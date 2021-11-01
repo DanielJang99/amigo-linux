@@ -18,6 +18,97 @@ import time
 import argparse
 import simplejson
 import subprocess
+import psycopg2
+
+# connect to databse 
+def connect_to_database(): 
+	print("connecting to database")
+	conn = psycopg2.connect(database = 'mobile_testbed', user = 'nyu', password = 'pa0l1n0', 
+		host = '127.0.0.1', port = '5432', sslmode = 'require')
+	cur = conn.cursor()  
+	return True, conn, cur
+
+
+# run a generic query on the database
+def run_query(query):
+	info = None
+	msg = ''
+
+	# connecting to db 
+	connected = False 
+	conn = None
+	try:
+		connected, conn, cur = connect_to_database()
+
+	# manage exception 
+	except psycopg2.DatabaseError as e:
+		if conn:
+			conn.rollback()
+		msg = 'Issue connecting to database. Error %s' % e    
+
+	# add installed_addons to database 
+	if connected: 
+		try:
+			cur.execute(query)
+			info = cur.fetchall()
+			if len(info) > 0: 
+				msg = 'OK'
+			else: 
+				info = None
+				msg = 'WARNING -- no entry found'
+
+		# handle exception 
+		except Exception as e:
+			msg = 'Issue querying the database. Error %s' % e    
+
+		# always close connection
+		finally:
+			if conn:
+				conn.close()
+
+	# all good 
+	return info, msg 
+
+
+# insert data from an experiment in the database 
+def insert_data(test_id, tester_id, location, timestamp, data_json = None):
+	# local parameters 
+	msg = '' 
+
+	# connecting to db 
+	connected = False 
+	try:
+		connected, conn, cur = connect_to_database()
+
+	# manage exception 
+	except psycopg2.DatabaseError as  e:
+		if conn:
+			conn.rollback()
+		msg = 'Issue connecting to database. Error %s' % e    
+
+	# add installed_addons to database 
+	if connected: 
+		try:
+			insert_sql = "insert into exp_summary(test_id, tester_id, location, timestamp) values(%s, %s, %s, %s);"
+			insert_data = (test_id, tester_id, location, timestamp)
+			cur.execute(insert_sql, insert_data)
+			msg = "exp_summary:all good" 	
+
+			# make database changes persistent 
+			conn.commit()
+
+		# handle exception 
+		except Exception as e:
+			msg += 'Issue inserting into database. Error %s' % e    
+
+		# always close connection
+		finally:
+			if conn:
+				conn.close()
+
+	# all done 
+	return msg 
+
 
 # simple function to read json from a POST message 
 def read_json(req): 
@@ -206,8 +297,11 @@ class StringGeneratorWebService(object):
 			data = read_json(cherrypy.request)
 			data = data['data'].split('\n')
 			print(data)
-			# consider adding to a DB? 
-
+			
+			# add returned status to databse 
+			info, msg  = run_query("select * from status_update")
+			print(info, msg)
+			
 		# respond all good 
 		cherrypy.response.headers['Content-Type'] = 'application/json'
 		cherrypy.response.headers['Access-Control-Allow-Origin']  = '*'
