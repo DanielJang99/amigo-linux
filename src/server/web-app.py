@@ -1,8 +1,8 @@
-## NOTE: web-app to receive commands from Fiat phone
+## NOTE: web-app to manage NYU mobile testbed
 ## Author: Matteo Varvello (matteo.varvello@nokia.com)
-## Date: 10/06/2021
-## TEST 
-## curl -H "Content-Type: application/json" --data '{"data":"testing data"}' http://localhost:8080/command
+## Date: 11/1/2021
+## TESTING
+## curl -H "Content-Type: application/json" --data '{"data":"testing data"}' https://mobile.batterylab.dev:8082/status
 
 #!/usr/bin/python
 #import random
@@ -35,6 +35,7 @@ allowedips      = {               # ACL rules
 }
 session_id = ""
 session_data = {}
+supportedIDs = ['1234']          # list of client IDs supported 
 
 # function to run a bash command
 def run_bash(bashCommand, verbose = True):
@@ -47,17 +48,11 @@ def run_bash(bashCommand, verbose = True):
 	# all good (add a check?)
 	return str(output.decode('utf-8'))
 
-# FIXME -- can this go? 
-def CORS():
-	cherrypy.response.headers["Access-Control-Allow-Origin"] = "*"
-
+# pre-flight request 
+# see http://www.w3.org/TR/cors/#cross-origin-request-with-preflight-0    
 def cors():
   # logging 
   if cherrypy.request.method == 'OPTIONS':
-    # logging 
-    #print "received a pre-flight request"
-    # preflign request 
-    # see http://www.w3.org/TR/cors/#cross-origin-request-with-preflight-0
     cherrypy.response.headers['Access-Control-Allow-Methods'] = 'POST'
     cherrypy.response.headers['Access-Control-Allow-Headers'] = 'content-type'
     cherrypy.response.headers['Access-Control-Allow-Origin']  = '*'
@@ -68,7 +63,7 @@ def cors():
 
 
 # thread to control client-server communication
-def th_web_app():
+def web_app():
     # configuration 
     conf = {
         '/': {
@@ -90,9 +85,10 @@ def th_web_app():
     # GET - ADD/REMOVE-ACL-RULE (localhost only)
     cherrypy.tree.mount(StringGeneratorWebService(), '/addACLRule', conf)
     cherrypy.tree.mount(StringGeneratorWebService(), '/removeACLRule', conf)
-    
+    cherrypy.tree.mount(StringGeneratorWebService(), '/action', conf)        # for now query each rand(30) seconds
+
     # POST/REPORT-MEASUREMENTS 
-    cherrypy.tree.mount(StringGeneratorWebService(), '/fiatData', conf)
+    cherrypy.tree.mount(StringGeneratorWebService(), '/status', conf)
  
     # start cherrypy engine 
     cherrypy.engine.start()
@@ -168,6 +164,25 @@ class StringGeneratorWebService(object):
 					cherrypy.response.status = 202
 					return "Rule could not be removed since not existing"
 		
+		# see if there is an action 
+		elif 'action' in cherrypy.url():
+			if 'id' not in cherrypy.request.params: 
+				cherrypy.response.status = 400
+				print("Malformed URL")
+				return "Error: Malformed URL" 
+			user_id = cherrypy.request.params['id']
+			if user_id not in supportedIDs: 
+				cherrypy.response.status = 400
+				print("User %s is not supported" %(user_id))
+				return "Error: User is not supported"
+			
+			# TODO --  look for a potential action to be performed
+			
+			# all good 
+			print("All good")
+			cherrypy.response.status = 200
+			return "All good"
+
 	# handle POST requests 
 	def POST(self, name="test"):
 	
@@ -186,27 +201,15 @@ class StringGeneratorWebService(object):
 				print("Requesting ip address (%s) is not allowed" %(src_ip))
 				return "Error: Forbidden" 
 
-		# command to be executed
-		if 'fiatData' in cherrypy.url():
+		# status update reporting 
+		if 'status' in cherrypy.url():
 			data = read_json(cherrypy.request)
 			data = data['data'].split('\n')
 			print(data)
-			if len(data) > 2:
-				print('ignore')
-			else:
-				data = data[0].split(',')
-				ts = int(data[0])
-				app = data[1]
-				sensor = data[2]
-				if sensor == 'GYR' or sensor == 'ACC':
-					sensor_values = [float(d) for d in data[3:9]]
-					print('ts: %d, app: %s, sensor: %s, values: %s' % (ts, app, sensor, str(sensor_values)))
-				else:
-					print('sensor is %s, ignore' % (sensor))
+			# consider adding to a DB? 
 
 		# respond all good 
 		cherrypy.response.headers['Content-Type'] = 'application/json'
-		#cherrypy.response.headers['Content-Type'] = 'string'
 		cherrypy.response.headers['Access-Control-Allow-Origin']  = '*'
 		cherrypy.response.status = ret_code
 		if ans == '':
@@ -215,9 +218,9 @@ class StringGeneratorWebService(object):
 		# all good, send response back 
 		return ans.encode('utf8')
 
+	# preflight request 
+	# see http://www.w3.org/TR/cors/#cross-origin-request-with-preflight-0	
 	def OPTIONS(self, name="test"): 
-		# preflign request 
-		# see http://www.w3.org/TR/cors/#cross-origin-request-with-preflight-0
 		cherrypy.response.headers['Access-Control-Allow-Methods'] = 'POST'
 		cherrypy.response.headers['Access-Control-Allow-Headers'] = 'content-type'
 		cherrypy.response.headers['Access-Control-Allow-Origin']  = '*'
@@ -231,7 +234,7 @@ class StringGeneratorWebService(object):
 # main goes here 
 if __name__ == '__main__':
 	# start a thread which handle client-server communication 
-	THREADS.append(Thread(target = th_web_app()))
+	THREADS.append(Thread(target = web_app()))
 	THREADS[-1].start()
 	
 	# listen to Ctrl+C
