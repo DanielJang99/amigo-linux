@@ -33,6 +33,6 @@ then
     usbTethering="True"
 fi 
 
-
 # report data back to control server
+#echo "$(generate_post_data)" 
 curl  -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
