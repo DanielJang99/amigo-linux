@@ -1,6 +1,7 @@
-#install cherrypi at the server 
-pip3 install cherrypy
+################### [server] 
 
+#install cherrypi
+pip3 install cherrypy
 
 # install postgres 
 sudo apt update
@@ -30,4 +31,11 @@ psql nyu -h 127.0.0.1 -d mobile_testbed
 
 # create tables # FIXME 
 create table status_update(tester_id text, location text, timestamp integer, data jsonb);
-#####################################
+
+################### [client]
+# aioquic support (H3 client)
+sudo apt install libssl-dev python3-dev
+git clone git@github.com:aiortc/aioquic.git
+cd aioquic/
+pip3 install -e .
+pip3 install wsproto
