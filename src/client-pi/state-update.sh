@@ -52,8 +52,8 @@ result=`cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=
 cpu_util=`echo "$result" | cut -f 1 | cut -f 1 -d "%"`
 
 # check memory usage
-mem_info=`free -m | grep Mem | awk '{print "Total:"$2"\tUsed:"$3"\tFree:"$4"\tAvailable:"$NF}'`
+mem_info=`free -m | grep Mem | awk '{print "Total:"$2";Used:"$3";Free:"$4";Available:"$NF}'`
 
 # report data back to control server
-#echo "$(generate_post_data)" 
+echo "$(generate_post_data)" 
 curl  -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
