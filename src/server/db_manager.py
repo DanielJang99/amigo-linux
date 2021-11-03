@@ -57,8 +57,8 @@ def run_query(query):
 	return info, msg 
 
 
-# insert data from an experiment in the database 
-def insert_data(test_id, tester_id, location, timestamp, power_json = None, sense_json = None):
+# insert status update from a device in the database
+def insert_data(tester_id, location, timestamp, data_json):
 	# local parameters 
 	msg = '' 
 
@@ -66,7 +66,7 @@ def insert_data(test_id, tester_id, location, timestamp, power_json = None, sens
 	connected = False 
 	try:
 		connected, conn, cur = connect_to_database()
-	
+
 	# manage exception 
 	except psycopg2.DatabaseError as  e:
 		if conn:
@@ -76,27 +76,18 @@ def insert_data(test_id, tester_id, location, timestamp, power_json = None, sens
 	# add installed_addons to database 
 	if connected: 
 		try:
-			insert_sql = "insert into exp_summary(test_id, tester_id, location, timestamp) values(%s, %s, %s, %s);"
-			insert_data = (test_id, tester_id, location, timestamp)
-			cur.execute(insert_sql, insert_data)
-			msg = "exp_summary:all good" 	
-
-			# add in other table if needed
-			if power_json is not None and sense_json is not None:
-				insert_sql = "insert into experiments(test_id, tester_id, location, timestamp, power_data, sense_data) values(%s, %s, %s, %s, %s::jsonb, %s::jsonb);"
-				insert_data += (power_json, sense_json)
-				cur.execute(insert_sql, insert_data)
-				msg += "experiments:all good" 	
-			else: 
-				print("WARNING -- Missing power data or sensing data")
-
+			insert_sql = "insert into status_update(tester_id, location, timestamp, data) values(%s, %s, %s, %s::jsonb);"
+			data = (tester_id, location, timestamp, json.dumps(data_json))
+			cur.execute(insert_sql, data)
+			msg = "status_update:all good" 	
+			
 			# make database changes persistent 
 			conn.commit()
 
-        # handle exception 
+		# handle exception 
 		except Exception as e:
 			msg += 'Issue inserting into database. Error %s' % e    
-	
+
 		# always close connection
 		finally:
 			if conn:
