@@ -10,10 +10,10 @@ import db_manager
 from db_manager import run_query, insert_data, insert_command
 
 ## Eample to cleanup status updates
-## python db-interface.py "delete from status_update;"
+## python db-interface.py query "delete from status_update;"
 
 ## Example to return all status updates
-## python db-interface.py "select * from status_update"
+## python db-interface.py query "select * from status_update"
 
 ## Eample to pause a command
 ## python db-interface.py query "UPDATE action_update SET status = 'pause' WHERE command_id = 'prova'"

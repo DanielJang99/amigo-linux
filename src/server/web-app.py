@@ -201,15 +201,19 @@ class StringGeneratorWebService(object):
 				print("No command matching the query found")
 				return "No command matching the query found"
 			if len(info) > 1: 
-				print("WARNING: too many actions active at the same time. Returning only first one")
-			command = info[0][4]
-			timestamp = info[0][1]
+				print("WARNING: too many actions active at the same time. Returning most recent one")
+			max_timestamp = 0
+			for entry in info: 
+				timestamp = info[0][2]
+				if timestamp > max_timestamp: 
+					max_timestamp = timestamp 
+					command = info[0][4]
 			
 			# all good 
-			print("All good. Returning command: ", command)
+			ans = command + ";" + str(max_timestamp)
+			print("All good. Returning: ", ans)
 			cherrypy.response.status = 200
-			return command + ";" + timestamp
-
+			return ans 
 
 	# handle POST requests 
 	def POST(self, name="test"):
