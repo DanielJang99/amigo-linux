@@ -36,16 +36,18 @@ def run_query(query):
 	if connected: 
 		try:
 			cur.execute(query)
-			info = cur.fetchall()
-			if len(info) > 0: 
-				msg = 'OK'
-			else: 
-				info = None
-				msg = 'WARNING -- no entry found'
+			msg = 'OK'
+			if 'select' in query or 'SELECT' in query:
+				info = cur.fetchall()
+				if len(info) > 0: 
+					msg = 'OK'
+				else: 
+					info = None
+					msg = 'WARNING -- no entry found'					
         
 		# handle exception 
 		except Exception as e:
-			msg = 'Issue querying the database. Error %s' % e    
+			msg = 'Exception: %s' % e    
 	
 		# always close connection and make things persistent
 		finally:
@@ -85,7 +87,7 @@ def insert_command(command_id, tester_id, timestamp, action):
 
 		# handle exception 
 		except Exception as e:
-			msg += 'Issue inserting into database. Error %s' % e    
+			msg += 'Exception: %s' % e    
 
 		# always close connection
 		finally:
