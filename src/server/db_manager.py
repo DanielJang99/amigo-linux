@@ -56,6 +56,45 @@ def run_query(query):
 	# all good 
 	return info, msg 
 
+# insert command
+def insert_command(tester_id, timestamp, action):
+	# local parameters 
+	msg = '' 
+
+	# connecting to db 
+	connected = False 
+	try:
+		connected, conn, cur = connect_to_database()
+
+	# manage exception 
+	except psycopg2.DatabaseError as  e:
+		if conn:
+			conn.rollback()
+		msg = 'Issue connecting to database. Error %s' % e    
+
+	# add installed_addons to database 
+	if connected: 
+		try:
+			insert_sql = "insert into action_update(tester_id, timestamp, status, action) values(%s, %s, %s, %s);"	
+			data = (tester_id, timestamp, "active", action)
+			cur.execute(insert_sql, data)
+			msg = "action_update:all good" 	
+			
+			# make database changes persistent 
+			conn.commit()
+
+		# handle exception 
+		except Exception as e:
+			msg += 'Issue inserting into database. Error %s' % e    
+
+		# always close connection
+		finally:
+			if conn:
+				conn.close()
+
+	# all done 
+	return msg #!/usr/bin/env python
+
 
 # insert status update from a device in the database
 def insert_data(tester_id, location, timestamp, data_json):
@@ -96,13 +135,4 @@ def insert_data(tester_id, location, timestamp, data_json):
 	# all done 
 	return msg #!/usr/bin/env python
 
-# run a query 
-#query = sys.argv[1]
-#print("QUERY:", query)
-#info, msg  = run_query(query)
-#print("INFO:", info)
-#print("MSG", msg)
-
-# insert data in database
-#info = insert_data(test_id, tester_id, location, timestamp, power_json, sense_json)
-#print(info)
+ 
