@@ -10,7 +10,7 @@ import psycopg2
 # connect to safekodi databse 
 def connect_to_database(): 
 	print("connecting to database")
-	conn = psycopg2.connect(database = 'power_scooter', user = 'scootor', password = 'pa0l1n0', 
+	conn = psycopg2.connect(database = 'mobile_testbed', user = 'nyu', password = 'pa0l1n0', 
 		host = '127.0.0.1', port = '5432', sslmode = 'require')
 	cur = conn.cursor()  
 	return True, conn, cur
