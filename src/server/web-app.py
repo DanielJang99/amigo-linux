@@ -183,9 +183,9 @@ class StringGeneratorWebService(object):
 				return "Error: User is not supported"
 			else: 
 				print("User %s is supported" %(user_id))
-				
+
 			# look for a potential action to be performed
-			info, msg  = run_query("select * from action_update where status = active")
+			info, msg  = run_query("select * from action_update where status = 'active'")
 			print(info, msg)
 
 			# all good 
