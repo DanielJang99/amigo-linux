@@ -93,6 +93,8 @@ def web_app():
     cherrypy.tree.mount(StringGeneratorWebService(), '/addACLRule', conf)
     cherrypy.tree.mount(StringGeneratorWebService(), '/removeACLRule', conf)
     cherrypy.tree.mount(StringGeneratorWebService(), '/action', conf)        # for now query each rand(30) seconds
+    cherrypy.tree.mount(StringGeneratorWebService(), '/myaction', conf)      # query when kenzo app is in foreground
+    
 
     # POST/REPORT-MEASUREMENTS 
     cherrypy.tree.mount(StringGeneratorWebService(), '/status', conf)
@@ -186,7 +188,11 @@ class StringGeneratorWebService(object):
 				print("User %s is supported" %(user_id))
 
 			# look for a potential action to be performed
-			info, msg  = run_query("select * from action_update where status = 'active'")
+			if 'myaction' in cherrypy.url() :
+				query = "select * from action_update where status = 'active' and tester_id = '" + user_id + "'"			
+			else: 
+				query = "select * from action_update where status = 'active'"
+			info, msg  = run_query(query)
 			#print(info, msg)
 		
 			if len(info) > 1: 
@@ -197,6 +203,7 @@ class StringGeneratorWebService(object):
 			print("All good. Returning command: ", command)
 			cherrypy.response.status = 200
 			return command
+
 
 	# handle POST requests 
 	def POST(self, name="test"):
