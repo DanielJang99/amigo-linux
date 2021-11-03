@@ -77,7 +77,7 @@ def insert_command(command_id, tester_id, timestamp, action):
 	# add installed_addons to database 
 	if connected: 
 		try:
-			insert_sql = "insert into action_update(command_id, tester_id, timestamp, status, action) values(%s, %s, %d, %s, %s);"	
+			insert_sql = "insert into action_update(command_id, tester_id, timestamp, status, action) values(%s, %s, %s, %s, %s);"	
 			data = (command_id, tester_id, timestamp, "active", action)
 			cur.execute(insert_sql, data)
 			msg = "action_update:all good" 	
