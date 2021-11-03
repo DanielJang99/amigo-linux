@@ -5,6 +5,8 @@
 ## curl -H "Content-Type: application/json" --data '{"data":"testing data"}' https://mobile.batterylab.dev:8082/status
 ## GET API 
 ## curl https://mobile.batterylab.dev:8082/action?id=1234
+## POST API (via APP)
+## curl -H "Content-Type: application/json" --data '{"uid":"c95ad2777d56", "timestamp":"1635973511", "command_id":"1234", "command":"recharge"}' https://mobile.batterylab.dev:8082/appstatus
 
 #!/usr/bin/python
 #import random
@@ -22,7 +24,7 @@ import simplejson
 import subprocess
 import psycopg2
 import db_manager
-from db_manager import run_query, insert_data
+from db_manager import run_query, insert_data, insert_command
 
 # simple function to read json from a POST message 
 def read_json(req): 
@@ -94,11 +96,11 @@ def web_app():
     cherrypy.tree.mount(StringGeneratorWebService(), '/removeACLRule', conf)
     cherrypy.tree.mount(StringGeneratorWebService(), '/action', conf)        # for now query each rand(30) seconds
     cherrypy.tree.mount(StringGeneratorWebService(), '/myaction', conf)      # query when kenzo app is in foreground
-    
 
     # POST/REPORT-MEASUREMENTS 
     cherrypy.tree.mount(StringGeneratorWebService(), '/status', conf)
- 
+    cherrypy.tree.mount(StringGeneratorWebService(), '/appstatus', conf)     # report charging state, wifi password, etc. 
+
     # start cherrypy engine 
     cherrypy.engine.start()
     cherrypy.engine.block()
@@ -224,7 +226,7 @@ class StringGeneratorWebService(object):
 				return "Error: Forbidden" 
 
 		# status update reporting 
-		if 'status' in cherrypy.url():
+		if 'status' in cherrypy.url() or 'appstatus' in cherrypy.url():
 			data_json = read_json(cherrypy.request)
 			user_id = data_json['uid']
 			if user_id not in supportedIDs and id_control:  			
@@ -233,14 +235,16 @@ class StringGeneratorWebService(object):
 				return "Error: User is not supported"
 			else: 
 				print("User %s is supported" %(user_id))
-
 			location = None
 			timestamp = data_json['timestamp']			
-			#print(user_id, location, timestamp, data_json)
-			msg = insert_data(user_id, location, timestamp, data_json)
+			msg = ''
+			if 'appstatus' in cherrypy.url():
+				command_id = data_json['command_id']
+				command = data_json['command']				
+				msg = insert_command(command_id, user_id, timestamp, command)
+			else: 
+				msg = insert_data(user_id, location, timestamp, data_json)
 			print(msg)
-			#info, msg  = run_query("select * from status_update")
-			#print(info, msg)
 			
 		# respond all good 
 		cherrypy.response.headers['Content-Type'] = 'application/json'
