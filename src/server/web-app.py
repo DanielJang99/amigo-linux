@@ -194,9 +194,12 @@ class StringGeneratorWebService(object):
 				query = "select * from action_update where status = 'active' and tester_id = '" + user_id + "'"			
 			else: 
 				query = "select * from action_update where status = 'active'"
+			print(query)
 			info, msg  = run_query(query)
-			#print(info, msg)
-		
+			if info is None:
+				cherrypy.response.status = 202
+				print("No command matching the query found")
+				return "No command matching the query found"
 			if len(info) > 1: 
 				print("WARNING: too many actions active at the same time. Returning only first one")
 			command = info[0][4]
