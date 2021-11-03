@@ -200,11 +200,12 @@ class StringGeneratorWebService(object):
 			if len(info) > 1: 
 				print("WARNING: too many actions active at the same time. Returning only first one")
 			command = info[0][4]
+			timestamp = info[0][1]
 			
 			# all good 
 			print("All good. Returning command: ", command)
 			cherrypy.response.status = 200
-			return command
+			return command + ";" + timestamp
 
 
 	# handle POST requests 
