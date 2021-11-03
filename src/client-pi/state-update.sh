@@ -7,7 +7,7 @@
 generate_post_data(){
   cat <<EOF
     {
-    "time":"${timestamp}",
+    "timestamp":"${timestamp}",
     "uid":"${uid}",
     "wifi_connection": "${wifi}", 
     "usb_tethering":"${usbTethering}",
