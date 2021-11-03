@@ -7,6 +7,7 @@
 generate_post_data(){
   cat <<EOF
     {
+    "time":"${timestamp}",
     "uid":"${uid}",
     "wifi_connection": "${wifi}", 
     "usb_tethering":"${usbTethering}",
@@ -19,6 +20,7 @@ EOF
 
 # FIXME
 uid="1234"
+timestamp=`date +%s`
 
 # check for wifi 
 wifi="False"
