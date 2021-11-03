@@ -90,7 +90,7 @@ def insert_data(tester_id, location, timestamp, data_json):
 	if connected: 
 		try:
 			insert_sql = "insert into status_update(tester_id, location, timestamp, data) values(%s, %s, %s, %s::jsonb);"
-			data = (tester_id, location, timestamp, data_json)			
+			data = (tester_id, location, timestamp, json.dumps(data_json))
 			cur.execute(insert_sql, data)
 			msg = "exp_summary:all good" 	
 
@@ -114,7 +114,8 @@ def insert_data(tester_id, location, timestamp, data_json):
 def read_json(req): 
 	cl = req.headers['Content-Length']
 	rawbody = req.body.read(int(cl))
-	body = simplejson.loads(rawbody)
+	#body = simplejson.load(rawbody)
+	body = simplejson.loads(rawbody)	
 	return body 
 
 # global parameters
