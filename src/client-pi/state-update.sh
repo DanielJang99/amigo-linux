@@ -10,9 +10,9 @@ generate_post_data(){
     "uid":"${uid}",
     "wifi_connection": "${wifi}", 
     "usb_tethering":"${usbTethering}",
-    "free_hd_space":"${free_space}",
+    "free_space_GB":"${free_space}",
     "cpu_util_perc":"${cpu_util}",
-    "mem_free_perc":"${mem_free_perc}"
+    "mem_info":"${mem_info}"
     }
 EOF
 }
@@ -52,9 +52,7 @@ result=`cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=
 cpu_util=`echo "$result" | cut -f 1 | cut -f 1 -d "%"`
 
 # check memory usage
-memfree=`cat /proc/meminfo | grep MemFree | awk '{print $2}'`; 
-memtotal=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`; 
-mem_free_perc=$(($memfree.0 * 100 / $memtotal))
+mem_info=`free -m | grep Mem | awk '{print "Total:"$2"\tUsed:"$3"\tFree:"$4"\tAvailable:"$NF}'`
 
 # report data back to control server
 #echo "$(generate_post_data)" 
