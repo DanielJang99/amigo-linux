@@ -29,6 +29,7 @@ if opt == "query":
 	info, msg  = run_query(query)
 	print("INFO:", info)
 	print("MSG", msg)
+
 elif opt == "insert-command":
 	# insert command in database
 	info = insert_command("prova", "*", time.time(), "adb shell ls")

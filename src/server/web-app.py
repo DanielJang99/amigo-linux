@@ -186,12 +186,16 @@ class StringGeneratorWebService(object):
 
 			# look for a potential action to be performed
 			info, msg  = run_query("select * from action_update where status = 'active'")
-			print(info, msg)
-
+			#print(info, msg)
+		
+			if len(info) > 1: 
+				print("WARNING: too many actions active at the same time. Returning only first one")
+			command = info[0][4]
+			
 			# all good 
-			print("All good")
+			print("All good. Returning command: ", command)
 			cherrypy.response.status = 200
-			return msg
+			return command
 
 	# handle POST requests 
 	def POST(self, name="test"):
