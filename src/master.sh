@@ -1,11 +1,12 @@
 #!/bin/bash
-## Master script for the balloon experiment (mazinga/kenzo)
+## Master script for constant experiments on the mobile testbed
 ## Author: Matteo Varvelo
+## Date: 11/01/2021
 
 # import util file
 script_dir=`pwd`
 DEBUG=1
-util_file=`pwd`"/android/util.cfg"
+util_file=`pwd`"/client-android/util.cfg"
 if [ -f $util_file ]
 then
     source $util_file
@@ -86,17 +87,9 @@ safe_stop(){
 	my_kill "ping.sh"
 	my_kill "cdn-test.sh"
 	my_kill "speed-browse-test.sh"
-	my_kill "quic-test.sh"
+	#my_kill "quic-test.sh"
 	my_kill "fiat_client.py"
 	my_kill "quic-test-external.sh"
-
-	# stop python server 
-	if [ $connected == "true" -o $run_pi == "true" ] 
-	then 
-		command="killall python3"
-		ssh -o StrictHostKeyChecking=no -p 12345 pi@$iot_proxy "$command"
-		myprint "Stopped my QUIC server"
-	fi 
 
 	# stop kenzo in background on each phone 
 	for device_id in "${list_devices[@]}"
@@ -133,9 +126,9 @@ phone_setup(){
 	adb -s $device_id shell settings put global heads_up_notifications_enabled 0
 
 	# set desired brightness
-	screen_brightness=70  
-	myprint "[INFO] Setting screen brightness to $screen_brightness -- ASSUMPTION: no automatic control"
-	adb -s $device_id shell settings put system screen_brightness $screen_brightness
+	#screen_brightness=70  
+	#myprint "[INFO] Setting screen brightness to $screen_brightness -- ASSUMPTION: no automatic control"
+	#adb -s $device_id shell settings put system screen_brightness $screen_brightness
 
 	#get and log some useful info
 	dev_model=`adb -s $device_id shell getprop ro.product.model | sed s/" "//g` # S9: SM-G960U
@@ -157,17 +150,17 @@ phone_setup(){
 
 # process to handle pi experiments 
 run_pi(){
-	cd pi
+	cd client-pi
 	(./ping.sh $test_id > $log_dir/"ping-log.txt" 2>&1 &)
 	(./cdn-test.sh $test_id > $log_dir/"cdn-log.txt" 2>&1 &)
-	(./quic-test.sh  --start --id $test_id > $log_dir/"quic-myserver-log.txt" 2>&1 &)
+	#(./quic-test.sh  --start --id $test_id > $log_dir/"quic-myserver-log.txt" 2>&1 &) # this is to our server
 	(./quic-test-external.sh --id $test_id > $log_dir/"quic-external-log.txt" 2>&1 &)
 	cd $script_dir	
 }
 
 # process to handle android experiments 
 run_android(){
-	cd android
+	cd client-android
 	for device_id in "${list_devices[@]}"
 	do
 		if [ $device_id == "BRE9K18610909502" ] 
@@ -295,9 +288,12 @@ done
 
 # report on free space 
 free_space=`df | grep root | awk '{print $4/(1000*1000)}'`
-myprint "Current free space is: $free_space" 
+myprint "Current free space is: $free_space GB" 
 
 # make sure ADB is ready and  get list of devices 
+declare -gA yCoords
+declare -gA xCoords
+declare -gA deviceNames
 ps aux | grep adb | grep server
 if [ $? -ne 0 ] 
 then 
@@ -312,6 +308,11 @@ do
 	device_id=`echo "$line" | awk '{print $1}'`
 	list_devices[c]=$device_id
 	let "c++"
+	# ASSUMPTION: only REDMI-GO are connected 
+	# coordinates needed to start kenzo (per device) -- FIXME 
+	xCoords["e1afce790502"]=332
+	yCoords["e1afce790502"]=1166
+	deviceNames["e1afce790502"]="M2004J19C" 
 done < ".devices"
 
 # make sure devices are on
@@ -332,30 +333,13 @@ then
 	sudo ntpdate 0.es.pool.ntp.org
 fi 
 
-# coordinates needed to start kenzo (per device)
-declare -gA yCoords
-declare -gA xCoords
-declare -gA deviceNames
-xCoords["LGH870eb6286bb"]=450
-xCoords["LGH870b714ee1b"]=450
-xCoords["e1afce790502"]=332
-xCoords["BRE9K18610909502"]=160
-yCoords["LGH870eb6286bb"]=1300
-yCoords["LGH870b714ee1b"]=1300
-yCoords["e1afce790502"]=1166
-yCoords["BRE9K18610909502"]=700
-deviceNames["LGH870eb6286bb"]="LG-H870"
-deviceNames["LGH870b714ee1b"]="LG-H870-2"
-deviceNames["e1afce790502"]="M2004J19C" 
-deviceNames["BRE9K18610909502"]="DRA-L21" 
-
 # folder organization
 mkdir -p $log_dir
 
 # phone preparation for test
 for device_id in "${list_devices[@]}"
 do
-	# prapre phone
+	# prepare phone
 	phone_setup
 
 	# clean logcat and make sure size is right
@@ -367,35 +351,35 @@ done
 myprint "TestID: $test_id"
 
 # start tcpdump 
-/usr/sbin/ifconfig | grep $iface > /dev/null
-if [ $? -eq 1 ] 
-then 
-	myprint "WARNING - skipping tcpdump since $iface is not available"
-else 
-	#myprint "Running tcpdump on interface $iface"
-	myprint "WARNING - skipping tcpdump because of potentiallt too much traffic"
-	connected="true"
-	#(sudo tcpdump -i $iface -w $log_dir/$test_id.pcap > /dev/null 2>&1 &)
-fi 
+#/usr/sbin/ifconfig | grep $iface > /dev/null
+#if [ $? -eq 1 ] 
+#then 
+#	myprint "WARNING - skipping tcpdump since $iface is not available"
+#else 
+#	#myprint "Running tcpdump on interface $iface"
+#	myprint "WARNING - skipping tcpdump because of potentiallt too much traffic"
+#	connected="true"
+#	#(sudo tcpdump -i $iface -w $log_dir/$test_id.pcap > /dev/null 2>&1 &)
+#fi 
 
 # clean potential pending things
 myprint "Clean potential pending things"
 safe_stop
 
 # start kenzo in background on each phone 
-for device_id in "${list_devices[@]}"
-do
-	#echo $device_id
-	adb -s $device_id shell monkey -p $kenzo 1 > /dev/null 2>&1
-	sleep 5
-	x_coord=${xCoords[$device_id]}
-	y_coord=${yCoords[$device_id]}
-	#myprint "TESTING => Device: $device_id x_coord:$x_coord y_coord:$y_coord"
-	adb -s $device_id shell "input tap $x_coord $y_coord"	
-
-	# take screenshot
-	adb -s $device_id exec-out screencap -p > $log_dir/"kenzo-screen-"$device_id".png"
-done
+#for device_id in "${list_devices[@]}"
+#do
+#	#echo $device_id
+#	adb -s $device_id shell monkey -p $kenzo 1 > /dev/null 2>&1
+#	sleep 5
+#	x_coord=${xCoords[$device_id]}
+#	y_coord=${yCoords[$device_id]}
+#	#myprint "TESTING => Device: $device_id x_coord:$x_coord y_coord:$y_coord"
+#	adb -s $device_id shell "input tap $x_coord $y_coord"	
+#
+#	# take screenshot
+#	adb -s $device_id exec-out screencap -p > $log_dir/"kenzo-screen-"$device_id".png"
+#done
 
 # start pi experiments 
 if [ $connected == "true" -o $run_pi == "true" ] 
@@ -405,28 +389,29 @@ then
 fi 
 
 # start Android experiments 
-myprint "Running <<run_android>> process" 
-run_android &
+myprint "Skipping Android experiments for now"
+#myprint "Running <<run_android>> process" 
+#run_android &
 
 # wait for experiment to be done #TODO: could use some other signal to stop 
-myprint "Running test for: $duration seconds"
-dump_telephony #Testing dumping telephony data each 5 secs until duration 
+#myprint "Running test for: $duration seconds"
+#dump_telephony #Testing dumping telephony data each 5 secs until duration 
 #sleep $duration 
 
 # stop all running 
 safe_stop
 
 # pull data 
-for device_id in "${list_devices[@]}"
-do
-	myprint "Saving logcat from $device_id..."
-	adb -s $device_id logcat -d >> $log_dir"/logcat-$device_id"
-	myprint "Pulling mazinga files from $device_id..."
-	fname=`adb -s $device_id shell "ls /storage/emulated/0/Android/data/com.example.sensorexample/files" | grep mazinga | tail -n 1` 
-	adb -s $device_id pull /storage/emulated/0/Android/data/com.example.sensorexample/files/$fname $log_dir
-	fname=`adb -s $device_id shell "ls /storage/emulated/0/Android/data/com.example.sensorexample/files" | grep sensor | tail -n 1` 
-	adb -s $device_id pull /storage/emulated/0/Android/data/com.example.sensorexample/files/$fname $log_dir
-done
+#for device_id in "${list_devices[@]}"
+#do
+#	myprint "Saving logcat from $device_id..."
+#	adb -s $device_id logcat -d >> $log_dir"/logcat-$device_id"
+#	myprint "Pulling mazinga files from $device_id..."
+#	fname=`adb -s $device_id shell "ls /storage/emulated/0/Android/data/com.example.sensorexample/files" | grep mazinga | tail -n 1` 
+#	adb -s $device_id pull /storage/emulated/0/Android/data/com.example.sensorexample/files/$fname $log_dir
+#	fname=`adb -s $device_id shell "ls /storage/emulated/0/Android/data/com.example.sensorexample/files" | grep sensor | tail -n 1` 
+#	adb -s $device_id pull /storage/emulated/0/Android/data/com.example.sensorexample/files/$fname $log_dir
+#done
 
 # report on free space 
 free_space=`df | grep root | awk '{print $4/(1000*1000)}'`
