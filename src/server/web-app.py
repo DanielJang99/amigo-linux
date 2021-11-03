@@ -219,8 +219,8 @@ class StringGeneratorWebService(object):
 		# status update reporting 
 		if 'status' in cherrypy.url():
 			data_json = read_json(cherrypy.request)
-			tester_id = data_json['uid']
-			if tester_id not in supportedIDs and id_control:  			
+			user_id = data_json['uid']
+			if user_id not in supportedIDs and id_control:  			
 				cherrypy.response.status = 400
 				print("User %s is not supported" %(user_id))
 				return "Error: User is not supported"
@@ -229,8 +229,8 @@ class StringGeneratorWebService(object):
 
 			location = None
 			timestamp = data_json['timestamp']			
-			#print(tester_id, location, timestamp, data_json)
-			msg = insert_data(tester_id, location, timestamp, data_json)
+			#print(user_id, location, timestamp, data_json)
+			msg = insert_data(user_id, location, timestamp, data_json)
 			print(msg)
 			#info, msg  = run_query("select * from status_update")
 			#print(info, msg)
