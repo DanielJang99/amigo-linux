@@ -70,8 +70,8 @@ def run_query(query):
 	return info, msg 
 
 
-# insert data from an experiment in the database 
-def insert_data(test_id, tester_id, location, timestamp, data_json = None):
+# insert status update from a device in the database
+def insert_data(tester_id, location, timestamp, data_json):
 	# local parameters 
 	msg = '' 
 
@@ -89,8 +89,8 @@ def insert_data(test_id, tester_id, location, timestamp, data_json = None):
 	# add installed_addons to database 
 	if connected: 
 		try:
-			insert_sql = "insert into exp_summary(test_id, tester_id, location, timestamp) values(%s, %s, %s, %s);"
-			insert_data = (test_id, tester_id, location, timestamp)
+			insert_sql = "insert into status_update(tester_id, location, timestamp, data) values(%s, %s, %s, %s::jsonb);"
+			insert_data = (tester_id, location, timestamp, data_json)			
 			cur.execute(insert_sql, insert_data)
 			msg = "exp_summary:all good" 	
 
@@ -294,12 +294,15 @@ class StringGeneratorWebService(object):
 
 		# status update reporting 
 		if 'status' in cherrypy.url():
-			data = read_json(cherrypy.request)
-			print(data)
-			
-			# add returned status to databse 
-			info, msg  = run_query("select * from status_update")
-			print(info, msg)
+			data_json = read_json(cherrypy.request)
+			#print(data_json)
+			tester_id = data_json['uid']
+			location = None
+			timestamp = data_json['timestamp']			
+			msg = insert_data(tester_id, location, timestamp, data_json):
+
+			#info, msg  = run_query("select * from status_update")
+			#print(info, msg)
 			
 		# respond all good 
 		cherrypy.response.headers['Content-Type'] = 'application/json'
