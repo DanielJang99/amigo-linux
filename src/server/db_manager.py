@@ -94,4 +94,15 @@ def insert_data(tester_id, location, timestamp, data_json):
 				conn.close()
 
 	# all done 
-	return msg 
+	return msg #!/usr/bin/env python
+
+# run a query 
+query = sys.argv[1]
+print("QUERY:", query)
+info, msg  = run_query(query)
+print("INFO:", info)
+print("MSG", msg)
+
+# insert data in database
+#info = insert_data(test_id, tester_id, location, timestamp, power_json, sense_json)
+#print(info)
