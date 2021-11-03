@@ -1,8 +1,10 @@
 ## NOTE: web-app to manage NYU mobile testbed
 ## Author: Matteo Varvello (matteo.varvello@nokia.com)
 ## Date: 11/1/2021
-## TESTING
+## POST API
 ## curl -H "Content-Type: application/json" --data '{"data":"testing data"}' https://mobile.batterylab.dev:8082/status
+## GET API 
+## curl https://mobile.batterylab.dev:8082/action?id=1234
 
 #!/usr/bin/python
 #import random
@@ -179,13 +181,17 @@ class StringGeneratorWebService(object):
 				cherrypy.response.status = 400
 				print("User %s is not supported" %(user_id))
 				return "Error: User is not supported"
-			
-			# TODO --  look for a potential action to be performed
-			
+			else: 
+				print("User %s is supported" %(user_id))
+				
+			# look for a potential action to be performed
+			info, msg  = run_query("select * from action_update where status = active")
+			print(info, msg)
+
 			# all good 
 			print("All good")
 			cherrypy.response.status = 200
-			return "All good"
+			return msg
 
 	# handle POST requests 
 	def POST(self, name="test"):
