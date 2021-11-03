@@ -1,20 +1,19 @@
 #!/usr/bin/python
 ## Notes: Common functions for database 
-## Author: Matteo Varvello 
-## Date: 07/27/2020
+## Author: Matteo Varvello (matteo.varvello@nokia.com)
+## Date: 11/1/2021
 import time 
 import json 
 import sys
 import psycopg2
 
-# connect to safekodi databse 
+# connect to databse 
 def connect_to_database(): 
 	print("connecting to database")
 	conn = psycopg2.connect(database = 'mobile_testbed', user = 'nyu', password = 'pa0l1n0', 
 		host = '127.0.0.1', port = '5432', sslmode = 'require')
 	cur = conn.cursor()  
 	return True, conn, cur
-
 
 # run a generic query on the database
 def run_query(query):
@@ -48,9 +47,10 @@ def run_query(query):
 		except Exception as e:
 			msg = 'Issue querying the database. Error %s' % e    
 	
-		# always close connection
+		# always close connection and make things persistent
 		finally:
 			if conn:
+				conn.commit()
 				conn.close()
 
 	# all good 
