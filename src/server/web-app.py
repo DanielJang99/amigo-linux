@@ -295,7 +295,6 @@ class StringGeneratorWebService(object):
 		# status update reporting 
 		if 'status' in cherrypy.url():
 			data = read_json(cherrypy.request)
-			data = data['data'].split('\n')
 			print(data)
 			
 			# add returned status to databse 
