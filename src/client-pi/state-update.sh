@@ -1,4 +1,7 @@
 #!/bin/bash
+## NOTE: report updates to the central server 
+## Author: Matteo Varvello (matteo.varvello@nokia.com)
+## Date: 11/3/2021
 
 # generate data to be POSTed to my server 
 generate_post_data(){
@@ -6,7 +9,10 @@ generate_post_data(){
     {
     "uid":"${uid}",
     "wifi_connection": "${wifi}", 
-    "usb_tethering":"${usbTethering}"
+    "usb_tethering":"${usbTethering}",
+    "free_hd_space":"${free_space}",
+    "cpu_util_perc":"${cpu_util}",
+    "mem_free_perc":"${mem_free_perc}"
     }
 EOF
 }
@@ -23,7 +29,6 @@ then
     wifi="True"
 fi 
 
-
 # check for USB tethering
 usbTethering="False"
 ifconfig | grep "usb0" > /dev/null
@@ -32,6 +37,24 @@ if [ $status -eq 0 ]
 then
     usbTethering="True"
 fi 
+
+# check current space usage
+free_space=`df | grep root | awk '{print $4/(1000*1000)}'`
+
+# check CPU usage 
+prev_total=0
+prev_idle=0
+result=`cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
+prev_idle=`echo "$result" | cut -f 2`
+prev_total=`echo "$result" | cut -f 3`
+sleep 3 
+result=`cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
+cpu_util=`echo "$result" | cut -f 1 | cut -f 1 -d "%"`
+
+# check memory usage
+memfree=`cat /proc/meminfo | grep MemFree | awk '{print $2}'`; 
+memtotal=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`; 
+mem_free_perc=$(($memfree.0 * 100 / $memtotal))
 
 # report data back to control server
 #echo "$(generate_post_data)" 
