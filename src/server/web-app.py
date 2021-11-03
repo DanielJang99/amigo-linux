@@ -300,7 +300,7 @@ class StringGeneratorWebService(object):
 			location = None
 			timestamp = data_json['timestamp']			
 			print(tester_id, location, timestamp, data_json)
-			print(typeof(data_json))			
+			print(type(data_json))			
 			msg = insert_data(tester_id, location, timestamp, data_json)
 			print(msg)
 			#info, msg  = run_query("select * from status_update")
