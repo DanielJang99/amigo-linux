@@ -90,8 +90,8 @@ def insert_data(tester_id, location, timestamp, data_json):
 	if connected: 
 		try:
 			insert_sql = "insert into status_update(tester_id, location, timestamp, data) values(%s, %s, %s, %s::jsonb);"
-			insert_data = (tester_id, location, timestamp, data_json)			
-			cur.execute(insert_sql, insert_data)
+			data = (tester_id, location, timestamp, data_json)			
+			cur.execute(insert_sql, data)
 			msg = "exp_summary:all good" 	
 
 			# make database changes persistent 
@@ -299,6 +299,8 @@ class StringGeneratorWebService(object):
 			tester_id = data_json['uid']
 			location = None
 			timestamp = data_json['timestamp']			
+			print(tester_id, location, timestamp, data_json)
+			print(typeof(data_json))			
 			msg = insert_data(tester_id, location, timestamp, data_json)
 			print(msg)
 			#info, msg  = run_query("select * from status_update")
