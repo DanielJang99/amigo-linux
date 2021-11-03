@@ -41,7 +41,8 @@ allowedips      = {               # ACL rules
 }
 session_id = ""
 session_data = {}
-supportedIDs = ['1234']          # list of client IDs supported 
+supportedIDs = ['c95ad2777d56']   # list of client IDs supported 
+id_control  = False               # flag for client ID control 
 
 # function to run a bash command
 def run_bash(bashCommand, verbose = True):
@@ -177,7 +178,7 @@ class StringGeneratorWebService(object):
 				print("Malformed URL")
 				return "Error: Malformed URL" 
 			user_id = cherrypy.request.params['id']
-			if user_id not in supportedIDs: 
+			if user_id not in supportedIDs and id_control:  
 				cherrypy.response.status = 400
 				print("User %s is not supported" %(user_id))
 				return "Error: User is not supported"
@@ -218,8 +219,14 @@ class StringGeneratorWebService(object):
 		# status update reporting 
 		if 'status' in cherrypy.url():
 			data_json = read_json(cherrypy.request)
-			#print(data_json)
 			tester_id = data_json['uid']
+			if tester_id not in supportedIDs and id_control:  			
+				cherrypy.response.status = 400
+				print("User %s is not supported" %(user_id))
+				return "Error: User is not supported"
+			else: 
+				print("User %s is supported" %(user_id))
+
 			location = None
 			timestamp = data_json['timestamp']			
 			#print(tester_id, location, timestamp, data_json)
@@ -253,6 +260,9 @@ class StringGeneratorWebService(object):
 
 # main goes here 
 if __name__ == '__main__':
+
+	## TODO: query supported device ids to populate supportedIDs
+
 	# start a thread which handle client-server communication 
 	THREADS.append(Thread(target = web_app()))
 	THREADS[-1].start()
