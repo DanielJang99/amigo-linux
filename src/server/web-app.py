@@ -204,10 +204,10 @@ class StringGeneratorWebService(object):
 				print("WARNING: too many actions active at the same time. Returning most recent one")
 			max_timestamp = 0
 			for entry in info: 
-				timestamp = info[0][2]
+				timestamp = entry[2]
 				if timestamp > max_timestamp: 
 					max_timestamp = timestamp 
-					command = info[0][4]
+					command = entry[4]
 			
 			# all good 
 			ans = command + ";" + str(max_timestamp)
@@ -236,6 +236,8 @@ class StringGeneratorWebService(object):
 		# status update reporting 
 		if 'status' in cherrypy.url() or 'appstatus' in cherrypy.url():
 			data_json = read_json(cherrypy.request)
+			print(data_json)
+			#user_id = data_json['adb_id']
 			user_id = data_json['uid']
 			if user_id not in supportedIDs and id_control:  			
 				cherrypy.response.status = 400
