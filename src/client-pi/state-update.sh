@@ -9,70 +9,221 @@ generate_post_data(){
     {
     "timestamp":"${timestamp}",
     "uid":"${uid}",
-    "wifi_connection": "${wifi}", 
+    "pi_wifi": "${wifi}", 
     "usb_tethering":"${usbTethering}",
-    "free_space_GB":"${free_space}",
-    "cpu_util_perc":"${cpu_util}",
-    "mem_info":"${mem_info}", 
-    "phone_foreground":"${foreground}"
+    "pi_free_space_GB":"${free_space}",
+    "pi_cpu_util_perc":"${cpu_util}",
+    "pi_mem_info":"${mem_info}", 
+    "phone_foreground_app":"${foreground}",
+    "phone_wifi_ip":"${wifi_ip}",
+    "phone_mobile_ip":"${mobile_ip}"
     }
 EOF
 }
 
-# params
-timestamp=`date +%s`
-MIN_INTERVAL=30
+# enable adb over wifi for phone under test 
+enable_adb_wifi(){
+	# logging 
+	echo "Enabling adb over wifi"
+
+	# open port on phone 
+	max_attempt_time=60
+	t1=`date +%s`
+	t_p=0
+	found="false"
+	while [ $t_p -lt $max_attempt_time ] 
+	do 
+		adb devices | grep $wifi_ip:$def_port > /dev/null
+		if [ $? -eq 0 ]
+		then
+			echo "Time passed: $t_p Device $wifi_ip:$def_port found"
+			found="true"
+			break
+		else
+			echo "Time passed: $t_p --> adb tcpip $def_port"
+			adb tcpip $def_port
+			sleep 2
+			adb connect $wifi_ip:$def_port
+		fi
+		t2=`date +%s`
+		let "t_p = t2 - t1"
+	done
+	
+	# check if found or not 
+	if [ $found == "false" ] 
+	then 
+		echo "ERROR: wifi could not be enabled"
+		adb_wifi="false"
+	fi 
+
+	# all good 
+	adb_wifi="true"
+}
+
+# parameters
+timestamp=`date +%s`                 # current time 
+MIN_INTERVAL=30                      # interval of status reporting (seconds)
+package="com.example.sensorexample"  # our app 
+def_port=5555                        # default ADB port (for ADB over wifi)
+adb_wifi="false"                     # flag to keep track if we are running ADB over wifi or not
 
 # check if another script is already running 
 N_running=`ps aux | grep "state-update"  | grep -v "grep" | wc -l`
 ps aux | grep "state-update"  | grep -v "grep"
-echo "===> N_running: $N_running"
+if [ $N_running -gt 2 ] 
+then 
+	echo "Stopping. Already running"
+	exit -1 
+fi 
 
 # get id of phone connected
-uid=`adb devices | grep -v "List"  | cut -f 1`
+num_devices=`adb devices | grep -v "List" | grep -v -e '^$' | wc -l`
+if [ $num_devices -gt 1 ] 
+then 
+	adb_wifi="true"
+	echo "Both USB and WiFi ADB are available. Something is not right. Relaying on WiFi"
+	uid=`adb devices | grep -v "List" | grep -v -e '^$' | grep 192 | cut -f 1`
+	#FIXME - notify user to disconnect cable? 
+else 
+	uid=`adb devices | grep -v "List" | grep -v -e '^$' | cut -f 1`
+fi 
+if [ -z ${uid+x} ]
+then 
+	echo "No ADB identifier found :("
+	exit -1 
+fi 
 
-# NOTE: this needs to be called by Kenzo based on user input 
-curl -H "Content-Type: application/json" --data '{"uid":"c95ad2777d56", "timestamp":"1635975692", "command_id":"12354", "command":"recharge"}' https://mobile.batterylab.dev:8082/appstatus
+# understand WiFi and mobile phone connectivity
+wifi_ip="None"
+adb -s $uid shell ifconfig wlan0 > ".wifi-info"
+if [ $? -eq 0 ] 
+then 
+	wifi_ip=`cat ".wifi-info" | grep "inet addr" | cut -f 2 -d ":" | cut -f 1 -d " "`  #FIXME: is this constant across devices/locations? 
+fi 
+mobile_ip="None"
+adb -s $uid shell ifconfig rmnet_data1 > ".mobile-info"
+if [ $? -eq 0 ] 
+then 
+	mobile_ip=`cat ".mobile-info" | grep "inet addr" | cut -f 2 -d ":" | cut -f 1 -d " "`  #FIXME: is this constant across devices/locations? 
+fi 
+echo "Device info. Wifi: $wifi_ip Mobile: $mobile_ip"
+
+# make sure ADB identifier is updated 
+adb -s $uid shell "ls /storage/emulated/0/Android/data/com.example.sensorexample/files/" > /dev/null 2>&1
+if [ $? -ne 0 ]
+then 
+	echo "App was never launched. Doing it now"
+	adb -s $uid shell pm grant $package android.permission.WRITE_EXTERNAL_STORAGE
+	adb -s $uid shell pm grant $package android.permission.ACCESS_FINE_LOCATION
+	#adb shell pm grant $package android.permission.READ_PRIVILEGED_PHONE_STATE #Q: is this even needed?
+	adb -s $uid shell monkey -p $package 1
+	sleep 3 
+	adb -s $uid shell "input keyevent KEYCODE_HOME"	
+fi 
+adb -s $uid shell "ls /storage/emulated/0/Android/data/com.example.sensorexample/files/adb.txt" > /dev/null 2>&1
+if [ $? -ne 0 ] 
+then 
+	echo "Pusing ADB identifier to file..." 
+	echo $uid  > "adb.txt"
+	adb -s $uid push "adb.txt"  /storage/emulated/0/Android/data/com.example.sensorexample/files/
+fi 
+usb_adb_id=`cat adb.txt`
 
 # check if kenzo is in the foreground - if yes act accordingly 
-foreground=`adb shell dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
-foreground="kenzo" # FIXME: just testing
+foreground=`adb -s $uid shell dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
 start_time=`date +%s`
 time_passed=0
-while [ $foreground == "kenzo" -a $time_passed -lt 60 ] 
+echo "Foreground app is: $foreground"
+while [ $foreground == "$package" -a $time_passed -lt 60 ] 
 do 
 	current_time=`date +%s`
-	ans=`curl -s https://mobile.batterylab.dev:8082/myaction?id=$uid` 
-	command=`echo $ans  | cut -f 1 -d ";"`
-	timestamp=`echo $ans  | cut -f 2 -d ";"`
-	# verify is allowed command
-	if [ $command == "recharge" -o $command == "tether" ] 
+	ans=`curl -s https://mobile.batterylab.dev:8082/myaction?id=$usb_adb_id`
+	if [ $? -ne 0 ] 
 	then 
-		# verify command is recent 
-		delta=`echo "$current_time $timestamp" | awk 'function abs(x){return ((x < 0.0) ? -x : x)} {print(abs($1 - $2))}'`
-		if [ $delta -lt 60 ]  #FIXME 
+		echo "Issue with query to https://mobile.batterylab.dev:8082/myaction"
+		sleep 5
+		foreground=`adb -s $uid shell dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+		let "time_passed = current_time - start_time"
+		continue
+	fi 
+	# check if command was found or not
+	if [[ "$ans" == *"No command matching"* ]]
+	then
+		echo "No command found for this user"
+	else 
+		command=`echo $ans  | cut -f 1 -d ";"`
+		timestamp_ms=`echo $ans  | cut -f 2 -d ";"`
+		timestamp=`echo $timestamp_ms | awk '{print int($1/1000)}'`
+		# verify is allowed command
+		if [ $command == "recharge" -o $command == "tether" ] 
 		then 
-			echo "Command is allowed" 
-			#FIXME: do what needed 
-			#FIXME: inform the user 
-			break 
-		else 
-			echo "Command is too old ($delta sec => $ans)"
+			# verify command is recent 
+			delta=`echo "$current_time $timestamp" | awk 'function abs(x){return ((x < 0.0) ? -x : x)} {print(abs($1 - $2))}'`
+			if [ $delta -lt 60 ]  #FIXME 
+			then 
+				echo "Command $command is allowed!!" 
+				if [ $command == "recharge" ] 
+				then 
+					# stop tethering if active 
+					echo "Stop tethering (if active)"
+					cd ../client-android/
+					./activate-tethering.sh $uid stop
+					cd - > /dev/null 
+
+					# enable wifi over adb, if needed 
+					echo "Enable ADB over wifi"
+					enable_adb_wifi $uid
+				
+					# return to app screen 
+					adb -s $uid shell monkey -p $package 1
+
+					# prompt user to disconnect the USB cable
+					# TODO
+				elif [ $command == "tether" ] 
+				then 
+					# verify that cable is connected
+					while [ $num_devices -eq 1 ] 
+					do 
+						#FIXME: notify user to connect cable
+						echo "FIXME: notify user to connect cable"
+						sleep 5 
+						current_time=`date +%s`
+						num_devices=`adb devices | grep -v "List" | grep -v -e '^$' | wc -l`
+						let "time_passed = current_time - start_time"
+					done
+					# disable ADB over wifi (if needed)
+					adb disconnect $wifi_ip:$def_port > /dev/null 2>&1
+					adb_wifi="false"
+
+					# update adb id to usb identifier
+					uid=$usb_adb_id
+					
+					# enable tethering over USB
+					echo "Enable tethering (if active)"
+					cd ../client-android/
+					./activate-tethering.sh $uid start
+					cd - > /dev/null 
+					
+					# return to app screen 
+					adb -s $uid shell monkey -p $package 1
+				fi 
+				break 
+			else 
+				echo "Command is too old ($delta sec => $ans)"
+			fi 
 		fi 
 	fi 
 
 	# keep checking status
-	foreground=`adb shell dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
-	foreground="kenzo" # FIXME: just testing
-	let "time_passed = current_time - start_time"
 	sleep 1 
+	foreground=`adb -s $uid shell dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+	let "time_passed = current_time - start_time"
 done
 if [ $time_passed -ge 60 ] 
 then 
 	echo "Something wrong. Is user stuck in Kenzo app? Maybe forgot? Go HOME!"
-	adb shell "input keyevent KEYCODE_HOME"
+	adb -s $uid shell "input keyevent KEYCODE_HOME"
 fi 
-exit -1 
 
 # if not time to report, just exit 
 last_report_time="1635969639" #just an old time...
@@ -82,8 +233,10 @@ then
 fi 
 current_time=`date +%s`
 let "time_from_last_report = current_time - last_report_time"
+echo "Time from last report: $time_from_last_report sec"
 if [ $time_from_last_report -lt $MIN_INTERVAL ] 
 then 
+	echo "Not time to report status"
 	exit 0
 fi 
 	
@@ -122,6 +275,7 @@ cpu_util=`echo "$result" | cut -f 1 | cut -f 1 -d "%"`
 mem_info=`free -m | grep Mem | awk '{print "Total:"$2";Used:"$3";Free:"$4";Available:"$NF}'`
 
 # report data back to control server (when needed)
-#echo "$(generate_post_data)" 
+echo "Report to send: "
+echo "$(generate_post_data)" 
 curl  -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
 echo $current_time > ".last_report"
