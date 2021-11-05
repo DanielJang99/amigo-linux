@@ -16,6 +16,7 @@ generate_post_data(){
     "pi_mem_info":"${mem_info}", 
     "phone_foreground_app":"${foreground}",
     "phone_wifi_ip":"${wifi_ip}",
+	"phone_wifi_ssid":"${phone_wifi_ssid}",
     "phone_mobile_ip":"${mobile_ip}"
     }
 EOF
@@ -95,10 +96,13 @@ fi
 
 # understand WiFi and mobile phone connectivity
 wifi_ip="None"
+phone_wifi_ssid="None"
 adb -s $uid shell ifconfig wlan0 > ".wifi-info"
 if [ $? -eq 0 ] 
 then 
 	wifi_ip=`cat ".wifi-info" | grep "inet addr" | cut -f 2 -d ":" | cut -f 1 -d " "`  #FIXME: is this constant across devices/locations? 
+	# get WiFI SSID
+	phone_wifi_ssid=`adb shell dumpsys netstats | grep -E 'iface=wlan.*networkId' | head -n 1  | awk '{print $4}' | cut -f 2 -d "=" | sed s/","// | sed s/"\""//g`
 fi 
 mobile_ip="None"
 adb -s $uid shell ifconfig rmnet_data1 > ".mobile-info"
@@ -113,8 +117,9 @@ adb -s $uid shell "ls /storage/emulated/0/Android/data/com.example.sensorexample
 if [ $? -ne 0 ]
 then 
 	echo "App was never launched. Doing it now"
-	adb -s $uid shell pm grant $package android.permission.WRITE_EXTERNAL_STORAGE
+	#adb -s $uid shell pm grant $package android.permission.WRITE_EXTERNAL_STORAGE
 	adb -s $uid shell pm grant $package android.permission.ACCESS_FINE_LOCATION
+	adb -s $uid shell pm grant $package android.permission.READ_PHONE_STATE
 	#adb shell pm grant $package android.permission.READ_PRIVILEGED_PHONE_STATE #Q: is this even needed?
 	adb -s $uid shell monkey -p $package 1
 	sleep 3 
@@ -155,7 +160,7 @@ do
 		timestamp_ms=`echo $ans  | cut -f 2 -d ";"`
 		timestamp=`echo $timestamp_ms | awk '{print int($1/1000)}'`
 		# verify is allowed command
-		if [ $command == "recharge" -o $command == "tether" ] 
+		if [ $command == "recharge" -o $command == "tether" -o $command == "recharge" ] 
 		then 
 			# verify command is recent 
 			delta=`echo "$current_time $timestamp" | awk 'function abs(x){return ((x < 0.0) ? -x : x)} {print(abs($1 - $2))}'`
@@ -164,6 +169,10 @@ do
 				echo "Command $command is allowed!!" 
 				if [ $command == "recharge" ] 
 				then 
+					# prompt user to disconnect the USB cable
+					adb -s $uid shell am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es lock "Preparing-the-device-please-wait"
+					sleep 3 	
+
 					# stop tethering if active 
 					echo "Stop tethering (if active)"
 					cd ../client-android/
@@ -178,19 +187,26 @@ do
 					adb -s $uid shell monkey -p $package 1
 
 					# prompt user to disconnect the USB cable
-					# TODO
+					adb -s $uid shell am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-disconnect-the-USB-cable"
 				elif [ $command == "tether" ] 
 				then 
 					# verify that cable is connected
+					first="true"
 					while [ $num_devices -eq 1 ] 
 					do 
-						#FIXME: notify user to connect cable
-						echo "FIXME: notify user to connect cable"
+						#notify user to connect cable
+						if [ $first == "true" ] 
+						then 
+							adb -s $uid shell am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-make-sure-the-USB-cable-is-connected!"
+							echo "Notified user to connect the cable..."
+							first="false"
+						fi 
 						sleep 5 
 						current_time=`date +%s`
 						num_devices=`adb devices | grep -v "List" | grep -v -e '^$' | wc -l`
 						let "time_passed = current_time - start_time"
 					done
+
 					# disable ADB over wifi (if needed)
 					adb disconnect $wifi_ip:$def_port > /dev/null 2>&1
 					adb_wifi="false"
@@ -206,6 +222,14 @@ do
 					
 					# return to app screen 
 					adb -s $uid shell monkey -p $package 1
+				elif [ $command == "connect" ] 
+				then 
+					echo "Connecting to provided wifi"
+					# TODO: Get SSID and PASSWORD from command
+					# TODO: REWRITE LOCATE FILE with SSID and PWD and put in right place 
+					# TODO: restart
+					#wpa_cli -i wlan0 reconfigure  # should be this one
+					#systemctl restart wpa_supplicant
 				fi 
 				break 
 			else 
