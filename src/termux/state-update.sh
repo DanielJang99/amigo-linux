@@ -119,6 +119,9 @@ do
 	#	echo $uid  > "/storage/emulated/0/Android/data/com.example.sensorexample/files/adb.txt"
 	#fi 
 
+	# current app in the foreground
+	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+
 	# if not time to report, go back up 
 	if [ -f ".last_report" ] 
 	then 
