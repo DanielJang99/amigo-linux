@@ -59,7 +59,6 @@ run_speed_test(){
     browser_package="com.brave.browser"
     browser_activity="com.google.android.apps.chrome.Main"
 	url="https://fast.com"
-    curr_run_id=$1 
 
     # launch browser and wait for test to run
     am start -n $browser_package/$browser_activity -d $url 
@@ -69,11 +68,9 @@ run_speed_test(){
 	#tap_screen 1090 1300 2
 
     # take screenshot (text) 
-    log_screen_fast="${res_folder}/screen-log-fast-${curr_run_id}.txt"
     sudo uiautomator dump /dev/tty | awk '{gsub("UI hierchary dumped to: /dev/tty", "");print}' > $log_screen_fast
 
     # take actual screenshot (image) 
-    screen_fast="${res_folder}/screenshot-fast-${curr_run_id}.png"
     screencap -p > $screen_fast
 
     # logging 
@@ -285,7 +282,7 @@ crawl_id=`date +%s`                               # unique test identifier
 monitor="false"                                   # Control if to monitor cpu/bandwdith or not
 url="www.google.com"                              # default URL to test 
 load_time=30                                      # default load time 
-video_recording="false"                           # record screen or not
+video_recording="true"                            # record screen or not
 interface="wlan0"                                 # default network interface to monitor (for traffic)
 
 # read input parameters
@@ -313,11 +310,15 @@ myprint "WARNING. Using interface $interface"
 #####WARNING
 
 # folder creation
-res_folder="./speedtest-results/$device/$crawl_id"
+suffix=`date +%d-%M-%Y`
+res_folder="./speedtest-results/$suffix"
 mkdir -p $res_folder 
-res_folder="./website-testing-results/$device/$crawl_id/"
+res_folder="./website-testing-results/$suffix"
 mkdir -p $res_folder
-    
+curr_run_id=`date +%s`    
+screen_fast="${res_folder}/screenshot-fast-${curr_run_id}.png"
+log_screen_fast="${res_folder}/screen-log-fast-${curr_run_id}.txt"
+
 # make sure the screen is ON
 turn_device_on
 
@@ -348,13 +349,13 @@ do
 	am start -n $package/$activity
 	sleep 2
     chrome_onboarding
-	#browser_setup #FIXME => can be skipped but option does not work 
+	#browser_setup #FIXME => allow to skip chrome onboarding, but using a non working option
     
     # file naming
     id=`echo $url | md5sum | cut -f1 -d " "`"-"$i
-    log_cpu=$res_folder"/"$id".cpu"
-    log_traffic=$res_folder"/"$id".traffic"
-    log_run=$res_folder"/"$id".run"
+    log_cpu="${res_folder}/${id}-${curr_run_id}.cpu"
+    log_traffic="${res_folder}/${id}-${curr_run_id}.traffic"
+    log_run="${res_folder}/${id}-${curr_run_id}.run"
     
     # start background process to monitor CPU on the device
     clean_file $log_cpu
@@ -375,7 +376,7 @@ done
 
 # run a speedtest 
 res_folder="./speedtest-results/$device/$crawl_id"
-#run_speed_test $run_id
+run_speed_test
 myprint "WARNING: speedtest disabled!!!"
 
 # re-enable notifications and screen timeout
