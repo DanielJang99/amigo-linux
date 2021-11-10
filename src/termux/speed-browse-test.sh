@@ -269,28 +269,27 @@ run_test(){
 # script usage
 usage(){
     echo "================================================================================"
-    echo "USAGE: $0 --id,	--novideo"
+    echo "USAGE: $0 --load,	--novideo"
     echo "================================================================================"
-    echo "--id            Crawl identifier to use"
-    echo "--novideo       Turn off video recording" 
+    echo "--load       Page load max duration"
+    echo "--novideo    Turn off video recording" 
     echo "================================================================================"
     exit -1
 }
 
 # parameters 
-crawl_id=`date +%s`                               # unique test identifier 
-monitor="false"                                   # Control if to monitor cpu/bandwdith or not
-url="www.google.com"                              # default URL to test 
-load_time=30                                      # default load time 
-video_recording="true"                            # record screen or not
-interface="wlan0"                                 # default network interface to monitor (for traffic)
+monitor="false"                    # Control if to monitor cpu/bandwdith or not
+url="www.google.com"               # default URL to test 
+load_time=30                       # default load time 
+video_recording="true"             # record screen or not
+interface="wlan0"                  # default network interface to monitor (for traffic)
 
 # read input parameters
 while [ "$#" -gt 0 ]
 do
     case "$1" in
-        --id)
-            shift; crawl_id="$1"; shift;
+        --load)
+            shift; load_time="$1"; shift;
             ;;
         --novideo)
             shift; video_recording="false";
@@ -311,13 +310,9 @@ myprint "WARNING. Using interface $interface"
 
 # folder creation
 suffix=`date +%d-%M-%Y`
-res_folder="./speedtest-results/$suffix"
-mkdir -p $res_folder 
+curr_run_id=`date +%s`    
 res_folder="./website-testing-results/$suffix"
 mkdir -p $res_folder
-curr_run_id=`date +%s`    
-screen_fast="${res_folder}/screenshot-fast-${curr_run_id}.png"
-log_screen_fast="${res_folder}/screen-log-fast-${curr_run_id}.txt"
 
 # make sure the screen is ON
 turn_device_on
@@ -339,9 +334,6 @@ for((i=0; i<num_urls++; i++))
 do
     # get URL to be tested 
     url=${urlList[$i]} 
-    
-    # update res_folder for next test
-    res_folder="./website-testing-results/$device/$crawl_id/"
     
     # clean the browser
     myprint "[INFO] Cleaning browser data ($app-->$package)"
@@ -375,7 +367,10 @@ do
 done
 
 # run a speedtest 
-res_folder="./speedtest-results/$device/$crawl_id"
+res_folder="./speedtest-results/$suffix"
+mkdir -p $res_folder 
+screen_fast="${res_folder}/screenshot-fast-${curr_run_id}.png"
+log_screen_fast="${res_folder}/screen-log-fast-${curr_run_id}.txt"
 run_speed_test
 myprint "WARNING: speedtest disabled!!!"
 
