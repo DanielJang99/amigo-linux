@@ -251,7 +251,7 @@ close_brave_tabs(){
 # close all pending applications 
 close_all(){
 	# logging 
-	dev_model=`shell getprop ro.product.model | sed s/" "//g`
+	dev_model=`getprop ro.product.model | sed s/" "//g`
 	myprint "[CLOSE_ALL] Closing all pending applications for device: $dev_model"
 
 	# go HOME 

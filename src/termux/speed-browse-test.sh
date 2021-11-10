@@ -344,7 +344,7 @@ do
     
     # clean the browser
     myprint "[INFO] Cleaning browser data ($app-->$package)"
-    sudo adb -s $device_id shell pm clear $package
+    sudo pm clear $package
     chrome_onboarding
 	#browser_setup #FIXME => can be skipped but option does not work 
     
