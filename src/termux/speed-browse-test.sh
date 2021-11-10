@@ -345,6 +345,8 @@ do
     # clean the browser
     myprint "[INFO] Cleaning browser data ($app-->$package)"
     sudo pm clear $package
+	am start -n $package/$activity
+	sleep 2
     chrome_onboarding
 	#browser_setup #FIXME => can be skipped but option does not work 
     
