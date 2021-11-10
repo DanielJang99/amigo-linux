@@ -36,10 +36,12 @@ turn_device_off(){
 
 # parameters
 curr_time=`date +%s`                 # current time 
-MIN_INTERVAL=30                      # interval of status reporting (seconds)
+freq=5                               # frequency in seconds for checking things to do 
+REPORT_INTERVAL=30                   # interval of status reporting (seconds)
+NET_INTERVAL=300                     # interval of networking testing 
 package="com.example.sensorexample"  # our app 
 last_report_time="1635969639"        # last time a report was sent (init to an old time)
-freq=5                               # frequency in seconds for checking things to do 
+time_from_last_net="1635969639"      # last time a net test was done (init to an old time) 
 asked_to_charge="false"              # keep track if we already asked user to charge their phone
 
 # generate a unique id first time is run
@@ -122,57 +124,66 @@ do
 	# current app in the foreground
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
 
-	# if not time to report, go back up 
+	# check if it is time to run net experimets 
+	current_time=`date +%s`
+	if [ -f ".last_net" ] 
+	then 
+		last_net=`cat ".last_net"`
+	fi 
+	let "time_from_last_net = current_time - last_net"
+	echo "Time from last net: $time_from_last_report sec"
+	if [ $time_from_last_net -gt $NET_INTERVAL ] 
+	then 
+		(./net-testing.sh &)
+	fi 
+
+	# check if it is time to status report
 	if [ -f ".last_report" ] 
 	then 
 		last_report_time=`cat ".last_report"`
 	fi 
-	current_time=`date +%s`
 	let "time_from_last_report = current_time - last_report_time"
 	echo "Time from last report: $time_from_last_report sec"
-	if [ $time_from_last_report -lt $MIN_INTERVAL ] 
+	if [ $time_from_last_report -gt $REPORT_INTERVAL ] 
 	then 
-		echo "Not time to report status"
-		continue
-	fi 
-		
-	# check CPU usage 
-	prev_total=0
-	prev_idle=0
-	result=`cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
-	prev_idle=`echo "$result" | cut -f 2`
-	prev_total=`echo "$result" | cut -f 3`
-	sleep 2
-	result=`cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
-	cpu_util=`echo "$result" | cut -f 1 | cut -f 1 -d "%"`
+		# check CPU usage 
+		prev_total=0
+		prev_idle=0
+		result=`cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
+		prev_idle=`echo "$result" | cut -f 2`
+		prev_total=`echo "$result" | cut -f 3`
+		sleep 2
+		result=`cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
+		cpu_util=`echo "$result" | cut -f 1 | cut -f 1 -d "%"`
 
-	# send status update to the server
-	echo "Report to send: "
-	echo "$(generate_post_data)" 
-	timeout 10 curl  -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
-	echo $current_time > ".last_report"
+		# send status update to the server
+		echo "Report to send: "
+		echo "$(generate_post_data)" 
+		timeout 10 curl  -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
+		echo $current_time > ".last_report"
 
-	# check if there is a new command to run
-	echo "Checking if there is a command to execute for the pi..."
-	ans=`timeout 10 curl -s https://mobile.batterylab.dev:8082/piaction?id=$usb_adb_id`
-	if [[ "$ans" == *"No command matching"* ]]
-	then
-		echo "No command found"
-	else 
-		command_pi=`echo $ans  | cut -f 1 -d ";"`
-		comm_id_pi=`echo $ans  | cut -f 3 -d ";"`
-	
-		# verify command was not just run
-		last_pi_comm_run=`cat ".last_command_pi"`
-		echo "==> $last_pi_comm_run -- $comm_id_pi"
-		if [ $last_pi_comm_run == $comm_id_pi ] 
-		then 
-			echo "Command $command_pi ($comm_id_pi) not allowed since it matches last command run!!"
+		# check if there is a new command to run
+		echo "Checking if there is a command to execute for the pi..."
+		ans=`timeout 10 curl -s https://mobile.batterylab.dev:8082/piaction?id=$usb_adb_id`
+		if [[ "$ans" == *"No command matching"* ]]
+		then
+			echo "No command found"
 		else 
-			eval $command_pi
-		fi 
-		echo $comm_id_pi > ".last_command_pi"
-		# FIXME: decide if to spawn from here, stop, etc. 
-		# FIXME: need a duration and some battery logic? Can be done at server too!
-	fi
+			command_pi=`echo $ans  | cut -f 1 -d ";"`
+			comm_id_pi=`echo $ans  | cut -f 3 -d ";"`
+		
+			# verify command was not just run
+			last_pi_comm_run=`cat ".last_command_pi"`
+			echo "==> $last_pi_comm_run -- $comm_id_pi"
+			if [ $last_pi_comm_run == $comm_id_pi ] 
+			then 
+				echo "Command $command_pi ($comm_id_pi) not allowed since it matches last command run!!"
+			else 
+				eval $command_pi
+			fi 
+			echo $comm_id_pi > ".last_command_pi"
+			# FIXME: decide if to spawn from here, stop, etc. 
+			# FIXME: need a duration and some battery logic? Can be done at server too!
+		fi
+	fi 
 done

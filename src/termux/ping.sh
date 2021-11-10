@@ -5,9 +5,10 @@ ts=`date +%s`
 num=10
 mkdir -p $res_dir
 
+echo "Currently not working on termux" 
+exit -1 
 # popular providers
 sudo mtr -rwc $num google.com   >  $res_dir/google-$ts.txt 2>&1
-exit -1 
 sudo mtr -rwc $num facebook.com >  $res_dir/facebook-$ts.txt  2>&1
 sudo mtr -rwc $num amazon.com   >  $res_dir/amazon-$ts.txt 2>&1
 

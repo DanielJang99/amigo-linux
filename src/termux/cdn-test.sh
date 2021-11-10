@@ -61,8 +61,8 @@ test_download(){
 
 	# curl download 
 	myprint "[CURL] Destination: $dst Label: $label"
-	stats="$res_folder/stats-$label-$counter"
-	headers="$res_folder/headers-$label-$counter"
+	stats="$res_folder/stats-$label-$ts"
+	headers="$res_folder/headers-$label-$ts"
 #	echo "curl -v -H \"Accept-Encoding: gzip\" -H 'user-agent: $UA' -w \"@curl-format.txt\" -s $dst -o $out_file"
 	#curl -v -H "Accept-Encoding: gzip" -H 'user-agent: $UA' -w "@curl-format.txt" -s $dst -o $out_file > $stats  2>$headers
 	timeout 15 curl -v -w "@curl-format.txt" -s $dst -o $out_file > $stats  2>$headers
@@ -110,8 +110,8 @@ test_download(){
 	fi 
 	myprint "File:$out_file\t Size:$file_size\tCache-HIT:$cache_hit\tX-served-by:$x_served\tAge:$age"
 
-	# report to Matteo's server in NJ
-	echo "$(generate_post_data)" 
+	# report to the server
+	# echo "$(generate_post_data)" 
 	#curl  -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://nj.batterylab.dev:8080/dCURL
 }
 
@@ -125,10 +125,8 @@ then
 fi 
 
 # common test identifier 
-if [ $# -eq 1 ] 
-then 
-	uid=$1
-fi
+uid=`date +%d-%M-%Y`
+ts=`date +%s`
 
 # folder organiztion 
 res_folder="./cdnlogs/$uid"
