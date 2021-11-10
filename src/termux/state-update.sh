@@ -41,7 +41,7 @@ REPORT_INTERVAL=30                   # interval of status reporting (seconds)
 NET_INTERVAL=300                     # interval of networking testing 
 package="com.example.sensorexample"  # our app 
 last_report_time="1635969639"        # last time a report was sent (init to an old time)
-time_from_last_net="1635969639"      # last time a net test was done (init to an old time) 
+last_net="1635969639"                # last time a net test was done (init to an old time) 
 asked_to_charge="false"              # keep track if we already asked user to charge their phone
 
 # generate a unique id first time is run
@@ -91,15 +91,15 @@ do
 	ifconfig wlan0 > ".wifi-info"
 	if [ $? -eq 0 ] 
 	then 
-		wifi_ip=`cat ".wifi-info" | grep "inet addr" | cut -f 2 -d ":" | cut -f 1 -d " "`  #FIXME: is this constant across devices/locations? 
+		wifi_ip=`cat ".wifi-info" | grep "\." | grep -v packets | awk '{print $2}'` 
 		# get WiFI SSID
 		phone_wifi_ssid=`sudo dumpsys netstats | grep -E 'iface=wlan.*networkId' | head -n 1  | awk '{print $4}' | cut -f 2 -d "=" | sed s/","// | sed s/"\""//g`
 	fi 
 	mobile_ip="None"
 	sudo ifconfig rmnet_data1 > ".mobile-info"
 	if [ $? -eq 0 ] 
-	then 
-		mobile_ip=`cat ".mobile-info" | grep "inet addr" | cut -f 2 -d ":" | cut -f 1 -d " "`  #FIXME: is this constant across devices/locations? 
+	then
+		mobile_ip=`cat ".mobile-info" | grep "\." | grep -v packets | awk '{print $2}'`
 	fi 
 	echo "Device info. Wifi: $wifi_ip Mobile: $mobile_ip"
 
@@ -131,10 +131,11 @@ do
 		last_net=`cat ".last_net"`
 	fi 
 	let "time_from_last_net = current_time - last_net"
-	echo "Time from last net: $time_from_last_report sec"
+	echo "Time from last net: $time_from_last_net sec"
 	if [ $time_from_last_net -gt $NET_INTERVAL ] 
 	then 
 		(./net-testing.sh &)
+		echo $current_time > ".last_net"
 	fi 
 
 	# check if it is time to status report
@@ -149,11 +150,11 @@ do
 		# check CPU usage 
 		prev_total=0
 		prev_idle=0
-		result=`cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
+		result=`sudo cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
 		prev_idle=`echo "$result" | cut -f 2`
 		prev_total=`echo "$result" | cut -f 3`
 		sleep 2
-		result=`cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
+		result=`sudo cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
 		cpu_util=`echo "$result" | cut -f 1 | cut -f 1 -d "%"`
 
 		# send status update to the server

@@ -5,7 +5,7 @@ ts=`date +%s`
 num=10
 mkdir -p $res_dir
 
-echo "Currently not working on termux" 
+echo "Starting MTR reporting -- Skipping casue currently not working on termux" 
 exit -1 
 # popular providers
 sudo mtr -rwc $num google.com   >  $res_dir/google-$ts.txt 2>&1
