@@ -94,7 +94,7 @@ def web_app():
     # GET - ADD/REMOVE-ACL-RULE (localhost only)
     cherrypy.tree.mount(StringGeneratorWebService(), '/addACLRule', conf)
     cherrypy.tree.mount(StringGeneratorWebService(), '/removeACLRule', conf)
-    cherrypy.tree.mount(StringGeneratorWebService(), '/action', conf)        # for now query each rand(30) seconds
+    cherrypy.tree.mount(StringGeneratorWebService(), '/piaction', conf)        # for now query each rand(30) seconds
     cherrypy.tree.mount(StringGeneratorWebService(), '/myaction', conf)      # query when kenzo app is in foreground
 
     # POST/REPORT-MEASUREMENTS 
@@ -190,11 +190,11 @@ class StringGeneratorWebService(object):
 				print("User %s is supported" %(user_id))
 
 			# look for a potential action to be performed
-			if 'myaction' in cherrypy.url() :
+			if 'myaction' in cherrypy.url():
 				query = "select * from action_update where status = 'active' and tester_id = '" + user_id + "'"			
-			else: 
-				query = "select * from action_update where status = 'active'"
-			print(query)
+			if 'piaction' in cherrypy.url(): 
+				query = "select * from pi_actions where status = 'active'" #FIXME: improve the query
+			#print(query)
 			info, msg  = run_query(query)
 			if info is None:
 				cherrypy.response.status = 202
@@ -203,14 +203,15 @@ class StringGeneratorWebService(object):
 			if len(info) > 1: 
 				print("WARNING: too many actions active at the same time. Returning most recent one")
 			max_timestamp = 0
-			for entry in info: 
+			for entry in info:
 				timestamp = entry[2]
 				if timestamp > max_timestamp: 
 					max_timestamp = timestamp 
 					command = entry[4]
+					comm_id = entry[0]
 			
 			# all good 
-			ans = command + ";" + str(max_timestamp)
+			ans = command + ";" + str(max_timestamp) + ";" + comm_id
 			print("All good. Returning: ", ans)
 			cherrypy.response.status = 200
 			return ans 

@@ -29,8 +29,12 @@ GRANT ALL PRIVILEGES ON DATABASE mobile_testbed to nyu;
 # connect to database with created user
 psql nyu -h 127.0.0.1 -d mobile_testbed
 
-# create tables # FIXME 
-create table status_update(tester_id text, location text, timestamp integer, data jsonb);
+# create tables 
+create table status_update(tester_id text, location text, timestamp bigint, data jsonb);
+create table action_update(command_id text, tester_id text, timestamp bigint, status text, action text);
+create table pi_actions(command_id text, tester_id text, timestamp bigint, status text, action text);
+ALTER TABLE action_update ADD CONSTRAINT constraintname UNIQUE(command_id); #FIXME: this can be done in one shot
+ALTER TABLE pi_actions ADD CONSTRAINT constraintname UNIQUE(command_id); #FIXME: this can be done in one shot
 
 ################### [client]
 # aioquic support (H3 client)
@@ -39,3 +43,6 @@ git clone git@github.com:aiortc/aioquic.git
 cd aioquic/
 pip3 install -e .
 pip3 install wsproto
+
+
+
