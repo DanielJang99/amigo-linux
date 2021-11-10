@@ -47,8 +47,14 @@ uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""
 
 # folder and file organization 
 mkdir -p "./logs"
-echo "testing" > ".last_command"
-echo "testing" > ".last_command_pi"
+if [ ! -f ".last_command" ] 
+then 
+	echo "testing" > ".last_command"
+fi 
+if [ ! -f ".last_command_pi" ] 
+then 
+	echo "testing" > ".last_command_pi"
+fi 
 echo "true" > ".status"
 
 # external loop 
@@ -72,7 +78,7 @@ do
 	mem_info=`free -m | grep "Mem" | awk '{print "Total:"$2";Used:"$3";Free:"$4";Available:"$NF}'`
 
 	# get phone battery level
-	phone_battery=`sudo dumpsys battery | grep "level"  | cut -f 2 -d ":"`
+	phone_battery=`sudo dumpsys battery | grep "level"  | cut -f 2 -d ":" | xargs`
 	charging=`sudo dumpsys battery | grep "AC powered"  | cut -f 2 -d ":"`
 	if [ $phone_battery -lt 20 -a $charging == "false" -a $asked_to_charge == "false" ] 
 	then 
@@ -89,7 +95,7 @@ do
 	ifconfig wlan0 > ".wifi-info"
 	if [ $? -eq 0 ] 
 	then 
-		wifi_ip=`cat ".wifi-info" | grep "inet addr" | cut -f 2 -d ":" | cut -f 1 -d " "`  #FIXME: is this constant across devices/locations? 
+		wifi_ip=`cat ".wifi-info" | grep "\." | grep -v packets | awk '{print $2}'`
 		# get WiFI SSID
 		phone_wifi_ssid=`sudo dumpsys netstats | grep -E 'iface=wlan.*networkId' | head -n 1  | awk '{print $4}' | cut -f 2 -d "=" | sed s/","// | sed s/"\""//g`
 	fi 
@@ -97,7 +103,7 @@ do
 	sudo ifconfig rmnet_data1 > ".mobile-info"
 	if [ $? -eq 0 ] 
 	then 
-		mobile_ip=`cat ".mobile-info" | grep "inet addr" | cut -f 2 -d ":" | cut -f 1 -d " "`  #FIXME: is this constant across devices/locations? 
+		mobile_ip=`cat ".mobile-info" | grep "\." | grep -v packets | awk '{print $2}'`
 	fi 
 	echo "Device info. Wifi: $wifi_ip Mobile: $mobile_ip"
 
@@ -136,11 +142,11 @@ do
 	# check CPU usage 
 	prev_total=0
 	prev_idle=0
-	result=`cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
+	result=`sudo cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
 	prev_idle=`echo "$result" | cut -f 2`
 	prev_total=`echo "$result" | cut -f 3`
 	sleep 2
-	result=`cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
+	result=`sudo cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
 	cpu_util=`echo "$result" | cut -f 1 | cut -f 1 -d "%"`
 
 	# send status update to the server
