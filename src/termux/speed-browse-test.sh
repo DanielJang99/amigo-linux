@@ -215,8 +215,9 @@ run_test(){
 	if [ $video_recording == "true" ]
 	then
     	t=`date +%s`
-    	screen_video="/sdcard/run-$device_id-$t"
-	    (sudo screenrecord $screen_video".mp4" &) #--bit-rate 1000000
+    	screen_video="${res_folder}/s${id}-${curr_run_id}.mp4"
+    	perf_video="${res_folder}/${id}-${curr_run_id}.perf"
+	    (sudo screenrecord $screen_video &) #--bit-rate 1000000
 	fi
 
 	# attempt page load and har extraction
@@ -229,21 +230,13 @@ run_test(){
 	# stop video recording 
 	if [ $video_recording == "true" ]
 	then
-		pid=`ps aux | grep "screenrecord" | grep "$device_id" | grep -v "grep" | awk '{print $2}'`
-		myprint "Found video process: $pid (device:$device_id)" 
+		pid=`ps aux | grep "screenrecord" | grep -v "grep" | awk '{print $2}'`
+		myprint "Found video process: $pid" 
 		kill -9 $pid
 		sleep 1
-		adb -s $device_id pull $screen_video".mp4" ./
-		adb -s $device_id shell rm $screen_video".mp4"
-		final_screen_video=$res_folder"/"$id".mp4"	
-		perf_video=$res_folder"/"$id".perf"	
-		last_frame=$res_folder"/"$id".png"	
-		local_screen_video=`echo $screen_video | awk -F "/" '{print $NF}'`
-		mv $local_screen_video".mp4" $final_screen_video
-		myprint "[INFO] LocalVideo: $local_screen_video Video: $final_screen_video Perf: $perf_video"
 		if [ -f "visualmetrics/visualmetrics.py" ] 
 		then 
-			(python visualmetrics/visualmetrics.py --video $final_screen_video --viewport --orange > $perf_video 2>&1 &)
+			(python visualmetrics/visualmetrics.py --video $screen_video --viewport --orange > $perf_video 2>&1 &)
 			#(python visualmetrics/visualmetrics.py --video $final_screen_video --dir frames -q 75 --histogram histograms.json.gz --orange --viewport > $perf_video 2>&1 &)
 		fi 
 		
