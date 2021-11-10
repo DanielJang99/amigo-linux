@@ -210,6 +210,21 @@ accept_cookies(){
 	fi 
 }
 
+# needed unless I can fix the other thign
+chrome_onboarding(){
+	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -f 2 -d "/" | sed s/"}"// | awk -F '.' '{print $NF}'`
+	if [ $curr_activity == "FirstRunActivity" ]
+	then 
+		tap_screen 370 1210 1
+		tap_screen 370 1210 1
+		tap_screen 600 1200 1
+		tap_screen 600 1200 1
+	else 
+		myprint "No onboarding was detected"
+	fi 
+} 
+
+
 # helper to do Brave onboarding
 brave_onboarding(){
 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -f 2 -d "/" | sed s/"}"// | awk -F '.' '{print $NF}'`
@@ -222,7 +237,6 @@ brave_onboarding(){
 	else 
 		myprint "No onboarding was detected"
 	fi 
-
 }
 
 # helper to close opened brave tabs
