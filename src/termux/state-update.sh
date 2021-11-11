@@ -49,9 +49,25 @@ uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""
 
 # folder and file organization 
 mkdir -p "./logs"
-echo "testing" > ".last_command"
-echo "testing" > ".last_command_pi"
+if [ ! -f ".last_command" ] 
+then 
+	echo "testing" > ".last_command"
+fi 
+if [ ! -f ".last_command_pi" ]
+then
+	echo "testing" > ".last_command_pi"
+fi 
 echo "true" > ".status"
+
+# make sure SELinux is permissive
+ans=`sudo getenforce`
+echo "SELinux: $ans"
+if [ $ans == "Enforcing" ]
+then
+    myprint "Disabling SELinux"
+    sudo setenforce 0
+    sudo getenforce
+fi
 
 # external loop 
 to_run=`cat ".status"`

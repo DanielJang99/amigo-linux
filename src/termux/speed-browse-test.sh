@@ -192,6 +192,15 @@ run_speed_test(){
 # make sure the screen is ON
 turn_device_on
 
+# make sure SELinux is permissive
+ans=`sudo getenforce`
+if [ $ans == "Enforcing" ] 
+then 
+	myprint "Disabling SELinux"
+	sudo setenforce 0
+	sudo getenforce
+fi 
+
 # folder creation
 suffix=`date +%d-%M-%Y`
 curr_run_id=`date +%s`
