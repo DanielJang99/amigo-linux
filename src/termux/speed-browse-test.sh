@@ -144,16 +144,16 @@ run_speed_test(){
         myprint "Text screenshot did not work. Attempting OCR: ocr-fast-${curr_run_id}.txt"
         filename=`echo $screen_fast | awk -F "/" '{print $NF}'`
         prefix=`echo $filename | cut -f 1 -d "."`
-        suffix=`echo $filename | cut -f 2 -d "."`
-        screen_fast_processed="${res_folder}/${prefix}_processed.${suffix}"
-		myprint "HERE-- Prefix:$prefix -- Suffix:$suffix"
+        ext=`echo $filename | cut -f 2 -d "."`
+        screen_fast_processed="${res_folder}/${prefix}_processed.${ext}"
+		myprint "HERE-- Prefix:$prefix -- Suffix:$ext"
         if [ ! -f $screen_fast_processed ]
         then 
             echo "Image optimization to help OCR..."
-            convert $screen_fast -type Grayscale "temp.${suffix}"  
-            convert "temp.${suffix}" -gravity South -chop 0x600 $screen_fast_processed
-            convert $screen_fast_processed -gravity North -chop 0x600 "temp.${suffix}"  
-            mv "temp.${suffix}" $screen_fast_processed
+            convert $screen_fast -type Grayscale "temp.${ext}"  
+            convert "temp.${ext}" -gravity South -chop 0x600 $screen_fast_processed
+            convert $screen_fast_processed -gravity North -chop 0x600 "temp.${ext}"  
+            mv "temp.${ext}" $screen_fast_processed
         fi 
         screen_fast_ocr="${res_folder}/ocr-fast-${curr_run_id}"
         tesseract -l eng $screen_fast_processed $screen_fast_ocr > /dev/null 2>&1
@@ -202,7 +202,7 @@ then
 fi 
 
 # folder creation
-suffix=`date +%d-%M-%Y`
+suffix=`date +%d-%m-%Y`
 curr_run_id=`date +%s`
 res_folder="./speedtest-results/$suffix"
 mkdir -p $res_folder 

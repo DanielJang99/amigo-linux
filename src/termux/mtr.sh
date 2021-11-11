@@ -1,5 +1,5 @@
 #!/data/data/com.termux/files/usr/bin/bash
-suffix=`date +%d-%M-%Y`
+suffix=`date +%d-%m-%Y`
 res_dir="pinglogs/$suffix"
 ts=`date +%s`
 num=10

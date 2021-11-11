@@ -302,7 +302,7 @@ myprint "WARNING. Using interface $interface"
 #####WARNING
 
 # folder creation
-suffix=`date +%d-%M-%Y`
+suffix=`date +%d-%m-%Y`
 curr_run_id=`date +%s`    
 res_folder="./website-testing-results/$suffix"
 mkdir -p $res_folder
