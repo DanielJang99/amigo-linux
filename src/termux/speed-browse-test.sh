@@ -63,7 +63,7 @@ run_speed_test(){
     sudo uiautomator dump /dev/tty | awk '{gsub("UI hierchary dumped to: /dev/tty", "");print}' > $log_screen_fast
 
     # take actual screenshot (image) 
-    screencap -p > $screen_fast
+    sudo screencap -p > $screen_fast
 
     # logging 
     myprint "Done with screenshots: screen-log-fast-${curr_run_id}.txt -- screenshot-fast-${curr_run_id}.png"
