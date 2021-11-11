@@ -51,11 +51,21 @@ run_speed_test(){
     browser_package="com.brave.browser"
     browser_activity="com.google.android.apps.chrome.Main"
 	url="https://fast.com"
+	load_time=30
 
     # launch browser and wait for test to run
     am start -n $browser_package/$browser_activity -d $url 
     sleep $load_time
-	
+		
+	# keep track of opened tabs
+	num_tabs=0
+	if [ -f ".brave-tabs" ] 
+	then 
+		num_tabs=`cat ".brave-tabs"`
+	fi
+	let "num_tabs++"
+	echo $num_tabs > ".brave-tabs"
+
 	# click "pause" - not deterministic
 	#tap_screen 1090 1300 2
 
@@ -69,7 +79,7 @@ run_speed_test(){
     myprint "Done with screenshots: screen-log-fast-${curr_run_id}.txt -- screenshot-fast-${curr_run_id}.png"
 	
 	#close open tabs
-	ans=$(($curr_run_id % 5))
+	ans=$(($num_tabs % 5))
 	if [ $ans -eq 0 -a $curr_run_id -gt 0 ] 
 	then 
 		close_brave_tabs
@@ -77,9 +87,6 @@ run_speed_test(){
 		# closing Brave 
 		close_all
 	fi 
-
-	# skipping analysis for now 
-	return 0 
 
     # extract speedtest results 
     speed_val="N/A"
