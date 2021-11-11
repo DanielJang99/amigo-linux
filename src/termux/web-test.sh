@@ -74,7 +74,7 @@ run_test(){
     compute_bandwidth
     traffic_rx=$curr_traffic
     traffic_rx_last=$traffic_rx
-    myprint "[INFO] App: $app Abs. Bandwidth: $traffic_rx"
+    # myprint "[INFO] Abs. Bandwidth: $traffic_rx"
 
 	# manage screen recording
 	if [ $video_recording == "true" ]
@@ -167,9 +167,22 @@ do
     esac
 done
 
-#####WARNING
-myprint "WARNING. Using interface $interface"
-#####WARNING
+# pick the right interface to monitor 
+ifconfig wlan0 | grep inet | grep "\." > /dev/null
+if [ $? -eq 0 ] 
+then 
+	interface="wlan0"
+else 
+	ifconfig rmnet_data0 | grep "inet" | grep "\." > /dev/null
+	if [ $? -eq 0 ]
+	then 
+		interface="rmnet_data0"
+	else 
+		echo "ERROR: no working interface was found! Assuming wlan0..."
+		interface="wlan0"
+		exit -1 
+	fi 
+fi 
 
 # folder creation
 suffix=`date +%d-%m-%Y`
@@ -207,7 +220,7 @@ do
     url=${urlList[$i]} 
     
     # file naming
-    id=`echo $url | md5sum | cut -f1 -d " "`"-"$i
+    id=`echo $url | md5sum | cut -f1 -d " "`
     log_cpu="${res_folder}/${id}-${curr_run_id}.cpu"
     log_traffic="${res_folder}/${id}-${curr_run_id}.traffic"
     log_run="${res_folder}/${id}-${curr_run_id}.run"

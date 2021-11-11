@@ -35,31 +35,6 @@ tap_screen(){
     sleep $t_comm
 }
 
-# OFF to ON and viceversa #FIXME 
-toggle_wifi(){
-    adb -s $device_id shell "input keyevent KEYCODE_HOME"
-    x_coord=`echo $screen_res | cut -f 1 -d "x" | awk '{print $1/2}'`
-	y_coord=`echo $screen_res | cut -f 2 -d "x" | awk '{print $1/2}'`
-	adb -s $device_id shell input swipe $x_coord 0 $x_coord $y_coord
-    # Q: can we generalize here?
-    if [ $device == "SM-J337A" ]
-    then
-        adb -s $device_id shell "input tap 40 118"
-    elif [ $device == "LM-X210" ]
-	then 
-		adb -s $device_id shell "input tap 175 132"
-    elif [ $device == "J7DUO" ]
-	then 
-		echo "adb -s $device_id shell \"input tap 27 186\""
-		adb -s $device_id shell "input tap 27 186"
-    elif [ $device == "E5PLAY" ]
-	then 
-		adb -s $device_id shell "input tap 198 82"
-	fi 
-    adb -s $device_id shell "input keyevent KEYCODE_HOME"
-	sleep 5 
-}
-
 # emulate user interaction with a page
 page_interact(){
     s_time=`date +%s`
@@ -255,6 +230,40 @@ init_fast_com(){
 	sleep 30 
 	#tap_screen 370 830 1
 }
+
+# turn wifi on or off
+toggle_wifi(){
+	opt=$1
+	wifiStatus="off"
+	ifconfig wlan0 | grep inet | grep "\." > /dev/null
+	if [ $? -eq 0 ] 
+	then 
+		wifiStatus="on"
+	fi 
+	if [ $opt == "on" ] 
+	then 
+ 		if [ $wifiStatus == "off" ] 
+		then 
+			sudo input swipe 370 0 370 500
+			tap_screen 300 100
+			sudo input swipe 370 500 370 0
+		else 
+			myprint "Requested wifi ON and it is already ON"
+		fi 
+	elif [ $opt == "off" ] 
+		if [ $wifiStatus == "on" ] 
+		then 
+			sudo input swipe 370 0 370 500
+			tap_screen 300 100
+			sudo input swipe 370 500 370 0
+		else 
+			myprint "Requested wifi OFF and it is already OFF"
+		fi 
+	else 
+		myprint "Option $opt not supported (on/off)"
+	fi 
+}
+
 
 # close all pending applications 
 close_all(){
