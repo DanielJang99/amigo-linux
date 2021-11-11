@@ -10,7 +10,7 @@
 # turn wifi on or off
 toggle_wifi(){
     opt=$1
-    myprint "[toggle_wifi] Requested: $opt"
+    echo "[toggle_wifi] Requested: $opt"
     sudo input keyevent KEYCODE_HOME
     wifiStatus="off"
     /usr/bin/ifconfig wlan0 | grep "inet" | grep "\." > /dev/null
@@ -18,37 +18,37 @@ toggle_wifi(){
     then
         wifiStatus="on"
     fi
-    myprint "[toggle_wifi] Requested: $opt Status: $wifiStatus"
+    echo "[toggle_wifi] Requested: $opt Status: $wifiStatus"
     if [ $opt == "on" ]
     then
         if [ $wifiStatus == "off" ]
         then
-            myprint "[toggle_wifi] swipe down"
+            echo "[toggle_wifi] swipe down"
             sudo input swipe 370 0 370 500
             sleep 5
-            myprint "[toggle_wifi] press"
+            echo "[toggle_wifi] press"
             tap_screen 300 100 2
-            myprint "[toggle_wifi] swipe up"
+            echo "[toggle_wifi] swipe up"
             sudo input swipe 370 500 370 0
         else
-            myprint "Requested wifi ON and it is already ON"
+            echo "Requested wifi ON and it is already ON"
         fi
     elif [ $opt == "off" ]
     then
         if [ $wifiStatus == "on" ]
         then
-            myprint "[toggle_wifi] swipe down"
+            echo "[toggle_wifi] swipe down"
             sudo input swipe 370 0 370 500
             sleep 5
-            myprint "[toggle_wifi] press"
+            echo "[toggle_wifi] press"
             tap_screen 300 100 2
-            myprint "[toggle_wifi] swipe up"
+            echo "[toggle_wifi] swipe up"
             sudo input swipe 370 500 370 0
         else
-            myprint "Requested wifi OFF and it is already OFF"
+            echo "Requested wifi OFF and it is already OFF"
         fi
     else
-        myprint "Option $opt not supported (on/off)"
+        echo "Option $opt not supported (on/off)"
     fi
 }
 
