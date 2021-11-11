@@ -92,13 +92,12 @@ run_test(){
 	t_now=`date +%s`
 	sleep $load_time 
 
-	# stop video recording 
+	# stop video recording and run we perf analysis
 	if [ $video_recording == "true" ]
 	then
-		pid=`ps aux | grep "screenrecord" | grep -v "grep" | awk '{print $2}'`
-		myprint "Found video process: $pid" 
-		kill -9 $pid
+		for pid in `sudo ps aux | grep screenrecord | grep $screen_video | awk '{print $2}'`; do  sudo kill -9 $pid; done
 		sleep 1
+		sudo chown $USER:$USER $screen_fast
 		if [ -f "visualmetrics/visualmetrics.py" ] 
 		then 
 			(python visualmetrics/visualmetrics.py --video $screen_video --viewport --orange > $perf_video 2>&1 &)
