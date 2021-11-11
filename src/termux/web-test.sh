@@ -201,7 +201,7 @@ chrome_onboarding
 #browser_setup #FIXME => allow to skip chrome onboarding, but using a non working option
     
 # loop across URLs to be tested
-for((i=0; i<num_urls++; i++))
+for((i=0; i<num_urls; i++))
 do
     # get URL to be tested 
     url=${urlList[$i]} 
@@ -224,8 +224,4 @@ do
     
     # stop monitoring CPU
     echo "false" > ".to_monitor"
-
-	# temp 
-	exit -1 
 done
-
