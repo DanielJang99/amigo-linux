@@ -149,13 +149,13 @@ run_speed_test(){
         if [ ! -f $screen_fast_processed ]
         then 
             echo "Image optimization to help OCR..."
-            convert $screen_fast -type Grayscale "temp.${suffix}"  
-            convert "temp.${suffix}" -gravity South -chop 0x600 $screen_fast_processed
-            convert $screen_fast_processed -gravity North -chop 0x600 "temp.${suffix}"  
+            sudo convert $screen_fast -type Grayscale "temp.${suffix}"  
+            sudo convert "temp.${suffix}" -gravity South -chop 0x600 $screen_fast_processed
+            sudo convert $screen_fast_processed -gravity North -chop 0x600 "temp.${suffix}"  
             mv "temp.${suffix}" $screen_fast_processed
         fi 
         screen_fast_ocr="${res_folder}/ocr-fast-${curr_run_id}"
-        tesseract -l eng $screen_fast_processed $screen_fast_ocr > /dev/null 2>&1
+        sudo tesseract -l eng $screen_fast_processed $screen_fast_ocr > /dev/null 2>&1
         screen_fast_ocr="${res_folder}/ocr-fast-${curr_run_id}.txt"
         cat $screen_fast_ocr  | sed -r '/^\s*$/d' > .last-ocr 
         mv .last-ocr $screen_fast_ocr
