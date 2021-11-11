@@ -70,9 +70,11 @@ run_speed_test(){
 	# click "pause" - not deterministic
 	#tap_screen 1090 1300 2
 		
-	echo "Click more info"
+	echo "Click more info.."
 	tap_screen 370 830 1
-	sleep 5 
+	sleep 3 
+	echo "Click pause..."
+	tap_screen 534 636 1
 
     # take screenshot (text) 
     sudo uiautomator dump /dev/tty | awk '{gsub("UI hierchary dumped to: /dev/tty", "");print}' > $log_screen_fast
