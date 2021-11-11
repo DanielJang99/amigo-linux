@@ -125,8 +125,14 @@ then
 fi 
 
 # common test identifier 
-uid=`date +%d-%M-%Y`
-ts=`date +%s`
+if [ $# -eq 2 ]
+then
+	uid=$1
+	ts=$2
+else 
+    uid=`date +%d-%m-%Y`
+    ts=`date +%s`
+fi 
 
 # folder organiztion 
 res_folder="./cdnlogs/$uid"

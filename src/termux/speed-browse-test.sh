@@ -205,8 +205,14 @@ then
 fi 
 
 # folder creation
-suffix=`date +%d-%m-%Y`
-curr_run_id=`date +%s`
+if [ $# -eq 2 ] 
+then 
+	suffix=$1
+	curr_run_id=$2
+else
+	suffix=`date +%d-%m-%Y`
+	curr_run_id=`date +%s`
+fi 
 res_folder="./speedtest-results/$suffix"
 mkdir -p $res_folder 
 screen_fast="${res_folder}/screenshot-fast-${curr_run_id}.png"

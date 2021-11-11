@@ -14,14 +14,22 @@ test(){
 	fi 
 }
 
+# input
+if [ $# -eq 2 ]
+then 
+	suffix=$1
+	t_s=$2
+else 
+	suffix=`date +%d-%m-%Y`
+	t_s=`date +%s`
+fi 
+
 # folder organization
-suffix=`date +%d-%m-%Y`
 res_dir="mtrlogs/$suffix"
 mkdir -p $res_dir
 num=10
 
 # logging
-t_s=`date +%s`
 echo "Starting MTR reporting..."
 
 # popular providers
@@ -31,7 +39,7 @@ test amazon.com amazon
 
 # popular DNS
 sudo mtr -r4wc $num 8.8.8.8 >  $res_dir/google-dns-ipv4-$ts.txt 2>&1
-sudo mtr -r6wc $num 82001:4860:4860::888 >  $res_dir/google-dns-ipv6-$ts.txt 2>&1
+sudo mtr -r6wc $num 2001:4860:4860::8888 >  $res_dir/google-dns-ipv6-$ts.txt 2>&1
 sudo mtr -r4wc $num 1.1.1.1 >  $res_dir/cloudflare-dns-ipv4-$ts.txt 2>&1
 sudo mtr -r6wc $num 2606:4700:4700::1111 >  $res_dir/cloudflare-dns-ipv6-$ts.txt 2>&1
 
