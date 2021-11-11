@@ -251,6 +251,7 @@ toggle_wifi(){
 			myprint "Requested wifi ON and it is already ON"
 		fi 
 	elif [ $opt == "off" ] 
+	then
 		if [ $wifiStatus == "on" ] 
 		then 
 			sudo input swipe 370 0 370 500
