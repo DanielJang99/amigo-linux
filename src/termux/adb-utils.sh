@@ -248,6 +248,14 @@ close_brave_tabs(){
 	tap_screen 370 1048 1
 }
 
+# helper to init fast.com (seems to be crashing)
+init_fast_com(){
+	myprint "Init fast.com"
+	am start -n $browser_package/$browser_activity -d "https://fast.com"
+	sleep 30 
+	#tap_screen 370 830 1
+}
+
 # close all pending applications 
 close_all(){
 	# logging 

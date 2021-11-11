@@ -48,7 +48,8 @@ read_dom () {
 # run a speed test 
 run_speed_test(){
     # parameters
-    browser_package="com.brave.browser"
+    #browser_package="com.brave.browser" #Brave and Kiwi crashed (too much memory)
+    browser_package="com.android.chrome"
     browser_activity="com.google.android.apps.chrome.Main"
 	url="https://fast.com"
 	load_time=30
@@ -68,24 +69,29 @@ run_speed_test(){
 
 	# click "pause" - not deterministic
 	#tap_screen 1090 1300 2
+		
+	echo "Click more info"
+	tap_screen 370 830 1
 
     # take screenshot (text) 
     sudo uiautomator dump /dev/tty | awk '{gsub("UI hierchary dumped to: /dev/tty", "");print}' > $log_screen_fast
 
     # take actual screenshot (image) 
-    sudo screencap -p > $screen_fast
+    sudo screencap -p $screen_fast
 
     # logging 
     myprint "Done with screenshots: screen-log-fast-${curr_run_id}.txt -- screenshot-fast-${curr_run_id}.png"
 	
-	#close open tabs
-	ans=$(($num_tabs % 5))
-	if [ $ans -eq 0 -a $curr_run_id -gt 0 ] 
+	#close open tabs (not on Chrome)
+	if [ $browser_package == "com.brave.browser" ] 
 	then 
-		close_brave_tabs
-	else 
-		# closing Brave 
-		close_all
+		ans=$(($num_tabs % 5))
+		if [ $ans -eq 0 -a $curr_run_id -gt 0 ] 
+		then 
+			close_brave_tabs
+		else 
+			# closing Brave 
+			close_all
 	fi 
 
     # extract speedtest results 
