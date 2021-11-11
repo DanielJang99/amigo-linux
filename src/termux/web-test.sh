@@ -83,6 +83,7 @@ run_test(){
     	screen_video="${res_folder}/${id}-${curr_run_id}.mp4"
     	perf_video="${res_folder}/${id}-${curr_run_id}.perf"
 	    (sudo screenrecord $screen_video &) #--bit-rate 1000000
+		myprint "Started screen recording on file: $screen_video"
 	fi
 
 	# attempt page load and har extraction
@@ -95,11 +96,16 @@ run_test(){
 	# stop video recording and run we perf analysis
 	if [ $video_recording == "true" ]
 	then
-		for pid in `sudo ps aux | grep screenrecord | grep $screen_video | awk '{print $2}'`; do  sudo kill -9 $pid; done
+		myprint "Stopping screen recording"
+		for pid in `sudo ps aux | grep "screenrecord" | grep $screen_video | awk '{print $2}'`
+		do  
+			sudo kill -9 $pid > /dev/null 2>&1
+		done
 		sleep 1
-		sudo chown $USER:$USER $screen_fast
+		sudo chown $USER:$USER $screen_video
 		if [ -f "visualmetrics/visualmetrics.py" ] 
 		then 
+			myprint "Running visualmetrics/visualmetrics.py (background - then should do browser prep...?)"
 			(python visualmetrics/visualmetrics.py --video $screen_video --viewport --orange > $perf_video 2>&1 &)
 			#(python visualmetrics/visualmetrics.py --video $final_screen_video --dir frames -q 75 --histogram histograms.json.gz --orange --viewport > $perf_video 2>&1 &)
 		fi 
@@ -183,22 +189,22 @@ do
     let "num_urls++"
 done < $url_file
 
-# loop for the whole experiment duration 
+# clean the browser before testing 
 browser="chrome"
 package="com.android.chrome"
 activity="com.google.android.apps.chrome.Main"
+myprint "[INFO] Cleaning browser data ($app-->$package)"
+sudo pm clear $package
+am start -n $package/$activity
+sleep 2
+chrome_onboarding
+#browser_setup #FIXME => allow to skip chrome onboarding, but using a non working option
+    
+# loop across URLs to be tested
 for((i=0; i<num_urls++; i++))
 do
     # get URL to be tested 
     url=${urlList[$i]} 
-    
-    # clean the browser
-    myprint "[INFO] Cleaning browser data ($app-->$package)"
-    sudo pm clear $package
-	am start -n $package/$activity
-	sleep 2
-    chrome_onboarding
-	#browser_setup #FIXME => allow to skip chrome onboarding, but using a non working option
     
     # file naming
     id=`echo $url | md5sum | cut -f1 -d " "`"-"$i
