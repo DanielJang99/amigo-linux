@@ -8,7 +8,7 @@ speedtest-cli --json
 # run NYU stuff 
 
 # run multiple MTR
-./ping.sh
+./mtr.sh
 
 # test multiple CDNs
 ./cdn-test.sh

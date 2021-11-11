@@ -5,8 +5,9 @@ ts=`date +%s`
 num=10
 mkdir -p $res_dir
 
-echo "Starting MTR reporting -- Skipping casue currently not working on termux" 
-exit -1 
+t_s=`date +%s`
+echo "Starting MTR reporting..."
+
 # popular providers
 sudo mtr -rwc $num google.com   >  $res_dir/google-$ts.txt 2>&1
 sudo mtr -rwc $num facebook.com >  $res_dir/facebook-$ts.txt  2>&1
@@ -16,3 +17,8 @@ sudo mtr -rwc $num amazon.com   >  $res_dir/amazon-$ts.txt 2>&1
 sudo mtr -rwc $num 8.8.8.8 > $res_dir/google-dns-$ts.txt 2>&1
 sudo mtr -rwc $num 1.1.1.1 > $res_dir/cloudflare-dns-$ts.txt 2>&1
 #sudo mtr -rwc $num 8.8.8.8 > $res_dir/ 2>&1
+
+# logging 
+t_e=`date +%s`
+let "t_p = t_e - t_s"
+echo "Done MTR reporting. Duration: $t_p"
