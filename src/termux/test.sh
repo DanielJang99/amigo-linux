@@ -12,12 +12,12 @@ toggle_wifi(){
     opt=$1
     echo "[toggle_wifi] Requested: $opt"
     sudo input keyevent KEYCODE_HOME
-    wifiStatus="off"
-    /usr/bin/ifconfig wlan0 | grep "inet" | grep "\." > /dev/null
-    if [ $? -eq 0 ]
-    then
-        wifiStatus="on"
-    fi
+    wifiStatus="on"
+    #/usr/bin/ifconfig wlan0 | grep "inet" | grep "\." > /dev/null
+    #if [ $? -eq 0 ]
+    #then
+    #    wifiStatus="on"
+    #fi
     echo "[toggle_wifi] Requested: $opt Status: $wifiStatus"
     if [ $opt == "on" ]
     then
@@ -53,10 +53,8 @@ toggle_wifi(){
 }
 
 
-echo "toggle_wifi off"
 toggle_wifi "off"
 timeout 5 /usr/bin/ifconfig wlan0 > wlan-info 2>&1
 echo $?
 sleep 5 
-echo "toggle_wifi on"
 toggle_wifi "on"
