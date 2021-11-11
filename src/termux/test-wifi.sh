@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/bin/bash
 ## Author: Matteo Varvello 
 ## Date:   11/10/2021
 
