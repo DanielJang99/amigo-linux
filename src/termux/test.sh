@@ -9,7 +9,7 @@ source $adb_file
 
 echo "toggle_wifi off"
 toggle_wifi "off"
-timeout 5 ifconfig wlan0 > wlan-info 2>&1
+timeout 5 /usr/bin/ifconfig wlan0 > wlan-info 2>&1
 echo $?
 sleep 5 
 echo "toggle_wifi on"

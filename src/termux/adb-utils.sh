@@ -237,7 +237,7 @@ toggle_wifi(){
 	myprint "[toggle_wifi] Requested: $opt"
 	sudo input keyevent KEYCODE_HOME
 	wifiStatus="off"
-	ifconfig wlan0 | grep "inet" | grep "\." > /dev/null
+	/usr/bin/ifconfig wlan0 | grep "inet" | grep "\." > /dev/null
 	if [ $? -eq 0 ] 
 	then 
 		wifiStatus="on"
