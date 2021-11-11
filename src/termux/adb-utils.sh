@@ -233,10 +233,11 @@ init_fast_com(){
 
 # turn wifi on or off
 toggle_wifi(){
+	myprint "[toggle_wifi] Requested: $opt"
 	opt=$1
 	sudo input keyevent KEYCODE_HOME
 	wifiStatus="off"
-	ifconfig wlan0 | grep inet | grep "\." > /dev/null
+	ifconfig wlan0 | grep "inet" | grep "\." > /dev/null
 	if [ $? -eq 0 ] 
 	then 
 		wifiStatus="on"
