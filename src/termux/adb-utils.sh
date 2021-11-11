@@ -240,6 +240,7 @@ toggle_wifi(){
 	then 
 		wifiStatus="on"
 	fi 
+	myprint "[toggle_wifi] Requested: $opt Status: $wifiStatus"
 	if [ $opt == "on" ] 
 	then 
  		if [ $wifiStatus == "off" ] 
