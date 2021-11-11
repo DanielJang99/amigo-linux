@@ -51,8 +51,8 @@ run_speed_test(){
     #browser_package="com.brave.browser" #Brave and Kiwi crashed (too much memory)
     browser_package="com.android.chrome"
     browser_activity="com.google.android.apps.chrome.Main"
-	url="https://fast.com"
-	load_time=30
+    url="https://fast.com"
+    load_time=30
 
     # launch browser and wait for test to run
     am start -n $browser_package/$browser_activity -d $url 
@@ -78,6 +78,7 @@ run_speed_test(){
 
     # take actual screenshot (image) 
     sudo screencap -p $screen_fast
+    sudo chown $USER:$USER $screen_fast
 
     # logging 
     myprint "Done with screenshots: screen-log-fast-${curr_run_id}.txt -- screenshot-fast-${curr_run_id}.png"
@@ -149,13 +150,13 @@ run_speed_test(){
         if [ ! -f $screen_fast_processed ]
         then 
             echo "Image optimization to help OCR..."
-            sudo convert $screen_fast -type Grayscale "temp.${suffix}"  
-            sudo convert "temp.${suffix}" -gravity South -chop 0x600 $screen_fast_processed
-            sudo convert $screen_fast_processed -gravity North -chop 0x600 "temp.${suffix}"  
+            convert $screen_fast -type Grayscale "temp.${suffix}"  
+            convert "temp.${suffix}" -gravity South -chop 0x600 $screen_fast_processed
+            convert $screen_fast_processed -gravity North -chop 0x600 "temp.${suffix}"  
             mv "temp.${suffix}" $screen_fast_processed
         fi 
         screen_fast_ocr="${res_folder}/ocr-fast-${curr_run_id}"
-        sudo tesseract -l eng $screen_fast_processed $screen_fast_ocr > /dev/null 2>&1
+        tesseract -l eng $screen_fast_processed $screen_fast_ocr > /dev/null 2>&1
         screen_fast_ocr="${res_folder}/ocr-fast-${curr_run_id}.txt"
         cat $screen_fast_ocr  | sed -r '/^\s*$/d' > .last-ocr 
         mv .last-ocr $screen_fast_ocr
