@@ -72,6 +72,7 @@ run_speed_test(){
 		
 	echo "Click more info"
 	tap_screen 370 830 1
+	sleep 5 
 
     # take screenshot (text) 
     sudo uiautomator dump /dev/tty | awk '{gsub("UI hierchary dumped to: /dev/tty", "");print}' > $log_screen_fast
@@ -151,8 +152,9 @@ run_speed_test(){
         then 
             echo "Image optimization to help OCR..."
             convert $screen_fast -type Grayscale "temp.${ext}"  
-            convert "temp.${ext}" -gravity South -chop 0x600 $screen_fast_processed
-            convert $screen_fast_processed -gravity North -chop 0x600 "temp.${ext}"  
+			# TEMP disabling, crops too much 
+            #convert "temp.${ext}" -gravity South -chop 0x600 $screen_fast_processed
+            #convert $screen_fast_processed -gravity North -chop 0x600 "temp.${ext}"  
             mv "temp.${ext}" $screen_fast_processed
         fi 
         screen_fast_ocr="${res_folder}/ocr-fast-${curr_run_id}"
