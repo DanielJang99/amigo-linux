@@ -10,4 +10,5 @@ source $adb_file
 toggle_wifi "off"
 ifconfig wlan0 > wlan-info 2>&1
 echo $?
+sleep 5 
 toggle_wifi "on"

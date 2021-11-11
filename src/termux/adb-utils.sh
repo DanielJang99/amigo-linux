@@ -245,7 +245,8 @@ toggle_wifi(){
  		if [ $wifiStatus == "off" ] 
 		then 
 			sudo input swipe 370 0 370 500
-			tap_screen 300 100
+			sleep 2
+			tap_screen 300 100 2
 			sudo input swipe 370 500 370 0
 		else 
 			myprint "Requested wifi ON and it is already ON"
@@ -255,7 +256,8 @@ toggle_wifi(){
 		if [ $wifiStatus == "on" ] 
 		then 
 			sudo input swipe 370 0 370 500
-			tap_screen 300 100
+			sleep 2 
+			tap_screen 300 100 2
 			sudo input swipe 370 500 370 0
 		else 
 			myprint "Requested wifi OFF and it is already OFF"
