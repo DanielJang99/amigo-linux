@@ -260,9 +260,12 @@ toggle_wifi(){
 	then
 		if [ $wifiStatus == "on" ] 
 		then 
+			myprint "[toggle_wifi] swipe down"
 			sudo input swipe 370 0 370 500
 			sleep 5 
+			myprint "[toggle_wifi] press"
 			tap_screen 300 100 2
+ 			myprint "[toggle_wifi] swipe up"
 			sudo input swipe 370 500 370 0
 		else 
 			myprint "Requested wifi OFF and it is already OFF"
