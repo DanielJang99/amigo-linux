@@ -152,9 +152,9 @@ run_speed_test(){
         then 
             echo "Image optimization to help OCR..."
             convert $screen_fast -type Grayscale "temp.${ext}"  
-            convert "temp.${ext}" -gravity South -chop 0x23 $screen_fast_processed
-            #convert $screen_fast_processed -gravity North -chop 0x600 "temp.${ext}"  
-            #mv "temp.${ext}" $screen_fast_processed
+            convert "temp.${ext}" -gravity South -chop 0x240 $screen_fast_processed
+            convert $screen_fast_processed -gravity North -chop 0x500 "temp.${ext}"  
+            mv "temp.${ext}" $screen_fast_processed
         fi 
         screen_fast_ocr="${res_folder}/ocr-fast-${curr_run_id}"
         tesseract -l eng $screen_fast_processed $screen_fast_ocr > /dev/null 2>&1
