@@ -92,6 +92,7 @@ run_speed_test(){
 		else 
 			# closing Brave 
 			close_all
+		fi 
 	fi 
 
     # extract speedtest results 
