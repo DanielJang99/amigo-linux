@@ -7,5 +7,6 @@ rm -rf mtrlogs
 rm -rf website-testing-results
 rm -rf speedtest-results
 rm -rf cdnlogs
+rm -rf locationlogs
 free_space=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 echo "[$0][`date`] Free space: $free_space"
