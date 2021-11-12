@@ -12,13 +12,19 @@ generate_post_data(){
     "free_space_GB":"${free_space}",
     "cpu_util_perc":"${cpu_util}",
     "mem_info":"${mem_info}", 
-    "foreground_app":"${foreground}",
-    "wifi_ip":"${wifi_ip}",
-    "wifi_ssid":"${phone_wifi_ssid}",
-    "mobile_ip":"${mobile_ip}",
     "battery_level":"${phone_battery}",
     "location_info":"${loc_str}",
-    "net_testing+proc":"${num}"
+    "foreground_app":"${foreground}",
+    "wifi_iface":"$wifi_iface", 
+    "wifi_ip":"${wifi_ip}",
+    "wifi_ssid":"${wifi_ssid}",
+    "wifi_info":"${wifi_info}",
+    "wifi_qual":"${wifi_qual}",
+    "net_testing_proc":"${num}", 
+    "mobile_iface":"$mobile_iface",
+    "mobile_ip":"${mobile_ip}",
+    "mobile_state":"${mobile_state}", 
+    "mobile_signal":"${mobile_signal}"
     }
 EOF
 }
@@ -86,10 +92,6 @@ fi
 # make sure location setting is correct 
 # TODO
 
-# discover wifi and mobile interface
-wifi_iface=`ifconfig | grep "wlan" | cut -f 1 -d ":"`
-mobile_iface=`ifconfig | grep "data" | cut -f 1 -d ":"`
-echo "WARNING - Discover wifi ($wifi_iface) and mobile ($mobile_iface)"
 
 # external loop 
 to_run=`cat ".status"`
@@ -108,7 +110,7 @@ do
 	to_run=`cat ".status"`
 	current_time=`date +%s`
 	suffix=`date +%d-%m-%Y`
-
+	
 	# check simple stats
 	free_space=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 	mem_info=`free -m | grep "Mem" | awk '{print "Total:"$2";Used:"$3";Free:"$4";Available:"$NF}'`
@@ -126,17 +128,39 @@ do
 	fi 
 	
 	# understand WiFi and mobile phone connectivity
+	wifi_iface=`ifconfig | grep "wlan" | cut -f 1 -d ":"`
+	mobile_iface=`ifconfig | grep "data" | cut -f 1 -d ":"`
+	echo "Discover wifi ($wifi_iface) and mobile ($mobile_iface)"
 	wifi_ip="None"
 	phone_wifi_ssid="None"
 	wifi_ip=`ifconfig $wifi_iface | grep "\." | grep -v packets | awk '{print $2}'` 
 	if [ $? -eq 0 ] 
 	then 
 		# get WiFI SSID
-		phone_wifi_ssid=`sudo dumpsys netstats | grep -E 'iface=wlan.*networkId' | head -n 1  | awk '{print $4}' | cut -f 2 -d "=" | sed s/","// | sed s/"\""//g`
+		wifi_ssid=`sudo dumpsys netstats | grep -E 'iface=wlan.*networkId' | head -n 1  | awk '{print $4}' | cut -f 2 -d "=" | sed s/","// | sed s/"\""//g`
+		# get more info
+		sudo dumpsys wifi > ".wifi"
+		wifi_info=`cat ".wifi" | grep "mWifiInfo"`
+		wifi_qual=`cat ".wifi" | grep "mLastSignalLevel"`
+		# mWifiInfo
+		#mLastSignalLevel
+	else
+		wifi_ip="none"
+		wifi_ssid="none"
+		wifi_info="none"
+		wifi_qual="none"
 	fi 
 	mobile_ip=`ifconfig $mobile_iface | grep "\." | grep -v packets | awk '{print $2}'`
 	if [ $? -eq 0 ] 
 	then
+		# get mobile network info 
+		sudo dumpsys telephony.registry > tel
+		mobile_state=`cat tel | grep "mServiceState" | head -n 1`
+		mobile_signal=`cat tel | grep "mSignalStrength" | head -n 1`
+	else 
+		mobile_state="none"
+		mobile_ip="none"
+		mobile_signal="none"
 	fi 
 	echo "Device info. Wifi: $wifi_ip Mobile: $mobile_ip"
 
