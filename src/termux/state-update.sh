@@ -162,6 +162,7 @@ do
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
 
 	# check if it is time to run net experimets 
+	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`
 	if [ -f ".last_net" ] 
 	then 
 		last_net=`cat ".last_net"`
@@ -170,8 +171,13 @@ do
 	echo "Time from last net: $time_from_last_net sec"
 	if [ $time_from_last_net -gt $NET_INTERVAL ] 
 	then 
-		(./net-testing.sh $suffix $current_time &)
-		echo $current_time > ".last_net"
+		if [ $num -eq 0 ] 
+		then 
+			(./net-testing.sh $suffix $current_time &)
+			echo $current_time > ".last_net"
+		else 
+			echo "Postponing net-testing since still running (numProc: $num)"
+		fi 
 	fi 
 
 	# check if it is time to status report
@@ -186,16 +192,18 @@ do
 		# check CPU usage (background)
 		check_cpu &
 
-		# check if net testing
-		num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`
-
-		# dump location information 
+		# dump location information (only start googlemaps if not net-testing to avoid collusion)
 		res_dir="locationlogs/${suffix}"
 		mkdir -p $res_dir
-		sudo monkey -p com.google.android.apps.maps 1
-		sleep 2
-		tap_screen 630 550 	
-		sleep 2 
+		if [ $num -eq 0 ] 
+		then 
+			sudo monkey -p com.google.android.apps.maps 1
+			sleep 2
+			tap_screen 630 550 	
+			sleep 2 
+		else 
+			echo "Skipping maps launch since net-testing is running"
+		fi 
 		sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
 		loc_str=`cat  $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
 
