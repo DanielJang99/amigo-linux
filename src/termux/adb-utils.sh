@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/bin/bash
 ## Notes: Collection of abd utils 
 ## Author: Matteo Varvello (Brave Software) 
 ## Date: 02/04/2019

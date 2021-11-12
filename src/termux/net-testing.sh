@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/bin/bash
 
 # folder organization
 suffix=`date +%d-%m-%Y`

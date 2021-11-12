@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/bin/bash
 ## Date: 11/11/2021
 ## Author: Matteo Varvello (varvello@gmail.com)
 ## NOTE: script to run bunch of mtr tests (both ipv4 and ipv6)
