@@ -29,7 +29,10 @@ speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
 ./cdn-test.sh $suffix $t_s
 
 # QUIC test? 
+# TODO 
 
 # test multiple webages 
+./web-test.sh  $suffix $t_s
 
 # video testing
+# TODO 

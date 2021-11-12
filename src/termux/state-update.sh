@@ -55,17 +55,17 @@ check_cpu(){
 }
 
 # parameters
-curr_time=`date +%s`                 # current time 
-freq=5                               # frequency in seconds for checking things to do 
-REPORT_INTERVAL=30                   # interval of status reporting (seconds)
-NET_INTERVAL=300                     # interval of networking testing 
-package="com.example.sensorexample"  # our app 
-last_report_time="1635969639"        # last time a report was sent (init to an old time)
-last_net="1635969639"                # last time a net test was done (init to an old time) 
-asked_to_charge="false"              # keep track if we already asked user to charge their phone
+curr_time=`date +%s`                   # current time 
+freq=10                                # interval for checking things to do 
+REPORT_INTERVAL=60                     # interval of status reporting (seconds)
+NET_INTERVAL=300                       # interval of networking testing 
+package="com.example.sensorexample"    # our app 
+last_report_time="1635969639"          # last time a report was sent (init to an old time)
+last_net="1635969639"                  # last time a net test was done (init to an old time) 
+asked_to_charge="false"                # keep track if we already asked user to charge their phone
 
 # retrieve unique ID for this device 
-uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g`
+uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed s/^ *//g`
 
 # folder and file organization 
 mkdir -p "./logs"
@@ -197,7 +197,7 @@ do
 	then 
 		if [ $num -eq 0 ] 
 		then 
-			(./net-testing.sh $suffix $current_time &)
+			#(./net-testing.sh $suffix $current_time &)
 			echo $current_time > ".last_net"
 		else 
 			echo "Postponing net-testing since still running (numProc: $num)"
@@ -213,21 +213,24 @@ do
 	echo "Time from last report: $time_from_last_report sec"
 	if [ $time_from_last_report -gt $REPORT_INTERVAL ] 
 	then 
-		# check CPU usage (background)
-		check_cpu &
-
 		# dump location information (only start googlemaps if not net-testing to avoid collusion)
 		res_dir="locationlogs/${suffix}"
 		mkdir -p $res_dir
 		if [ $num -eq 0 ] 
 		then 
+			# check CPU usage (background)
+			check_cpu &
+
 			echo "Launching googlemaps to improve location accuracy"
-			sudo monkey -p com.google.android.apps.maps 1
-			sleep 2
+			sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
+			sleep 5
 			sudo input tap 630 550 	
 			sleep 2 
+			sudo input keyevent KEYCODE_HOME
 		else 
 			echo "Skipping maps launch since net-testing is running"
+			# check CPU usage  (foreground)
+			check_cpu &
 		fi 
 		sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
 		loc_str=`cat  $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
@@ -237,29 +240,31 @@ do
 		echo "$(generate_post_data)" 
 		timeout 10 curl  -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
 		echo $current_time > ".last_report"
-
-		# check if there is a new command to run
-		echo "Checking if there is a command to execute for the pi..."
-		ans=`timeout 10 curl -s https://mobile.batterylab.dev:8082/piaction?id=$usb_adb_id`
-		if [[ "$ans" == *"No command matching"* ]]
-		then
-			echo "No command found"
+	fi 
+	
+	# check if there is a new command to run
+	echo "Checking if there is a command to execut (consider lowering/increasing frequency)..."
+	ans=`timeout 10 curl -s https://mobile.batterylab.dev:8082/piaction?id=$uid`
+	if [[ "$ans" == *"No command matching"* ]]
+	then
+		echo "No command found"
+	else 
+		command_pi=`echo $ans  | cut -f 1 -d ";"`
+		comm_id_pi=`echo $ans  | cut -f 3 -d ";"`
+	
+		# verify command was not just run
+		last_pi_comm_run=`cat ".last_command_pi"`
+		echo "==> $last_pi_comm_run -- $comm_id_pi"
+		if [ $last_pi_comm_run == $comm_id_pi ] 
+		then 
+			echo "Command $command_pi ($comm_id_pi) not allowed since it matches last command run!!"
 		else 
-			command_pi=`echo $ans  | cut -f 1 -d ";"`
-			comm_id_pi=`echo $ans  | cut -f 3 -d ";"`
-		
-			# verify command was not just run
-			last_pi_comm_run=`cat ".last_command_pi"`
-			echo "==> $last_pi_comm_run -- $comm_id_pi"
-			if [ $last_pi_comm_run == $comm_id_pi ] 
-			then 
-				echo "Command $command_pi ($comm_id_pi) not allowed since it matches last command run!!"
-			else 
-				eval $command_pi
-			fi 
-			echo $comm_id_pi > ".last_command_pi"
-			# FIXME: decide if to spawn from here, stop, etc. 
-			# FIXME: need a duration and some battery logic? Can be done at server too!
-		fi
+			eval $command_pi
+			ans=`timeout 10 curl -s https://mobile.batterylab.dev:8082/commandDone?id=$uid\&command_id=$comm_id_pi`
+			commandDone
+		fi 
+		echo $comm_id_pi > ".last_command_pi"
+		# FIXME: decide if to spawn from here, stop, etc. 
+		# FIXME: need a duration and some battery logic? Can be done at server too!
 	fi 
 done

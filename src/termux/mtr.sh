@@ -18,10 +18,10 @@ test(){
 if [ $# -eq 2 ]
 then 
 	suffix=$1
-	t_s=$2
+	ts=$2
 else 
 	suffix=`date +%d-%m-%Y`
-	t_s=`date +%s`
+	ts=`date +%s`
 fi 
 
 # folder organization
