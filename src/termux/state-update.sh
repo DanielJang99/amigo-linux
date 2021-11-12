@@ -16,7 +16,9 @@ generate_post_data(){
     "wifi_ip":"${wifi_ip}",
     "wifi_ssid":"${phone_wifi_ssid}",
     "mobile_ip":"${mobile_ip}",
-    "battery_level":"${phone_battery}"
+    "battery_level":"${phone_battery}",
+    "location_info":"${loc_str}",
+    "net_testing+proc":"${num}"
     }
 EOF
 }
@@ -34,6 +36,18 @@ turn_device_off(){
     fi
 }
 
+# compute current CPU usage 
+check_cpu(){
+	prev_total=0
+	prev_idle=0
+	result=`sudo cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
+	prev_idle=`echo "$result" | cut -f 2`
+	prev_total=`echo "$result" | cut -f 3`
+	sleep 2
+	result=`sudo cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
+	cpu_util=`echo "$result" | cut -f 1 | cut -f 1 -d "%"`
+}
+
 # parameters
 curr_time=`date +%s`                 # current time 
 freq=5                               # frequency in seconds for checking things to do 
@@ -44,7 +58,7 @@ last_report_time="1635969639"        # last time a report was sent (init to an o
 last_net="1635969639"                # last time a net test was done (init to an old time) 
 asked_to_charge="false"              # keep track if we already asked user to charge their phone
 
-# generate a unique id first time is run
+# retrieve unique ID for this device 
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g`
 
 # folder and file organization 
@@ -69,6 +83,14 @@ then
     sudo getenforce
 fi
 
+# make sure location setting is correct 
+# TODO
+
+# discover wifi and mobile interface
+wifi_iface=`ifconfig | grep "wlan" | cut -f 1 -d ":"`
+mobile_iface=`ifconfig | grep "data" | cut -f 1 -d ":"`
+echo "WARNING - Discover wifi ($wifi_iface) and mobile ($mobile_iface)"
+
 # external loop 
 to_run=`cat ".status"`
 echo "Script will run with a 5 sec frequency. To stop: <<echo \"false\" > \".status\""
@@ -84,8 +106,10 @@ do
 	fi 
 	last_loop_time=$current_time
 	to_run=`cat ".status"`
+	current_time=`date +%s`
+	suffix=`date +%d-%m-%Y`
 
-	# check simple stats from the pi
+	# check simple stats
 	free_space=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 	mem_info=`free -m | grep "Mem" | awk '{print "Total:"$2";Used:"$3";Free:"$4";Available:"$NF}'`
 
@@ -100,22 +124,19 @@ do
 	else 
 		asked_to_charge="false"
 	fi 
-
+	
 	# understand WiFi and mobile phone connectivity
 	wifi_ip="None"
 	phone_wifi_ssid="None"
-	ifconfig wlan0 > ".wifi-info"
+	wifi_ip=`ifconfig $wifi_iface | grep "\." | grep -v packets | awk '{print $2}'` 
 	if [ $? -eq 0 ] 
 	then 
-		wifi_ip=`cat ".wifi-info" | grep "\." | grep -v packets | awk '{print $2}'` 
 		# get WiFI SSID
 		phone_wifi_ssid=`sudo dumpsys netstats | grep -E 'iface=wlan.*networkId' | head -n 1  | awk '{print $4}' | cut -f 2 -d "=" | sed s/","// | sed s/"\""//g`
 	fi 
-	mobile_ip="None"
-	sudo ifconfig rmnet_data1 > ".mobile-info"
+	mobile_ip=`ifconfig $mobile_iface | grep "\." | grep -v packets | awk '{print $2}'`
 	if [ $? -eq 0 ] 
 	then
-		mobile_ip=`cat ".mobile-info" | grep "\." | grep -v packets | awk '{print $2}'`
 	fi 
 	echo "Device info. Wifi: $wifi_ip Mobile: $mobile_ip"
 
@@ -141,7 +162,6 @@ do
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
 
 	# check if it is time to run net experimets 
-	current_time=`date +%s`
 	if [ -f ".last_net" ] 
 	then 
 		last_net=`cat ".last_net"`
@@ -150,7 +170,7 @@ do
 	echo "Time from last net: $time_from_last_net sec"
 	if [ $time_from_last_net -gt $NET_INTERVAL ] 
 	then 
-		(./net-testing.sh &)
+		(./net-testing.sh $suffix $current_time &)
 		echo $current_time > ".last_net"
 	fi 
 
@@ -163,15 +183,21 @@ do
 	echo "Time from last report: $time_from_last_report sec"
 	if [ $time_from_last_report -gt $REPORT_INTERVAL ] 
 	then 
-		# check CPU usage 
-		prev_total=0
-		prev_idle=0
-		result=`sudo cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
-		prev_idle=`echo "$result" | cut -f 2`
-		prev_total=`echo "$result" | cut -f 3`
+		# check CPU usage (background)
+		check_cpu &
+
+		# check if net testing
+		num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`
+
+		# dump location information 
+		res_dir="locationlogs/${suffix}"
+		mkdir -p $res_dir
+		sudo monkey -p com.google.android.apps.maps 1
 		sleep 2
-		result=`sudo cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
-		cpu_util=`echo "$result" | cut -f 1 | cut -f 1 -d "%"`
+		tap_screen 630 550 	
+		sleep 2 
+		sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
+		loc_str=`cat  $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
 
 		# send status update to the server
 		echo "Report to send: "

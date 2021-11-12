@@ -1,8 +1,14 @@
 #!/bin/bash
 
 # folder organization
-suffix=`date +%d-%m-%Y`
-t_s=`date +%s`
+if [ $# -eq 2 ] 
+then
+	suffix=$1
+	t_s=$2
+else 
+	suffix=`date +%d-%m-%Y`
+	t_s=`date +%s`
+fi 
 
 # run a speedtest 
 echo "[`date`] speedtest-cli..."
