@@ -221,9 +221,10 @@ do
 		mkdir -p $res_dir
 		if [ $num -eq 0 ] 
 		then 
+			echo "Launching googlemaps to improve location accuracy"
 			sudo monkey -p com.google.android.apps.maps 1
 			sleep 2
-			tap_screen 630 550 	
+			sudo input tap 630 550 	
 			sleep 2 
 		else 
 			echo "Skipping maps launch since net-testing is running"

@@ -165,11 +165,7 @@ run_speed_test(){
         mv .last-ocr $screen_fast_ocr
         speed_val=`cat $screen_fast_ocr  | grep -A 1 "speed" | grep -v "speed" | sed 's/[^\u2103]//g'`
         speed_unit="Mbps" # unfortunately speedunit can only be guessed...        
-        if [ $speed_val -gt 50 ] 
-        then
-            speed_unit="Kbps"
-        fi 
-        ans=`cat $screen_fast_ocr | grep ms  | awk 'BEGIN{isnum=0; newval=""; first=0;}{for(i=1; i<=NF; i++){if (substr($i,1,1) ~ /^[0-9]/) {newval=newval$i}else{if(first==0){ans=newval" "$i; first=1;} else {ans=ans" "newval" "$i;} newval="";}}}END{print ans}'`
+	    ans=`cat $screen_fast_ocr | grep ms  | awk 'BEGIN{isnum=0; newval=""; first=0;}{for(i=1; i<=NF; i++){if (substr($i,1,1) ~ /^[0-9]/) {newval=newval$i}else{if(first==0){ans=newval" "$i; first=1;} else {ans=ans" "newval" "$i;} newval="";}}}END{print ans}'`
         unloaded_latency=`echo $ans | cut -f 1 -d " "`
         unloaded_latency_unit=`echo $ans | cut -f 2 -d " "`
         loaded_latency=`echo $ans | cut -f 3 -d " "`

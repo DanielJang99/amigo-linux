@@ -12,7 +12,9 @@ fi
 
 # run a speedtest 
 echo "[`date`] speedtest-cli..."
-speedtest-cli --json > "mspeedtest-cli-logs/$suffix/speed-$t_s.json"
+res_folder="speedtest-cli-logs/${suffix}"
+mkdir -p $res_folder
+speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
 
 # run a speedtest in the browser (fast.com)
 ./speed-browse-test.sh $suffix $t_s
