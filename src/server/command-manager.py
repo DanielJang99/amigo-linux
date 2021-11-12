@@ -6,7 +6,9 @@ import time
 import json 
 import sys
 import psycopg2
+import psutil
 import db_manager
+import os 
 from db_manager import run_query, insert_data, insert_command, insert_pi_command
 
 ## Eample to cleanup status updates
@@ -19,6 +21,9 @@ from db_manager import run_query, insert_data, insert_command, insert_pi_command
 ## python db-interface.py query "UPDATE action_update SET status = 'pause' WHERE command_id = 'prova'"
 
 # read input
+if len(sys.argv) < 2:
+	print("USAGE: " + sys.argv[1] + " opt [query/insert-command/ssh] [uid]")
+	sys.exit(-1)
 opt = sys.argv[1]
 
 # switch among supported operations
@@ -34,15 +39,24 @@ elif opt == "insert-command":
 	# insert command in database
 	curr_time = int(time.time())
 	command_id = "matteo-" + str(curr_time)
-	#info = insert_pi_command(command_id, "*", time.time(), "adb -s c95ad2777d56 shell \"input keyevent KEYCODE_HOME\"")
-	#info = insert_pi_command(command_id, "*", time.time(), "sudo input keyevent KEYCODE_HOME")
-	info = insert_pi_command(command_id, "*", time.time(), "ssh -f -N -T -R 8022:localhost:8022 root@23.235.205.5")
-	#info = insert_pi_command(command_id, "*", time.time(), "adb -s c95ad2777d56 shell am start -n com.android.chrome/com.google.android.apps.chrome.Main -d https://www.repubblica.it")
+	info = insert_pi_command(command_id, "*", time.time(), "sudo input keyevent KEYCODE_HOME")
 	print(info)
 	# invalidate a command (using command identifier)
-#else:
-	# insert data in database
-	#info = insert_data(test_id, tester_id, location, timestamp, power_json, sense_json)
-	#print(info)
-
-
+elif opt == "ssh":
+	if len(sys.argv) < 2:
+		print("USAGE: " + sys.argv[1] + " opt [query/insert-command/ssh] [uid]")
+		sys.exit(-1)
+	uid = sys.argv[2]
+	curr_time = int(time.time())
+	command_id = "root-" + str(curr_time)
+	# use a new port
+	if os.path.isfile('port.txt'):
+		with open('port.txt', 'r') as f:
+		    free_port = int(f.readline())
+		free_port += 1 
+	else: 
+		free_port = 1025
+	with open('port.txt', 'w') as f:
+		f.write(str(free_port))
+	info = insert_pi_command(command_id, uid, time.time(), "ssh -f -N -T -R " + str(free_port) + ":localhost:8022 root@23.235.205.5")
+	print(info)
