@@ -259,7 +259,7 @@ do
 		then 
 			echo "Command $command_pi ($comm_id_pi) not allowed since it matches last command run!!"
 		else 
-			eval $command_pi
+			eval $command_pi & 
 			ans=`timeout 10 curl -s https://mobile.batterylab.dev:8082/commandDone?id=$uid\&command_id=$comm_id_pi`
 			commandDone
 		fi 
