@@ -234,10 +234,24 @@ do
 
 			myprint "Launching googlemaps to improve location accuracy"
 			sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
-			sleep 5
-			sudo input tap 630 550 	
+			sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'
+			sleep 1 
+			sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'
+			sleep 1 
+			sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'
+			sleep 1 
+			sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'
+			sleep 1 
+			sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'
+			sleep 1 
+			#sleep 5
+			#sudo input tap 630 550  # this GUI part might be moving...	
+			sudo input tap 340 100
+			sudo input text "here"	
 			sleep 2 
+			sudo input keyevent 66
 			sudo input keyevent KEYCODE_HOME
+			exit -1 
 		else 
 			myprint "Skipping maps launch since net-testing is running"
 			# check CPU usage  (foreground)
