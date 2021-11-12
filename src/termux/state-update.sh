@@ -65,7 +65,7 @@ last_net="1635969639"                  # last time a net test was done (init to 
 asked_to_charge="false"                # keep track if we already asked user to charge their phone
 
 # retrieve unique ID for this device 
-uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed s/^ *//g`
+uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 
 # folder and file organization 
 mkdir -p "./logs"
