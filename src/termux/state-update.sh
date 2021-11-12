@@ -3,6 +3,17 @@
 ## Author: Matteo Varvello (matteo.varvello@nokia.com)
 ## Date: 11/3/2021
 
+# import util file
+DEBUG=1
+util_file=`pwd`"/util.cfg"
+if [ -f $util_file ]
+then
+    source $util_file
+else
+    echo "Util file $util_file is missing"
+    exit 1
+fi
+
 # generate data to be POSTed to my server 
 generate_post_data(){
   cat <<EOF
@@ -55,17 +66,17 @@ check_cpu(){
 }
 
 # parameters
-curr_time=`date +%s`                 # current time 
-freq=5                               # frequency in seconds for checking things to do 
-REPORT_INTERVAL=30                   # interval of status reporting (seconds)
-NET_INTERVAL=300                     # interval of networking testing 
-package="com.example.sensorexample"  # our app 
-last_report_time="1635969639"        # last time a report was sent (init to an old time)
-last_net="1635969639"                # last time a net test was done (init to an old time) 
-asked_to_charge="false"              # keep track if we already asked user to charge their phone
+curr_time=`date +%s`                   # current time 
+freq=10                                # interval for checking things to do 
+REPORT_INTERVAL=60                     # interval of status reporting (seconds)
+NET_INTERVAL=300                       # interval of networking testing 
+package="com.example.sensorexample"    # our app 
+last_report_time="1635969639"          # last time a report was sent (init to an old time)
+last_net="1635969639"                  # last time a net test was done (init to an old time) 
+asked_to_charge="false"                # keep track if we already asked user to charge their phone
 
 # retrieve unique ID for this device 
-uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g`
+uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 
 # folder and file organization 
 mkdir -p "./logs"
@@ -81,7 +92,7 @@ echo "true" > ".status"
 
 # make sure SELinux is permissive
 ans=`sudo getenforce`
-echo "SELinux: $ans"
+myprint "SELinux: $ans"
 if [ $ans == "Enforcing" ]
 then
     myprint "Disabling SELinux"
@@ -95,7 +106,7 @@ fi
 
 # external loop 
 to_run=`cat ".status"`
-echo "Script will run with a 5 sec frequency. To stop: <<echo \"false\" > \".status\""
+myprint "Script will run with a 5 sec frequency. To stop: <<echo \"false\" > \".status\""
 last_loop_time=0
 while [ $to_run == "true" ] 
 do 
@@ -120,7 +131,7 @@ do
 	charging=`sudo dumpsys battery | grep "AC powered"  | cut -f 2 -d ":"`
 	if [ $phone_battery -lt 20 -a $charging == "false" -a $asked_to_charge == "false" ] 
 	then 
-		echo "Prompting user to charge their phone..." #FIXME 
+		myprint "Prompting user to charge their phone..." #FIXME 
 		am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Phone-battery-is-low.-Consider-charging!"
 		asked_to_charge="true"
 	else 
@@ -130,7 +141,7 @@ do
 	# understand WiFi and mobile phone connectivity
 	wifi_iface=`ifconfig | grep "wlan" | cut -f 1 -d ":"`
 	mobile_iface=`ifconfig | grep "data" | cut -f 1 -d ":"`
-	echo "Discover wifi ($wifi_iface) and mobile ($mobile_iface)"
+	myprint "Discover wifi ($wifi_iface) and mobile ($mobile_iface)"
 	wifi_ip="None"
 	phone_wifi_ssid="None"
 	wifi_ip=`ifconfig $wifi_iface | grep "\." | grep -v packets | awk '{print $2}'` 
@@ -162,7 +173,7 @@ do
 		mobile_ip="none"
 		mobile_signal="none"
 	fi 
-	echo "Device info. Wifi: $wifi_ip Mobile: $mobile_ip"
+	myprint "Device info. Wifi: $wifi_ip Mobile: $mobile_ip"
 
 	# make sure device identifier is updated in the app  -- do we even need an app? 
 	#ls "/storage/emulated/0/Android/data/com.example.sensorexample/files/" > /dev/null 2>&1
@@ -192,15 +203,15 @@ do
 		last_net=`cat ".last_net"`
 	fi 
 	let "time_from_last_net = current_time - last_net"
-	echo "Time from last net: $time_from_last_net sec"
+	myprint "Time from last net: $time_from_last_net sec"
 	if [ $time_from_last_net -gt $NET_INTERVAL ] 
 	then 
 		if [ $num -eq 0 ] 
 		then 
-			(./net-testing.sh $suffix $current_time &)
+			#(./net-testing.sh $suffix $current_time &)
 			echo $current_time > ".last_net"
 		else 
-			echo "Postponing net-testing since still running (numProc: $num)"
+			myprint "Postponing net-testing since still running (numProc: $num)"
 		fi 
 	fi 
 
@@ -210,56 +221,75 @@ do
 		last_report_time=`cat ".last_report"`
 	fi 
 	let "time_from_last_report = current_time - last_report_time"
-	echo "Time from last report: $time_from_last_report sec"
+	myprint "Time from last report: $time_from_last_report sec"
 	if [ $time_from_last_report -gt $REPORT_INTERVAL ] 
 	then 
-		# check CPU usage (background)
-		check_cpu &
-
 		# dump location information (only start googlemaps if not net-testing to avoid collusion)
 		res_dir="locationlogs/${suffix}"
 		mkdir -p $res_dir
 		if [ $num -eq 0 ] 
 		then 
-			echo "Launching googlemaps to improve location accuracy"
-			sudo monkey -p com.google.android.apps.maps 1
-			sleep 2
-			sudo input tap 630 550 	
+			# check CPU usage (background)
+			check_cpu &
+
+			myprint "Launching googlemaps to improve location accuracy"
+			sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
+			sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'
+			sleep 1 
+			sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'
+			sleep 1 
+			sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'
+			sleep 1 
+			sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'
+			sleep 1 
+			sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'
+			sleep 1 
+			#sleep 5
+			#sudo input tap 630 550  # this GUI part might be moving...	
+			sudo input tap 340 100
+			sudo input text "here"	
 			sleep 2 
+			sudo input keyevent 66
+			sudo input keyevent KEYCODE_HOME
+			exit -1 
 		else 
-			echo "Skipping maps launch since net-testing is running"
+			myprint "Skipping maps launch since net-testing is running"
+			# check CPU usage  (foreground)
+			check_cpu &
 		fi 
 		sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
 		loc_str=`cat  $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
 
 		# send status update to the server
-		echo "Report to send: "
+		myprint "Report to send: "
 		echo "$(generate_post_data)" 
 		timeout 10 curl  -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
 		echo $current_time > ".last_report"
-
-		# check if there is a new command to run
-		echo "Checking if there is a command to execute for the pi..."
-		ans=`timeout 10 curl -s https://mobile.batterylab.dev:8082/piaction?id=$usb_adb_id`
-		if [[ "$ans" == *"No command matching"* ]]
-		then
-			echo "No command found"
+	fi 
+	
+	# check if there is a new command to run
+	myprint "Checking if there is a command to execut (consider lowering/increasing frequency)..."
+	ans=`timeout 10 curl -s https://mobile.batterylab.dev:8082/piaction?id=$uid`
+	if [[ "$ans" == *"No command matching"* ]]
+	then
+		myprint "No command found"
+	else 
+		command_pi=`echo $ans  | cut -f 1 -d ";"`
+		comm_id_pi=`echo $ans  | cut -f 3 -d ";"`
+	
+		# verify command was not just run
+		last_pi_comm_run=`cat ".last_command_pi"`
+		#echo "==> $last_pi_comm_run -- $comm_id_pi"
+		if [ $last_pi_comm_run == $comm_id_pi ] 
+		then 
+			myprint "Command $command_pi ($comm_id_pi) not allowed since it matches last command run!!"
 		else 
-			command_pi=`echo $ans  | cut -f 1 -d ";"`
-			comm_id_pi=`echo $ans  | cut -f 3 -d ";"`
-		
-			# verify command was not just run
-			last_pi_comm_run=`cat ".last_command_pi"`
-			echo "==> $last_pi_comm_run -- $comm_id_pi"
-			if [ $last_pi_comm_run == $comm_id_pi ] 
-			then 
-				echo "Command $command_pi ($comm_id_pi) not allowed since it matches last command run!!"
-			else 
-				eval $command_pi
-			fi 
-			echo $comm_id_pi > ".last_command_pi"
-			# FIXME: decide if to spawn from here, stop, etc. 
-			# FIXME: need a duration and some battery logic? Can be done at server too!
-		fi
+			eval $command_pi & 
+			ans=`timeout 10 curl -s https://mobile.batterylab.dev:8082/commandDone?id=$uid\&command_id=$comm_id_pi`
+			myprint "Informed server that command is being executed. ANS: $ans"
+		fi 
+		echo $comm_id_pi > ".last_command_pi"
+		# FIXME: decide if to spawn from here, stop, etc. 
+		# FIXME: need a duration and some battery logic? Can be done at server too!
 	fi 
 done
