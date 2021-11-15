@@ -177,9 +177,9 @@ do
 	if [ $? -eq 0 ] 
 	then
 		# get mobile network info 
-		sudo dumpsys telephony.registry > tel
-		mobile_state=`cat tel | grep "mServiceState" | head -n 1`
-		mobile_signal=`cat tel | grep "mSignalStrength" | head -n 1`
+		sudo dumpsys telephony.registry > ".tel"
+		mobile_state=`cat ".tel" | grep "mServiceState" | head -n 1`
+		mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
 	else 
 		mobile_state="none"
 		mobile_ip="none"
