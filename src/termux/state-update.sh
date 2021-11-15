@@ -77,6 +77,7 @@ asked_to_charge="false"                # keep track if we already asked user to 
 
 
 # don't run if already running
+ps aux | grep "state-update.sh" | grep "bash"
 ps aux | grep "state-update.sh" | grep "bash" > /dev/null 
 if [ $? -ne 1 ] 
 then 
