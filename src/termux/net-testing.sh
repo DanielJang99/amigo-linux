@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # folder organization
 if [ $# -eq 2 ] 
 then

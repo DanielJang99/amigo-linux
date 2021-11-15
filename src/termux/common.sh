@@ -1,6 +1,6 @@
-#!/bin/bash 
+#!/bin/bash
 ## Notes: Common functions across cripts 
-## Author: Matteo Varvello (Brave Software)
+## Author: Matteo Varvello (Nokia)
 ## Date: 04/10/2019
 
 # import util file
