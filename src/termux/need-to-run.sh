@@ -4,7 +4,11 @@
 ## Date: 11/15/2021
 
 # don't run if already running
-debug=`cat .isDebug`
+.isDebug="true"
+if [ -f ".isDebug" ] 
+then 
+	debug=`cat .isDebug`
+fi 
 ps aux | grep "state-update.sh" | grep "bash" > .ps
 N=`cat ".ps" | wc -l`
 if [ $N -gt 0 -o $debug == "true" ] 
