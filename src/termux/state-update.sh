@@ -211,7 +211,7 @@ do
 	then 
 		if [ $num -eq 0 ] 
 		then 
-			#(./net-testing.sh $suffix $current_time &)
+			(./net-testing.sh $suffix $current_time &)
 			echo $current_time > ".last_net"
 		else 
 			myprint "Postponing net-testing since still running (numProc: $num)"
@@ -261,7 +261,7 @@ do
 	fi 
 	
 	# check if there is a new command to run
-	myprint "Checking if there is a command to execut (consider lowering/increasing frequency)..."
+	myprint "Checking if there is a command to execute (consider lowering/increasing frequency)..."
 	ans=`timeout 10 curl -s https://mobile.batterylab.dev:8082/piaction?id=$uid`
 	if [[ "$ans" == *"No command matching"* ]]
 	then
