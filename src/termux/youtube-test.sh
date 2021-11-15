@@ -7,6 +7,7 @@
 script_dir=`pwd`
 adb_file=$script_dir"/adb-utils.sh"
 source $adb_file
+DURATION=30
 
 # lower all the volumes
 sudo media volume --show --stream 3 --set 0  # media volume
