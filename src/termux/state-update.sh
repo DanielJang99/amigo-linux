@@ -80,7 +80,7 @@ asked_to_charge="false"                # keep track if we already asked user to 
 ps aux | grep "state-update.sh" | grep "bash" > /dev/null 
 if [ $? -ne 1 ] 
 then 
-	exit - 1
+	exit -1
 fi 
 
 # retrieve unique ID for this device 
