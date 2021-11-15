@@ -142,7 +142,7 @@ do
 	#wifi_iface=`ifconfig | grep "wlan" | cut -f 1 -d ":"`
 	#mobile_iface=`ifconfig | grep "data" | cut -f 1 -d ":"`
 	sudo dumpsys netstats > .data
-	wifi_iface=`cat .data grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
+	wifi_iface=`cat .data | grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
 	mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "="`
 	myprint "Discover wifi ($wifi_iface) and mobile ($mobile_iface)"
 	wifi_ip="None"
