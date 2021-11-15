@@ -143,7 +143,7 @@ do
 	#mobile_iface=`ifconfig | grep "data" | cut -f 1 -d ":"`
 	sudo dumpsys netstats > .data
 	wifi_iface=`cat .data | grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
-	mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "="`
+	mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
 	myprint "Discover wifi ($wifi_iface) and mobile ($mobile_iface)"
 	wifi_ip="None"
 	phone_wifi_ssid="None"
@@ -245,7 +245,6 @@ do
 			#sleep 2 
 			#sudo input keyevent 66
 			sudo input keyevent KEYCODE_HOME
-			exit -1 
 		else 
 			myprint "Skipping maps launch since net-testing is running"
 			# check CPU usage  (foreground)
