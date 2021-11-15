@@ -147,6 +147,8 @@ url="www.google.com"               # default URL to test
 load_time=30                       # default load time 
 video_recording="true"             # record screen or not
 interface="wlan0"                  # default network interface to monitor (for traffic)
+suffix=`date +%d-%m-%Y`            # folder id (one folder per day)
+curr_run_id=`date +%s`             # unique id per run
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -161,6 +163,12 @@ do
         --iface)
             shift; interface="$1"; shift;
             ;;
+        --suffix)
+            shift; suffix="$1"; shift;
+            ;;
+        --id)
+            shift; curr_run_id="$1"; shift;
+            ;;
         -h | --help)
             usage
             ;;
@@ -172,8 +180,6 @@ do
 done
 
 # folder creation
-suffix=`date +%d-%m-%Y`
-curr_run_id=`date +%s`    
 res_folder="./website-testing-results/$suffix"
 mkdir -p $res_folder
 
