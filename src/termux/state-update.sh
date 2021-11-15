@@ -77,12 +77,13 @@ asked_to_charge="false"                # keep track if we already asked user to 
 
 
 # don't run if already running
-ps aux | grep "state-update.sh" | grep "bash"
-ps aux | grep "state-update.sh" | grep "bash" > /dev/null 
-if [ $? -ne 1 ] 
-then 
-	exit -1
-fi 
+N=`ps aux | grep "state-update.sh" | grep "bash" | wc -l`
+echo $N
+#if [ $? -ne 1 ] 
+#then 
+#	exit -1
+#fi 
+exit -1 
 
 # retrieve unique ID for this device 
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
