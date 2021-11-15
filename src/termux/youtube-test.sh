@@ -31,7 +31,8 @@ turn_device_on
 sudo pm clear com.google.android.youtube
 
 # launch YouTube 
-am start -a android.intent.action.VIEW 
+sudo monkey -p $com.google.android.youtube 1
+sleep 10  # takes a while 
 
 # activate stats for nerds  
 tap_screen 680 105 1 
