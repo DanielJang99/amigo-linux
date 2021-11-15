@@ -16,7 +16,7 @@ activate_stats_nerds(){
 script_dir=`pwd`
 adb_file=$script_dir"/adb-utils.sh"
 source $adb_file
-DURATION=30
+DURATION=20
 
 # cleanup the clipboard
 termux-clipboard-set "none"
@@ -60,15 +60,15 @@ do
 	if [ $? -ne 0 ] 
 	then 
 		activate_stats_nerds
-
 		# resume video we want 
 		am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
 	fi 
 
 	# update on time passed 
-	t_e=`date +%s`
-	let "t_p = t_s - t_e"
 	sleep 1 
+	t_e=`date +%s`
+	let "t_p = t_e - t_s"
+	echo "TimePassed: $t_p"
 done
 
 # stop playing 
