@@ -20,9 +20,9 @@ DURATION=30
 termux-clipboard-set "none"
 
 # lower all the volumes
-#sudo media volume --show --stream 3 --set 0  # media volume
-#sudo media volume --show --stream 1 --set 0	 # ring volume
-#sudo media volume --show --stream 4 --set 0	 # alarm volume
+#sudo media volume --stream 3 --set 0  # media volume
+#sudo media volume --stream 1 --set 0	 # ring volume
+#sudo media volume --stream 4 --set 0	 # alarm volume
 
 # make sure screen is ON
 turn_device_on
@@ -31,7 +31,7 @@ turn_device_on
 sudo pm clear com.google.android.youtube
 
 # launch YouTube 
-sudo monkey -p $com.google.android.youtube 1
+sudo monkey -p com.google.android.youtube 1
 sleep 10  # takes a while 
 
 # activate stats for nerds  
