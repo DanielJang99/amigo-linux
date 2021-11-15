@@ -6,9 +6,11 @@
 # activate stats for nerds  
 activate_stats_nerds(){
 	echo "Activating stats for nerds!!"
-	tap_screen 680 105 1
+	tap_screen 680 105 1 
+	tap_screen 680 105 1 
 	tap_screen 370 1125 
 }
+
 
 # import utilities files needed
 script_dir=`pwd`
@@ -27,20 +29,16 @@ termux-clipboard-set "none"
 # make sure screen is ON
 turn_device_on
 
-# clean youtube state 
-sudo pm clear com.google.android.youtube
+# clean youtube state  # FIXME
+#sudo pm clear com.google.android.youtube
 
 # launch YouTube 
-sudo monkey -p com.google.android.youtube 1
-sleep 10  # takes a while 
+#sudo monkey -p com.google.android.youtube 1
+#sleep 10  # takes a while 
 
-# activate stats for nerds  
-tap_screen 680 105 1 
-tap_screen 680 105 1 
-tap_screen 370 1125 
-
-#launch the target video 
+#launch the target video # assuming stats-for-nerds are enables
 am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
+sleep 5 
 
 # switch between portrait and landscape
 # ?? 
@@ -57,6 +55,17 @@ do
 	# dump clipboard 
 	termux-clipboard-get > ".clipboard"
 
+	# check if stats for nerds are there
+	cat ".clipboard" | grep "cplayer"
+	if [ $? -ne 0 ] 
+	then 
+		activate_stats_nerds
+
+		# resume video we want 
+		am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
+	fi 
+
+	# update on time passed 
 	t_e=`date +%s`
 	let "t_p = t_s - t_e"
 	sleep 1 
