@@ -9,9 +9,9 @@ adb_file=$script_dir"/adb-utils.sh"
 source $adb_file
 
 # lower all the volumes
-sudo media volume --show --stream 3 --set 5  # media volume
-sudo media volume --show --stream 1 --set 5	 # ring volume
-# Q: alarm volume? 
+sudo media volume --show --stream 3 --set 0  # media volume
+sudo media volume --show --stream 1 --set 0	 # ring volume
+sudo media volume --show --stream 4 --set 0	 # alarm volume
 
 # make sure screen is ON
 turn_device_on
