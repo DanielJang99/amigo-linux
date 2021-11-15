@@ -17,17 +17,22 @@ sudo media volume --show --stream 4 --set 0	 # alarm volume
 # make sure screen is ON
 turn_device_on
 
-# launch YouTube 
-am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
-sleep 1
+# clean youtube state 
+sudo pm clear com.google.android.youtube
 
-# switch between portrait and landscape
-# ?? 
+# launch YouTube 
+am start -a android.intent.action.VIEW 
 
 # activate stats for nerds  
 tap_screen 680 105 1 
+tap_screen 680 105 1 
 tap_screen 370 1125 
-exit -1 
+
+#launch the target video 
+am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
+
+# switch between portrait and landscape
+# ?? 
 
 # collect data 
 t_s=`date +%s`
