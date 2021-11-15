@@ -106,7 +106,7 @@ fi
 
 # external loop 
 to_run=`cat ".status"`
-myprint "Script will run with a 5 sec frequency. To stop: <<echo \"false\" > \".status\""
+myprint "Script will run with a $freq sec frequency. To stop: <<echo \"false\" > \".status\""
 last_loop_time=0
 while [ $to_run == "true" ] 
 do 
@@ -142,8 +142,8 @@ do
 	#wifi_iface=`ifconfig | grep "wlan" | cut -f 1 -d ":"`
 	#mobile_iface=`ifconfig | grep "data" | cut -f 1 -d ":"`
 	sudo dumpsys netstats > .data
-	wifi_iface=`grep WIFI | grep iface | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
-	mobile_iface=`cat .data | grep MOBILE | grep iface | head -n 1  | cut -f 2 -d "="`
+	wifi_iface=`cat .data grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
+	mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "="`
 	myprint "Discover wifi ($wifi_iface) and mobile ($mobile_iface)"
 	wifi_ip="None"
 	phone_wifi_ssid="None"
