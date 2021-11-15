@@ -1,13 +1,14 @@
 #!/bin/bash
 # folder organization
+suffix=`date +%d-%m-%Y`
+t_s=`date +%s`
+iface="wlan0"
 if [ $# -eq 2 ] 
 then
 	suffix=$1
 	t_s=$2
-else 
-	suffix=`date +%d-%m-%Y`
-	t_s=`date +%s`
-fi 
+	iface=$3
+fi  
 
 # run a speedtest 
 echo "[`date`] speedtest-cli..."
@@ -31,7 +32,7 @@ speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
 # TODO 
 
 # test multiple webages 
-./web-test.sh  $suffix $t_s
+./web-test.sh  --suffix $suffix --id $t_s --iface $iface
 
 # video testing
 # TODO 

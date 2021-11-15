@@ -147,8 +147,6 @@ do
 	fi 
 	
 	# understand WiFi and mobile phone connectivity
-	#wifi_iface=`ifconfig | grep "wlan" | cut -f 1 -d ":"`
-	#mobile_iface=`ifconfig | grep "data" | cut -f 1 -d ":"`
 	sudo dumpsys netstats > .data
 	wifi_iface=`cat .data | grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
 	mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
@@ -219,7 +217,13 @@ do
 	then 
 		if [ $num -eq 0 ] 
 		then 
-			(./net-testing.sh $suffix $current_time &)
+			if [ $wifi_ip == "none" ] 
+			then 
+				iface=$wifi_iface
+			else 
+				iface=$mobile_iface
+			fi 
+			(./net-testing.sh $suffix $current_time $iface >  logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
 			echo $current_time > ".last_net"
 		else 
 			myprint "Postponing net-testing since still running (numProc: $num)"
