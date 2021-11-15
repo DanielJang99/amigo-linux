@@ -264,7 +264,7 @@ do
 		# send status update to the server
 		myprint "Report to send: "
 		echo "$(generate_post_data)" 
-		timeout 10 curl  -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
+		timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
 		echo $current_time > ".last_report"
 	fi 
 	

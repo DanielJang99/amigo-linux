@@ -135,6 +135,7 @@ usage(){
     echo "USAGE: $0 --load,	--novideo"
     echo "================================================================================"
     echo "--load       Page load max duration"
+    echo "--iface      Network interface in use"
     echo "--novideo    Turn off video recording" 
     echo "================================================================================"
     exit -1
@@ -157,6 +158,9 @@ do
         --novideo)
             shift; video_recording="false";
             ;;
+        --iface)
+            shift; interface="$1"; shift;
+            ;;
         -h | --help)
             usage
             ;;
@@ -166,23 +170,6 @@ do
             ;;
     esac
 done
-
-# pick the right interface to monitor 
-ifconfig wlan0 | grep inet | grep "\." > /dev/null
-if [ $? -eq 0 ] 
-then 
-	interface="wlan0"
-else 
-	ifconfig rmnet_data0 | grep "inet" | grep "\." > /dev/null
-	if [ $? -eq 0 ]
-	then 
-		interface="rmnet_data0"
-	else 
-		echo "ERROR: no working interface was found! Assuming wlan0..."
-		interface="wlan0"
-		exit -1 
-	fi 
-fi 
 
 # folder creation
 suffix=`date +%d-%m-%Y`
