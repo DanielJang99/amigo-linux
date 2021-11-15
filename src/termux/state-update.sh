@@ -40,19 +40,6 @@ generate_post_data(){
 EOF
 }
 
-# turn device off
-turn_device_off(){
-    sudo dumpsys window | grep "mAwake=false"
-    if [ $? -eq 0 ]
-    then
-        myprint "Screen was OFF. Nothing to do"
-    else
-        sleep 2
-        myprint "Screen is ON. Turning off"
-        sudo input keyevent KEYCODE_POWER
-    fi
-}
-
 # compute current CPU usage 
 check_cpu(){
 	prev_total=0
@@ -68,7 +55,7 @@ check_cpu(){
 # parameters
 curr_time=`date +%s`                   # current time 
 freq=10                                # interval for checking things to do 
-REPORT_INTERVAL=60                     # interval of status reporting (seconds)
+REPORT_INTERVAL=180                    # interval of status reporting (seconds)
 NET_INTERVAL=600                       # interval of networking testing 
 package="com.example.sensorexample"    # our app 
 last_report_time="1635969639"          # last time a report was sent (init to an old time)
@@ -110,7 +97,6 @@ fi
 
 # make sure location setting is correct 
 # TODO
-
 
 # external loop 
 to_run=`cat ".status"`
@@ -239,14 +225,15 @@ do
 	myprint "Time from last report: $time_from_last_report sec"
 	if [ $time_from_last_report -gt $REPORT_INTERVAL ] 
 	then 
+		# check CPU usage (background)
+		check_cpu
+
 		# dump location information (only start googlemaps if not net-testing to avoid collusion)
 		res_dir="locationlogs/${suffix}"
 		mkdir -p $res_dir
 		if [ $num -eq 0 ] 
 		then 
-			# check CPU usage (background)
-			check_cpu &
-
+			turn_device_on
 			myprint "Launching googlemaps to improve location accuracy"
 			sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
 			sleep 5
@@ -257,10 +244,8 @@ do
 			#sleep 2 
 			#sudo input keyevent 66
 			sudo input keyevent KEYCODE_HOME
-		else 
-			myprint "Skipping maps launch since net-testing is running"
-			# check CPU usage  (foreground)
-			check_cpu &
+			turn_device_off
+			# screen back off 
 		fi 
 		sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
 		loc_str=`cat  $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
