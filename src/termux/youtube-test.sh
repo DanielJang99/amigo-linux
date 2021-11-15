@@ -25,25 +25,30 @@ sleep 1
 # ?? 
 
 # activate stats for nerds  
-# Q: how to know if off or not? 
-#tap_screen 680 105 1 
-#tap_screen 370 1125 
+tap_screen 680 105 1 
+tap_screen 370 1125 
+exit -1 
 
 # collect data 
 t_s=`date +%s`
-t_p=`date +%s`
+t_e=`date +%s`
 let "t_p = t_s - t_e"
-while [ $t_p -gt $DURATION ] 
+while [ $t_p -lt $DURATION ] 
 do 
 	# click to copy clipboard 
 	tap_screen 592 216 1
 
 	# dump clipboard 
 	termux-clipboard-get
-	t_p=`date +%s`
+	t_e=`date +%s`
 	let "t_p = t_s - t_e"
 	sleep 1 
 done
+
+# stop playing 
+sudo input keyevent KEYCODE_BACK
+sleep 2 
+tap_screen 670 1130 1 
 
 # turn device off when done
 turn_device_on
