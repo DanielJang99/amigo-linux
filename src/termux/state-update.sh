@@ -69,7 +69,7 @@ check_cpu(){
 curr_time=`date +%s`                   # current time 
 freq=10                                # interval for checking things to do 
 REPORT_INTERVAL=60                     # interval of status reporting (seconds)
-NET_INTERVAL=300                       # interval of networking testing 
+NET_INTERVAL=600                       # interval of networking testing 
 package="com.example.sensorexample"    # our app 
 last_report_time="1635969639"          # last time a report was sent (init to an old time)
 last_net="1635969639"                  # last time a net test was done (init to an old time) 
