@@ -27,20 +27,22 @@ termux-clipboard-set "none"
 # make sure screen is ON
 turn_device_on
 
+# clean youtube state 
+sudo pm clear com.google.android.youtube
+
 # launch YouTube 
+am start -a android.intent.action.VIEW 
+
+# activate stats for nerds  
+tap_screen 680 105 1 
+tap_screen 680 105 1 
+tap_screen 370 1125 
+
+#launch the target video 
 am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
-sleep 3
 
 # switch between portrait and landscape
 # ?? 
-
-# make sure stats-for-nerds are active
-cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
-if [ $? -ne 0 ] 
-then 
-	termux-clipboard-get > ".clipboard"
-	activate_stats_nerds
-fi 
 
 # collect data 
 t_s=`date +%s`
