@@ -75,6 +75,14 @@ last_report_time="1635969639"          # last time a report was sent (init to an
 last_net="1635969639"                  # last time a net test was done (init to an old time) 
 asked_to_charge="false"                # keep track if we already asked user to charge their phone
 
+
+# don't run if already running
+ps aux | grep "state-update.sh" | grep "bash" > /dev/null 
+if [ $? -ne 1 ] 
+then 
+	exit - 1
+fi 
+
 # retrieve unique ID for this device 
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 
