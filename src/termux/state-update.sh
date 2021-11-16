@@ -217,7 +217,8 @@ do
 			else 
 				iface=$mobile_iface
 			fi 
-			#(./net-testing.sh $suffix $current_time $iface >  logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+			(./net-testing.sh $suffix $current_time $iface >  logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+			num=1
 			echo $current_time > ".last_net"
 		else 
 			myprint "Postponing net-testing since still running (numProc: $num)"
@@ -249,7 +250,6 @@ do
 			#sudo input tap 630 550  # this GUI part might be moving...	
 			#sudo input tap 340 100 # searching then also require cleaning
 			#sudo input text "here"	
-			#sleep 2 
 			#sudo input keyevent 66
 			sudo input keyevent KEYCODE_HOME
 			turn_device_off
