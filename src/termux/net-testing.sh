@@ -1,8 +1,10 @@
 #!/bin/bash
-
 # import utilities files needed
 adb_file=`pwd`"/adb-utils.sh"
 source $adb_file
+
+#logging 
+echo "[`date`] net-testing START"
 
 # folder organization
 suffix=`date +%d-%m-%Y`
@@ -15,15 +17,6 @@ then
 	iface=$3
 fi  
 
-# test multiple webages 
-turn_device_on
-#./web-test.sh  --suffix $suffix --id $t_s --iface $iface
-
-# video testing
-./youtube-test.sh --suffix $suffix --id $t_s --iface $iface
-
-# save battery, screen off 
-turn_device_off
 # run a speedtest 
 echo "[`date`] speedtest-cli..."
 res_folder="speedtest-cli-logs/${suffix}"
@@ -44,3 +37,16 @@ speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
 
 # QUIC test? 
 # TODO 
+
+# test multiple webages 
+turn_device_on
+./web-test.sh  --suffix $suffix --id $t_s --iface $iface
+
+# video testing
+./youtube-test.sh --suffix $suffix --id $t_s --iface $iface
+
+# save battery, screen off 
+turn_device_off
+
+#logging 
+echo "[`date`] net-testing END"

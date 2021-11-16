@@ -116,7 +116,7 @@ do
 		activate_stats_nerds
 		tap_screen 592 216 1
 		termux-clipboard-get > ".clipboard"
-		cat ".clipboard" | grep "cplayer"
+		cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
 		if [ $? -eq 0 ] 
 		then
 			ready="true"		
