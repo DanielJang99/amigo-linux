@@ -6,9 +6,9 @@
 # activate stats for nerds  
 activate_stats_nerds(){
 	echo "Activating stats for nerds!!"
-	tap_screen 680 105 1 
-	tap_screen 680 105 1 
-	tap_screen 370 1125 
+	tap_screen 680 105 
+	tap_screen 680 105  
+	tap_screen 370 1125
 }
 
 
@@ -16,7 +16,7 @@ activate_stats_nerds(){
 script_dir=`pwd`
 adb_file=$script_dir"/adb-utils.sh"
 source $adb_file
-DURATION=20
+DURATION=30
 
 # cleanup the clipboard
 termux-clipboard-set "none"
@@ -30,15 +30,53 @@ termux-clipboard-set "none"
 turn_device_on
 
 # clean youtube state  # FIXME
-#sudo pm clear com.google.android.youtube
+sudo pm clear com.google.android.youtube
 
 # launch YouTube 
-#sudo monkey -p com.google.android.youtube 1
-#sleep 10  # takes a while 
+sudo monkey -p com.google.android.youtube 1
+sleep 10  # takes a while 
 
-#launch the target video # assuming stats-for-nerds are enables
+# re-enable stats for nerds for the app
+sudo input tap 665 100
+sleep 1 
+sudo input tap 370 1180
+sleep 1 
+sudo input tap 370 304
+sleep 1 
+sudo input tap 370 230 
+sleep 1 
+sudo input keyevent KEYCODE_BACK
+sleep 1
+sudo input tap 370 200
+sleep 1 
+sudo input swipe 370 500 370 100
+sleep 1 
+sudo input tap 370 1250
+
+#activate stats for nerds on rickroll video
 am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
-sleep 5 
+ready="false"
+while [ $ready == "false" ]
+do 
+	termux-clipboard-get > ".clipboard"
+	cat ".clipboard" | grep "cplayer"
+	if [ $? -ne 0 ] 
+	then 		
+		activate_stats_nerds
+		tap_screen 592 216 1
+		termux-clipboard-get > ".clipboard"
+		cat ".clipboard" | grep "cplayer"
+		if [ $? -eq 0 ] 
+		then
+			ready="true"		
+			echo "Ready to start!!"
+			cat ".clipboard"
+		fi
+	else
+		ready="true"		
+		echo "Ready to start!!"
+	fi
+done
 
 # switch between portrait and landscape
 # ?? 
@@ -53,16 +91,7 @@ do
 	tap_screen 592 216 1
 
 	# dump clipboard 
-	termux-clipboard-get > ".clipboard"
-
-	# check if stats for nerds are there
-	cat ".clipboard" | grep "cplayer"
-	if [ $? -ne 0 ] 
-	then 
-		activate_stats_nerds
-		# resume video we want 
-		am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
-	fi 
+	termux-clipboard-get 
 
 	# update on time passed 
 	sleep 1 
@@ -75,6 +104,9 @@ done
 sudo input keyevent KEYCODE_BACK
 sleep 2 
 tap_screen 670 1130 1 
+
+# go HOME
+sudo input keyevent KEYCODE_HOME
 
 # turn device off when done
 turn_device_on
