@@ -38,15 +38,15 @@ speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
 # QUIC test? 
 # TODO 
 
-# test multiple webages 
-turn_device_on
-./web-test.sh  --suffix $suffix --id $t_s --iface $iface
+# test multiple webages - skipping for now
+#turn_device_on
+#./web-test.sh  --suffix $suffix --id $t_s --iface $iface
 
-# video testing
-./youtube-test.sh --suffix $suffix --id $t_s --iface $iface
+# video testing - skipping for now
+#./youtube-test.sh --suffix $suffix --id $t_s --iface $iface
 
 # save battery, screen off 
-turn_device_off
+#turn_device_off
 
 #logging 
 echo "[`date`] net-testing END"
