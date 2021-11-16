@@ -14,6 +14,10 @@ else
     exit 1
 fi
 
+# import utilities files needed
+adb_file=`pwd`"/adb-utils.sh"
+source $adb_file
+
 # generate data to be POSTed to my server 
 generate_post_data(){
   cat <<EOF
