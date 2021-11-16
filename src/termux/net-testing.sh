@@ -1,4 +1,9 @@
 #!/bin/bash
+
+# import utilities files needed
+adb_file=`pwd`"/adb-utils.sh"
+source $adb_file
+
 # folder organization
 suffix=`date +%d-%m-%Y`
 t_s=`date +%s`

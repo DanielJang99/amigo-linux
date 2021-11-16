@@ -202,7 +202,7 @@ activity="com.google.android.apps.chrome.Main"
 myprint "[INFO] Cleaning browser data ($app-->$package)"
 sudo pm clear $package
 am start -n $package/$activity
-sleep 2
+sleep 10
 chrome_onboarding
 #browser_setup #FIXME => allow to skip chrome onboarding, but using a non working option
     
