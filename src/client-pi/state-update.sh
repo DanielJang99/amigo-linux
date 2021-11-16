@@ -14,10 +14,12 @@ generate_post_data(){
     "pi_free_space_GB":"${free_space}",
     "pi_cpu_util_perc":"${cpu_util}",
     "pi_mem_info":"${mem_info}", 
+    "pi_battery":"${pi_battery}",
     "phone_foreground_app":"${foreground}",
     "phone_wifi_ip":"${wifi_ip}",
     "phone_wifi_ssid":"${phone_wifi_ssid}",
-    "phone_mobile_ip":"${mobile_ip}"
+    "phone_mobile_ip":"${mobile_ip}",
+    "phone_battery":"${phone_battery}"
     }
 EOF
 }
@@ -96,6 +98,7 @@ adb_wifi="false"                     # flag to keep track if we are running ADB 
 last_report_time="1635969639"        # last time a report was sent (init to an old time)
 wifi="False"                         # keep track if pi is on wifi or not
 freq=5                               # frequency in seconds for checking things to do 
+asked_to_charge="false"              # keep track if we already asked user to charge their phone
 
 # folder and file organization 
 mkdir -p "./logs"
@@ -165,6 +168,32 @@ do
 			echo $current_time > ".last_report"
 		fi
 		continue
+	fi 
+
+	# get phone battery level
+	phone_battery=`adb -s $uid shell dumpsys battery | grep "level"  | cut -f 2 -d ":"`
+	charging=`adb -s $uid shell dumpsys battery | grep "AC powered"  | cut -f 2 -d ":"`
+	if [ $phone_battery -lt 20 -a $charging == "false" -a $asked_to_charge == "false" ] 
+	then 
+		echo "Prompting user to charge their phone..."
+		adb -s $uid shell am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Phone-battery-is-low.-Consider-charging!"
+		asked_to_charge="true"
+	else 
+		asked_to_charge="false"
+	fi 
+
+	# get PI sugar battery level
+	# FIXME (just a draft for now)
+	pi_battery=100
+	#echo "get battery" | nc -q 0 /tmp/pisugar-server.sock
+	#echo "get battery" | nc -U -q 0 127.0.0.1 8423
+	if [ $pi_battery -lt 20 -a $charging == "false" -a $asked_to_charge == "false" ] 
+	then 
+		echo "Prompting user to charge their pi..."
+		adb -s $uid shell am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Pi-battery-is-low.-Consider-charging!"
+		asked_to_charge="true"
+	else 
+		asked_to_charge="false"
 	fi 
 
 	# understand WiFi and mobile phone connectivity
@@ -252,23 +281,24 @@ do
 			if [ $last_comm_run == $comm_id ] 
 			then 
 				echo "Command $command ($comm_id) not allowed since it matches last command run!!"
+				let "time_passed = current_time - start_time"
 				continue
 			fi 
+
 			# verify is allowed command
 			if [ $command == "recharge" -o $command == "tether" -o $command == "connect" ] 
 			then 
 				# verify command is recent 
 				delta=`echo "$current_time $timestamp" | awk 'function abs(x){return ((x < 0.0) ? -x : x)} {print(abs($1 - $2))}'`
-				if [ $delta -lt 60 ]  #FIXME 
+				if [ $delta -lt 60 ] 
 				then 
 					echo "Command $command is allowed!!" 
 					echo $comm_id > ".last_command"
 					if [ $command == "recharge" ] 
 					then 
-						# prompt user to disconnect the USB cable
+						# inform the user 
 						adb -s $uid shell am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es lock "Preparing-the-device-please-wait..."
-						sleep 3 	
-
+						
 						# stop tethering if active 
 						echo "Stop tethering (if active)"
 						cd ../client-android/
@@ -276,13 +306,24 @@ do
 						cd - > /dev/null 
 						sleep 5 
 
-						# enable wifi over adb, if needed 
-						echo "Enable ADB over wifi"
-						enable_adb_wifi $uid
-						
-						# prompt user to disconnect the USB cable
-						echo "Prompting use to disconnect USB cable..."
-						adb -s $uid shell am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-disconnect-the-USB-cable"
+						# enable wifi over adb, if needed and possible 
+						pi_wifi=`iwgetid`
+						if [ $pi_wifi == "" ] 
+						then 
+							echo "Enable ADB over wifi"
+							enable_adb_wifi $uid
+										
+							#update uid to wifi
+							uid=`adb devices | grep -v "List" | grep "\." | cut -f 1`
+							
+							# prompt user to disconnect the USB cable
+							echo "Prompting user to disconnect USB cable..."
+							adb -s $uid shell am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-disconnect-the-USB-cable"
+						else 
+							# prompt user to disconnect the USB cable
+							echo "WiFi info is missing. Prompting user..."
+							adb -s $uid shell am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "WiFi-info-is-missing.-Please-add-and-redo"
+						fi 
 					elif [ $command == "tether" ] 
 					then 
 						# verify that cable is connected
@@ -311,13 +352,16 @@ do
 						uid=$usb_adb_id
 						
 						# enable tethering over USB
-						echo "Enable tethering (if active)"
+						echo "Enable tethering (if needed)"
 						cd ../client-android/
 						./activate-tethering.sh $uid start
 						cd - > /dev/null 
+
+						# make sure wifi interface has high priority (might fail with no wifi) 
+						sudo ifmetric wlan0 100
 						
-						# return to app screen 
-						adb -s $uid shell monkey -p $package 1
+						# return to app screen and signal user 
+						adb -s $uid shell am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "All-good!"
 					elif [ $command == "connect" ] 
 					then 
 						echo "Connecting to $ssid using password $password"
@@ -403,6 +447,7 @@ do
 	
 		# verify command was not just run
 		last_pi_comm_run=`cat ".last_command_pi"`
+		echo "==> $last_pi_comm_run -- $comm_id_pi"
 		if [ $last_pi_comm_run == $comm_id_pi ] 
 		then 
 			echo "Command $command_pi ($comm_id_pi) not allowed since it matches last command run!!"
