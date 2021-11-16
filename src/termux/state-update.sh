@@ -259,27 +259,40 @@ do
 	
 	# check if there is a new command to run
 	myprint "Checking if there is a command to execute (consider lowering/increasing frequency)..."
-	ans=`timeout 10 curl -s https://mobile.batterylab.dev:8082/piaction?id=$uid`
+	ans=`timeout 10 curl -s https://mobile.batterylab.dev:8082/action?id=$uid`
 	if [[ "$ans" == *"No command matching"* ]]
 	then
 		myprint "No command found"
 	else 
-		command_pi=`echo $ans  | cut -f 1 -d ";"`
-		comm_id_pi=`echo $ans  | cut -f 3 -d ";"`
-	
-		# verify command was not just run
-		last_pi_comm_run=`cat ".last_command_pi"`
-		#echo "==> $last_pi_comm_run -- $comm_id_pi"
-		if [ $last_pi_comm_run == $comm_id_pi ] 
-		then 
-			myprint "Command $command_pi ($comm_id_pi) not allowed since it matches last command run!!"
-		else 
-			eval $command_pi & 
-			ans=`timeout 10 curl -s https://mobile.batterylab.dev:8082/commandDone?id=$uid\&command_id=$comm_id_pi`
-			myprint "Informed server that command is being executed. ANS: $ans"
+		prev_command="none"
+		if [ -f ".prev_command" ] 
+		then
+			prev_command=`cat ".prev_command"`
 		fi 
-		echo $comm_id_pi > ".last_command_pi"
-		# FIXME: decide if to spawn from here, stop, etc. 
-		# FIXME: need a duration and some battery logic? Can be done at server too!
+		command=`echo $ans  | cut -f 1 -d ";"`
+		comm_id=`echo $ans  | cut -f 3 -d ";"`
+		duration=`echo $ans  | cut -f 4 -d ";"`	
+		background=`echo $ans  | cut -f 5 -d ";"`
+		myprint "Command:$command- ID:$comm_id - MaxDuration:$duration - IsBackground:$background - PrevCommand:$prev_command"
+
+		# verify command was not just run
+		if [ $prev_command == $comm_id ] 
+		then 
+			myprint "Command $command ($comm_id) not allowed since it matches last command run!!"
+		else 
+			if [ $background == "true" ] 
+			then 
+				timeout $duration eval $command & 
+				comm_status=$?
+				myprint "Command started in background. Status: $comm_status"
+			else 
+				timeout $duration eval $command
+				comm_status=$?
+				myprint "Command executed. Status: $comm_status"
+			fi 
+			ans=`timeout 10 curl -s https://mobile.batterylab.dev:8082/commandDone?id=$uid\&command_id=$comm_id_pi\&status=$comm_status`
+			myprint "Informed server about last command run. ANS: $ans"
+		fi 
+		echo $comm_id > ".prev_command"
 	fi 
 done
