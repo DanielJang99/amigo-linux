@@ -282,7 +282,7 @@ do
 		# verify command was not just run
 		if [ $prev_command == $comm_id ] 
 		then 
-			myprint "Command $command ($comm_id) not allowed since it matches last command run!!"
+			myprint "Command not allowed since it matches last command run!!"
 		else 
 			if [ $background == "true" ] 
 			then 
@@ -294,7 +294,7 @@ do
 				comm_status=$?
 				myprint "Command executed. Status: $comm_status"
 			fi 
-			ans=`timeout 10 curl -s https://mobile.batterylab.dev:8082/commandDone?id=$uid\&command_id=$comm_id_pi\&status=$comm_status`
+			ans=`timeout 10 curl -s "https://mobile.batterylab.dev:8082/commandDone?id=${uid}\&command_id=${comm_id}\&status=${comm_status}"`
 			myprint "Informed server about last command run. ANS: $ans"
 		fi 
 		echo $comm_id > ".prev_command"
