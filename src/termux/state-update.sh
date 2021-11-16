@@ -99,6 +99,9 @@ then
     sudo getenforce
 fi
 
+# find termuxt user 
+termux_user=`whoami`
+
 # make sure location setting is correct 
 # TODO
 
@@ -295,7 +298,7 @@ do
 				comm_status=$?
 				myprint "Command executed. Status: $comm_status"
 			fi 
-			ans=`timeout 10 curl -s "https://mobile.batterylab.dev:8082/commandDone?id=${uid}\&command_id=${comm_id}\&status=${comm_status}"`
+			ans=`timeout 10 curl -s "https://mobile.batterylab.dev:8082/commandDone?id=${uid}\&command_id=${comm_id}\&status=${comm_status}\&termuxUser=${termux_user}"`
 			myprint "Informed server about last command run. ANS: $ans"
 		fi 
 		echo $comm_id > ".prev_command"
