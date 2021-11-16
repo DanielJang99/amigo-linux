@@ -35,11 +35,13 @@ generate_post_data(){
     "wifi_ssid":"${wifi_ssid}",
     "wifi_info":"${wifi_info}",
     "wifi_qual":"${wifi_qual}",
+    "widfi_traffic":"${wifi_traffic}",
     "net_testing_proc":"${num}", 
     "mobile_iface":"$mobile_iface",
     "mobile_ip":"${mobile_ip}",
     "mobile_state":"${mobile_state}", 
-    "mobile_signal":"${mobile_signal}"
+    "mobile_signal":"${mobile_signal}",
+    "mobile_traffic":"${mobile_traffic}"
     }
 EOF
 }
@@ -155,13 +157,13 @@ do
 		sudo dumpsys wifi > ".wifi"
 		wifi_info=`cat ".wifi" | grep "mWifiInfo"`
 		wifi_qual=`cat ".wifi" | grep "mLastSignalLevel"`
-		# mWifiInfo
-		#mLastSignalLevel
+		wifi_traffic=`ifconfig $wifi_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 	else
 		wifi_ip="none"
 		wifi_ssid="none"
 		wifi_info="none"
 		wifi_qual="none"
+		wifi_traffic="none"
 	fi 
 
 	# get more mobile info if active 
@@ -171,10 +173,12 @@ do
 		sudo dumpsys telephony.registry > ".tel"
 		mobile_state=`cat ".tel" | grep "mServiceState" | head -n 1`
 		mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
+		mobile_traffic=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 	else 
 		mobile_state="none"
 		mobile_ip="none"
 		mobile_signal="none"
+		mobile_traffic="none"
 	fi 
 	myprint "Device info. Wifi: $wifi_ip Mobile: $mobile_ip"
 
