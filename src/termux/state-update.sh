@@ -143,12 +143,12 @@ do
 	myprint "Discover wifi ($wifi_iface) and mobile ($mobile_iface)"
 	wifi_ip="None"
 	phone_wifi_ssid="None"
-	wifi_ip=`ifconfig $wifi_iface | grep "\." | grep -v packets | awk '{print $2}'` 
-	if [ $? -eq 0 ] 
+
+	# get more wifi info if active 
+	if [ ! -z $wifi_iface ]
 	then 
-		# get WiFI SSID
+		wifi_ip=`ifconfig $wifi_iface | grep "\." | grep -v packets | awk '{print $2}'` 
 		wifi_ssid=`sudo dumpsys netstats | grep -E 'iface=wlan.*networkId' | head -n 1  | awk '{print $4}' | cut -f 2 -d "=" | sed s/","// | sed s/"\""//g`
-		# get more info
 		sudo dumpsys wifi > ".wifi"
 		wifi_info=`cat ".wifi" | grep "mWifiInfo"`
 		wifi_qual=`cat ".wifi" | grep "mLastSignalLevel"`
@@ -160,10 +160,11 @@ do
 		wifi_info="none"
 		wifi_qual="none"
 	fi 
-	mobile_ip=`ifconfig $mobile_iface | grep "\." | grep -v packets | awk '{print $2}'`
-	if [ $? -eq 0 ] 
+
+	# get more mobile info if active 
+	if [ ! -z $mobile_iface ]
 	then
-		# get mobile network info 
+		mobile_ip=`ifconfig $mobile_iface | grep "\." | grep -v packets | awk '{print $2}'`
 		sudo dumpsys telephony.registry > ".tel"
 		mobile_state=`cat ".tel" | grep "mServiceState" | head -n 1`
 		mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
