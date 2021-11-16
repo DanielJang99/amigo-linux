@@ -94,8 +94,8 @@ def web_app():
     # GET - ADD/REMOVE-ACL-RULE (localhost only)
     cherrypy.tree.mount(StringGeneratorWebService(), '/addACLRule', conf)
     cherrypy.tree.mount(StringGeneratorWebService(), '/removeACLRule', conf)
-    cherrypy.tree.mount(StringGeneratorWebService(), '/piaction', conf)        # for now query each rand(30) seconds
-    cherrypy.tree.mount(StringGeneratorWebService(), '/myaction', conf)        # query when kenzo app is in foreground
+    cherrypy.tree.mount(StringGeneratorWebService(), '/action', conf)        # for now query each rand(30) seconds
+    #cherrypy.tree.mount(StringGeneratorWebService(), '/myaction', conf)        # query when kenzo app is in foreground
     cherrypy.tree.mount(StringGeneratorWebService(), '/commandDone', conf)     # allow marking a command as done
 
     # POST/REPORT-MEASUREMENTS 
@@ -176,7 +176,7 @@ class StringGeneratorWebService(object):
 					cherrypy.response.status = 202
 					return "Rule could not be removed since not existing"
 		
-		# see if there is an action 
+		# see if there is a command
 		elif 'action' in cherrypy.url():
 			if 'id' not in cherrypy.request.params: 
 				cherrypy.response.status = 400
@@ -191,10 +191,9 @@ class StringGeneratorWebService(object):
 				print("User %s is supported" %(user_id))
 
 			# look for a potential action to be performed
-			if 'myaction' in cherrypy.url():
-				query = "select * from action_update where status = 'active' and tester_id = '" + user_id + "'"			
-			if 'piaction' in cherrypy.url(): 
-				query = "select * from pi_actions where status = 'active'" #FIXME: improve the query
+			query = "select * from commands where status = 'active'" #FIXME: improve the query
+			print(query)
+			('root-1637084748', '861272047248839', 'ssh -f -N -T -R 1032:localhost:8022 root@23.235.205.53', 10, 'false', 1637084748, 'active')
 			info, msg  = run_query(query)
 			#print(info, msg)
 			if info is None:
@@ -205,14 +204,16 @@ class StringGeneratorWebService(object):
 				print("WARNING: too many actions active at the same time. Returning most recent one")
 			max_timestamp = 0
 			for entry in info:
-				timestamp = entry[2]
+				timestamp = entry[5]
 				if timestamp > max_timestamp: 
 					max_timestamp = timestamp 
-					command = entry[4]
+					command = entry[2]
 					comm_id = entry[0]
+					duration = entry[3]
+					isBackground = entry[4]
 			
 			# all good 
-			ans = command + ";" + str(max_timestamp) + ";" + comm_id
+			ans = command + ';' + str(max_timestamp) + ';' + comm_id + ';' + str(duration) + ';' + isBackground + '\n'
 			print("All good. Returning: ", ans)
 			cherrypy.response.status = 200
 			return ans 
@@ -238,7 +239,7 @@ class StringGeneratorWebService(object):
 			command_id = cherrypy.request.params['command_id']
 
 			# look for a potential action to be performed
-			query = "update pi_actions set status = 'inactive' where command_id = '" + command_id + "'"
+			query = "update commands set status = 'inactive' where command_id = '" + command_id + "'"
 			#print("==>", query)
 			info, msg  = run_query(query)
 			#print(info, msg)

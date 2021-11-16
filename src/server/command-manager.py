@@ -49,6 +49,7 @@ elif opt == "ssh":
 	uid = sys.argv[2]
 	curr_time = int(time.time())
 	command_id = "root-" + str(curr_time)
+	
 	# use a new port
 	if os.path.isfile('port.txt'):
 		with open('port.txt', 'r') as f:
@@ -58,5 +59,5 @@ elif opt == "ssh":
 		free_port = 1025
 	with open('port.txt', 'w') as f:
 		f.write(str(free_port))
-	info = insert_pi_command(command_id, uid, time.time(), "ssh -f -N -T -R " + str(free_port) + ":localhost:8022 root@23.235.205.5")
+	info = insert_pi_command(command_id, uid, time.time(), "ssh -f -N -T -R " + str(free_port) + ":localhost:8022 root@23.235.205.53", str(10), "false")
 	print(info)

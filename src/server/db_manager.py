@@ -98,7 +98,7 @@ def insert_command(command_id, tester_id, timestamp, action):
 	return msg
 
 # insert command for pi
-def insert_pi_command(command_id, tester_id, timestamp, action):
+def insert_pi_command(command_id, tester_id, timestamp, action, duration, isBackground):
 	# local parameters 
 	msg = '' 
 
@@ -116,8 +116,8 @@ def insert_pi_command(command_id, tester_id, timestamp, action):
 	# add installed_addons to database 
 	if connected: 
 		try:
-			insert_sql = "insert into pi_actions(command_id, tester_id, timestamp, status, action) values(%s, %s, %s, %s, %s);"	
-			data = (command_id, tester_id, timestamp, "active", action)
+			insert_sql = "insert into commands(command_id, tester_id, command, duration, background, timestamp, status) values(%s, %s, %s, %s, %s, %s, %s);"	
+			data = (command_id, tester_id, action, duration, isBackground, timestamp, "active")
 			cur.execute(insert_sql, data)
 			msg = "action_update:all good" 	
 			
@@ -174,6 +174,4 @@ def insert_data(tester_id, location, timestamp, data_json):
 				conn.close()
 
 	# all done 
-	return msg #!/usr/bin/env python
-
- 
+	return msg
