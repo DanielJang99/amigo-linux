@@ -122,6 +122,7 @@ do
 			ready="true"		
 			echo "Ready to start!!"
 			cat ".clipboard" > $log_file
+			echo "" >> $log_file
 		fi
 	else
 		ready="true"		
@@ -144,6 +145,7 @@ do
 
 	# dump clipboard 
 	termux-clipboard-get >> $log_file
+	echo "" >> $log_file
 
 	# update on time passed 
 	sleep 1 
