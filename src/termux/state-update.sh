@@ -213,7 +213,7 @@ do
 			else 
 				iface=$mobile_iface
 			fi 
-			(./net-testing.sh $suffix $current_time $iface >  logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+			#(./net-testing.sh $suffix $current_time $iface >  logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
 			echo $current_time > ".last_net"
 		else 
 			myprint "Postponing net-testing since still running (numProc: $num)"
@@ -286,11 +286,11 @@ do
 		else 
 			if [ $background == "true" ] 
 			then 
-				timeout $duration eval $command & 
+				eval timeout $duration $command & 
 				comm_status=$?
 				myprint "Command started in background. Status: $comm_status"
 			else 
-				timeout $duration eval $command
+				eval timeout $duration $command
 				comm_status=$?
 				myprint "Command executed. Status: $comm_status"
 			fi 
