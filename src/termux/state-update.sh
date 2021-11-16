@@ -240,7 +240,7 @@ do
 			turn_device_on
 			myprint "Launching googlemaps to improve location accuracy"
 			sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
-			sleep 5
+			sleep 10
 			myprint "Verify it is enough to obtain fresh location information..."
 			#sudo input tap 630 550  # this GUI part might be moving...	
 			#sudo input tap 340 100 # searching then also require cleaning
