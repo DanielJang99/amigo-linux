@@ -22,9 +22,10 @@ source $adb_file
 generate_post_data(){
   cat <<EOF
     {
-    "timestamp":"${curr_time}",
+    "timestamp":"${current_time}",
     "uid":"${uid}",
-    "free_space_GB":"${free_space}",
+    "uptime:"${uptime_info},
+	"free_space_GB":"${free_space}",
     "cpu_util_perc":"${cpu_util}",
     "mem_info":"${mem_info}", 
     "battery_level":"${phone_battery}",
@@ -35,7 +36,7 @@ generate_post_data(){
     "wifi_ssid":"${wifi_ssid}",
     "wifi_info":"${wifi_info}",
     "wifi_qual":"${wifi_qual}",
-    "widfi_traffic":"${wifi_traffic}",
+    "wifi_traffic":"${wifi_traffic}",
     "net_testing_proc":"${num}", 
     "mobile_iface":"$mobile_iface",
     "mobile_ip":"${mobile_ip}",
@@ -59,7 +60,6 @@ check_cpu(){
 }
 
 # parameters
-curr_time=`date +%s`                   # current time 
 freq=10                                # interval for checking things to do 
 REPORT_INTERVAL=180                    # interval of status reporting (seconds)
 NET_INTERVAL=600                       # interval of networking testing 
@@ -262,6 +262,9 @@ do
 		sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
 		loc_str=`cat  $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
 
+		# get uptime
+		uptime_info=`uptime`
+
 		# send status update to the server
 		myprint "Report to send: "
 		echo "$(generate_post_data)" 
@@ -302,7 +305,7 @@ do
 				comm_status=$?
 				myprint "Command executed. Status: $comm_status"
 			fi 
-			ans=`timeout 10 curl -s "https://mobile.batterylab.dev:8082/commandDone?id=${uid}\&command_id=${comm_id}\&status=${comm_status}\&termuxUser=${termux_user}"`
+			ans=`timeout 10 curl -s "https://mobile.batterylab.dev:8082/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${termux_user}"`
 			myprint "Informed server about last command run. ANS: $ans"
 		fi 
 		echo $comm_id > ".prev_command"
