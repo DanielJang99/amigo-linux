@@ -95,7 +95,7 @@ run_test(){
 	sleep $load_time 
 
 	# take final screenshot 
-	perf_video="${res_folder}/${id}-${curr_run_id}.png"
+	screen_file="${res_folder}/${id}-${curr_run_id}.png"
 	sudo screencap -p $screen_file
 
 	# stop video recording and run we perf analysis
