@@ -46,18 +46,17 @@ load_file(){
     fi
 }
 
-
-# helper to extra last frame of a video
-last_video_frame(){
-	fn="$1"
- 	of="$2"
-	suffix=`echo $fn | awk -F "/" '{print $NF}'| cut -f 1 -d "."`
-	lf=`ffprobe -show_streams "$fn" 2> /dev/null | awk -F= '/^nb_frames/ { print $2-1 }'`
- 	rm -f "$of"
- 	#echo "ffmpeg -i \"$fn\" -vf \"select=\'eq(n,$lf)\'\" -vframes 1 \"$of\""
- 	ffmpeg -i "$fn" -vf "select='eq(n,$lf)'" -vframes 1 "$of" > "debvideologs/"$suffix".log" 2>&1
+# run video ananlysis for web perf
+visual(){
+	myprint "Running visualmetrics/visualmetrics.py (background - while visual prep is done)"
+	(python visualmetrics/visualmetrics.py --video $screen_video --viewport > $perf_video 2>&1 &)
+	ans=`cat $perf_video | grep "Speed Index"`
+	ans_more=`cat $perf_video | grep "Speed Index"`
+	myprint "VisualMetric - $perf_video - $ans $ans_more"
+	#(python visualmetrics/visualmetrics.py --video $final_screen_video --dir frames -q 75 --histogram histograms.json.gz --orange --viewport > $perf_video 2>&1 &)
 }
 
+# helper to extra last frame of a video
 # setup browser for next experiment
 browser_setup(){
 	myprint "Disabling welcome tour. NOTE: this only works in Chrome unfortunately"
@@ -95,6 +94,10 @@ run_test(){
 	# artificial time for page loading
 	sleep $load_time 
 
+	# take final screenshot 
+	perf_video="${res_folder}/${id}-${curr_run_id}.png"
+	sudo screencap -p $screen_file
+
 	# stop video recording and run we perf analysis
 	if [ $video_recording == "true" ]
 	then
@@ -107,14 +110,8 @@ run_test(){
 		sudo chown $USER:$USER $screen_video
 		if [ -f "visualmetrics/visualmetrics.py" ] 
 		then 
-			myprint "Running visualmetrics/visualmetrics.py (background - then should do browser prep...?)"
-			(python visualmetrics/visualmetrics.py --video $screen_video --viewport --orange > $perf_video 2>&1 &)
-			#(python visualmetrics/visualmetrics.py --video $final_screen_video --dir frames -q 75 --histogram histograms.json.gz --orange --viewport > $perf_video 2>&1 &)
+			visual &
 		fi 
-		
-		# extract last frame (also in the background) 
- 		#(ffmpeg -sseof -3 -i $final_screen_video -update 1 -q:v 1 $last_frame > /dev/null 2>&1 &)
- 		#(last_video_frame $final_screen_video $last_frame &)
 	fi	
 	
 	# update traffic rx (for this URL)
