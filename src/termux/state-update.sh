@@ -132,11 +132,15 @@ do
 	# get phone battery level
 	phone_battery=`sudo dumpsys battery | grep "level"  | cut -f 2 -d ":"`
 	charging=`sudo dumpsys battery | grep "AC powered"  | cut -f 2 -d ":"`
-	if [ $phone_battery -lt 20 -a $charging == "false" -a $asked_to_charge == "false" ] 
+	if [ $phone_battery -lt 20 -a $charging == "false" ] 
 	then 
-		myprint "Prompting user to charge their phone..." #FIXME 
-		am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Phone-battery-is-low.-Consider-charging!"
-		asked_to_charge="true"
+ 		if [ $asked_to_charge == "false" ] 
+		then 
+			myprint "Phone battery is low. Asking to recharge!"
+			termux-notification -c "Please charge your phone!" -t "recharge" --icon warning --prio high --vibrate pattern 500,500
+			am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Phone-battery-is-low.-Consider-charging!"
+			asked_to_charge="true"
+		fi 
 	else 
 		asked_to_charge="false"
 	fi 

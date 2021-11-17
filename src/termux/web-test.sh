@@ -76,32 +76,34 @@ run_test(){
     traffic_rx_last=$traffic_rx
     # myprint "[INFO] Abs. Bandwidth: $traffic_rx"
 
+	# attempt page load 
+	myprint "URL: $url PROTO: $PROTO  RES-FOLDER: $res_folder TIMEOUT: $MAX_DURATION"
+	t_launch=`date +%s`
+	am start -n $package/$activity -a $intent -d $url 
+	t_now=`date +%s`
+
 	# manage screen recording
 	if [ $video_recording == "true" ]
 	then
     	t=`date +%s`
     	screen_video="${res_folder}/${id}-${curr_run_id}.mp4"
     	perf_video="${res_folder}/${id}-${curr_run_id}.perf"
-	    (sudo screenrecord $screen_video &) #--bit-rate 1000000
+	    (sudo screenrecord $screen_video --time-limit $load_time &) #--bit-rate 1000000
 		myprint "Started screen recording on file: $screen_video"
 	fi
 
-	# attempt page load and har extraction
-	myprint "URL: $url PROTO: $PROTO  RES-FOLDER: $res_folder TIMEOUT: $MAX_DURATION"
-	t_launch=`date +%s`
-	am start -n $package/$activity -a $intent -d $url 
-	t_now=`date +%s`
+	# artificial time for page loading
 	sleep $load_time 
 
 	# stop video recording and run we perf analysis
 	if [ $video_recording == "true" ]
 	then
-		myprint "Stopping screen recording"
-		for pid in `sudo ps aux | grep "screenrecord" | grep $screen_video | awk '{print $2}'`
-		do  
-			sudo kill -9 $pid > /dev/null 2>&1
-		done
-		sleep 1
+		#myprint "Stopping screen recording"
+		#for pid in `sudo ps aux | grep "screenrecord" | grep $screen_video | awk '{print $2}'`
+		#do  
+		#	sudo kill -9 $pid > /dev/null 2>&1
+		#done
+		sleep 5
 		sudo chown $USER:$USER $screen_video
 		if [ -f "visualmetrics/visualmetrics.py" ] 
 		then 
