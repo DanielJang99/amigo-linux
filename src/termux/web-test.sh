@@ -49,9 +49,9 @@ load_file(){
 # run video ananlysis for web perf
 visual(){
 	myprint "Running visualmetrics/visualmetrics.py (background - while visual prep is done)"
-	(python visualmetrics/visualmetrics.py --video $screen_video --viewport > $perf_video 2>&1 &)
+	python visualmetrics/visualmetrics.py --video $screen_video --viewport > $perf_video 2>&1
 	ans=`cat $perf_video | grep "Speed Index"`
-	ans_more=`cat $perf_video | grep "Speed Index"`
+	ans_more=`cat $perf_video | grep "Last"`
 	myprint "VisualMetric - $perf_video - $ans $ans_more"
 	#(python visualmetrics/visualmetrics.py --video $final_screen_video --dir frames -q 75 --histogram histograms.json.gz --orange --viewport > $perf_video 2>&1 &)
 }
@@ -101,12 +101,7 @@ run_test(){
 	# stop video recording and run we perf analysis
 	if [ $video_recording == "true" ]
 	then
-		#myprint "Stopping screen recording"
-		#for pid in `sudo ps aux | grep "screenrecord" | grep $screen_video | awk '{print $2}'`
-		#do  
-		#	sudo kill -9 $pid > /dev/null 2>&1
-		#done
-		sleep 5
+		sleep 5 # allow things to finish (maybe can be saved)
 		sudo chown $USER:$USER $screen_video
 		if [ -f "visualmetrics/visualmetrics.py" ] 
 		then 
