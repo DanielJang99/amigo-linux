@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash 
+#!/bin/bash
 ## Notes: Collection of abd utils 
 ## Author: Matteo Varvello (Brave Software) 
 ## Date: 02/04/2019
@@ -33,31 +33,6 @@ tap_screen(){
     fi 
     sudo input tap $x $y
     sleep $t_comm
-}
-
-# OFF to ON and viceversa #FIXME 
-toggle_wifi(){
-    adb -s $device_id shell "input keyevent KEYCODE_HOME"
-    x_coord=`echo $screen_res | cut -f 1 -d "x" | awk '{print $1/2}'`
-	y_coord=`echo $screen_res | cut -f 2 -d "x" | awk '{print $1/2}'`
-	adb -s $device_id shell input swipe $x_coord 0 $x_coord $y_coord
-    # Q: can we generalize here?
-    if [ $device == "SM-J337A" ]
-    then
-        adb -s $device_id shell "input tap 40 118"
-    elif [ $device == "LM-X210" ]
-	then 
-		adb -s $device_id shell "input tap 175 132"
-    elif [ $device == "J7DUO" ]
-	then 
-		echo "adb -s $device_id shell \"input tap 27 186\""
-		adb -s $device_id shell "input tap 27 186"
-    elif [ $device == "E5PLAY" ]
-	then 
-		adb -s $device_id shell "input tap 198 82"
-	fi 
-    adb -s $device_id shell "input keyevent KEYCODE_HOME"
-	sleep 5 
 }
 
 # emulate user interaction with a page
@@ -143,7 +118,7 @@ turn_device_on(){
 	
 	while [ $is_on == "false" -a $num_tries -lt $max_attempts ]
 	do
-		sudo dumpsys window | grep "mAwake=false"
+		sudo dumpsys window | grep "mAwake=false" > /dev/null 
 		if [ $? -eq 0 ]
 		then
 			myprint "Screen was OFF. Turning ON (Attempt $num_tries/$max_attempts)"
@@ -162,7 +137,7 @@ turn_device_on(){
 
 # turn device off 
 turn_device_off(){	
-	sudo dumpsys window | grep "mAwake=false"
+	sudo dumpsys window | grep "mAwake=false" > /dev/null
 	if [ $? -eq 0 ]
 	then
 		myprint "Screen was OFF. Nothing to do" 
@@ -247,6 +222,60 @@ close_brave_tabs(){
 	tap_screen 640 1230 1
 	tap_screen 370 1048 1
 }
+
+# helper to init fast.com (seems to be crashing)
+init_fast_com(){
+	myprint "Init fast.com"
+	am start -n $browser_package/$browser_activity -d "https://fast.com"
+	sleep 30 
+	#tap_screen 370 830 1
+}
+
+# turn wifi on or off
+toggle_wifi(){
+	opt=$1
+	myprint "[toggle_wifi] Requested: $opt"
+	sudo input keyevent KEYCODE_HOME
+	wifiStatus="off"
+	/usr/bin/ifconfig wlan0 | grep "inet" | grep "\." > /dev/null
+	if [ $? -eq 0 ] 
+	then 
+		wifiStatus="on"
+	fi 
+	myprint "[toggle_wifi] Requested: $opt Status: $wifiStatus"
+	if [ $opt == "on" ] 
+	then 
+ 		if [ $wifiStatus == "off" ] 
+		then 
+			myprint "[toggle_wifi] swipe down"
+			sudo input swipe 370 0 370 500
+			sleep 5
+			myprint "[toggle_wifi] press"
+			tap_screen 300 100 2
+ 			myprint "[toggle_wifi] swipe up"
+			sudo input swipe 370 500 370 0
+		else 
+			myprint "Requested wifi ON and it is already ON"
+		fi 
+	elif [ $opt == "off" ] 
+	then
+		if [ $wifiStatus == "on" ] 
+		then 
+			myprint "[toggle_wifi] swipe down"
+			sudo input swipe 370 0 370 500
+			sleep 5 
+			myprint "[toggle_wifi] press"
+			tap_screen 300 100 2
+ 			myprint "[toggle_wifi] swipe up"
+			sudo input swipe 370 500 370 0
+		else 
+			myprint "Requested wifi OFF and it is already OFF"
+		fi 
+	else 
+		myprint "Option $opt not supported (on/off)"
+	fi 
+}
+
 
 # close all pending applications 
 close_all(){

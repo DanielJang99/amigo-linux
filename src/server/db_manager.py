@@ -58,7 +58,7 @@ def run_query(query):
 	# all good 
 	return info, msg 
 
-# insert command
+# insert command for pi
 def insert_command(command_id, tester_id, timestamp, action):
 	# local parameters 
 	msg = '' 
@@ -79,6 +79,45 @@ def insert_command(command_id, tester_id, timestamp, action):
 		try:
 			insert_sql = "insert into action_update(command_id, tester_id, timestamp, status, action) values(%s, %s, %s, %s, %s);"	
 			data = (command_id, tester_id, timestamp, "active", action)
+			cur.execute(insert_sql, data)
+			msg = "action_update:all good" 	
+			
+			# make database changes persistent 
+			conn.commit()
+
+		# handle exception 
+		except Exception as e:
+			msg += 'Exception: %s' % e    
+
+		# always close connection
+		finally:
+			if conn:
+				conn.close()
+
+	# all done 
+	return msg
+
+# insert command for pi
+def insert_pi_command(command_id, tester_id, timestamp, action, duration, isBackground):
+	# local parameters 
+	msg = '' 
+
+	# connecting to db 
+	connected = False 
+	try:
+		connected, conn, cur = connect_to_database()
+
+	# manage exception 
+	except psycopg2.DatabaseError as  e:
+		if conn:
+			conn.rollback()
+		msg = 'Issue connecting to database. Error %s' % e    
+
+	# add installed_addons to database 
+	if connected: 
+		try:
+			insert_sql = "insert into commands(command_id, tester_id, command, duration, background, timestamp, status) values(%s, %s, %s, %s, %s, %s, %s);"	
+			data = (command_id, tester_id, action, duration, isBackground, timestamp, "active")
 			cur.execute(insert_sql, data)
 			msg = "action_update:all good" 	
 			
@@ -135,6 +174,4 @@ def insert_data(tester_id, location, timestamp, data_json):
 				conn.close()
 
 	# all done 
-	return msg #!/usr/bin/env python
-
- 
+	return msg

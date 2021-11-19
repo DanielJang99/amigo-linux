@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/bin/bash
 ## Author: Matteo Varvello (varvello@gmail.com)
 ## Date: 11-10-2020
 ## NOTE: Tool to test perf of multiple CDNs
@@ -125,8 +125,14 @@ then
 fi 
 
 # common test identifier 
-uid=`date +%d-%M-%Y`
-ts=`date +%s`
+if [ $# -eq 2 ]
+then
+	uid=$1
+	ts=$2
+else 
+    uid=`date +%d-%m-%Y`
+    ts=`date +%s`
+fi 
 
 # folder organiztion 
 res_folder="./cdnlogs/$uid"

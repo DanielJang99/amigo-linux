@@ -1,6 +1,6 @@
-#!/bin/bash 
+#!/bin/bash
 ## Notes: Common functions across cripts 
-## Author: Matteo Varvello (Brave Software)
+## Author: Matteo Varvello (Nokia)
 ## Date: 04/10/2019
 
 # import util file
@@ -22,17 +22,17 @@ compute_bandwidth(){
 	prev_traffic=$1
     
 	# for first run, just report on current traffic	
-	curr_traffic=`cat /proc/net/xt_qtaguid/stats | grep $interface | awk '{traffic += $6}END{print traffic}'`
-    myprint "[INFO] Current traffic rx by $app: $curr_traffic"
+	#curr_traffic=`cat /proc/net/xt_qtaguid/stats | grep $interface | awk '{traffic += $6}END{print traffic}'`
+	curr_traffic=`ifconfig $interface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
+    myprint "[INFO] Current traffic rx: $curr_traffic"
     if [ -z $prev_traffic ]
     then
 		traffic="-1"
 		return -1
 	fi 
-
     if [ -z $curr_traffic ]
     then
-        myprint "[ERROR] Something went wrong in bandwidth calculcation"
+        myprint "[ERROR] Something went wrong in bandwidth calculation"
 		traffic="-1"
 		return -1
 	fi 
