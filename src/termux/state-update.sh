@@ -22,6 +22,7 @@ source $adb_file
 generate_post_data(){
   cat <<EOF
     {
+	"today":"${suffix}, 
     "timestamp":"${current_time}",
     "uid":"${uid}",
     "uptime:"${uptime_info},
@@ -36,13 +37,13 @@ generate_post_data(){
     "wifi_ssid":"${wifi_ssid}",
     "wifi_info":"${wifi_info}",
     "wifi_qual":"${wifi_qual}",
-    "wifi_traffic":"${wifi_traffic}",
+    "today_wifi_data":"${wifi_data}",
     "net_testing_proc":"${num}", 
     "mobile_iface":"$mobile_iface",
     "mobile_ip":"${mobile_ip}",
     "mobile_state":"${mobile_state}", 
     "mobile_signal":"${mobile_signal}",
-    "mobile_traffic":"${mobile_traffic}"
+    "today_mobile_data":"${mobile_data}"
     }
 EOF
 }
@@ -67,6 +68,9 @@ package="com.example.sensorexample"    # our app
 last_report_time="1635969639"          # last time a report was sent (init to an old time)
 last_net="1635969639"                  # last time a net test was done (init to an old time) 
 asked_to_charge="false"                # keep track if we already asked user to charge their phone
+prev_wifi_traffic=0                    # keep track of wifi traffic used today
+prev_mobile_traffic=0                  # keep track of mobile traffic used today
+MAX_MOBILE_GB=3                        # maximum mobile data usage per day
 
 # don't run if already running
 #ps aux | grep "state-update.sh" | grep "bash" > .ps
@@ -79,8 +83,13 @@ asked_to_charge="false"                # keep track if we already asked user to 
 # retrieve unique ID for this device 
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 
+# derive B from GB
+let "MAX_MOBILE = MAX_MOBILE_GB * 1000000000"
+
 # folder and file organization 
 mkdir -p "./logs"
+mkdir -p "./data/wifi"
+mkdir -p "./data/mobile"
 if [ ! -f ".last_command" ] 
 then 
 	echo "testing" > ".last_command"
@@ -124,6 +133,20 @@ do
 	to_run=`cat ".status"`
 	current_time=`date +%s`
 	suffix=`date +%d-%m-%Y`
+
+	# get update on data sent/received
+	wifi_today_file="./data/wifi/"$suffix".txt"
+	mobile_today_file="./data/mobile/"$suffix".txt"
+	wifi_data=0
+	mobile_data=0
+	if [ -f $wifi_today_file ] 
+	then 
+		wifi_data=`cat $wifi_today_file`
+	fi 
+	if [ -f $mobile_today_file ] 
+	then 
+		cat $mobile_today_file
+	fi 
 	
 	# check simple stats
 	free_space=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
@@ -154,6 +177,7 @@ do
 	phone_wifi_ssid="None"
 
 	# get more wifi info if active 
+	def_iface="none"
 	if [ ! -z $wifi_iface ]
 	then 
 		wifi_ip=`ifconfig $wifi_iface | grep "\." | grep -v packets | awk '{print $2}'` 
@@ -162,6 +186,15 @@ do
 		wifi_info=`cat ".wifi" | grep "mWifiInfo"`
 		wifi_qual=`cat ".wifi" | grep "mLastSignalLevel"`
 		wifi_traffic=`ifconfig $wifi_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
+		def_iface=$wifi_iface
+	
+		# update data consumed 
+		if [ $prev_wifi_traffic != 0 ] 
+		then 
+			let "wifi_data += (wifi_traffic - prev_wifi_traffic)"
+			echo $wifi_data > $wifi_today_file
+		fi 
+		prev_wifi_traffic=$wifi_traffic
 	else
 		wifi_ip="none"
 		wifi_ssid="none"
@@ -169,7 +202,6 @@ do
 		wifi_qual="none"
 		wifi_traffic="none"
 	fi 
-
 	# get more mobile info if active 
 	if [ ! -z $mobile_iface ]
 	then
@@ -178,13 +210,23 @@ do
 		mobile_state=`cat ".tel" | grep "mServiceState" | head -n 1`
 		mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
 		mobile_traffic=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
+		if [ $def_iface == "none" ] 
+		then
+			def_iface=$mobile_iface
+		fi 
+		if [ $prev_mobile_traffic != 0 ] 
+		then 
+			let "mobile_data += (mobile_traffic - prev_mobile_traffic)"
+			echo $mobile_data > $mobile_today_file
+		fi 
+		prev_mobile_traffic=$mobile_traffic
 	else 
 		mobile_state="none"
 		mobile_ip="none"
 		mobile_signal="none"
 		mobile_traffic="none"
 	fi 
-	myprint "Device info. Wifi: $wifi_ip Mobile: $mobile_ip"
+	myprint "Device info. Wifi: $wifi_ip Mobile: $mobile_ip DefaultIface: $def_iface"
 
 	# make sure device identifier is updated in the app  -- do we even need an app? 
 	#ls "/storage/emulated/0/Android/data/com.example.sensorexample/files/" > /dev/null 2>&1
@@ -215,19 +257,23 @@ do
 	fi 
 	let "time_from_last_net = current_time - last_net"
 	myprint "Time from last net: $time_from_last_net sec"
-	if [ $time_from_last_net -gt $NET_INTERVAL ] 
+	if [ $time_from_last_net -gt $NET_INTERVAL ] # if it is time 
 	then 
-		if [ $num -eq 0 ] 
-		then 
-			if [ $wifi_ip == "none" ] 
-			then 
-				iface=$wifi_iface
+		if [ $num -eq 0 ]                       # if previous test is not still running 
+		then 	
+			if [ $def_iface != "none" ]         # if a connectivity is found
+			then
+				if [ $def_iface == $mobile_iface -a $mobile_data -gt $MAX_MOBILE ]      # if enough mobile data is available 
+				then 
+					myprint "Skipping net-testing since we are on mobile and data limit passed ($mobile_data -> $MAX_MOBILE)"
+				else 
+					(./net-testing.sh $suffix $current_time $iface >  logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+					num=1
+					echo $current_time > ".last_net"
+				fi 
 			else 
-				iface=$mobile_iface
+				myprint "Skipping net-testing since no connection was found" 
 			fi 
-			(./net-testing.sh $suffix $current_time $iface >  logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
-			num=1
-			echo $current_time > ".last_net"
 		else 
 			myprint "Postponing net-testing since still running (numProc: $num)"
 		fi 
@@ -248,20 +294,14 @@ do
 		# dump location information (only start googlemaps if not net-testing to avoid collusion)
 		res_dir="locationlogs/${suffix}"
 		mkdir -p $res_dir
-		if [ $num -eq 0 ] 
+		if [ ! -f ".locked" ] 
 		then 
 			turn_device_on
 			myprint "Launching googlemaps to improve location accuracy"
 			sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
 			sleep 10
-			myprint "Verify it is enough to obtain fresh location information..."
-			#sudo input tap 630 550  # this GUI part might be moving...	
-			#sudo input tap 340 100 # searching then also require cleaning
-			#sudo input text "here"	
-			#sudo input keyevent 66
 			sudo input keyevent KEYCODE_HOME
 			turn_device_off
-			# screen back off 
 		fi 
 		sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
 		loc_str=`cat  $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`

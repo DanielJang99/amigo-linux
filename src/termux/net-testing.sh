@@ -28,6 +28,22 @@ speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
 
 # run NYU stuff 
 # TODO 
+#turn_device_on
+# switch to 3G 
+#am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
+#tap_screen 370 765 1 
+#tap_screen 370 765 1 
+#tap_screen 370 660
+#sudo input keyevent KEYCODE_BACK  
+
+# switch back to 4G 
+#am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
+#tap_screen 370 765 1 
+#tap_screen 370 765 1 
+#tap_screen 370 560
+#sudo input keyevent KEYCODE_BACK
+#turn_device_off
+
 
 # run multiple MTR
 ./mtr.sh $suffix $t_s
@@ -38,15 +54,17 @@ speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
 # QUIC test? 
 # TODO 
 
-# test multiple webages - skipping for now
-#turn_device_on
-#./web-test.sh  --suffix $suffix --id $t_s --iface $iface
+# test multiple webages
+turn_device_on
+touch ".locked"
+./web-test.sh  --suffix $suffix --id $t_s --iface $iface
 
 # video testing - skipping for now
 #./youtube-test.sh --suffix $suffix --id $t_s --iface $iface
 
 # save battery, screen off 
-#turn_device_off
+turn_device_off
+rm ".locked"
 
 #logging 
 echo "[`date`] net-testing END"
