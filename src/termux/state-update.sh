@@ -32,14 +32,14 @@ generate_post_data(){
     "battery_level":"${phone_battery}",
     "location_info":"${loc_str}",
     "foreground_app":"${foreground}",
+    "net_testing_proc":"${num}", 
     "wifi_iface":"${wifi_iface}", 
     "wifi_ip":"${wifi_ip}",
     "wifi_ssid":"${wifi_ssid}",
     "wifi_info":"${wifi_info}",
     "wifi_qual":"${wifi_qual}",
     "today_wifi_data":"${wifi_data}",
-    "net_testing_proc":"${num}", 
-    "mobile_iface":"{$mobile_iface}",
+    "mobile_iface":"${mobile_iface}",
     "mobile_ip":"${mobile_ip}",
     "mobile_state":"${mobile_state}", 
     "mobile_signal":"${mobile_signal}",
@@ -228,7 +228,6 @@ do
 	fi 
 	myprint "Device info. Wifi: $wifi_ip Mobile: $mobile_ip DefaultIface: $def_iface"
 
-	# make sure device identifier is updated in the app  -- do we even need an app? 
 	#ls "/storage/emulated/0/Android/data/com.example.sensorexample/files/" > /dev/null 2>&1
 	#if [ $? -ne 0 ]
 	#then 
@@ -314,7 +313,6 @@ do
 		echo "$(generate_post_data)" 
 		timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
 		echo $current_time > ".last_report"
-		exit -1 
 	fi 
 	
 	# check if there is a new command to run
