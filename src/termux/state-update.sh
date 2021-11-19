@@ -116,6 +116,9 @@ termux_user=`whoami`
 # make sure location setting is correct 
 # TODO
 
+# TEMP
+termux-wifi-enable false
+
 # external loop 
 to_run=`cat ".status"`
 myprint "Script will run with a $freq sec frequency. To stop: <<echo \"false\" > \".status\""
