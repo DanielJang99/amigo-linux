@@ -118,7 +118,7 @@ turn_device_on(){
 	
 	while [ $is_on == "false" -a $num_tries -lt $max_attempts ]
 	do
-		sudo dumpsys window | grep "mAwake=false"
+		sudo dumpsys window | grep "mAwake=false" > /dev/null 
 		if [ $? -eq 0 ]
 		then
 			myprint "Screen was OFF. Turning ON (Attempt $num_tries/$max_attempts)"
@@ -137,7 +137,7 @@ turn_device_on(){
 
 # turn device off 
 turn_device_off(){	
-	sudo dumpsys window | grep "mAwake=false"
+	sudo dumpsys window | grep "mAwake=false" > /dev/null
 	if [ $? -eq 0 ]
 	then
 		myprint "Screen was OFF. Nothing to do" 
