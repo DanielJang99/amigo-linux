@@ -304,7 +304,7 @@ do
 			turn_device_off
 		fi 
 		sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
-		loc_str=`cat  $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
+		loc_str=`cat $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
 
 		# get uptime
 		uptime_info=`uptime`
@@ -314,6 +314,7 @@ do
 		echo "$(generate_post_data)" 
 		timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
 		echo $current_time > ".last_report"
+		exit -1 
 	fi 
 	
 	# check if there is a new command to run
