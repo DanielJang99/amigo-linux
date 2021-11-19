@@ -25,7 +25,7 @@ generate_post_data(){
     "today":"${suffix}", 
     "timestamp":"${current_time}",
     "uid":"${uid}",
-    "uptime:"${uptime_info}",
+    "uptime":"${uptime_info}",
     "free_space_GB":"${free_space}",
     "cpu_util_perc":"${cpu_util}",
     "mem_info":"${mem_info}", 
@@ -307,8 +307,7 @@ do
 		loc_str=`cat $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
 
 		# get uptime
-		#uptime_info=`uptime`
-		uptime_info="none"
+		uptime_info=`uptime`
 
 		# send status update to the server
 		myprint "Report to send: "
