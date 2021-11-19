@@ -307,7 +307,8 @@ do
 		loc_str=`cat $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
 
 		# get uptime
-		uptime_info=`uptime`
+		#uptime_info=`uptime`
+		uptime_info="none"
 
 		# send status update to the server
 		myprint "Report to send: "
