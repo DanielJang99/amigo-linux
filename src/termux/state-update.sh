@@ -22,11 +22,11 @@ source $adb_file
 generate_post_data(){
   cat <<EOF
     {
-	"today":"${suffix}, 
+    "today":"${suffix}, 
     "timestamp":"${current_time}",
     "uid":"${uid}",
     "uptime:"${uptime_info},
-	"free_space_GB":"${free_space}",
+    "free_space_GB":"${free_space}",
     "cpu_util_perc":"${cpu_util}",
     "mem_info":"${mem_info}", 
     "battery_level":"${phone_battery}",
