@@ -4,7 +4,6 @@
 ## Date: 11/15/2021
 
 # don't run if already running
-.isDebug="true"
 if [ -f ".isDebug" ] 
 then 
 	debug=`cat .isDebug`
