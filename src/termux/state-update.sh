@@ -22,7 +22,7 @@ source $adb_file
 generate_post_data(){
   cat <<EOF
     {
-    "today":"${suffix}, 
+    "today":"${suffix}", 
     "timestamp":"${current_time}",
     "uid":"${uid}",
     "uptime:"${uptime_info},
@@ -145,7 +145,7 @@ do
 	fi 
 	if [ -f $mobile_today_file ] 
 	then 
-		cat $mobile_today_file
+		mobile_data=`cat $mobile_today_file`
 	fi 
 	
 	# check simple stats
