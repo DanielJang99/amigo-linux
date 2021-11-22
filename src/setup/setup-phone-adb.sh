@@ -22,6 +22,15 @@ termux_pack="com.termux"          # termux package
 termux_boot="com.termux.boot"     # termux boot package 
 termux_api="com.termux.api"       # termux API package 
 
+# verify phone is on wifi
+wifi_iface=`cat .data | grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
+if [ ! -z $wifi_iface ]
+    wifi_ip=`ifconfig $wifi_iface | grep "\." | grep -v packets | awk '{print $2}'`
+else 
+    echo "ERROR. Phone $device_id is not on wifi"
+    exit -1 
+fi 
+
 # install Fdroid
 adb -s $device_id shell 'pm list packages -f' | grep $fdroid_pack > /dev/null
 to_install=$?
@@ -140,15 +149,14 @@ adb -s $device_id shell input text "passwd"
 adb -s $device_id shell "input keyevent KEYCODE_ENTER"
 adb -s $device_id  shell input text "$password"
 adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-ip_add=`adb -s $device_id  shell "ifconfig wlan0" | grep "\." | grep -v packets | awk '{print $2}' | cut -f 2 -d ":"`
 
 # SSH preparation
 sudo apt install -y sshpass
-sshpass -p "$password" ssh -p 8022 $ip_add "mkdir -p .ssh"
-sshpass -p "$password" scp -P 8022 $key $ip_add:.ssh 
-sshpass -p "$password" scp -P 8022 "authorized_keys" $ip_add:.ssh 
-scp -i $key -P 8022 "config" $ip_add:.ssh
-scp -i $key -P 8022 "bashrc" $ip_add:.bashrc
+sshpass -p "$password" ssh -p 8022 $wifi_ip "mkdir -p .ssh"
+sshpass -p "$password" scp -P 8022 $key $wifi_ip:.ssh 
+sshpass -p "$password" scp -P 8022 "authorized_keys" $wifi_ip:.ssh 
+scp -i $key -P 8022 "config" $wifi_ip:.ssh
+scp -i $key -P 8022 "bashrc" $wifi_ip:.bashrc
 
 
 # install apps needed -- TODO
@@ -169,8 +177,8 @@ adb -s $device_id shell "input keyevent KEYCODE_HOME"
 # googlemaps, chrome, youtube
 
 # clone code and run phone prepping script
-ssh -i $key -p 8022 $ip_add "pkg install -y git"
-ssh -i $key -p 8022 $ip_add "git clone git@github.com:svarvel/mobile-testbed.git"
-ssh -i $key -p 8022 $ip_add "cd mobile-testbed/src/setup && ./phone-prepping.sh"
-ssh -i $key -p 8022 $ip_add "echo \"true\" > \"mobile-testbed/src/termux/.isDebug\""
+ssh -i $key -p 8022 $wifi_ip "pkg install -y git"
+ssh -i $key -p 8022 $wifi_ip "git clone git@github.com:svarvel/mobile-testbed.git"
+ssh -i $key -p 8022 $wifi_ip "cd mobile-testbed/src/setup && ./phone-prepping.sh"
+ssh -i $key -p 8022 $wifi_ip "echo \"true\" > \"mobile-testbed/src/termux/.isDebug\""
 #echo "false" > "mobile-testbed/src/termux/.isDebug"
