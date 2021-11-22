@@ -79,8 +79,29 @@ sshpass -p "$password" ssh -p 8022 $ip_add "mkdir -p .ssh"
 sshpass -p "$password" scp -P 8022 $key $ip_add:.ssh 
 sshpass -p "$password" scp -P 8022 "authorized_keys" $ip_add:.ssh 
 scp -i $key -P 8022 "config" $ip_add:.ssh
+scp -i $key -P 8022 "bashrc" $ip_add:.bashrc
 
-# clone code and run phone prepping scritp
+
+# install apps needed -- TODO
+adb -s $device_id monkey -p com.android.vending 1 
+adb -s $device_id shell "input tap 340 100"
+adb -s $device_id shell input text "google\ maps"
+adb -s $device_id shell "input tap 665 1225"
+adb -s $device_id shell "input tap 600 250"
+
+adb -s $device_id shell "input tap 340 100"
+adb -s $device_id shell input keyevent --longpress $(printf 'KEYCODE_DEL %.0s' {1..20})
+adb -s $device_id shell input text "youtube"
+adb -s $device_id shell "input tap 665 1225"
+adb -s $device_id shell "input tap 600 250"
+adb -s $device_id shell "input keyevent KEYCODE_HOME"
+
+
+# googlemaps, chrome, youtube
+
+# clone code and run phone prepping script
 ssh -i $key -p 8022 $ip_add "pkg install -y git"
 ssh -i $key -p 8022 $ip_add "git clone git@github.com:svarvel/mobile-testbed.git"
 ssh -i $key -p 8022 $ip_add "cd mobile-testbed/src/setup && ./phone-prepping.sh"
+ssh -i $key -p 8022 $ip_add "echo \"true\" > \"mobile-testbed/src/termux/.isDebug\""
+#echo "false" > "mobile-testbed/src/termux/.isDebug"
