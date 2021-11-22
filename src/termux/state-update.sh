@@ -78,6 +78,8 @@ if [ $# -eq 1 ]
 then 
 	testing="true"
 fi 
+echo "$testing"
+exit -1 
 
 # retrieve unique ID for this device 
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
@@ -369,7 +371,8 @@ do
 
 	# stop here if testing 
 	if [ $testing == "true" ] 
-	then 
+	then
+		myprint "One simple test was requested, interrupting!" 
 		break
 	fi 
 done
