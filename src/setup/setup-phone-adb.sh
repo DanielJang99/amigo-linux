@@ -6,9 +6,9 @@
 # check input 
 if [ $# -ne 1 ] 
 then
-    echo "============================="
+    echo "==========================================="
     echo "USAGE: $0 adb-device-id"
-    echo "============================="
+    echo "==========================================="
     exit -1 
 fi 
 
@@ -23,8 +23,10 @@ termux_boot="com.termux.boot"     # termux boot package
 termux_api="com.termux.api"       # termux API package 
 
 # verify phone is on wifi
+sudo dumpsys netstats > .data
 wifi_iface=`cat .data | grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
 if [ ! -z $wifi_iface ]
+then 
     wifi_ip=`ifconfig $wifi_iface | grep "\." | grep -v packets | awk '{print $2}'`
 else 
     echo "ERROR. Phone $device_id is not on wifi"
