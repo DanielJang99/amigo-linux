@@ -99,6 +99,10 @@ then
 	echo "testing" > ".last_command_pi"
 fi 
 echo "true" > ".status"
+if [ ! -f ".net_status" ] 
+then
+	echo "false" > ".net_status"
+fi 
 
 # make sure SELinux is permissive
 ans=`sudo getenforce`
@@ -115,9 +119,6 @@ termux_user=`whoami`
 
 # make sure location setting is correct 
 # TODO
-
-# TEMP
-termux-wifi-enable false
 
 # external loop 
 to_run=`cat ".status"`
@@ -150,27 +151,7 @@ do
 	then 
 		mobile_data=`cat $mobile_today_file`
 	fi 
-	
-	# check simple stats
-	free_space=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
-	mem_info=`free -m | grep "Mem" | awk '{print "Total:"$2";Used:"$3";Free:"$4";Available:"$NF}'`
 
-	# get phone battery level
-	phone_battery=`sudo dumpsys battery | grep "level"  | cut -f 2 -d ":"`
-	charging=`sudo dumpsys battery | grep "AC powered"  | cut -f 2 -d ":"`
-	if [ $phone_battery -lt 20 -a $charging == "false" ] 
-	then 
- 		if [ $asked_to_charge == "false" ] 
-		then 
-			myprint "Phone battery is low. Asking to recharge!"
-			termux-notification -c "Please charge your phone!" -t "recharge" --icon warning --prio high --vibrate pattern 500,500
-			am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Phone-battery-is-low.-Consider-charging!"
-			asked_to_charge="true"
-		fi 
-	else 
-		asked_to_charge="false"
-	fi 
-	
 	# understand WiFi and mobile phone connectivity
 	sudo dumpsys netstats > .data
 	wifi_iface=`cat .data | grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
@@ -231,6 +212,26 @@ do
 	fi 
 	myprint "Device info. Wifi: $wifi_ip Mobile: $mobile_ip DefaultIface: $def_iface"
 
+	# check simple stats
+	free_space=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
+	mem_info=`free -m | grep "Mem" | awk '{print "Total:"$2";Used:"$3";Free:"$4";Available:"$NF}'`
+
+	# get phone battery level
+	phone_battery=`sudo dumpsys battery | grep "level"  | cut -f 2 -d ":"`
+	charging=`sudo dumpsys battery | grep "AC powered"  | cut -f 2 -d ":"`
+	if [ $phone_battery -lt 20 -a $charging == "false" ] 
+	then 
+ 		if [ $asked_to_charge == "false" ] 
+		then 
+			myprint "Phone battery is low. Asking to recharge!"
+			termux-notification -c "Please charge your phone!" -t "recharge" --icon warning --prio high --vibrate pattern 500,500
+			am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Phone-battery-is-low.-Consider-charging!"
+			asked_to_charge="true"
+		fi 
+	else 
+		asked_to_charge="false"
+	fi 
+	
 	#ls "/storage/emulated/0/Android/data/com.example.sensorexample/files/" > /dev/null 2>&1
 	#if [ $? -ne 0 ]
 	#then 
@@ -257,9 +258,10 @@ do
 	then 
 		last_net=`cat ".last_net"`
 	fi 
+	net_status=`cat ".net_status"`
 	let "time_from_last_net = current_time - last_net"
-	myprint "Time from last net: $time_from_last_net sec"
-	if [ $time_from_last_net -gt $NET_INTERVAL ] # if it is time 
+	myprint "Time from last net: $time_from_last_net sec ShouldRun: $net_status"
+	if [ $time_from_last_net -gt $NET_INTERVAL -a $net_status == "true" ] # if it is time and we should run
 	then 
 		if [ $num -eq 0 ]                       # if previous test is not still running 
 		then 	
@@ -314,17 +316,26 @@ do
 		# send status update to the server
 		myprint "Report to send: "
 		echo "$(generate_post_data)" 
-		timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
+	
+		if [ $def_iface == "none" ] 
+		then
+			myprint "Skipping report sending since not connected"
+		else 
+			timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
+		fi 
 		echo $current_time > ".last_report"
 	fi 
 	
 	# check if there is a new command to run
-	myprint "Checking if there is a command to execute (consider lowering/increasing frequency)..."
-	ans=`timeout 10 curl -s https://mobile.batterylab.dev:8082/action?id=$uid`
-	if [[ "$ans" == *"No command matching"* ]]
+	if [ $def_iface != "none" ] 
 	then
-		myprint "No command found"
-	else 
+		myprint "Checking if there is a command to execute (consider lowering/increasing frequency)..."
+		ans=`timeout 10 curl -s https://mobile.batterylab.dev:8082/action?id=$uid`
+		if [[ "$ans" == *"No command matching"* ]]
+		then
+			myprint "No command found"
+			continue
+		fi 
 		prev_command="none"
 		if [ -f ".prev_command" ] 
 		then
