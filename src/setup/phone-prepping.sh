@@ -17,7 +17,7 @@ pkg install -y root-repo
 pkg install -y mtr
 
 # install python and upgrade pip 
-pkg install python3
+pkg install -y python3
 python -m pip install --upgrade pip
 
 # install speedtest-cli    
@@ -26,41 +26,27 @@ pip install speedtest-cli
 # traffic collection 
 pkg install -y tcpdump
 
-# video analysis 
+# video analysis of web performance metrics
 pkg install -y ffmpeg 
 pip install wheel
-pkg install imagemagick
+pkg install -y imagemagick
 echo "WARNING -- next command will take some time..."
 pip install pillow 
-#pip install pyssim  # skipping since takes forever and not needed? 
+#pip install pyssim     # skipping since takes forever and not needed? 
 git clone https://github.com/WPO-Foundation/visualmetrics
 cd visualmetrics
 python visualmetrics.py --check
 
-
-# install crontab 
+# install crontab and add our jobs 
 pkg install -y cronie
-
 (crontab -l 2>/dev/null; echo "*/3 * * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/ && ./need-to-run.sh") | crontab -
 (crontab -l 2>/dev/null; echo "0 2 * * * cd sudo reboot") | crontab -
-
-
 # activate testing at certain time
 #30 7 * * * echo "false" > "/data/data/com.termux/files/home/mobile-testbed/src/termux/.isDebug"
 
-
-# check each 3 minutes if there is somethign to run
-
-
-# TODO: add entries 
-
-# activate testing at certain time
-#30 7 * * * echo "false" > "/data/data/com.termux/files/home/mobile-testbed/src/termux/.isDebug"
-# check each 3 minutes if there is somethign to run
-#*/3 * * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/ && ./need-to-run.sh
-cat .isDebug
-
-
+# make sure all permissions are granted 
+sudo pm grant com.termux.api android.permission.READ_PHONE_STATE
+sudo pm grant com.google.android.apps.maps android.permission.ACCESS_FINE_LOCATION
 
 ############################ TESTING, TO BE DECIDED 
 # aioquic 
