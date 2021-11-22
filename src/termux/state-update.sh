@@ -71,14 +71,13 @@ asked_to_charge="false"                # keep track if we already asked user to 
 prev_wifi_traffic=0                    # keep track of wifi traffic used today
 prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=3                        # maximum mobile data usage per day
+testing="false"                        # keep track if we are testing or not 
 
-# don't run if already running
-#ps aux | grep "state-update.sh" | grep "bash" > .ps
-#N=`cat ".ps" | wc -l`
-#if [ $N -gt 1 ] 
-#then 
-#	exit -1
-#fi 
+# check if testing
+if [ $# -eq 1 ] 
+then 
+	testing="true"
+fi 
 
 # retrieve unique ID for this device 
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
@@ -367,4 +366,13 @@ do
 		fi 
 		echo $comm_id > ".prev_command"
 	fi 
+
+	# stop here if testing 
+	if [ $testing == "true" ] 
+	then 
+		break
+	fi 
 done
+
+# logging 
+myprint "A request to interrupt $0 was received and executed. All good!"
