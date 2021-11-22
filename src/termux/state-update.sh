@@ -368,7 +368,6 @@ do
 	fi 
 
 	# stop here if testing 
-	echo "==> $testing"
 	if [ $testing == "true" ] 
 	then
 		myprint "One simple test was requested, interrupting!" 

@@ -48,6 +48,10 @@ pkg install -y cronie
 sudo pm grant com.termux.api android.permission.READ_PHONE_STATE
 sudo pm grant com.google.android.apps.maps android.permission.ACCESS_FINE_LOCATION
 
+# run one test 
+cd ../termux
+./state-update.sh test
+
 ############################ TESTING, TO BE DECIDED 
 # aioquic 
 # pkg install rust
