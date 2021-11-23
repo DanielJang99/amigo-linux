@@ -49,7 +49,7 @@ sudo pm grant com.termux.api android.permission.READ_PHONE_STATE
 sudo pm grant com.google.android.apps.maps android.permission.ACCESS_FINE_LOCATION
 
 # run one test 
-cd ../termux
+cd mobile-testbed/src/termux
 ./state-update.sh test
 
 ############################ TESTING, TO BE DECIDED 

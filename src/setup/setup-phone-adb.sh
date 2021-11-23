@@ -12,8 +12,59 @@ then
     exit -1 
 fi 
 
-#adb -s $device_id  shell input text "termux\ api"
-#https://f-droid.org/repo/com.termux.api_49.apk
+# install an app using google playstore
+install_app_playstore(){
+	# read input 
+	if [ $# -ne 2 ] 
+	then 
+		echo "ERROR. Missing params to install_app_playstore"
+		exit -1 
+	fi 
+	package=$1
+	name=$2
+    adb -s $device_id shell 'pm list packages -f' | grep -w $package > /dev/null
+    if [ $? -ne 0 ]
+    then
+        echo "Installing app $name ($package)"
+		if [ $first == "true" ] 
+		then 
+			adb -s $device_id shell monkey -p com.android.vending 1 /dev/null 2>&1
+			sleep 10
+			first="false"
+		fi 
+        adb -s $device_id shell "input tap 340 100"
+        adb -s $device_id shell input text "$name"
+        adb -s $device_id shell "input tap 665 1225"
+        sleep 5
+        adb -s $device_id shell "input tap 600 250"
+        sleep 5
+        adb -s $device_id shell "input tap 58 105"
+        sleep 1
+    else
+        echo "App $name ($package) already installed"
+    fi
+}
+
+# helper to insall apk via ADB
+install_simple(){
+	# read input 
+	if [ $# -ne 2 ] 
+	then 
+		echo "ERROR. Missing params to install_via_fdroid"
+		exit -1 
+	fi
+	pkg=$1
+	apk=$2
+	adb -s $device_id shell 'pm list packages -f' | grep $pkg > /dev/null
+	to_install=$?
+	if [ $to_install -eq 1 ]
+	then 
+		./install-app.sh $device_id $apk
+	else
+		echo "$pkg is already installed"
+	fi 
+}
+
 # helper to install apk via fdroid 
 install_via_fdroid(){
 	# read input 
@@ -162,42 +213,23 @@ then
 	install_via_fdroid $termux_boot "termux\ boot"
 else 
 	cd APKs
-	#https://f-droid.org/repo/com.termux_117.apk
-	adb -s $device_id shell 'pm list packages -f' | grep $termux_pack > /dev/null
-	to_install=$?
-	if [ $to_install -eq 1 ]
-	then 
-		./install-app.sh $device_id com.termux_117.apk
-	fi 
-
-	#https://f-droid.org/repo/com.termux.api_49.apk
-	adb -s $device_id shell 'pm list packages -f' | grep $termux_api > /dev/null
-	to_install=$?
-	if [ $to_install -eq 1 ]
-	then 
-		./install-app.sh $device_id com.termux.api_49.apk
-	fi 
-
-	#https://f-droid.org/repo/com.termux.boot_7.apk
-	adb -s $device_id shell 'pm list packages -f' | grep $termux_boot > /dev/null
-	to_install=$?
-	if [ $to_install -eq 1 ]
-	then 
-		./install-app.sh $device_id com.termux.boot_7.apk
-	fi 
-	cd - > /dev/null 2>&1 
+	install_simple $termux_pack "com.termux_117.apk"     #https://f-droid.org/repo/com.termux_117.apk
+	install_simple $termux_api "com.termux.api_49.apk"	 #https://f-droid.org/repo/com.termux.api_49.apk
+	install_simple $termux_boot "com.termux.boot_8.apk"  #https://f-droid.org/repo/com.termux.boot_7.apk
+	cd - > /dev/null 2>&1
 fi 
 
 # install SSH via termux (and update code) 
 sudo nmap -p 8022 $wifi_ip | grep closed
 if [ $? -eq 0 ] 
 then 
-	echo "Setting up SSH (plus code updated)"
+	echo "Setting up SSH (plus code updates)"
 	adb -s $device_id push install.sh /sdcard/	
 	adb -s $device_id shell "input keyevent KEYCODE_HOME"	
 	adb -s $device_id shell input keyevent 111
 	adb -s $device_id shell monkey -p com.termux 1 > /dev/null 2>&1
-	sleep 5 
+	echo "Wait for termux bootstrapping to be done..."
+	sleep 15 
 	adb -s $device_id shell input text "pkg\ install\ -y\ tsu"
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
 	echo "Allowing 30 secs to install sudo"
@@ -217,30 +249,45 @@ then
 	adb -s $device_id shell input text "sudo\ chown\ \\\$USER\ install.sh"
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
 	sleep 1 
-	adb -s $device_id shell input text "sudo\ install.sh"
+	adb -s $device_id shell input text ".\/install.sh"
+	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+
+	# wait for above process to be done
+	ssh_ready="false"
+	ts=`date +%s`
+	SSH_TIMEOUT=120
+	while [ $ssh_ready == "false" ] 
+	do 
+		tc=`date +%s`
+		let "tp = tc - ts"
+		sudo nmap -p 8022 $wifi_ip | grep "closed"
+		if [ $? -ne 0 ] 
+		then 
+			ssh_ready="true"
+		fi 
+		if [ $tp -gt $SSH_TIMEOUT ] 
+		then 
+			echo "ERROR! Timeout ($TIMEOUT sec) Something is wrong. SSH should be installed at this point"
+			exit -1 
+		fi 
+		sleep 5 
+	done
+
+	# set default password
+	echo "Setting default password: $password"
+	adb -s $device_id shell monkey -p com.termux 1 > /dev/null 2>&1
+	sleep 5 
+	adb -s $device_id shell input text "passwd"
+	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+	adb -s $device_id shell input text "$password"
+	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+	adb -s $device_id shell input text "$password"
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
 else 
 	echo "SSH already available -- assuming all rest was done  too" 
 fi 
 
-# set default password
-echo "Setting default password: $password"
-adb -s $device_id shell monkey -p com.termux 1 > /dev/null 2>&1
-sleep 5 
-adb -s $device_id shell input text "passwd"
-adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-adb -s $device_id shell input text "$password"
-adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-adb -s $device_id shell input text "$password"
-adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-
 # SSH preparation
-sudo nmap -p 8022 $wifi_ip | grep closed
-if [ $? -eq 0 ] 
-then 
-	echo "ERROR! Something is wrong. SSH should be installed at this point"
-	exit -1 
-fi 
 hash sshpass
 if [ $? -ne 0 ] 
 then 
@@ -272,27 +319,7 @@ for((i=0; i<num_apps; i++))
 do
     package=${package_list[$i]}
     name=${name_list[$i]}
-    adb -s $device_id shell 'pm list packages -f' | grep -w $package > /dev/null
-    if [ $? -ne 0 ]
-    then
-        echo "Installing app $name ($package)"
-		if [ $first == "true" ] 
-		then 
-			adb -s $device_id shell monkey -p com.android.vending 1
-			sleep 10
-			first="false"
-		fi 
-        adb -s $device_id shell "input tap 340 100"
-        adb -s $device_id shell input text "$name"
-        adb -s $device_id shell "input tap 665 1225"
-        sleep 5
-        adb -s $device_id shell "input tap 600 250"
-        sleep 5
-        adb -s $device_id shell "input tap 58 105"
-        sleep 1
-    else
-        echo "App $name ($package) already installed"
-    fi
+	install_app_playstore ${package_list[$i]} ${name_list[$i]}
 done
 adb -s $device_id shell "input keyevent KEYCODE_HOME"
 
