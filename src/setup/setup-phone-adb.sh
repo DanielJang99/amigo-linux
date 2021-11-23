@@ -12,6 +12,75 @@ then
     exit -1 
 fi 
 
+#adb -s $device_id  shell input text "termux\ api"
+#https://f-droid.org/repo/com.termux.api_49.apk
+# helper to install apk via fdroid 
+install_via_fdroid(){
+	# read input 
+	if [ $# -ne 2 ] 
+	then 
+		echo "ERROR. Missing params to install_via_fdroid"
+		exit -1 
+	fi 
+	pkg=$1
+	name=$2
+	adb -s $device_id shell "input keyevent KEYCODE_HOME"	
+	adb -s $device_id shell input keyevent 111
+	adb -s $device_id shell 'pm list packages -f' | grep $pkg > /dev/null
+	to_install=$?
+	sleep 2 
+	if [ $to_install -eq 1 ]
+	then 
+		adb -s $device_id logcat -c 
+		adb -s $device_id shell monkey -p $fdroid_pack 1 > /dev/null 2>&1
+		sleep 5 
+		adb -s $device_id shell dumpsys window windows | grep -E 'mCurrentFocus' | grep "AppListActivity" > /dev/null
+		if [ $? -ne 0 ] 
+		then 
+			adb -s $device_id shell "input tap 630 1080"
+			sleep 1 
+		fi 
+		adb -s $device_id  shell input text "$name"
+		sleep 10 
+		adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+		adb -s $device_id shell "input tap 626 256"
+		sleep 5
+		last_time=`adb -s $device_id  logcat -d | grep "Package enqueue rate" | tail -n 1 | awk '{print $2}'`
+		prev_time=0
+		while [ $prev_time != $last_time ] 
+		do
+			echo "$prev_time -- $last_time" 
+			prev_time=$last_time 
+			sleep 10
+			last_time=`adb -s $device_id  logcat -d | grep "Package enqueue rate" | tail -n 1 | awk '{print $2}'`
+		done 
+		echo "Download completed!"
+		adb -s $device_id shell "input tap 626 256"
+		sleep 2 
+		adb -s $device_id shell "input tap 620 1210" 
+		echo "Waiting for installation to complete...."
+		to_install=1
+		t_s=`date +%s`
+		while [ $to_install -eq 1 ]
+		do 
+			t_c=`date +%s`
+			let "t_p = t_c - t_s"
+			if [ $t_p -gt $TIMEOUT ] 
+			then 
+				echo "ERROR installing $name"
+				exit -1 
+			fi 
+			adb -s $device_id shell 'pm list packages -f' | grep $pkg > /dev/null
+			to_install=$?
+			sleep 5 
+		done 
+		echo "$name ($pkg) was installed correctly"
+		adb -s $device_id shell "input tap 590 130"
+	else 
+		echo "$name ($pkg) is already installed. Nothing to do!"
+	fi 
+}
+
 # parameters 
 device_id=$1                      # device to be prepped 
 ssh_key="id_rsa_mobile"           # unique key used for both SSH and GITHUB 
@@ -22,6 +91,7 @@ termux_pack="com.termux"          # termux package
 termux_boot="com.termux.boot"     # termux boot package 
 termux_api="com.termux.api"       # termux API package 
 production="false"                # default we are debugging 
+use_fdroid="false"                # control how to intall termux stuff 
 
 # check if we want to switch to production
 if [ $# -eq 2 ] 
@@ -53,165 +123,72 @@ else
 fi 
 
 # install Fdroid
-adb -s $device_id shell 'pm list packages -f' | grep $fdroid_pack > /dev/null
-to_install=$?
-if [ $to_install -eq 1 ]
+if [ $use_fdroid == "true" ] 
 then
-	echo "Starting Fdroid installation..." 
-    if [ ! -f $apk ]
-    then 
-        echo "ERROR missing $apk"
-        exit -1 
-    fi 
-    adb -s $device_id push $apk /data/local/tmp/
-    adb -s $device_id shell pm install -t /data/local/tmp/$apk
-    adb -s $device_id shell 'pm list packages -f' | grep $fdroid_pack > /dev/null
+	adb -s $device_id shell 'pm list packages -f' | grep $fdroid_pack > /dev/null
 	to_install=$?
-    if [ $to_install -eq 1 ]
-    then 
-        echo "ERROR installing $apk"
-        exit -1
-    else 
-        echo "$apk ($fdroid_pack) was installed correctly"
-    fi 
-else 
-	echo "$apk ($fdroid_pack) is already installed" 
-fi 
-
-# install termux from FDroid
-# need to activate install unknown apps 
-adb -s $device_id shell 'pm list packages -f' | grep $termux_pack | grep -v $termux_boot | grep -v $termux_api > /dev/null
-to_install=$?
-if [ $to_install -eq 1 ]
-then 
-	# https://f-droid.org/repo/com.termux_117.apk
-	echo "Starting termux installation via fdroid..." 
-    adb -s $device_id shell monkey -p $fdroid_pack 1 > /dev/null 2>&1
-	sleep 5 	
-	echo "Allowing 2 minutes for Fdroid repositories to update...."
-	sleep 240
-	adb -s $device_id shell dumpsys window windows | grep -E 'mCurrentFocus' | grep "AppListActivity" > /dev/null
-	if [ $? -ne 0 ] 
-	then 
-	    adb -s $device_id shell "input tap 630 1080"
-		sleep 1 
+	if [ $to_install -eq 1 ]
+	then
+		echo "Starting Fdroid installation..." 
+		if [ ! -f $apk ]
+		then 
+			echo "ERROR missing $apk"
+			exit -1 
+		fi 
+		adb -s $device_id push $apk /data/local/tmp/
+		adb -s $device_id shell pm install -t /data/local/tmp/$apk
+		adb -s $device_id shell 'pm list packages -f' | grep $fdroid_pack > /dev/null
+		to_install=$?
+		if [ $to_install -eq 1 ]
+		then 
+			echo "ERROR installing $apk"
+			exit -1
+		else 
+			echo "$apk ($fdroid_pack) was installed correctly"
+			adb -s $device_id shell monkey -p $fdroid_pack 1 > /dev/null 2>&1
+			echo "Allowing 2 minutes for Fdroid repositories to update...."
+			sleep 240
+		fi 
+	else 
+		echo "$apk ($fdroid_pack) is already installed" 
 	fi 
-    adb -s $device_id shell input text "termux\ terminal\ emulator"
-	sleep 10
-    adb -s $device_id shell "input tap 626 256"
-	echo "Allowing 5 mins for termux to download...."
-	sleep 300
-    adb -s $device_id shell "input tap 626 256"
-	sleep 10 	
-    adb -s $device_id shell "input tap 560 780"
-	sleep 1 
-    adb -s $device_id shell "input tap 640 400"
-	sleep 1 
-    adb -s $device_id shell "input keyevent KEYCODE_BACK"
-	sleep 1 
-    adb -s $device_id shell "input tap 620 1200"
-	echo "Allowing 1 min to install termux...."
-	sleep 60
-    adb -s $device_id shell "input tap 590 130"
-	adb -s $device_id shell 'pm list packages -f' | grep $termux_pack | grep -v $termux_boot | grep -v $termux_api > /dev/null
-	to_install=$?
-    if [ $to_install -eq 1 ]
-    then 
-        echo "ERROR installing termux!"
-        exit -1 
-    else 
-        echo "termux ($termux_pack) was installed correctly"
-    fi
-else 
-	echo "termux ($termux_pack) is already installed"
 fi 
 
-# install termux api 
-adb -s $device_id shell "input keyevent KEYCODE_HOME"	
-adb -s $device_id shell input keyevent 111
-adb -s $device_id shell 'pm list packages -f' | grep $termux_api> /dev/null
-to_install=$?
-sleep 2 
-if [ $to_install -eq 1 ]
+# install termux, termux-api, termux-boot
+if [ $use_fdroid == "true" ] 
 then 
-    #https://f-droid.org/repo/com.termux.api_49.apk
-	adb -s $device_id shell monkey -p $fdroid_pack 1 > /dev/null 2>&1
-	sleep 5 
-	adb -s $device_id shell dumpsys window windows | grep -E 'mCurrentFocus' | grep "AppListActivity" > /dev/null
-	if [ $? -ne 0 ] 
+	install_via_fdroid $termux_pack "termux\ terminal\ emulator"
+	install_via_fdroid $termux_api "termux\ api"
+	install_via_fdroid $termux_boot "termux\ boot"
+else 
+	cd APKs
+	#https://f-droid.org/repo/com.termux_117.apk
+	adb -s $device_id shell 'pm list packages -f' | grep $termux_pack > /dev/null
+	to_install=$?
+	if [ $to_install -eq 1 ]
 	then 
-    	adb -s $device_id shell "input tap 630 1080"
-		sleep 1 
+		./install-app.sh $device_id com.termux_117.apk
 	fi 
-    adb -s $device_id  shell input text "termux\ api"
-    sleep 10 
-    adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-    adb -s $device_id shell "input tap 626 256"
-	echo "Allowing 1 min for termux_api to download...."
-	sleep 60
-    adb -s $device_id shell "input tap 626 256"
-    sleep 2 
-	adb -s $device_id shell "input tap 620 1210" 
-	echo "Allowing 30 sec min for termux_api to install..."
-	sleep 30
-    adb -s $device_id shell "input tap 590 130"
-    adb -s $device_id shell 'pm list packages -f' | grep $termux_api > /dev/null
+
+	#https://f-droid.org/repo/com.termux.api_49.apk
+	adb -s $device_id shell 'pm list packages -f' | grep $termux_api > /dev/null
 	to_install=$?
-    if [ $to_install -eq 1 ]
-    then 
-        echo "ERROR installing termux-api!"
-        exit -1 
-    else 
-        echo "termux-api ($termux_api) was installed correctly"
-    fi
-else 
-	echo "termux-api ($termux_api) is already installed"
+	if [ $to_install -eq 1 ]
+	then 
+		./install-app.sh $device_id com.termux.api_49.apk
+	fi 
+
+	#https://f-droid.org/repo/com.termux.boot_7.apk
+	adb -s $device_id shell 'pm list packages -f' | grep $termux_boot > /dev/null
+	to_install=$?
+	if [ $to_install -eq 1 ]
+	then 
+		./install-app.sh $device_id com.termux.boot_7.apk
+	fi 
+	cd - > /dev/null 2>&1 
 fi 
 
-# install termux boot 
-adb -s $device_id shell "input keyevent KEYCODE_HOME"	
-adb -s $device_id shell input keyevent 111
-adb -s $device_id shell 'pm list packages -f' | grep $termux_boot> /dev/null
-to_install=$?
-sleep 2 
-if [ $to_install -eq 1 ]
-then 
-	#org.fdroid.fdroid.installer.ApkFileProvider/files/TermuxBoot-0.7.apk
-    echo "Installing termux-boot"
-	adb -s $device_id shell monkey -p $fdroid_pack 1 > /dev/null 2>&1
-	sleep 5 
-	adb -s $device_id shell dumpsys window windows | grep -E 'mCurrentFocus' | grep "AppListActivity" > /dev/null
-	if [ $? -ne 0 ] 
-	then 
-    	adb -s $device_id shell "input tap 630 1080"
-		sleep 1 
-    fi 
-	adb -s $device_id  shell input text "termux\ boot"
-    sleep 10 
-    adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-    adb -s $device_id shell "input tap 626 256"
-	echo "Allowing 1 min for termux_boot to download...."
-	sleep 60
-    adb -s $device_id shell "input tap 626 256"
-    sleep 2 
-	adb -s $device_id shell "input tap 620 1210" 
-	echo "Allowing 30 sec min for termux_boot to install..."
-	sleep 30
-    adb -s $device_id shell "input tap 590 130"
-    adb -s $device_id shell 'pm list packages -f' | grep $termux_boot > /dev/null
-	to_install=$?
-    if [ $to_install -eq 1 ]
-    then 
-        echo "ERROR installing termux-boot!"
-        exit -1 
-    else 
-        echo "termux-api ($termux_boot) was installed correctly"
-    fi
-else 
-	echo "termux-boot ($termux_boot) is already installed"
-fi  
-
-# install SSH on termux (and update code) 
+# install SSH via termux (and update code) 
 sudo nmap -p 8022 $wifi_ip | grep closed
 if [ $? -eq 0 ] 
 then 
