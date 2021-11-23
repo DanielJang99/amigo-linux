@@ -28,7 +28,7 @@ install_app_playstore(){
         echo "Installing app $name ($package)"
 		if [ $first == "true" ] 
 		then 
-			adb -s $device_id shell monkey -p com.android.vending 1 /dev/null 2>&1
+			adb -s $device_id shell monkey -p com.android.vending 1 > /dev/null 2>&1
 			sleep 10
 			first="false"
 		fi 
@@ -39,7 +39,7 @@ install_app_playstore(){
         adb -s $device_id shell "input tap 600 250"
         sleep 5
         adb -s $device_id shell "input tap 58 105"
-        sleep 1
+        sleep 3
     else
         echo "App $name ($package) already installed"
     fi
@@ -55,6 +55,7 @@ install_simple(){
 	fi
 	pkg=$1
 	apk=$2
+	echo "[install_simple] $pkg"
 	adb -s $device_id shell 'pm list packages -f' | grep $pkg > /dev/null
 	to_install=$?
 	if [ $to_install -eq 1 ]
@@ -67,6 +68,7 @@ install_simple(){
 
 # helper to install apk via fdroid 
 install_via_fdroid(){
+	TIMEOUT=120
 	# read input 
 	if [ $# -ne 2 ] 
 	then 
@@ -95,19 +97,33 @@ install_via_fdroid(){
 		sleep 10 
 		adb -s $device_id shell "input keyevent KEYCODE_ENTER"
 		adb -s $device_id shell "input tap 626 256"
-		sleep 5
+		adb -s $device_id shell input keyevent 111
+		sleep 10
 		last_time=`adb -s $device_id  logcat -d | grep "Package enqueue rate" | tail -n 1 | awk '{print $2}'`
 		prev_time=0
-		while [ $prev_time != $last_time ] 
-		do
-			echo "$prev_time -- $last_time" 
-			prev_time=$last_time 
-			sleep 10
-			last_time=`adb -s $device_id  logcat -d | grep "Package enqueue rate" | tail -n 1 | awk '{print $2}'`
-		done 
+		if [ ! -z $last_time ] 
+		then 
+			while [ $prev_time != $last_time ] 
+			do
+				echo "$prev_time -- $last_time" 
+				prev_time=$last_time 
+				sleep 10
+				last_time=`adb -s $device_id  logcat -d | grep "Package enqueue rate" | tail -n 1 | awk '{print $2}'`
+			done 
+		fi 
 		echo "Download completed!"
 		adb -s $device_id shell "input tap 626 256"
-		sleep 2 
+		sleep 5 
+		if [ $first_run == "true" ] 
+		then 
+			adb -s $device_id shell "input tap 560 780"
+			sleep 1 
+		    adb -s $device_id shell "input tap 640 400"
+			sleep 1 
+		    adb -s $device_id shell "input keyevent KEYCODE_BACK"
+			sleep 1 
+			first_run="false"
+		fi 
 		adb -s $device_id shell "input tap 620 1210" 
 		echo "Waiting for installation to complete...."
 		to_install=1
@@ -143,6 +159,7 @@ termux_boot="com.termux.boot"     # termux boot package
 termux_api="com.termux.api"       # termux API package 
 production="false"                # default we are debugging 
 use_fdroid="false"                # control how to intall termux stuff 
+use_fdroid="true"
 
 # check if we want to switch to production
 if [ $# -eq 2 ] 
@@ -206,18 +223,28 @@ then
 fi 
 
 # install termux, termux-api, termux-boot
-if [ $use_fdroid == "true" ] 
-then 
-	install_via_fdroid $termux_pack "termux\ terminal\ emulator"
-	install_via_fdroid $termux_api "termux\ api"
-	install_via_fdroid $termux_boot "termux\ boot"
-else 
-	cd APKs
-	install_simple $termux_pack "com.termux_117.apk"     #https://f-droid.org/repo/com.termux_117.apk
-	install_simple $termux_api "com.termux.api_49.apk"	 #https://f-droid.org/repo/com.termux.api_49.apk
-	install_simple $termux_boot "com.termux.boot_8.apk"  #https://f-droid.org/repo/com.termux.boot_7.apk
-	cd - > /dev/null 2>&1
-fi 
+#if [ $use_fdroid == "true" ] 
+#then 
+#	#first_run="true"  #FIXME: needs a better way to intercept "allow" (maybe fdroid setting?)
+#	first_run="false"
+#	install_via_fdroid $termux_pack "termux\ terminal\ emulator"
+#	install_via_fdroid $termux_api "termux\ api"
+#	install_via_fdroid $termux_boot "termux\ boot"
+#else 
+#	cd APKs
+#	install_simple $termux_pack "com.termux_117.apk"     #https://f-droid.org/repo/com.termux_117.apk
+#	install_simple $termux_api "com.termux.api_49.apk"	 #https://f-droid.org/repo/com.termux.api_49.apk
+#	install_simple $termux_boot "com.termux.boot_7.apk"  #https://f-droid.org/repo/com.termux.boot_7.apk
+#	cd - > /dev/null 2>&1
+#fi 
+
+# testing 
+first_run="true"
+install_via_fdroid $termux_pack "termux\ terminal\ emulator"
+cd APKs
+install_simple $termux_api "com.termux.api_49.apk"	 #https://f-droid.org/repo/com.termux.api_49.apk
+install_simple $termux_boot "com.termux.boot_7.apk"  #https://f-droid.org/repo/com.termux.boot_7.apk
+cd - > /dev/null 2>&1
 
 # install SSH via termux (and update code) 
 sudo nmap -p 8022 $wifi_ip | grep closed
@@ -275,14 +302,15 @@ then
 
 	# set default password
 	echo "Setting default password: $password"
-	adb -s $device_id shell monkey -p com.termux 1 > /dev/null 2>&1
-	sleep 5 
 	adb -s $device_id shell input text "passwd"
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
 	adb -s $device_id shell input text "$password"
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
 	adb -s $device_id shell input text "$password"
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+
+	# go back home 
+	adb -s $device_id shell "input keyevent KEYCODE_HOME"
 else 
 	echo "SSH already available -- assuming all rest was done  too" 
 fi 
@@ -298,9 +326,14 @@ sshpass -p "$password" ssh -oStrictHostKeyChecking=no -p 8022 $wifi_ip "mkdir -p
 sshpass -p "$password" scp -oStrictHostKeyChecking=no -P 8022 $ssh_key $wifi_ip:.ssh 
 sshpass -p "$password" scp -oStrictHostKeyChecking=no -P 8022 "authorized_keys" "config" $wifi_ip:.ssh 
 sshpass -p "$password" scp -oStrictHostKeyChecking=no -P 8022 "bashrc" $wifi_ip:.bashrc
-echo "WARNING - check boot script from first phone"
 sshpass -p "$password" ssh -oStrictHostKeyChecking=no -p 8022 $wifi_ip "mkdir -p .termux/boot/"
 sshpass -p "$password" scp -oStrictHostKeyChecking=no -P 8022 "start-sshd.sh" $wifi_ip:.termux/boot/
+sshpass -p "$password" ssh -oStrictHostKeyChecking=no -p 8022 $wifi_ip "chmod +x .termux/boot/start-sshd.sh"
+
+# launch termux-boot to make sure it is ready 
+echo "launching termux-boot to make sure it is ready"
+adb -s $device_id shell monkey -p $termux_boot 1 > /dev/null 2>&1
+sleep 5 
 
 # install apps needed
 package_list[0]="com.google.android.apps.maps"
@@ -319,13 +352,14 @@ for((i=0; i<num_apps; i++))
 do
     package=${package_list[$i]}
     name=${name_list[$i]}
-	install_app_playstore ${package_list[$i]} ${name_list[$i]}
+	install_app_playstore "$package" "$name"
 done
 adb -s $device_id shell "input keyevent KEYCODE_HOME"
 
 # clone code and run phone prepping script
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pkg install -y git"
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "git clone git@github.com:svarvel/mobile-testbed.git"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "termux-notification -c \"ADB:$device_id\" --icon warning --prio high --vibrate pattern 500,500"
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/setup && (./phone-prepping.sh &)"
 if [ $production == "true" ] 
 then 
@@ -348,5 +382,3 @@ do
 	ans=$?
 done
 echo "All good"
-
-# Q: can we run a test? 
