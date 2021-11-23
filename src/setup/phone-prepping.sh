@@ -17,7 +17,7 @@ pkg install -y root-repo
 pkg install -y mtr
 
 # install python and upgrade pip 
-pkg install -y python3
+pkg install -y python
 python -m pip install --upgrade pip
 
 # install speedtest-cli    
@@ -33,7 +33,10 @@ pkg install -y imagemagick
 echo "WARNING -- next command will take some time..."
 pip install pillow 
 #pip install pyssim     # skipping since takes forever and not needed? 
-git clone https://github.com/WPO-Foundation/visualmetrics
+if [ ! -d "visualmetrics" ] 
+then 
+	git clone https://github.com/WPO-Foundation/visualmetrics
+fi 
 cd visualmetrics
 python visualmetrics.py --check
 
@@ -49,6 +52,7 @@ sudo pm grant com.termux.api android.permission.READ_PHONE_STATE
 sudo pm grant com.google.android.apps.maps android.permission.ACCESS_FINE_LOCATION
 
 # run one test 
+pwd
 cd ../termux
 ./state-update.sh test
 
