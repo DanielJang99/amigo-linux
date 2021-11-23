@@ -327,18 +327,18 @@ do
 	
 	# check if there is a new command to run
 	if [ $def_iface != "none" ] 
-	then
+	then	
+		prev_command="none"
+		if [ -f ".prev_command" ] 
+		then
+			prev_command=`cat ".prev_command"`
+		fi 
 		myprint "Checking if there is a command to execute (consider lowering/increasing frequency)..."
-		ans=`timeout 10 curl -s https://mobile.batterylab.dev:8082/action?id=$uid`
+		ans=`timeout 10 curl -s "https://mobile.batterylab.dev:8082/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`
 		if [[ "$ans" == *"No command matching"* ]]
 		then
 			myprint "No command found"
-		else 
-			prev_command="none"
-			if [ -f ".prev_command" ] 
-			then
-				prev_command=`cat ".prev_command"`
-			fi 
+		else 	
 			command=`echo $ans  | cut -f 1 -d ";"`
 			comm_id=`echo $ans  | cut -f 3 -d ";"`
 			duration=`echo $ans  | cut -f 4 -d ";"`	
@@ -359,7 +359,7 @@ do
 					eval timeout $duration $command
 					comm_status=$?
 					myprint "Command executed. Status: $comm_status"
-				fi 
+				fi
 				ans=`timeout 10 curl -s "https://mobile.batterylab.dev:8082/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${termux_user}"`
 				myprint "Informed server about last command run. ANS: $ans"
 			fi 

@@ -105,7 +105,7 @@ install_via_fdroid(){
 		then 
 			while [ $prev_time != $last_time ] 
 			do
-				echo "$prev_time -- $last_time" 
+				#echo "$prev_time -- $last_time" 
 				prev_time=$last_time 
 				sleep 10
 				last_time=`adb -s $device_id  logcat -d | grep "Package enqueue rate" | tail -n 1 | awk '{print $2}'`
@@ -205,6 +205,7 @@ then
 		fi 
 		adb -s $device_id push $apk /data/local/tmp/
 		adb -s $device_id shell pm install -t /data/local/tmp/$apk
+		sleep 2 
 		adb -s $device_id shell 'pm list packages -f' | grep $fdroid_pack > /dev/null
 		to_install=$?
 		if [ $to_install -eq 1 ]
