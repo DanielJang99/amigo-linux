@@ -189,22 +189,39 @@ class StringGeneratorWebService(object):
 				return "Error: User is not supported"
 			else: 
 				print("User %s is supported" %(user_id))
-
+			if 'prev_command' not in cherrypy.request.params: 
+				cherrypy.response.status = 400
+				print("Malformed URL")
+				return "Error: Malformed URL" 
+			prev_command = cherrypy.request.params['prev_command']
+			if 'termuxUser' not in cherrypy.request.params: 
+				cherrypy.response.status = 400
+				print("Malformed URL")
+				return "Error: Malformed URL" 
+			termux_id  = cherrypy.request.params['termuxUser']
+			
 			# look for a potential action to be performed
-			query = "select * from commands where status = 'active'" #FIXME: improve the query
-			print(query)
-			('root-1637084748', '861272047248839', 'ssh -f -N -T -R 1032:localhost:8022 root@23.235.205.53', 10, 'false', 1637084748, 'active')
+			#query = "select * from commands where (tester_id = '" + user_id + "' or tester_id = '*') and command_id != '" + prev_command + "' and status != 'DONE';"
+			query = "select * from commands where (tester_id = '" + user_id + "' or tester_id = '*') and command_id != '" + prev_command + "';"
 			info, msg  = run_query(query)
 			#print(info, msg)
 			if info is None:
 				cherrypy.response.status = 202
 				print("No command matching the query found")
 				return "No command matching the query found"
-			if len(info) > 1: 
-				print("WARNING: too many actions active at the same time. Returning most recent one")
+			#if len(info) > 1: 
+			#	print("WARNING: too many actions active at the same time. Returning most recent one")
 			max_timestamp = 0
+			unique_id = termux_id + ';' + user_id
 			for entry in info:
+				print(entry)
 				timestamp = entry[5]
+				user_target = entry[1]
+				status = entry[6]
+				if user_target == "*" and user_id in status:
+					continue
+				if user_target == user_id and ('DONE' in status or unique_id in status):
+					continue
 				if timestamp > max_timestamp: 
 					max_timestamp = timestamp 
 					command = entry[2]
@@ -213,6 +230,9 @@ class StringGeneratorWebService(object):
 					isBackground = entry[4]
 			
 			# all good 
+			if max_timestamp == 0:
+				print("No command matching the query found")
+				return "No command matching the query found"
 			ans = command + ';' + str(max_timestamp) + ';' + comm_id + ';' + str(duration) + ';' + isBackground + '\n'
 			print("All good. Returning: ", ans)
 			cherrypy.response.status = 200
@@ -231,18 +251,24 @@ class StringGeneratorWebService(object):
 				return "Error: User is not supported"
 			else: 
 				print("User %s is supported" %(user_id))
-
 			if 'command_id' not in cherrypy.request.params: 
 				cherrypy.response.status = 400
 				print("Malformed URL")
 				return "Error: Malformed URL" 
+			if 'termuxUser' not in cherrypy.request.params: 
+				cherrypy.response.status = 400
+				print("Malformed URL")
+				return "Error: Malformed URL" 
 			command_id = cherrypy.request.params['command_id']
+			termux_id  = cherrypy.request.params['termuxUser']
+			comm_status = cherrypy.request.params['status'] #FIXME: potentially use this 
 
 			# look for a potential action to be performed
-			query = "update commands set status = 'inactive' where command_id = '" + command_id + "'"
-			#print("==>", query)
+			status = termux_id + ';' + user_id
+			query = "update commands set status = array_append(status, '" + status + "') where command_id = '" + command_id + "';"
+			print("==>", query)
 			info, msg  = run_query(query)
-			#print(info, msg)
+			print(info, msg)
 	
 			# all good 
 			print("Operation result:", msg)

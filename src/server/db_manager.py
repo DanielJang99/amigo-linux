@@ -117,7 +117,8 @@ def insert_pi_command(command_id, tester_id, timestamp, action, duration, isBack
 	if connected: 
 		try:
 			insert_sql = "insert into commands(command_id, tester_id, command, duration, background, timestamp, status) values(%s, %s, %s, %s, %s, %s, %s);"	
-			data = (command_id, tester_id, action, duration, isBackground, timestamp, "active")
+			#data = (command_id, tester_id, action, duration, isBackground, timestamp, "{{active}}")
+			data = (command_id, tester_id, action, duration, isBackground, timestamp, "{active}")
 			cur.execute(insert_sql, data)
 			msg = "action_update:all good" 	
 			

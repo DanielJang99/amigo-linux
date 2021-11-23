@@ -22,28 +22,20 @@ from db_manager import run_query, insert_data, insert_command, insert_pi_command
 
 # read input
 if len(sys.argv) < 2:
-	print("USAGE: " + sys.argv[1] + " opt [query/insert-command/ssh] [uid]")
+	print("USAGE: " + sys.argv[0] + " opt [ssh/update/restart] [uid]")
 	sys.exit(-1)
 opt = sys.argv[1]
 
 # switch among supported operations
-if opt == "query":
-	# run a query 
-	query = sys.argv[2]
-	print("QUERY:", query)
-	info, msg  = run_query(query)
-	print("INFO:", info)
-	print("MSG", msg)
-
-elif opt == "insert-command":
-	# insert command in database
-	curr_time = int(time.time())
-	command_id = "matteo-" + str(curr_time)
-	info = insert_pi_command(command_id, "*", time.time(), "sudo input keyevent KEYCODE_HOME")
-	print(info)
-	# invalidate a command (using command identifier)
-elif opt == "ssh":
-	if len(sys.argv) < 2:
+#if opt == "query":
+#	# run a query 
+#	query = sys.argv[2]
+#	print("QUERY:", query)
+#	info, msg  = run_query(query)
+#	print("INFO:", info)
+#	print("MSG", msg)
+if opt == "ssh":
+	if len(sys.argv) < 3:
 		print("USAGE: " + sys.argv[1] + " opt [query/insert-command/ssh] [uid]")
 		sys.exit(-1)
 	uid = sys.argv[2]
@@ -59,5 +51,23 @@ elif opt == "ssh":
 		free_port = 1025
 	with open('port.txt', 'w') as f:
 		f.write(str(free_port))
-	info = insert_pi_command(command_id, uid, time.time(), "ssh -f -N -T -R " + str(free_port) + ":localhost:8022 root@23.235.205.53", str(10), "false")
+	info = insert_pi_command(command_id, uid, time.time(), "ssh -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no -f -N -T -R " + str(free_port) + ":localhost:8022 root@23.235.205.53", str(10), "false")
 	print(info)
+elif opt == "update":
+	curr_time = int(time.time())
+	command_id = "root-" + str(curr_time)
+	uid = "*"
+	if len(sys.argv) == 3:
+		uid = sys.argv[2]
+	print("Requested code update for device:", uid)
+	info = insert_pi_command(command_id, uid, time.time(), "git pull", str(10), "false")
+elif opt == "restart":
+	curr_time = int(time.time())
+	command_id = "root-" + str(curr_time)
+	uid = "*"
+	if len(sys.argv) == 3:
+		uid = sys.argv[2]
+	print("Requested code restart for device:", uid)
+	info = insert_pi_command(command_id, uid, time.time(), "echo \"false\" > \".status\"", str(10), "false")
+else: 
+	print("USAGE: " + sys.argv[0] + " opt [ssh/update/restart] [uid]")
