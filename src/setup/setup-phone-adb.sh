@@ -12,6 +12,19 @@ then
     exit -1 
 fi 
 
+# close all pending applications
+close_all(){
+    # go HOME
+    sudo input keyevent KEYCODE_HOME
+
+    # enter switch application tab
+    sudo input keyevent KEYCODE_APP_SWITCH
+    sleep 2
+
+    # press close all
+    tap_screen 370 1210
+}
+
 # install an app using google playstore
 install_app_playstore(){
 	# read input 
@@ -320,6 +333,12 @@ fi
 #else 
 #	echo "SSH already available -- assuming all rest was done  too" 
 #fi 
+
+# restart termux and enable crontab 
+close_all
+adb -s $device_id shell monkey -p com.termux 1 > /dev/null 2>&1
+sleep 3 
+sv-enable crond
 
 # test SSH 
 c=0

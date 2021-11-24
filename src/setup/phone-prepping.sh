@@ -40,10 +40,9 @@ fi
 cd visualmetrics
 python visualmetrics.py --check
 
-# install crontab and add our jobs 
-pkg install -y cronie
+# install jobs in crontab
 (crontab -l 2>/dev/null; echo "*/3 * * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/ && ./need-to-run.sh") | crontab -
-(crontab -l 2>/dev/null; echo "0 2 * * * cd sudo reboot") | crontab -
+(crontab -l 2>/dev/null; echo "0 2 * * * sudo reboot") | crontab -
 # activate testing at certain time
 #30 7 * * * echo "false" > "/data/data/com.termux/files/home/mobile-testbed/src/termux/.isDebug"
 
