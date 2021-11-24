@@ -328,17 +328,19 @@ fi
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
 	sleep 2 
 
-	# go back home 
+	# restart termux and enable crontab 
+	adb -s $device_id shell input text "exit"
+	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+	sleep 2
+	adb -s $device_id shell monkey -p com.termux 1 > /dev/null 2>&1
+	sleep 3
+	adb -s $device_id shell input text "sv-enable\ crond"
+	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+	sleep 1 
 	adb -s $device_id shell "input keyevent KEYCODE_HOME"
 #else 
 #	echo "SSH already available -- assuming all rest was done  too" 
 #fi 
-
-# restart termux and enable crontab 
-close_all
-adb -s $device_id shell monkey -p com.termux 1 > /dev/null 2>&1
-sleep 3 
-sv-enable crond
 
 # test SSH 
 c=0
