@@ -24,19 +24,20 @@ install_app_playstore(){
 	name=$2
     adb -s $device_id shell 'pm list packages -f' | grep -w $package > /dev/null
     if [ $? -ne 0 ]
-    then
+    then	
         echo "Installing app $name ($package)"
 		if [ $first == "true" ] 
 		then 
 			adb -s $device_id shell monkey -p com.android.vending 1 > /dev/null 2>&1
-			sleep 10
+			sleep 20
 			first="false"
 		fi 
         adb -s $device_id shell "input tap 340 100"
         adb -s $device_id shell input text "$name"
         adb -s $device_id shell "input tap 665 1225"
         sleep 5
-        adb -s $device_id shell "input tap 600 250"
+        adb -s $device_id shell "input tap 545 610"
+        #adb -s $device_id shell "input tap 600 250"
         sleep 5
         adb -s $device_id shell "input tap 58 105"
         sleep 3
@@ -159,7 +160,7 @@ termux_boot="com.termux.boot"     # termux boot package
 termux_api="com.termux.api"       # termux API package 
 production="false"                # default we are debugging 
 use_fdroid="false"                # control how to intall termux stuff 
-use_fdroid="true"
+#use_fdroid="true"
 
 # check if we want to switch to production
 if [ $# -eq 2 ] 
@@ -224,28 +225,28 @@ then
 fi 
 
 # install termux, termux-api, termux-boot
-#if [ $use_fdroid == "true" ] 
-#then 
-#	#first_run="true"  #FIXME: needs a better way to intercept "allow" (maybe fdroid setting?)
-#	first_run="false"
-#	install_via_fdroid $termux_pack "termux\ terminal\ emulator"
-#	install_via_fdroid $termux_api "termux\ api"
-#	install_via_fdroid $termux_boot "termux\ boot"
-#else 
-#	cd APKs
-#	install_simple $termux_pack "com.termux_117.apk"     #https://f-droid.org/repo/com.termux_117.apk
-#	install_simple $termux_api "com.termux.api_49.apk"	 #https://f-droid.org/repo/com.termux.api_49.apk
-#	install_simple $termux_boot "com.termux.boot_7.apk"  #https://f-droid.org/repo/com.termux.boot_7.apk
-#	cd - > /dev/null 2>&1
-#fi 
+if [ $use_fdroid == "true" ] 
+then 
+	#first_run="true"  #FIXME: needs a better way to intercept "allow" (maybe fdroid setting?)
+	first_run="false"
+	install_via_fdroid $termux_pack "termux\ terminal\ emulator"
+	install_via_fdroid $termux_api "termux\ api"
+	install_via_fdroid $termux_boot "termux\ boot"
+else 
+	cd APKs
+	install_simple $termux_pack "com.termux_117.apk"     #https://f-droid.org/repo/com.termux_117.apk
+	install_simple $termux_api "com.termux.api_49.apk"	 #https://f-droid.org/repo/com.termux.api_49.apk
+	install_simple $termux_boot "com.termux.boot_7.apk"  #https://f-droid.org/repo/com.termux.boot_7.apk
+	cd - > /dev/null 2>&1
+fi 
 
 # testing 
-first_run="true"
-install_via_fdroid $termux_pack "termux\ terminal\ emulator"
-cd APKs
-install_simple $termux_api "com.termux.api_49.apk"	 #https://f-droid.org/repo/com.termux.api_49.apk
-install_simple $termux_boot "com.termux.boot_7.apk"  #https://f-droid.org/repo/com.termux.boot_7.apk
-cd - > /dev/null 2>&1
+#first_run="true"
+#install_via_fdroid $termux_pack "termux\ terminal\ emulator"
+#cd APKs
+#install_simple $termux_api "com.termux.api_49.apk"	 #https://f-droid.org/repo/com.termux.api_49.apk
+#install_simple $termux_boot "com.termux.boot_7.apk"  #https://f-droid.org/repo/com.termux.boot_7.apk
+#cd - > /dev/null 2>&1
 
 # install SSH via termux (and update code) 
 sudo nmap -p 8022 $wifi_ip | grep closed
@@ -264,19 +265,19 @@ then
 	sleep 30 
 	adb -s $device_id shell input text "sudo\ setenforce\ \0"
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-	sleep 1 
+	sleep 5 
 	adb -s $device_id shell input text "sudo\ mv\ /\sdcard/\install.sh\ ./"
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-	sleep 1 
+	sleep 2 
 	adb -s $device_id shell input text "sudo\ chmod\ +x\ install.sh"
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-	sleep 1 
+	sleep 2 
 	adb -s $device_id shell input text "USER=\\\`whoami\\\`"
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-	sleep 1 
+	sleep 2 
 	adb -s $device_id shell input text "sudo\ chown\ \\\$USER\ install.sh"
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-	sleep 1 
+	sleep 2 
 	adb -s $device_id shell input text ".\/install.sh"
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
 
@@ -338,23 +339,32 @@ sleep 5
 
 # install apps needed
 package_list[0]="com.google.android.apps.maps"
-package_list[1]="com.google.android.youtube"
-package_list[2]="com.google.android.apps.meetings"
-package_list[3]="us.zoom.videomeetings"
-package_list[4]="com.cisco.webex.meetings"
+package_list[1]="us.zoom.videomeetings"
+package_list[2]="com.cisco.webex.meetings"
+package_list[3]="com.google.android.apps.meetings"
+package_list[4]="com.google.android.youtube"
 name_list[0]="google\ maps"
-name_list[1]="youtube"
-name_list[2]="google\ meet"
-name_list[3]="zoom"
-name_list[4]="webex"
+name_list[1]="zoom"
+name_list[2]="webex"
+name_list[3]="google\ meet"
+name_list[4]="youtube"
+apk_list[0]="com.google.android.apps.maps_11.7.5.apk"
+apk_list[1]="us.zoom.videomeetings_5.8.4.2783.apk"
+apk_list[2]="com.cisco.webex.meetings_41.11.0.apk"
+apk_list[3]="com.google.android.apps.meetings_2021.10.31.apk"
+apk_list[4]="com.google.android.youtube_16.46.35.apk"
 num_apps="${#package_list[@]}"
 first="true"
+cd APKs
 for((i=0; i<num_apps; i++))
 do
     package=${package_list[$i]}
     name=${name_list[$i]}
-	install_app_playstore "$package" "$name"
+	apk=${apk_list[$i]}
+	install_simple $package $apk
+	#install_app_playstore "$package" "$name"
 done
+cd - > /dev/null 2>&1
 adb -s $device_id shell "input keyevent KEYCODE_HOME"
 
 # clone code and run phone prepping script

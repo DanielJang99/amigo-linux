@@ -10,3 +10,4 @@ apk_file=`echo $2 | awk -F "/" '{print $NF}'`
 echo $apk_file
 echo "Installing..."
 adb -s $1 shell pm install -t /data/local/tmp/$apk_file
+adb -s $1 shell "rm /data/local/tmp/$apk_file"

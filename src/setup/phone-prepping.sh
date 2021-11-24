@@ -51,6 +51,11 @@ pkg install -y cronie
 sudo pm grant com.termux.api android.permission.READ_PHONE_STATE
 sudo pm grant com.google.android.apps.maps android.permission.ACCESS_FINE_LOCATION
 
+# accept termux wake lock 
+termux-wake-lock
+sleep 2 
+sudo input tap 587 832
+
 # run one test 
 cd ../../termux
 ./state-update.sh test
