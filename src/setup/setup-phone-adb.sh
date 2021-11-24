@@ -57,7 +57,7 @@ install_simple(){
 	pkg=$1
 	apk=$2
 	echo "[install_simple] $pkg"
-	adb -s $device_id shell 'pm list packages -f' | grep $pkg > /dev/null
+	adb -s $device_id shell 'pm list packages -f' | grep -w $pkg > /dev/null
 	to_install=$?
 	if [ $to_install -eq 1 ]
 	then 
@@ -240,18 +240,19 @@ else
 	cd - > /dev/null 2>&1
 fi 
 
-# testing 
-#first_run="true"
-#install_via_fdroid $termux_pack "termux\ terminal\ emulator"
-#cd APKs
-#install_simple $termux_api "com.termux.api_49.apk"	 #https://f-droid.org/repo/com.termux.api_49.apk
-#install_simple $termux_boot "com.termux.boot_7.apk"  #https://f-droid.org/repo/com.termux.boot_7.apk
-#cd - > /dev/null 2>&1
+
+# make sure nmap is installed 
+hash nmap
+if [ $? -ne 0 ] 
+then 
+	echo "Installing nmap since missing" 
+	sudo apt install -y nmap
+fi 
 
 # install SSH via termux (and update code) 
-sudo nmap -p 8022 $wifi_ip | grep closed
-if [ $? -eq 0 ] 
-then 
+#sudo nmap -p 8022 $wifi_ip | grep closed
+#if [ $? -eq 0 ] 
+#then 
 	echo "Setting up SSH (plus code updates)"
 	adb -s $device_id push install.sh /sdcard/	
 	adb -s $device_id shell "input keyevent KEYCODE_HOME"	
@@ -306,16 +307,37 @@ then
 	echo "Setting default password: $password"
 	adb -s $device_id shell input text "passwd"
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+	sleep 2
 	adb -s $device_id shell input text "$password"
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+	sleep 2 
 	adb -s $device_id shell input text "$password"
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+	sleep 2 
 
 	# go back home 
 	adb -s $device_id shell "input keyevent KEYCODE_HOME"
-else 
-	echo "SSH already available -- assuming all rest was done  too" 
-fi 
+#else 
+#	echo "SSH already available -- assuming all rest was done  too" 
+#fi 
+
+# test SSH 
+c=0
+sshpass -p "$password" ssh -oStrictHostKeyChecking=no -p 8022 $wifi_ip "pwd"
+ans=$?
+while [ $ans -ne 0 ] 
+do 
+	echo "Issue with SSH..."
+	sleep 5 
+	sshpass -p "$password" ssh -oStrictHostKeyChecking=no -p 8022 $wifi_ip "pwd"
+	ans=$?
+	let "c++"
+	if [ $c -eq 5 ] 
+	then 
+		echo "SSH-ERROR. Aborting!"
+		exit -1 
+	fi 
+done 
 
 # SSH preparation
 hash sshpass
@@ -324,6 +346,7 @@ then
 	echo "Installing sshpass since missing" 
 	sudo apt install -y sshpass
 fi 
+echo "SSH prepping..."
 sshpass -p "$password" ssh -oStrictHostKeyChecking=no -p 8022 $wifi_ip "mkdir -p .ssh"
 sshpass -p "$password" scp -oStrictHostKeyChecking=no -P 8022 $ssh_key $wifi_ip:.ssh 
 sshpass -p "$password" scp -oStrictHostKeyChecking=no -P 8022 "authorized_keys" "config" $wifi_ip:.ssh 
@@ -336,6 +359,7 @@ sshpass -p "$password" ssh -oStrictHostKeyChecking=no -p 8022 $wifi_ip "chmod +x
 echo "launching termux-boot to make sure it is ready"
 adb -s $device_id shell monkey -p $termux_boot 1 > /dev/null 2>&1
 sleep 5 
+adb -s $device_id shell "input keyevent KEYCODE_HOME"	
 
 # install apps needed
 package_list[0]="com.google.android.apps.maps"
