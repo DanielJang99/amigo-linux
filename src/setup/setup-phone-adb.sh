@@ -217,7 +217,7 @@ then
 			echo "ERROR missing $apk"
 			exit -1 
 		fi 
-		adb -s $device_id push $apk /data/local/tmp/
+		adb -s $device_id push $apk /data/local/tmp/ > /dev/null 2>&1
 		adb -s $device_id shell pm install -t /data/local/tmp/$apk
 		sleep 2 
 		adb -s $device_id shell 'pm list packages -f' | grep $fdroid_pack > /dev/null
