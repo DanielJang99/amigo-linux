@@ -4,12 +4,6 @@
 ## Date:   11/29/2021
 
 # import utilities files needed
-curr_dir=`pwd`
-base_dir=$curr_dir
-adb_file=$base_dir"/adb-utils.sh"
-load_file $adb_file
-
-# import utilities files needed
 DEBUG=1
 util_file=`pwd`"/util.cfg"
 adb_file=`pwd`"/adb-utils.sh"
@@ -79,22 +73,22 @@ find_package(){
 grant_permission(){
     if [ $app == "zoom" ]
     then 
-        pm grant $package android.permission.RECORD_AUDIO
-        pm grant $package android.permission.WRITE_EXTERNAL_STORAGE
-        pm grant $package android.permission.CAMERA
+        sudo pm grant $package android.permission.RECORD_AUDIO
+        sudo pm grant $package android.permission.WRITE_EXTERNAL_STORAGE
+        sudo pm grant $package android.permission.CAMERA
     elif [ $app == "webex" ]
     then 
-        pm grant $package android.permission.RECORD_AUDIO
-        pm grant $package android.permission.WRITE_EXTERNAL_STORAGE
-        pm grant $package android.permission.CAMERA
-        pm grant $package android.permission.READ_CONTACTS
-        pm grant $package android.permission.CALL_PHONE
-        pm grant $package android.permission.ACCESS_FINE_LOCATION
+        sudo pm grant $package android.permission.RECORD_AUDIO
+        sudo pm grant $package android.permission.WRITE_EXTERNAL_STORAGE
+        sudo pm grant $package android.permission.CAMERA
+        sudo pm grant $package android.permission.READ_CONTACTS
+        sudo pm grant $package android.permission.CALL_PHONE
+        sudo pm grant $package android.permission.ACCESS_FINE_LOCATION
     elif [ $app == "meet" ]
     then 
-        pm grant $package android.permission.RECORD_AUDIO
-        pm grant $package android.permission.CAMERA        
-        pm grant $package android.permission.CALL_PHONE
+        sudo pm grant $package android.permission.RECORD_AUDIO
+        sudo pm grant $package android.permission.CAMERA        
+        sudo pm grant $package android.permission.CALL_PHONE
     fi 
 }
 
