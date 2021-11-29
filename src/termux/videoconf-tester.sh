@@ -470,7 +470,7 @@ low_cpu="false"
 myprint "Starting cpu monitor. Log: $log_cpu LowCpu: $low_cpu"
 echo "true" > ".to_monitor"
 clean_file ".ready_to_start"
-#cpu_monitor $log_cpu &
+cpu_monitor $log_cpu &
 cpu_monitor_top $log_cpu_top &
 
 # get initial network data information
@@ -486,7 +486,7 @@ t_launch=`date +%s` #NOTE: use posterior time in case u want to filter launching
 myprint "Launching $app..."
 sudo monkey -p $package 1 > /dev/null 2>&1
 
-# needed for rooted device 
+# needed to handle warning of zoom on rooted device 
 if [ $clear_state == "true" -a $app == "zoom" ] 
 then 
 	tap_screen 440 835 
