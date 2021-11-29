@@ -38,7 +38,7 @@ cpu_monitor_top(){
     # continuous monitoring
     while [ $to_monitor == "true" ]
     do
-        shell top -n 1 | grep $key >> $log_cpu_top
+        top -n 1 | grep $key >> $log_cpu_top
         sleep $sleep_time
         to_monitor=`cat .to_monitor`
     done
@@ -313,9 +313,8 @@ leave_meet(){
 # script usage
 usage(){
     echo "====================================================================================================================================================================="
-    echo "USAGE: $0 -d/--device, -a/--app, -p/--pass, -m/--meet, -v/--video, -D/--dur, -c/--clear, -i/--id, --pcap, --iface, --remote, --vpn, --view"
+    echo "USAGE: $0 -a/--app, -p/--pass, -m/--meet, -v/--video, -D/--dur, -c/--clear, -i/--id, --pcap, --iface, --remote, --vpn, --view"
     echo "====================================================================================================================================================================="
-    echo "-d/--device     human readable device name as defined in $phone_info"
     echo "-a/--app        videoconf app to use: zoom, meet, webex" 
     echo "-p/--pass       zoom meeting password" 
     echo "-m/--meet       zoom meeting identifier" 
@@ -354,9 +353,6 @@ turn_off="false"                         # turn off the screen
 while [ "$#" -gt 0 ]
 do
     case "$1" in
-        -d | --device)
-            shift; device_id="$1"; shift;
-            ;;
         -a | --app)
             shift; app="$1"; shift;
             ;;
@@ -543,7 +539,7 @@ then
     myprint "A view change was requested!"
     if [ $app == "zoom" ] 
     then 
-        adb -s $device_id shell input swipe 700 800 300 800
+        sudo input swipe 700 800 300 800
     elif [ $app == "meet" ] # -o $app == "webex" ] #CHECK: webex is naturally multi-view
     then 
         tap_screen $x_center $y_center
@@ -563,8 +559,7 @@ then
 	if [ $app != "zoom" ] # cause zoom ignores this
 	then 
 		myprint "Rotating screen in landscape mode..."
-		adb -s $device_id shell content insert --uri content://settings/system --bind name:s:accelerometer_rotation --bind value:i:0
-		adb -s $device_id shell content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:1
+		sudo content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:1
 		sleep 5
 	fi 
 
@@ -595,7 +590,7 @@ sleep 5
 if [ $change_view == "false" -a $app == "webex" ]
 then 
     myprint "Redoing tap for full screen, just in case. Verify no issue added" 
-    adb -s $device_id shell "input tap 200 400 & sleep 0.1; input tap 200 400"
+    sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
 fi
 
 # sleep up to mid experiment then take a screenshot 
