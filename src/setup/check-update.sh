@@ -41,7 +41,7 @@ install_simple(){
 	to_install=$?
 	if [ $to_install -eq 1 ]
 	then 
-		./install-app-wifi.sh $device_id $apk
+		./install-app-wifi.sh $wifi_ip $apk
 	else
 		echo "$pkg is already installed"
 	fi 
@@ -98,12 +98,6 @@ cd - > /dev/null 2>&1
 #ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sv-enable crond"
 #fail: crond: unable to change to service directory: file does not exist
 
-# launch termux-boot to make sure it is ready 
-echo "launching termux-boot to make sure it is ready"
-ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo monkey -p $termux_boot 1 > /dev/null 2>&1"
-sleep 5 
-ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo input keyevent KEYCODE_HOME"	
-
 # install apps needed
 package_list[0]="com.google.android.apps.maps"
 package_list[1]="us.zoom.videomeetings"
@@ -131,9 +125,16 @@ do
     package=${package_list[$i]}
     name=${name_list[$i]}
 	apk=${apk_list[$i]}
+	echo "install_simple $package $apk"
 	install_simple $package $apk
 done
 cd - > /dev/null 2>&1
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo input keyevent KEYCODE_HOME"	
+
+# launch termux-boot to make sure it is ready 
+echo "launching termux-boot to make sure it is ready"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo monkey -p $termux_boot 1 > /dev/null 2>&1"
+sleep 5 
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo input keyevent KEYCODE_HOME"	
 
 # update code 
