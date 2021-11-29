@@ -145,5 +145,15 @@ else
 	ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "echo \"true\" > \"mobile-testbed/src/termux/.isDebug\"" 
 fi 
 
+# make sure all permissions are granted 
+todo="sudo pm grant com.termux.api android.permission.READ_PHONE_STATE"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "$todo"
+todo="sudo pm grant com.google.android.apps.maps android.permission.ACCESS_FINE_LOCATION"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "$todo"
+todo="sudo pm grant com.example.sensorexample android.permission.ACCESS_FINE_LOCATION"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "$todo"
+todo="sudo pm grant com.example.sensorexample android.permission.READ_PHONE_STATE"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "$todo"
+
 # logging 
 echo "All good"
