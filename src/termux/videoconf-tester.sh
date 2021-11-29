@@ -10,6 +10,43 @@ adb_file=`pwd`"/adb-utils.sh"
 source $util_file
 source $adb_file
 
+# monitor CPU usage using TOP
+cpu_monitor_top(){
+    sleep_time=3
+    to_monitor="true"
+
+    if [ $app == "zoom" ]
+    then
+        key="zoom"
+    elif [ $app == "meet" ]
+    then
+        key="com.google.and"
+    elif [ $app == "webex" ]
+    then
+        key="webex"
+    fi
+
+    # logging
+    myprint "Start monitoring CPU via TOP (PID: $$)"
+
+    # clean cpu sync barrier done via files
+    if [ -f ".ready_to_start" ]
+    then
+        rm ".ready_to_start"
+    fi
+
+    # continuous monitoring
+    while [ $to_monitor == "true" ]
+    do
+        shell top -n 1 | grep $key >> $log_cpu_top
+        sleep $sleep_time
+        to_monitor=`cat .to_monitor`
+    done
+
+    # logging
+    myprint "Done monitoring CPU via TOP (PID: $$)"
+}
+
 # sync barrier between devices 
 sync_barrier(){
     myprint "Time for sync barrier..."
@@ -433,7 +470,7 @@ low_cpu="false"
 myprint "Starting cpu monitor. Log: $log_cpu LowCpu: $low_cpu"
 echo "true" > ".to_monitor"
 clean_file ".ready_to_start"
-cpu_monitor $log_cpu &
+#cpu_monitor $log_cpu &
 cpu_monitor_top $log_cpu_top &
 
 # get initial network data information
