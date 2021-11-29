@@ -1,24 +1,20 @@
 #!/bin/bash
-## Note:   Script to automate zoom
+## Note:   Script to automate videoconferencing clients
 ## Author: Matteo Varvello
-## Date:   01/27/2021
-
-#helper to  load utilities files
-load_file(){
-    if [ -f $1 ]
-    then
-        source $1
-    else
-        echo "Utility file $1 is missing"
-        exit -1
-    fi
-}
+## Date:   11/29/2021
 
 # import utilities files needed
 curr_dir=`pwd`
 base_dir=$curr_dir
 adb_file=$base_dir"/adb-utils.sh"
 load_file $adb_file
+
+# import utilities files needed
+DEBUG=1
+util_file=`pwd`"/util.cfg"
+adb_file=`pwd`"/adb-utils.sh"
+source $util_file
+source $adb_file
 
 # sync barrier between devices 
 sync_barrier(){
@@ -42,24 +38,11 @@ unlock_device(){
 	turn_device_on
 
 	# check if device is locked or not
-	foreground=`adb -s $device_id shell dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
 	if [[ "$foreground" == *"StatusBar"* ]]
 	then
-		myprint "Device is locked. Attempting unlock..."
-		adb -s $device_id shell input swipe 360 1040 360 100
-		adb -s $device_id shell "input tap 150 750"
-		for ((i=1; i<=3; i++))
-		do
-			adb -s $device_id shell "input tap 360 750"
-		done
-		sleep 5
-		foreground=`adb -s $device_id shell dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
-		if [ $foreground == "com.sec.android.app.launcher" ]
-		then
-			myprint "Unlock worked, test can continue"
-		fi
-	else
-		myprint "Device is unlocked"
+		myprint "Device is locked. Exiting!"
+		exit -1 
 	fi
 }
 
@@ -77,16 +60,18 @@ find_package(){
         package="com.google.android.apps.meetings"        
     else 
         myprint "$app is currently not supported"
-        exit -11
+        exit -1
     fi 
 
     # make sure app is installed? 
-    adb -s $device_id shell 'pm list packages -f' | grep $package 
+    pm list packages -f | grep $package > /dev/null 
     if [ $? -ne 0 ] 
     then 
         myprint "Something is wrong. Package $package was not found. Please install it" 
         exit -1
-    fi 
+    else 
+		myprint "Package $package correctly found!"
+	fi 
 }
 
 # grant permission required by each app
@@ -94,22 +79,22 @@ find_package(){
 grant_permission(){
     if [ $app == "zoom" ]
     then 
-        adb -s $device_id shell pm grant $package android.permission.RECORD_AUDIO
-        adb -s $device_id shell pm grant $package android.permission.WRITE_EXTERNAL_STORAGE
-        adb -s $device_id shell pm grant $package android.permission.CAMERA
+        pm grant $package android.permission.RECORD_AUDIO
+        pm grant $package android.permission.WRITE_EXTERNAL_STORAGE
+        pm grant $package android.permission.CAMERA
     elif [ $app == "webex" ]
     then 
-        adb -s $device_id shell pm grant $package android.permission.RECORD_AUDIO
-        adb -s $device_id shell pm grant $package android.permission.WRITE_EXTERNAL_STORAGE
-        adb -s $device_id shell pm grant $package android.permission.CAMERA
-        adb -s $device_id shell pm grant $package android.permission.READ_CONTACTS
-        adb -s $device_id shell pm grant $package android.permission.CALL_PHONE
-        adb -s $device_id shell pm grant $package android.permission.ACCESS_FINE_LOCATION
+        pm grant $package android.permission.RECORD_AUDIO
+        pm grant $package android.permission.WRITE_EXTERNAL_STORAGE
+        pm grant $package android.permission.CAMERA
+        pm grant $package android.permission.READ_CONTACTS
+        pm grant $package android.permission.CALL_PHONE
+        pm grant $package android.permission.ACCESS_FINE_LOCATION
     elif [ $app == "meet" ]
     then 
-        adb -s $device_id shell pm grant $package android.permission.RECORD_AUDIO
-        adb -s $device_id shell pm grant $package android.permission.CAMERA        
-        adb -s $device_id shell pm grant $package android.permission.CALL_PHONE
+        pm grant $package android.permission.RECORD_AUDIO
+        pm grant $package android.permission.CAMERA        
+        pm grant $package android.permission.CALL_PHONE
     fi 
 }
 
@@ -119,7 +104,7 @@ run_zoom(){
 	tap_screen $x_center 1020 3
 	 
 	# enter meeting ID
-	adb -s $device_id shell input text "$meeting_id" 
+	sudo input text "$meeting_id" 
 	tap_screen $x_center 655 5
 	 
 	# enter password if needed
@@ -128,7 +113,7 @@ run_zoom(){
 		myprint "Password not provided. Verify on screen if needed or not" 
 	else 
 		myprint "Entering Password: $password" 
-		adb -s $device_id shell input text "$password" 
+		sudo input text "$password" 
 		tap_screen 530 535 
 	fi 
 
@@ -161,15 +146,15 @@ run_webex(){
 
 	# enter meeting ID
 	tap_screen $x_center 935 3
-	adb -s $device_id shell input text "$meeting_id"
+	sudo input text "$meeting_id"
 	 
 	# add user and password on first run
 	if [ $clear_state == "true" ] 
 	then 
 		tap_screen $x_center 500 2
-		adb -s $device_id shell input text "Bravello"
+		sudo input text "Bravello"
 		tap_screen $x_center 620 2
-		adb -s $device_id shell input text "bravello@gmail.com"
+		sudo input text "bravello@gmail.com"
 		sleep 2 
 	fi 
 
@@ -218,7 +203,7 @@ run_webex(){
 	# go full screen (which is comparable with zoom default)
 	if [ $change_view == "false" ]
 	then 
-		adb -s $device_id shell "input tap 200 400 & sleep 0.1; input tap 200 400"
+		sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
 	fi 
 }
 
@@ -233,7 +218,7 @@ run_meet(){
 	tap_screen 515 230 3
 	 
 	# enter meeting ID
-	adb -s $device_id shell input text "$meeting_id" #FIXME - check DVPN code (verify spaces) 
+	sudo input text "$meeting_id" #FIXME - check DVPN code (verify spaces) 
 	tap_screen 640 105 3
 	 
 	# enter password if needed
@@ -241,7 +226,7 @@ run_meet(){
 	then 
 		myprint "Password not provided. Verify on screen if needed or not" 
 	else 
-		adb -s $device_id shell input text "$password"
+		sudo input text "$password"
 		tap_screen 530 780 1
 	fi 
 
@@ -297,7 +282,7 @@ leave_meet(){
 # script usage
 usage(){
     echo "====================================================================================================================================================================="
-    echo "USAGE: $0 -d/--device, -a/--app, -p/--pass, -m/--meet, -v/--video, -D/--dur, -c/--clear, -i/--id, --pcap, --moon, --remote, --vpn, --view"
+    echo "USAGE: $0 -d/--device, -a/--app, -p/--pass, -m/--meet, -v/--video, -D/--dur, -c/--clear, -i/--id, --pcap, --iface, --remote, --vpn, --view"
     echo "====================================================================================================================================================================="
     echo "-d/--device     human readable device name as defined in $phone_info"
     echo "-a/--app        videoconf app to use: zoom, meet, webex" 
@@ -307,10 +292,10 @@ usage(){
     echo "-D/--dur        call duration" 
     echo "-c/--clear      clear zoom state (enable flag, default=false)" 
     echo "-i/--id         test identifier to be used" 
-    echo "--pcap          request pcap collection at wifi router" 
-    echo "--moon          request battery monitoring via monsoon"
+    echo "--suffix        folder identifier for results" 
+    echo "--pcap          request pcap collection"
+	echo "--iface         current interface in use"  
     echo "--remote        start a remote client in Azure"
-    echo "--vpn           flag to control if to use a VPN" 
     echo "--rec           record video of the screen"
     echo "--view          change from default view"
     echo "====================================================================================================================================================================="
@@ -323,6 +308,7 @@ use_video="false" 	                     # flag to control video usage or not
 package=""                               # package of videoconferencing app to be tested
 duration=10                              # default test duration before leaving the call
 phone_info=$base_dir"/phones-info.json"  # json file containing device information 
+suffix=`date +%d-%m-%Y`                  # folder id (one folder per day)
 test_id=`date +%s`                       # unique test identifier 
 pcap_collect="false"                     # flag to control pcap collection ar router
 iface="wlan0"                            # current default interface where to collect data
@@ -358,6 +344,12 @@ do
 		-D | --dur)
 			shift; duration="$1"; shift;
 			;;
+		--iface)
+			shift; iface="$1"; shift;
+			;;
+        --suffix)
+            shift; suffix="$1"; shift;
+            ;;
         -c | --clear)
             shift; clear_state="true";
             ;;
@@ -366,9 +358,6 @@ do
             ;;
         --pcap)
             shift; pcap_collect="true";
-            ;;
-        --moon)
-            shift; use_monsoon="true";
             ;;
         --remote)
             shift; remote="true";
@@ -379,9 +368,6 @@ do
         --view)
             shift; change_view="true";
             ;;
-        --vpn)
-            shift; use_vpn="true"; location="$1"; shift; 
-			;;
          --off)
             shift; turn_off="true"; 
             ;;      
@@ -415,23 +401,27 @@ let "y_center = height/2"
 find_package
 
 # folder organization
-res_folder="./results/${test_id}"
+res_folder="./videoconferencing/${suffix}"
 mkdir -p $res_folder 
 
 # ntp update 
-myprint "WARNING: comment next line for ntp update" 
-#sudo ntpdate 0.us.pool.ntp.org
+use_ntp="false"
+if [ $use_ntp == "tru" ] 
+then 
+	sudo ntpdate 0.us.pool.ntp.org
+fi 
 
 # make sure device is on and unlocked
 unlock_device
 
 # always make sure screen is in portrait 
-adb -s $device_id shell content insert --uri content://settings/system --bind name:s:user_rotatio
+sudo content insert --uri content://settings/system --bind name:s:accelerometer_rotation --bind value:i:0
+sudo content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:0  # 1 => for landscape 
 
-# clean pending zoom state and re-grant permissions
+# clear app states and  re-grant permissions
 if [ $clear_state == "true" ] 
 then 
-	adb -s $device_id shell pm clear $package
+	sudo pm clear $package
 fi 
 
 # allow permission
@@ -454,17 +444,16 @@ cpu_monitor_top $log_cpu_top &
 
 # get initial network data information
 pi_start=`cat /proc/net/dev | grep $iface  | awk '{print $10}'`
-uid=`adb -s $device_id shell dumpsys package $package | grep "userId=" | head -n 1 | cut -f 2 -d "="`
-app_start=`adb -s $device_id shell cat /proc/net/xt_qtaguid/stats | grep $iface | grep $uid | awk '{traffic += $6}END{print traffic}'` #NOTE: not working on S10
+uid=`sudo dumpsys package $package | grep "userId=" | head -n 1 | cut -f 2 -d "="`
+app_start=`cat /proc/net/xt_qtaguid/stats | grep $iface | grep $uid | awk '{traffic += $6}END{print traffic}'` #NOTE: not working on S10
 
 # cleanup logcat
-for pid in `ps aux | grep "adb" | grep "logcat"  | awk '{print $2}'`; do  kill -9 $pid; done
-adb -s $device_id logcat -c 
+#sudo logcat -c 
 
 # start app 
 t_launch=`date +%s` #NOTE: use posterior time in case u want to filter launching and joining a conference
 myprint "Launching $app..."
-adb -s $device_id shell monkey -p $package 1 > /dev/null 2>&1
+sudo monkey -p $package 1 > /dev/null 2>&1
 
 # needed for rooted device 
 if [ $clear_state == "true" -a $app == "zoom" ] 
@@ -536,12 +525,6 @@ then
     turn_device_off
 fi 
 
-# make sure device is on and unlocked
-if [ $turn_off == "true" ] 
-then 
-    unlock_device
-fi 
-
 # manage screen recording
 if [ $video_recording == "true" ]
 then
@@ -557,20 +540,20 @@ then
     # make sure video is full screen 
 	if [ $app == "webex" ] 
 	then 
-		adb -s $device_id shell "input tap 730 250 & sleep 0.1; input tap 730 250"
+		sudo input tap 730 250 & sleep 0.1; sudo input tap 730 250
 	elif [ $app == "meet" ]
 	then 
     	tap_screen 1200 430 
 	fi 
 	
-    # skip first 60 minutes when screen is black anyway 
+    # skip first 60 seconds when screen is black anyway 
     myprint "Skip first 60 seconds since screen is black anyway"
     sleep 60
     
 	# start recording the video 
-    screen_video="/sdcard/last-run-${test_id}"
+    screen_video="${res_folder}/video-rec-${test_id}"
     myprint "Start video recording: $screen_video"
-    (adb -s $device_id shell screenrecord $screen_video".mp4" &)
+    (sudo screenrecord $screen_video".mp4" --time-limit $duration &)
 fi
 
 # wait for test to end 
@@ -587,7 +570,7 @@ fi
 # sleep up to mid experiment then take a screenshot 
 let "half_duration = duration/2 - 5"
 sleep $half_duration 
-(adb -s $device_id exec-out screencap -p > $res_folder"/"$test_id".png" &)
+(sudo screencap -p $res_folder"/"$test_id".png" &)
 
 # sleep rest of the experiment
 sleep $half_duration 
@@ -598,13 +581,6 @@ then
 	myprint "Stopping $app remote client..."
 	echo "ssh -o StrictHostKeyChecking=no -i $key -f $user@$server \"$remote_exec stop\""
 	ssh -o StrictHostKeyChecking=no -i $key -f $user@$server "$remote_exec stop"
-fi 
-
-# stop video recording
-if [ $video_recording == "true" ]
-then
-    pid=`ps aux | grep "screenrecord" | grep -v "grep" | awk '{print $2}'`
-    kill -9 $pid
 fi 
 
 # make sure device is on and unlocked (needed when screen is off)
@@ -637,9 +613,8 @@ myprint "Done monitoring CPU"
 echo "false" > ".to_monitor"
 
 # collect logcat 
-log_cat="${res_folder}/${test_id}.logcat"
-adb -s $device_id logcat -d > $log_cat
-for pid in `ps aux | grep "adb" | grep "logcat"  | awk '{print $2}'`; do  kill -9 $pid; done
+#log_cat="${res_folder}/${test_id}.logcat"
+#sudo logcat -d > $log_cat
 
 # tshark analysis 
 #tshark_file="${res_folder}/${test_id}.tshark"
@@ -647,18 +622,8 @@ for pid in `ps aux | grep "adb" | grep "logcat"  | awk '{print $2}'`; do  kill -
 #tshark -nr $pcap_file -T fields -e frame.number -e frame.time_epoch -e ip.src -e ip.dst -e tcp.srcport -e tcp.dstport -e udp.srcport -e udp.dstport -e _ws.col.Protocol -e frame.len -e tcp.window_size -e tcp.analysis.bytes_in_flight -e _ws.col.Info -e tcp.analysis.ack_rtt -e ipv6.dst -e ipv6.src -e tcp.analysis.retransmission > $tshark_file
 #rm $pcap_file
 
-# save video locally
-if [ $video_recording == "true" ]
-then
-    adb -s $device_id pull $screen_video".mp4" ./
-    adb -s $device_id shell rm $screen_video".mp4"
-    local_screen_video=`echo $screen_video | awk -F "/" '{print $NF}'`
-    final_screen_video=$res_folder"/"$test_id".mp4"
-    mv $local_screen_video".mp4" $final_screen_video
-fi 
-
 # BDW readings
-app_last=`adb -s $device_id shell cat /proc/net/xt_qtaguid/stats | grep $iface | grep $uid | awk '{traffic += $6}END{print traffic}'` #NOTE: not working on S10
+app_last=`cat /proc/net/xt_qtaguid/stats | grep $iface | grep $uid | awk '{traffic += $6}END{print traffic}'` #NOTE: not working on S10
 pi_last=`cat /proc/net/dev | grep $iface  | awk '{print $10}'`
 pi_traffic=`echo $pi_start" "$pi_last | awk '{delta=($2-$1)/1000000; print delta;}'`
 app_traffic=`echo $app_start" "$app_last | awk '{delta=($2-$1)/1000000; print delta;}'`
@@ -670,8 +635,8 @@ log_traffic=$res_folder"/"$test_id".traffic"
 echo -e "$app_traffic\t$pi_traffic" > $log_traffic
 
 # always make sure screen is in portrait 
-adb -s $device_id shell content insert --uri content://settings/system --bind name:s:user_rotatio
+sudo content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:0  # 1 => for landscape 
 
 # return HOME and turn off screen 
-adb -s $device_id shell input keyevent HOME
+sudo input keyevent HOME
 turn_device_off
