@@ -125,6 +125,31 @@ myprint "Script will run with a $freq sec frequency. To stop: <<echo \"false\" >
 last_loop_time=0
 while [ $to_run == "true" ] 
 do 
+	# check if user wants us to stop/pause 
+	user_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/running.txt"
+	user_status="true"
+	if [ -f $user_file ] 
+	then 
+		user_status=`sudo cat $user_file`
+	fi 
+	if [ $user_status == "false" ] 
+	then 
+		echo "User is asking to stop!"
+		echo "false" > ".status"
+		#FIXME
+		echo "FIXME: need to potentially stop more stuff"
+		break 
+	fi 
+
+	# check if user wants to run a test 
+	sel_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/selection.txt"
+	if [ -f $sel_file ] 
+	then 
+		sel_id=`cat $sel_file`
+		echo "User entered selection: $sel_id"
+		#private String[] dropdownItems = new String[]{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
+	fi 
+
 	# loop rate control 
 	current_time=`date +%s`
 	let "t_p = freq - (current_time - last_loop_time)"

@@ -457,6 +457,14 @@ grant_permission
 # close all pending apps
 close_all
 
+# start pcap collection if needed
+if [ $pcap_collect == "true" ] 
+then 
+    pcap_file="${res_folder}/${test_id}.pcap"
+    sudo tcpdump -i $iface -w $pcap_file > /dev/null 2>&1 &
+	myprint "Started tcpdump: $pcap_file Interface: $iface"
+fi 
+
 # start background procees to monitor CPU on the device
 log_cpu=$res_folder"/"$test_id".cpu"
 log_cpu_top=$res_folder"/"$test_id".cpu_top"
@@ -600,6 +608,7 @@ sleep $half_duration
 
 # sleep rest of the experiment
 sleep $half_duration 
+sudo chown $USER:$USER $res_folder"/"$test_id".png"
 
 # close remote client if needed
 if [ $remote == "true" ] 
@@ -616,8 +625,12 @@ then
 fi 
 
 # stop tcpdump 
-#sudo killall tcpdump 
-#myprint "Stopped tcpdump: $pcap_file" 
+if [ $pcap_collect == "true" ] 
+then 
+	sudo killall tcpdump 
+	myprint "Stopped tcpdump: $pcap_file" 
+	#TODO: start some analysis to reduce file size 
+fi 
 
 # leave the meeting 
 myprint "Close $app..."
