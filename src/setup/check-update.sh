@@ -43,18 +43,26 @@ install_simple(){
 	then 
 		./install-app-wifi.sh $wifi_ip $apk
 	else
-		echo "$pkg is already installed"
+		vrs=`ssh -oStrictHostKeyChecking=no -i id_rsa_mobile -p 8022 $wifi_ip "sudo dumpsys package $pkg | grep versionName" | cut -f 2 -d "="`
+		echo "$pkg is already installed - version:$vrs (last_vrs:$last_vrs)"
+		if [ $apk == -a $vrs != $last_vrs ] 
+		then 
+			echo "Re-installing since it is an old vesion!"
+			ssh -oStrictHostKeyChecking=no -i id_rsa_mobile -p 8022 $wifi_ip "sudo pm uninstall $pkg"
+			./install-app-wifi.sh $wifi_ip $apk
+		fi 
 	fi 
 }
 
 # parameters 
-wifi_ip=$1                      # device to be prepped 
+wifi_ip=$1                        # device to be prepped 
 ssh_key="id_rsa_mobile"           # unique key used for both SSH and GITHUB 
 password="termux"                 # default password
 termux_pack="com.termux"          # termux package 
 termux_boot="com.termux.boot"     # termux boot package 
 termux_api="com.termux.api"       # termux API package 
 production="false"                # default we are debugging 
+last_vrs="1.0"                    # last version of our app
 
 # check if we want to switch to production
 if [ $# -eq 2 ] 
@@ -94,10 +102,6 @@ install_simple $termux_api "com.termux.api_49.apk"	 #https://f-droid.org/repo/co
 install_simple $termux_boot "com.termux.boot_7.apk"  #https://f-droid.org/repo/com.termux.boot_7.apk
 cd - > /dev/null 2>&1
 
-# make sure crontab is enabled (FIXME)
-#ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sv-enable crond"
-#fail: crond: unable to change to service directory: file does not exist
-
 # install apps needed
 package_list[0]="com.google.android.apps.maps"
 package_list[1]="us.zoom.videomeetings"
@@ -132,6 +136,8 @@ cd - > /dev/null 2>&1
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo input keyevent KEYCODE_HOME"	
 
 # launch termux-boot to make sure it is ready 
+scp -oStrictHostKeyChecking=no -i $ssh_key -P 8022 "start-sshd.sh" $wifi_ip:.termux/boot/
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "chmod +x .termux/boot/start-sshd.sh"
 echo "launching termux-boot to make sure it is ready"
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo monkey -p $termux_boot 1 > /dev/null 2>&1"
 sleep 5 
@@ -155,6 +161,49 @@ todo="sudo pm grant com.example.sensorexample android.permission.ACCESS_FINE_LOC
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "$todo"
 todo="sudo pm grant com.example.sensorexample android.permission.READ_PHONE_STATE"
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "$todo"
+
+# make sure crontab is enabled
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pgrep cron"
+if [ $? -ne 0 ] 
+then 
+	echo "Setting up CRON"
+	ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pkg install -y cronie termux-services"
+	ssh -oStrictHostKeyChecking=no -t -i $ssh_key -p 8022 $wifi_ip 'sh -c "sv-enable crond"'
+	ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pgrep cron"
+	if [ $? -ne 0 ] 
+	then
+		echo "ERROR Something went wrong!"
+	else 
+		echo "CRON is correctly running"
+	fi 
+else 
+	echo "CRON is correctly running"
+fi 
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "crontab -r"  #cleanup 
+#ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "(crontab -l 2>/dev/null; echo \"*/3 * * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/ && ./need-to-run.sh\") | crontab -"
+#ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "(crontab -l 2>/dev/null; echo \"0 2 * * * sudo reboot\") | crontab -"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "(crontab -l 2>/dev/null; echo \"50 21 * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/ && ls > loggamelo\") | crontab -"
+echo "WARNING. Added need-to-run and reboot jobs for now"
+
+# testing REBOOT 
+echo "Testing REBOOT!"
+timeout 10 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo reboot"
+rebooting="true"
+ts=`date +%s`
+TIMEOUT=90
+tp=0
+while [ $rebooting == "true" -a $tp -lt $TIMEOUT ] 
+do 
+	sleep 10 
+	timeout 5 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "echo $USER"
+	if [ $? -ne 0 ] 
+	then 
+		rebooting="false"
+	fi 
+	tc=`date +%s`
+	let "tp = tc - ts"
+	echo "TimePassed: $tp"
+done
 
 # logging 
 echo "All good"

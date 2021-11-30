@@ -49,6 +49,8 @@ python visualmetrics.py --check
 # make sure all permissions are granted 
 sudo pm grant com.termux.api android.permission.READ_PHONE_STATE
 sudo pm grant com.google.android.apps.maps android.permission.ACCESS_FINE_LOCATION
+sudo pm grant com.example.sensorexample android.permission.ACCESS_FINE_LOCATION
+sudo pm grant com.example.sensorexample android.permission.READ_PHONE_STATE
 
 # accept termux wake lock 
 termux-wake-lock

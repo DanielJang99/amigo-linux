@@ -360,13 +360,21 @@ do
 	fi 
 done 
 
-# SSH preparation
+# install local packages 
+hash jq
+if [ $? -ne 0 ] 
+then 
+	echo "Installing json parser (jq) since missing"
+	sudo apt-get install jq
+fi 
 hash sshpass
 if [ $? -ne 0 ] 
 then 
 	echo "Installing sshpass since missing" 
 	sudo apt install -y sshpass
 fi 
+
+# SSH preparation
 echo "SSH prepping..."
 sshpass -p "$password" ssh -oStrictHostKeyChecking=no -p 8022 $wifi_ip "mkdir -p .ssh"
 sshpass -p "$password" scp -oStrictHostKeyChecking=no -P 8022 $ssh_key $wifi_ip:.ssh 
