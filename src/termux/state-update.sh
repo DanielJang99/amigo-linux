@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/data/data/com.termux/files/usr/bin/env bash
 ## NOTE: report updates to the central server 
 ## Author: Matteo Varvello (matteo.varvello@nokia.com)
 ## Date: 11/3/2021

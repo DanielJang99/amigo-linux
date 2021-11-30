@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/data/data/com.termux/files/usr/bin/bash
 ## Author: Matteo Varvello 
 ## Date:   11/10/2021
 ## NOTE: script to test wifi toggling 

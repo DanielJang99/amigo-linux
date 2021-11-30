@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/data/data/com.termux/files/usr/bin/bash
 ## Notes: Common functions across cripts 
 ## Author: Matteo Varvello (Nokia)
 ## Date: 04/10/2019
