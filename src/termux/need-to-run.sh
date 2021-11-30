@@ -31,23 +31,6 @@ then
 	fi
 fi 
 
-# check if we were just rebooted 
-pwd
-date
-uptime
-echo $USER
-sudo cat "/proc/uptime" 
-uptime_sec=`sudo cat "/proc/uptime" | cut -f 1 -d " " | cut -f 1 -d "."`
-echo "uptime: $uptime_sec"
-#if [ $uptime_sec -lt 10000 ] 
-#then 
-	suffix=`date +%d-%m-%Y`
-	current_time=`date +%s`
-	uid=`termux-telephony-deviceinfo | grep "device_id" | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
-	uptime_info=`uptime`
-	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
-#fi 
-
 # don't run if already running
 if [ -f ".isDebug" ] 
 then 
