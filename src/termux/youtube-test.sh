@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/data/data/com.termux/files/usr/bin/bash
 ## NOTE: testing getting <<stats for nerds>> on youtube
 ## Author: Matteo Varvello (matteo.varvello@nokia.com)
 ## Date: 11/15/2021

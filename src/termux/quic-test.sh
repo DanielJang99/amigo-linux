@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/data/data/com.termux/files/usr/bin/bash
 ## Note:   Script for driving experiments
 ## Author: Matteo Varvello
 ## Date:   06/22/2021

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/data/data/com.termux/files/usr/bin/bash
 ## Author: Matteo Varvello (varvello@gmail.com)
 ## Date: 11-10-2020
 ## NOTE: Tool to test perf of multiple CDNs

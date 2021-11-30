@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/data/data/com.termux/files/usr/bin/bash
 ## Note:   Script to automate videoconferencing clients
 ## Author: Matteo Varvello
 ## Date:   11/29/2021

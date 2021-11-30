@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/data/data/com.termux/files/usr/bin/bash
 
 for pid in `ps aux | grep 'state\|net-testing\|web-test'  | grep -v grep | awk '{print $2}'`
 do 
