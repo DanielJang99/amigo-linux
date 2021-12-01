@@ -149,8 +149,8 @@ do
 	sel_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/selection.txt"
 	if [ -f $sel_file ] 
 	then 
-		sel_id=`cat $sel_file | cut -f 1`
-		time_sel=`cat $sel_file | cut -f 2`
+		sel_id=`sudo cat $sel_file | cut -f 1`
+		time_sel=`sudo cat $sel_file | cut -f 2`
 		let "time_from_sel = time_sel - current_time"
 		let "time_check = freq + freq/2"
 		echo "TEMP: User entered selection: $sel_id (Time: $time_sel -- $current_time)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
