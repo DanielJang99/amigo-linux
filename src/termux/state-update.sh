@@ -151,10 +151,10 @@ do
 	then 
 		sel_id=`sudo cat $sel_file | cut -f 1`
 		time_sel=`sudo cat $sel_file | cut -f 2`
-		let "time_from_sel = time_sel - current_time"
+		let "time_from_sel = current_time - time_sel"
 		let "time_check = freq + freq/2"
 		echo "TEMP: User entered selection: $sel_id (Time: $time_sel -- $current_time)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
-		if [ $time_from_sel -lt  $time_check ] 
+		if [ $time_from_sel -lt $time_check ] 
 		then 
 			echo "User entered selection: $sel_id (Time: $time_sel -- $current_time)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
 			case $sel_id in
@@ -163,7 +163,7 @@ do
 				    ;;
 
   				"1")
-					echo "Watch a video"
+					echo "Watch a video -- ./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface"
 					./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface
 				    ;;
 				  *)
