@@ -126,11 +126,12 @@ run_test(){
 # script usage
 usage(){
     echo "================================================================================"
-    echo "USAGE: $0 --load,	--novideo"
+    echo "USAGE: $0 --load,	--novideo, --single"
     echo "================================================================================"
     echo "--load       Page load max duration"
     echo "--iface      Network interface in use"
     echo "--novideo    Turn off video recording" 
+    echo "--single     Just one test" 
     echo "================================================================================"
     exit -1
 }
@@ -143,6 +144,7 @@ video_recording="true"             # record screen or not
 interface="wlan0"                  # default network interface to monitor (for traffic)
 suffix=`date +%d-%m-%Y`            # folder id (one folder per day)
 curr_run_id=`date +%s`             # unique id per run
+single="false"                     # should run just one test 
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -162,6 +164,9 @@ do
             ;;
         --id)
             shift; curr_run_id="$1"; shift;
+            ;;
+        --single)
+            shift; single="true"; 
             ;;
         -h | --help)
             usage
@@ -204,8 +209,15 @@ chrome_onboarding
 for((i=0; i<num_urls; i++))
 do
     # get URL to be tested 
-    url=${urlList[$i]} 
-    
+	if [ $single == "true" ] 
+	then 
+		let "i = RANDOM % num_urls"
+	    url=${urlList[$i]} 
+		i=$num_urls
+	else 
+	    url=${urlList[$i]} 
+ 	fi 
+ 
     # file naming
     id=`echo $url | md5sum | cut -f1 -d " "`
     log_cpu="${res_folder}/${id}-${curr_run_id}.cpu"

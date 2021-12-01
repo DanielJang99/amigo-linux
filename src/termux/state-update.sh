@@ -140,7 +140,7 @@ do
 	then 
 		echo "User is asking to stop!"
 		echo "false" > ".status"
-		#FIXME
+		./stop-net-testing.sh #FIXME
 		echo "FIXME: need to potentially stop more stuff"
 		break 
 	fi 
@@ -159,11 +159,14 @@ do
 			echo "User entered selection: $sel_id (Time: $time_sel -- $current_time)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
 			case $sel_id in
   				"0")
-					echo "Open a webpage -- FIXME (just one URL"
+					./stop-net-testing.sh #FIXME
+					echo "Open a webpage -- FIXME (just one URL)"
+					./web-test.sh  --suffix $suffix --id $t_s --iface $iface --single
 				    ;;
 
   				"1")
 					echo "Watch a video -- ./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface"
+					./stop-net-testing.sh #FIXME
 					./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface
 				    ;;
 				  *)
