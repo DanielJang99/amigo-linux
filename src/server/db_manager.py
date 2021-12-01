@@ -139,7 +139,7 @@ def insert_pi_command(command_id, tester_id, timestamp, action, duration, isBack
 
 
 # insert status update from a device in the database
-def insert_data(tester_id, location, timestamp, data_json):
+def insert_data(tester_id, post_type, timestamp, data_json):
 	# local parameters 
 	msg = '' 
 
@@ -157,8 +157,8 @@ def insert_data(tester_id, location, timestamp, data_json):
 	# add installed_addons to database 
 	if connected: 
 		try:
-			insert_sql = "insert into status_update(tester_id, location, timestamp, data) values(%s, %s, %s, %s::jsonb);"
-			data = (tester_id, location, timestamp, json.dumps(data_json))
+			insert_sql = "insert into status_update(tester_id, type, timestamp, data) values(%s, %s, %s, %s::jsonb);"
+			data = (tester_id, post_type, timestamp, json.dumps(data_json))
 			cur.execute(insert_sql, data)
 			msg = "status_update:all good" 	
 			

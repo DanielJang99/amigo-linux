@@ -94,9 +94,9 @@ def web_app():
     # GET - ADD/REMOVE-ACL-RULE (localhost only)
     cherrypy.tree.mount(StringGeneratorWebService(), '/addACLRule', conf)
     cherrypy.tree.mount(StringGeneratorWebService(), '/removeACLRule', conf)
-    cherrypy.tree.mount(StringGeneratorWebService(), '/action', conf)        # for now query each rand(30) seconds
-    #cherrypy.tree.mount(StringGeneratorWebService(), '/myaction', conf)        # query when kenzo app is in foreground
-    cherrypy.tree.mount(StringGeneratorWebService(), '/commandDone', conf)     # allow marking a command as done
+    cherrypy.tree.mount(StringGeneratorWebService(), '/action', conf)         # for now query each rand(30) seconds
+    cherrypy.tree.mount(StringGeneratorWebService(), '/ratings', conf)        # kenzo app reporting some user ratings
+    cherrypy.tree.mount(StringGeneratorWebService(), '/commandDone', conf)    # allow marking a command as done
 
     # POST/REPORT-MEASUREMENTS 
     cherrypy.tree.mount(StringGeneratorWebService(), '/status', conf)
@@ -134,61 +134,21 @@ class StringGeneratorWebService(object):
 		# log last IP that contacted the server
 		src_ip = cherrypy.request.headers['Remote-Addr']
 		
-		# ACL control 
-		if ACL: 
-			if not src_ip in allowedips:
-				cherrypy.response.status = 403
-				print("Requesting ip address (%s) is not allowed" %(src_ip))
-				return "Error: Forbidden" 
-
-		# add ACL rule
-		if 'addACLRule' in cherrypy.url():
-			if 'ip' in cherrypy.request.params: 
-				ip_to_add = cherrypy.request.params['ip']
-				currentTime = int(time.time()) * 1000
-				if ip_to_add in allowedips:
-					print("Updating ip %s in allowedips" %(ip_to_add))
-					msg = "Rule correctly updated"
-				else:
-					print("Adding new ip %s to allowedips" %(ip_to_add))
-					msg = "Rule correctly added"
-
-				# update or add the rule 
-				allowedips[ip_to_add] = currentTime
-				
-				# respond all good 
-				cherrypy.response.status = 200
-				return msg
-
-		# remove ACL rule 
-		elif 'removeACLRule' in cherrypy.url():
-			if 'ip' in cherrypy.request.params: 
-				ip_to_remove = cherrypy.request.params['ip']
-				if ip_to_remove in allowedips:
-					del allowedips[ip_to_remove] 
-					print("Remove ip %s from allowedips" %(ip_to_remove))
-					
-					# respond all good 
-					cherrypy.response.status = 200
-					return "Rule correctly removed"
-				else:
-					# respond nothing was done 
-					cherrypy.response.status = 202
-					return "Rule could not be removed since not existing"
-		
-		# see if there is a command
-		elif 'action' in cherrypy.url():
-			if 'id' not in cherrypy.request.params: 
+		# get user id 
+		if 'id' not in cherrypy.request.params: 
 				cherrypy.response.status = 400
 				print("Malformed URL")
 				return "Error: Malformed URL" 
-			user_id = cherrypy.request.params['id']
-			if user_id not in supportedIDs and id_control:  
-				cherrypy.response.status = 400
-				print("User %s is not supported" %(user_id))
-				return "Error: User is not supported"
-			else: 
-				print("User %s is supported" %(user_id))
+		user_id = cherrypy.request.params['id']
+		if user_id not in supportedIDs and id_control:  
+			cherrypy.response.status = 400
+			print("User %s is not supported" %(user_id))
+			return "Error: User is not supported"
+		else: 
+			print("User %s is supported" %(user_id))
+	
+		# see if there is a command
+		if 'action' in cherrypy.url():
 			if 'prev_command' not in cherrypy.request.params: 
 				cherrypy.response.status = 400
 				print("Malformed URL")
@@ -240,17 +200,6 @@ class StringGeneratorWebService(object):
 
 		# mark command as done
 		elif 'commandDone' in cherrypy.url():
-			if 'id' not in cherrypy.request.params: 
-				cherrypy.response.status = 400
-				print("Malformed URL")
-				return "Error: Malformed URL" 
-			user_id = cherrypy.request.params['id']
-			if user_id not in supportedIDs and id_control:  
-				cherrypy.response.status = 400
-				print("User %s is not supported" %(user_id))
-				return "Error: User is not supported"
-			else: 
-				print("User %s is supported" %(user_id))
 			if 'command_id' not in cherrypy.request.params: 
 				cherrypy.response.status = 400
 				print("Malformed URL")
@@ -294,7 +243,7 @@ class StringGeneratorWebService(object):
 				return "Error: Forbidden" 
 
 		# status update reporting 
-		if 'status' in cherrypy.url() or 'appstatus' in cherrypy.url():
+		if 'status' in cherrypy.url() or 'appstatus' in cherrypy.url() or 'ratings' in cherrypy.url():
 			data_json = read_json(cherrypy.request)
 			print(data_json)
 			#user_id = data_json['adb_id']
@@ -305,7 +254,12 @@ class StringGeneratorWebService(object):
 				return "Error: User is not supported"
 			else: 
 				print("User %s is supported" %(user_id))
-			location = None
+			if 'status' in cherrypy.url():
+				post_type = "status"
+			elif 'appstatus' in cherrypy.url():
+				post_type = "appstatus"
+			elif 'ratings' in cherrypy.url():
+				post_type = "ratings"
 			timestamp = data_json['timestamp']			
 			msg = ''
 			if 'appstatus' in cherrypy.url():
@@ -314,10 +268,10 @@ class StringGeneratorWebService(object):
 				timestamp = data_json['timestamp']
 				command_id = command + '-'  + str(timestamp)
 				msg = insert_command(command_id, user_id, timestamp, command)
-			else: 
-				msg = insert_data(user_id, location, timestamp, data_json)
+			else:
+				msg = insert_data(user_id, post_type, timestamp, data_json)
 			print(msg)
-			
+	
 		# respond all good 
 		cherrypy.response.headers['Content-Type'] = 'application/json'
 		cherrypy.response.headers['Access-Control-Allow-Origin']  = '*'
