@@ -25,8 +25,10 @@ then
 	user_status=`sudo cat $user_file`
 	if [ $user_status == "true" ]
 	then
+		echo "User pressed \"resume\""
 		echo "false" > ".isDebug"
 	else 
+		echo "User pressed \"pause\""
 		echo "true" > ".isDebug"
 	fi
 fi 
