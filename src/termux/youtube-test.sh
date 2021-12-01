@@ -155,13 +155,17 @@ do
 done
 
 # stop playing 
-myprint "Stop playing!"
-sudo input keyevent KEYCODE_BACK
-sleep 2 
-tap_screen 670 1130 1 
+#myprint "Stop playing!"
+#sudo input keyevent KEYCODE_BACK
+#sleep 2 
+#tap_screen 670 1130 1 
 
 # go HOME
-sudo input keyevent KEYCODE_HOME
+#sudo input keyevent KEYCODE_HOME
+
+# clean youtube state  
+myprint "Cleaning YT state"
+sudo pm clear com.google.android.youtube
 
 # turn device off when done
-turn_device_on
+#turn_device_on
