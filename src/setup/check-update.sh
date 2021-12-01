@@ -25,7 +25,6 @@ close_all(){
     tap_screen 370 1210
 }
 
-
 # helper to insall apk via wifi/ssh
 install_simple(){
 	# read input 
@@ -43,11 +42,11 @@ install_simple(){
 	then 
 		./install-app-wifi.sh $wifi_ip $apk
 	else
-		vrs=`ssh -oStrictHostKeyChecking=no -i id_rsa_mobile -p 8022 $wifi_ip "sudo dumpsys package $pkg | grep versionName" | cut -f 2 -d "="`
+		vrs=`ssh -oStrictHostKeyChecking=no -i ../id_rsa_mobile -p 8022 $wifi_ip "sudo dumpsys package $pkg | grep versionName" | cut -f 2 -d "="`
 		echo "$pkg is already installed - version:$vrs (last_vrs:$last_vrs)"
 		if [ $apk == -a $vrs != $last_vrs ] 
 		then 
-			echo "Re-installing since it is an old vesion!"
+			echo "Re-installing our app  since it is an old vesion!"
 			ssh -oStrictHostKeyChecking=no -i id_rsa_mobile -p 8022 $wifi_ip "sudo pm uninstall $pkg"
 			./install-app-wifi.sh $wifi_ip $apk
 		fi 
@@ -88,11 +87,14 @@ then
 fi 
 echo "OK. Phone is reachable via $wifi_ip"
 
+# update codebase
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed && git pull"
+
 # list installed packages 
 mkdir -p "installed-pkg"
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pm list packages -f" > "installed-pkg/$wifi_ip"
 
-# make sure phone is reachable via adb 
+# go HOME
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo input keyevent KEYCODE_HOME && sudo input keyevent 111"	
 
 # verify termux related stuff is installed (should be) 
@@ -180,10 +182,13 @@ else
 	echo "CRON is correctly running"
 fi 
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "crontab -r"  #cleanup 
-#ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "(crontab -l 2>/dev/null; echo \"*/3 * * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/ && ./need-to-run.sh\") | crontab -"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "(crontab -l 2>/dev/null; echo \"*/3 * * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/ && ./need-to-run.sh > log-need-run\") | crontab -"
 #ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "(crontab -l 2>/dev/null; echo \"0 2 * * * sudo reboot\") | crontab -"
-ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "(crontab -l 2>/dev/null; echo \"50 21 * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/ && ls > loggamelo\") | crontab -"
+#ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "(crontab -l 2>/dev/null; echo \"50 21 * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/ && ls > loggamelo\") | crontab -"
 echo "WARNING. Added need-to-run and reboot jobs for now"
+
+# make sure all packages are installed on phone
+./phone-prepping.sh "nocron"
 
 # testing REBOOT 
 echo "Testing REBOOT!"
