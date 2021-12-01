@@ -79,8 +79,9 @@ then
 	testing="true"
 fi 
 
-# retrieve unique ID for this device 
+# retrieve unique ID for this device and pass to our app
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+sudo sh -c "echo $uid > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
 
 # derive B from GB
 let "MAX_MOBILE = MAX_MOBILE_GB * 1000000000"
