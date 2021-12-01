@@ -174,7 +174,7 @@ do
 			case $sel_id in
   				"0")
 					./stop-net-testing.sh #FIXME
-					echo "Open a webpage -- ./web-test.sh  --suffix $suffix --id $t_s --iface $def_iface --single"
+					echo "Open a webpage -- ./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single"
 					./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single 
 					am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-quickly-the-page-loaded:1-star-(slow)--5-stars-(fast)"
 					sleep 30 # allow time to enter input	
