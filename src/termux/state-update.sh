@@ -158,11 +158,11 @@ do
 		then 
 			echo "User entered selection: $sel_id (Time: $time_sel -- $current_time)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
 			case $sel_id in
-  				"1")
+  				"0")
 					echo "Open a webpage -- FIXME (just one URL"
 				    ;;
 
-  				"2")
+  				"1")
 					echo "Watch a video"
 					./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface
 				    ;;
