@@ -31,6 +31,19 @@ then
 	fi
 fi 
 
+# restart crond and inform server of reboot
+up_min=`uptime | awk '{print $3}'`
+echo "Uptime: $up_min mins"
+if [ $up_min -le 3 ] 
+then
+	suffix=`date +%d-%m-%Y`
+	current_time=`date +%s`
+	uid=`termux-telephony-deviceinfo | grep "device_id" | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+	uptime_info=`uptime`
+	echo "$(generate_post_data)"
+	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
+fi 
+
 # don't run if already running
 if [ -f ".isDebug" ] 
 then 
