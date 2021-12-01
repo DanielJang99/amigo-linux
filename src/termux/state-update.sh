@@ -153,7 +153,6 @@ do
 		time_sel=`sudo cat $sel_file | cut -f 2`
 		let "time_from_sel = current_time - time_sel"
 		let "time_check = freq + freq/2"
-		echo "TEMP: User entered selection: $sel_id (Time: $time_sel -- $current_time)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
 		if [ $time_from_sel -lt $time_check ] 
 		then 
 			echo "User entered selection: $sel_id (Time: $time_sel -- $current_time)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
@@ -161,7 +160,7 @@ do
   				"0")
 					./stop-net-testing.sh #FIXME
 					echo "Open a webpage -- FIXME (just one URL)"
-					./web-test.sh  --suffix $suffix --id $t_s --iface $iface --single
+					./web-test.sh  --suffix $suffix --id $t_s --iface $def_iface --single --novideo
 				    ;;
 
   				"1")
