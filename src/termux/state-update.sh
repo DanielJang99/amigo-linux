@@ -125,7 +125,11 @@ myprint "Script will run with a $freq sec frequency. To stop: <<echo \"false\" >
 last_loop_time=0
 while [ $to_run == "true" ] 
 do 
-	# check if user wants us to stop/pause 
+	# keep track of time
+	current_time=`date +%s`
+	suffix=`date +%d-%m-%Y`
+
+	# check if user wants us to pause 
 	user_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/running.txt"
 	user_status="true"
 	if [ -f $user_file ] 
@@ -145,13 +149,31 @@ do
 	sel_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/selection.txt"
 	if [ -f $sel_file ] 
 	then 
-		sel_id=`cat $sel_file`
-		echo "User entered selection: $sel_id"
-		#private String[] dropdownItems = new String[]{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
+		sel_id=`cat $sel_file | cut -f 1`
+		time_sel=`cat $sel_file | cut -f 2`
+		let "time_from_sel = time_sel - current_time"
+		let "time_check = freq + freq/2"
+		echo "TEMP: User entered selection: $sel_id (Time: $time_sel -- $current_time)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
+		if [ $time_from_sel -lt  $time_check ] 
+		then 
+			echo "User entered selection: $sel_id (Time: $time_sel -- $current_time)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
+			case $sel_id in
+  				"1")
+					echo "Open a webpage -- FIXME (just one URL"
+				    ;;
+
+  				"2")
+					echo "Watch a video"
+					./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface
+				    ;;
+				  *)
+					echo "Option not supported"
+					;;
+			esac
+		fi 
 	fi 
 
 	# loop rate control 
-	current_time=`date +%s`
 	let "t_p = freq - (current_time - last_loop_time)"
 	if [ $t_p -gt 0 ] 
 	then 
@@ -160,7 +182,6 @@ do
 	last_loop_time=$current_time
 	to_run=`cat ".status"`
 	current_time=`date +%s`
-	suffix=`date +%d-%m-%Y`
 
 	# get update on data sent/received
 	wifi_today_file="./data/wifi/"$suffix".txt"
@@ -210,6 +231,7 @@ do
 		wifi_qual="none"
 		wifi_traffic="none"
 	fi 
+	
 	# get more mobile info if active 
 	if [ ! -z $mobile_iface ]
 	then
@@ -256,23 +278,6 @@ do
 		asked_to_charge="false"
 	fi 
 	
-	#ls "/storage/emulated/0/Android/data/com.example.sensorexample/files/" > /dev/null 2>&1
-	#if [ $? -ne 0 ]
-	#then 
-	#	echo "App was never launched. Doing it now"
-	#	pm grant $package android.permission.ACCESS_FINE_LOCATION
-	#	pm grant $package android.permission.READ_PHONE_STATE
-	#	sudo monkey -p $package 1
-	#	sleep 3 
-	#	sudo input keyevent KEYCODE_HOME
-	#fi 
-	#ls "/storage/emulated/0/Android/data/com.example.sensorexample/files/adb.txt" > /dev/null 2>&1
-	#if [ $? -ne 0 ] 
-	#then 
-	#	echo "Pushing ADB identifier to file..." 
-	#	echo $uid  > "/storage/emulated/0/Android/data/com.example.sensorexample/files/adb.txt"
-	#fi 
-
 	# current app in the foreground
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
 

@@ -60,7 +60,7 @@ touch ".locked"
 ./web-test.sh  --suffix $suffix --id $t_s --iface $iface
 
 # video testing - skipping for now
-#./youtube-test.sh --suffix $suffix --id $t_s --iface $iface
+./youtube-test.sh --suffix $suffix --id $t_s --iface $iface
 
 # save battery, screen off 
 turn_device_off
