@@ -81,7 +81,12 @@ fi
 
 # retrieve unique ID for this device and pass to our app
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+if [ ! -d "/storage/emulated/0/Android/data/com.example.sensorexample/" ] 
+then 
+	sudo monkey -p com.example.sensorexample 1 > /dev/null 2>&1
+fi 
 sudo sh -c "echo $uid > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
+sudo input keyevent KEYCODE_HOME
 
 # derive B from GB
 let "MAX_MOBILE = MAX_MOBILE_GB * 1000000000"
