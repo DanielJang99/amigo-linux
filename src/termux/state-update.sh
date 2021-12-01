@@ -129,6 +129,21 @@ do
 	current_time=`date +%s`
 	suffix=`date +%d-%m-%Y`
 
+	# understand WiFi and mobile phone connectivity
+	sudo dumpsys netstats > .data
+	wifi_iface=`cat .data | grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
+	mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
+	def_iface="none"
+	if [ ! -z $wifi_iface ]
+	then 
+		def_iface=$wifi_iface
+	else  
+		if [ ! -z $mobile_iface ]
+		then
+			def_iface=$mobile_iface
+		fi 
+	fi 
+
 	# check if user wants us to pause 
 	user_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/running.txt"
 	user_status="true"
@@ -159,8 +174,8 @@ do
 			case $sel_id in
   				"0")
 					./stop-net-testing.sh #FIXME
-					echo "Open a webpage -- FIXME (just one URL)"
-					./web-test.sh  --suffix $suffix --id $t_s --iface $def_iface --single 
+					echo "Open a webpage -- ./web-test.sh  --suffix $suffix --id $t_s --iface $def_iface --single"
+					./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single 
 					am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-quickly-the-page-loaded:1-star-(slow)--5-stars-(fast)"
 					sleep 30 # allow time to enter input	
 					continue # go back up to see if user wants to run another test 
@@ -206,15 +221,11 @@ do
 	fi 
 
 	# understand WiFi and mobile phone connectivity
-	sudo dumpsys netstats > .data
-	wifi_iface=`cat .data | grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
-	mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
 	myprint "Discover wifi ($wifi_iface) and mobile ($mobile_iface)"
 	wifi_ip="None"
 	phone_wifi_ssid="None"
 
 	# get more wifi info if active 
-	def_iface="none"
 	if [ ! -z $wifi_iface ]
 	then 
 		wifi_ip=`ifconfig $wifi_iface | grep "\." | grep -v packets | awk '{print $2}'` 
@@ -223,7 +234,6 @@ do
 		wifi_info=`cat ".wifi" | grep "mWifiInfo"`
 		wifi_qual=`cat ".wifi" | grep "mLastSignalLevel"`
 		wifi_traffic=`ifconfig $wifi_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
-		def_iface=$wifi_iface
 	
 		# update data consumed 
 		if [ $prev_wifi_traffic != 0 ] 
@@ -248,10 +258,6 @@ do
 		mobile_state=`cat ".tel" | grep "mServiceState" | head -n 1`
 		mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
 		mobile_traffic=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
-		if [ $def_iface == "none" ] 
-		then
-			def_iface=$mobile_iface
-		fi 
 		if [ $prev_mobile_traffic != 0 ] 
 		then 
 			let "mobile_data += (mobile_traffic - prev_mobile_traffic)"
