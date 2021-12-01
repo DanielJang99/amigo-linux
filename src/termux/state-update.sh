@@ -160,13 +160,16 @@ do
   				"0")
 					./stop-net-testing.sh #FIXME
 					echo "Open a webpage -- FIXME (just one URL)"
-					./web-test.sh  --suffix $suffix --id $t_s --iface $def_iface --single --novideo
+					echo "./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single"
+					#./web-test.sh  --suffix $suffix --id $t_s --iface $def_iface --single --novideo
+					am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-quickly-the-page-loaded:1-star-(slow)--5-stars-(fast)"
 				    ;;
 
   				"1")
 					echo "Watch a video -- ./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface"
 					./stop-net-testing.sh #FIXME
 					./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface
+					am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-the-video-played:1-star-(poor)--5-stars-(great)"
 				    ;;
 				  *)
 					echo "Option not supported"
