@@ -90,7 +90,7 @@ then
 fi 
 sudo sh -c "echo $uid > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
 sudo input keyevent KEYCODE_HOME
-
+exit -1 
 # derive B from GB
 let "MAX_MOBILE = MAX_MOBILE_GB * 1000000000"
 
