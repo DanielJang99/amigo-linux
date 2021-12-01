@@ -346,6 +346,8 @@ do
 			turn_device_on
 			myprint "Launching googlemaps to improve location accuracy"
 			sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
+			sleep 5 
+			sudo input tap 108 1220
 			sleep 10
 			sudo input keyevent KEYCODE_HOME
 			turn_device_off
