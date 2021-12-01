@@ -84,6 +84,10 @@ uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""
 if [ ! -d "/storage/emulated/0/Android/data/com.example.sensorexample/" ] 
 then 
 	sudo monkey -p com.example.sensorexample 1 > /dev/null 2>&1
+	sleep 2 
+	sudo pm grant com.example.sensorexample android.permission.ACCESS_FINE_LOCATION
+	sudo pm grant com.example.sensorexample android.permission.READ_PHONE_STATE"
+	sleep 2 
 fi 
 sudo sh -c "echo $uid > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
 sudo input keyevent KEYCODE_HOME
