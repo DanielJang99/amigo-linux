@@ -5,6 +5,9 @@ pkg upgrade -y
 # install termux API
 pkg install -y termux-api
 
+# install termux job scheduled 
+termux-job-scheduler
+
 # install sudo 
 pkg install -y tsu
 
@@ -26,6 +29,9 @@ pip install speedtest-cli
 # traffic collection 
 pkg install -y tcpdump
 
+# install perl for videoconferencing
+pkg install -y perl
+
 # video analysis of web performance metrics
 pkg install -y ffmpeg 
 pip install wheel
@@ -41,7 +47,8 @@ cd visualmetrics
 python visualmetrics.py --check
 
 # install jobs in crontab
-(crontab -l 2>/dev/null; echo "*/3 * * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/ && ./need-to-run.sh") | crontab -
+crontab -r 
+(crontab -l 2>/dev/null; echo "*/3 * * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/ && ./need-to-run.sh > log-need-run") | crontab -
 #(crontab -l 2>/dev/null; echo "0 2 * * * sudo reboot") | crontab -
 # activate testing at certain time
 #30 7 * * * echo "false" > "/data/data/com.termux/files/home/mobile-testbed/src/termux/.isDebug"
