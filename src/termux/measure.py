@@ -2,17 +2,21 @@ import sys
 import re
 import os
 
+# check usage
 if len(sys.argv) != 4:
-    print("Usage: %s <dir> <id> <local-ip-address>" % (sys.argv[0]))
+    print("Usage: %s <dir> <id> <local-ip-address> <big-packet-size>" % (sys.argv[0]))
     exit()
 
+# read input
 probe_dir = sys.argv[1]
 test_id   = sys.argv[2]
+local_ip  = sys.argv[3]
+big_packet_size = sys.argv[4]
+
 probe_cmd = "mtr -r %s > %s/%s-%s &"
 probe_tbl = dict()
-probe_tbl[sys.argv[3]] = 1
+probe_tbl[local_ip] = 1
 delay_file = probe_dir + '/' + test_id + '-delay.txt'
-big_packet_size = 400   # for Zoom
 
 sys.stdout = open(delay_file, 'w')
 

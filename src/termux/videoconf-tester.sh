@@ -348,6 +348,7 @@ use_vpn="false"                          # flag to control if to use a VPN or no
 video_recording="false"                  # record screen or not 
 change_view="false"                      # change from default view 
 turn_off="false"                         # turn off the screen 
+big_packet="false"                       # keep track if big packet size was passed 
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -376,6 +377,9 @@ do
 			;;
         --suffix)
             shift; suffix="$1"; shift;
+            ;;
+        --big)
+            shift; big_packet_size="$1"; big_packet="true"; shift;
             ;;
         -c | --clear)
             shift; clear_state="true";
@@ -416,6 +420,16 @@ if [ -z "$meeting_id" -a $remote == "false" ]
 then 
     myprint "ERROR. Missing meeting identifier (-m/--meet)"
 	exit -1
+fi 
+
+# get big packet size if it was not passed 
+if [ $big_packet == "false" ] 
+then 
+	big_packet_size=400
+	if [ $app == "meet" ] 
+	then 
+		big_packet_size=500
+	fi 
 fi 
 
 # get private  IP in use 
@@ -643,8 +657,8 @@ if [ $pcap_collect == "true" ]
 then 
 	sudo killall tcpdump 
 	myprint "Stopped tcpdump. Starting background analysis: $pcap_file"
-	echo "=> tcpdump -r $pcap_file -ttnn | python measure.py $res_folder $my_ip" 
-	tcpdump -r $pcap_file -ttnn | python measure.py $res_folder $my_ip & 
+	echo "=> tcpdump -r $pcap_file -ttnn | python measure.py $res_folder $test_id $my_ip" 
+	tcpdump -r $pcap_file -ttnn | python measure.py $res_folder $test_id $my_ip $big_packet_size & 
 fi 
 
 # leave the meeting 
