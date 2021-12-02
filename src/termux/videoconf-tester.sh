@@ -418,6 +418,9 @@ then
 	exit -1
 fi 
 
+# get private  IP in use 
+my_ip=`ifconfig $iface | grep "\." | grep -v packets | awk '{print $2}'`
+
 # screen info
 width="720"
 height="1280"
@@ -461,8 +464,19 @@ close_all
 if [ $pcap_collect == "true" ] 
 then 
     pcap_file="${res_folder}/${test_id}.pcap"
-    sudo tcpdump -i $iface -w $pcap_file > /dev/null 2>&1 &
-	myprint "Started tcpdump: $pcap_file Interface: $iface"
+    if [ $app == "zoom" ] 
+	then 
+		port_num=8801
+	elif [ $app == "meet" ] 
+	then 
+		port_num=19305
+	elif [ $app == "webex" ] 
+	then 
+		port_num=9000
+	fi 
+	sudo tcpdump -i $iface port $port_num -w $pcap_file > /dev/null 2>&1 & 
+	disown -h %1 # what is this doing?
+	myprint "Started tcpdump: $pcap_file Interface: $iface Port: $port_num"
 fi 
 
 # start background procees to monitor CPU on the device
@@ -628,8 +642,9 @@ fi
 if [ $pcap_collect == "true" ] 
 then 
 	sudo killall tcpdump 
-	myprint "Stopped tcpdump: $pcap_file" 
-	#TODO: start some analysis to reduce file size 
+	myprint "Stopped tcpdump. Starting background analysis: $pcap_file"
+	echo "=> tcpdump -r $pcap_file -ttnn | python measure.py $res_folder $my_ip" 
+	tcpdump -r $pcap_file -ttnn | python measure.py $res_folder $my_ip & 
 fi 
 
 # leave the meeting 
