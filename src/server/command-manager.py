@@ -22,7 +22,7 @@ from db_manager import run_query, insert_data, insert_command, insert_pi_command
 
 # read input
 if len(sys.argv) < 2:
-	print("USAGE: " + sys.argv[0] + " opt [ssh/update/restart] [uid]")
+	print("USAGE: " + sys.argv[0] + " opt [ssh/update/restart/generic] [uid-list] [command]")
 	sys.exit(-1)
 opt = sys.argv[1]
 
@@ -34,13 +34,14 @@ opt = sys.argv[1]
 #	info, msg  = run_query(query)
 #	print("INFO:", info)
 #	print("MSG", msg)
+curr_time = int(time.time())
+command_id = "root-" + str(curr_time)
+uid_list = ["*"]
 if opt == "ssh":
 	if len(sys.argv) < 3:
-		print("USAGE: " + sys.argv[1] + " opt [query/insert-command/ssh] [uid]")
+		print("USAGE: " + sys.argv[1] + " opt [query/insert-command/ssh] [uid-list]")
 		sys.exit(-1)
-	uid = sys.argv[2]
-	curr_time = int(time.time())
-	command_id = "root-" + str(curr_time)
+	uid_list = sys.argv[2].split(',')
 	
 	# use a new port
 	if os.path.isfile('port.txt'):
@@ -51,23 +52,27 @@ if opt == "ssh":
 		free_port = 1025
 	with open('port.txt', 'w') as f:
 		f.write(str(free_port))
-	info = insert_pi_command(command_id, uid, time.time(), "ssh -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no -f -N -T -R " + str(free_port) + ":localhost:8022 root@23.235.205.53", str(10), "false")
+	info = insert_pi_command(command_id, uid_list, time.time(), "ssh -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no -f -N -T -R " + str(free_port) + ":localhost:8022 root@23.235.205.53", str(10), "false")
 	print(info)
 elif opt == "update":
-	curr_time = int(time.time())
-	command_id = "root-" + str(curr_time)
-	uid = "*"
 	if len(sys.argv) == 3:
-		uid = sys.argv[2]
-	print("Requested code update for device:", uid)
-	info = insert_pi_command(command_id, uid, time.time(), "git pull", str(10), "false")
+		uid_list = sys.argv[2].split(',')
+	print("Requested code update for device:", uid_list)
+	info = insert_pi_command(command_id, uid_list, time.time(), "git pull", str(10), "false")
 elif opt == "restart":
-	curr_time = int(time.time())
-	command_id = "root-" + str(curr_time)
-	uid = "*"
 	if len(sys.argv) == 3:
-		uid = sys.argv[2]
-	print("Requested code restart for device:", uid)
-	info = insert_pi_command(command_id, uid, time.time(), "echo \"false\" > \".status\"", str(10), "false")
+		uid_list = sys.argv[2]
+	print("Requested code restart for devices:", uid_list)
+	info = insert_pi_command(command_id, uid_list, time.time(), "echo \"false\" > \".status\"", str(10), "false")
+elif opt == "generic":
+	if len(sys.argv) != 4:
+		print("USAGE: " + sys.argv[1] + " <generic> <uid_list> <command>")
+		sys.exit(-1)
+	uid_list = sys.argv[2].split(',')
+	command = sys.argv[3]
+	command = "./videoconf-tester.sh -a meet -m grp-ehna-qya --dur 30 --suffix prova --pcap --iface wlan0 --clear --big 500"
+	#command = "./videoconf-tester.sh -a meet -m grp-ehna-qya --dur 30 --suffix `date +%d-%m-%Y` --pcap --iface wlan0 --clear --big 500"
+	info = insert_pi_command(command_id, uid_list, time.time(), command, str(300), "false")
+	print(info)
 else: 
-	print("USAGE: " + sys.argv[0] + " opt [ssh/update/restart] [uid]")
+	print("USAGE: " + sys.argv[0] + " opt [ssh/update/restart] [uid-list]")

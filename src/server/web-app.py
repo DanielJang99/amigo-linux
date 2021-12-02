@@ -95,12 +95,13 @@ def web_app():
     cherrypy.tree.mount(StringGeneratorWebService(), '/addACLRule', conf)
     cherrypy.tree.mount(StringGeneratorWebService(), '/removeACLRule', conf)
     cherrypy.tree.mount(StringGeneratorWebService(), '/action', conf)         # for now query each rand(30) seconds
-    cherrypy.tree.mount(StringGeneratorWebService(), '/ratings', conf)        # kenzo app reporting some user ratings
     cherrypy.tree.mount(StringGeneratorWebService(), '/commandDone', conf)    # allow marking a command as done
 
     # POST/REPORT-MEASUREMENTS 
     cherrypy.tree.mount(StringGeneratorWebService(), '/status', conf)
     cherrypy.tree.mount(StringGeneratorWebService(), '/appstatus', conf)     # report charging state, wifi password, etc. 
+    cherrypy.tree.mount(StringGeneratorWebService(), '/ratings', conf)       # kenzo app reporting some user ratings
+    cherrypy.tree.mount(StringGeneratorWebService(), '/tags', conf)          # report tag status 
 
     # start cherrypy engine 
     cherrypy.engine.start()
@@ -162,7 +163,8 @@ class StringGeneratorWebService(object):
 			
 			# look for a potential action to be performed
 			#query = "select * from commands where (tester_id = '" + user_id + "' or tester_id = '*') and command_id != '" + prev_command + "' and status != 'DONE';"
-			query = "select * from commands where (tester_id = '" + user_id + "' or tester_id = '*') and command_id != '" + prev_command + "';"
+			query = "select * from commands where ('" + user_id + "' = ANY (tester_id_list) or '*' = ANY (tester_id_list)) and command_id != '" + prev_command + "';"
+			print(query)
 			info, msg  = run_query(query)
 			#print(info, msg)
 			if info is None:
@@ -243,7 +245,7 @@ class StringGeneratorWebService(object):
 				return "Error: Forbidden" 
 
 		# status update reporting 
-		if 'status' in cherrypy.url() or 'appstatus' in cherrypy.url() or 'ratings' in cherrypy.url():
+		if 'status' in cherrypy.url() or 'appstatus' in cherrypy.url() or 'ratings' in cherrypy.url() or 'tags' in cherrypy.url():
 			data_json = read_json(cherrypy.request)
 			print(data_json)
 			#user_id = data_json['adb_id']
@@ -260,6 +262,8 @@ class StringGeneratorWebService(object):
 				post_type = "appstatus"
 			elif 'ratings' in cherrypy.url():
 				post_type = "ratings"
+			elif 'tags' in cherrypy.url():
+				post_type = "tags"
 			timestamp = data_json['timestamp']			
 			msg = ''
 			if 'appstatus' in cherrypy.url():
