@@ -226,7 +226,7 @@ do
 		else 	
 			command=`echo $ans  | cut -f 1 -d ";"`
 			comm_id=`echo $ans  | cut -f 3 -d ";"`
-			duration=`echo $ans  | cut -f 4 -d ";"`	
+			duration=`echo $ans  | cut -f 4 -d ";" | sed 's/ //g'`	
 			background=`echo $ans  | cut -f 5 -d ";"`
 			myprint "Command:$command- ID:$comm_id - MaxDuration:$duration - IsBackground:$background - PrevCommand:$prev_command"
 
@@ -241,11 +241,12 @@ do
 					comm_status=$?
 					myprint "Command started in background. Status: $comm_status"
 				else 
-					echo "#!/data/data/com.termux/files/usr/bin/env bash" > "command.sh"
-					echo "$command" >> "command.sh"
-					chmod +x "command.sh"
+					eval timeout $duration $command & 
+					#echo "#!/data/data/com.termux/files/usr/bin/env bash" > "command.sh"
+					#echo "$command" >> "command.sh"
+					#chmod +x "command.sh"
 					#timeout $duration ./command.sh
-					./command.sh
+					#./command.sh
 					comm_status=$?
 					myprint "Command executed. Status: $comm_status"
 				fi
