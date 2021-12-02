@@ -53,6 +53,7 @@ visual(){
 	ans=`cat $perf_video | grep "Speed Index"`
 	ans_more=`cat $perf_video | grep "Last"`
 	myprint "VisualMetric - $perf_video - $ans $ans_more"
+	rm $screen_video
 	#(python visualmetrics/visualmetrics.py --video $final_screen_video --dir frames -q 75 --histogram histograms.json.gz --orange --viewport > $perf_video 2>&1 &)
 }
 
@@ -259,6 +260,6 @@ do
 		sudo killall tcpdump
 		myprint "Stopped tcpdump. Starting background analysis: $pcap_file"
 		tshark -nr $pcap_file -T fields -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file
-		#rm $pcap_file  -- is it really much smaller? 
+		sudo rm $pcap_file
 	fi
 done
