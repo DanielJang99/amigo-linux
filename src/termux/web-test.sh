@@ -104,7 +104,8 @@ run_test(){
 		sleep 5 # allow things to finish (maybe can be saved)
 		sudo chown $USER:$USER $screen_video
 		if [ -f "visualmetrics/visualmetrics.py" ] 
-		then 
+		then
+			myprint "Running visual analysis in the background" 
 			visual &
 		fi 
 	fi	

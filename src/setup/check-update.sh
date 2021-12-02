@@ -92,12 +92,12 @@ uid=`ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "termux-telepho
 echo -e "$wifi_ip\t$uid"
 
 # update codebase
+echo "Updating our code" 
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed && git pull"
 
 # verify visual metric is there 
-cd ../termux 
-./check-visual.sh
-cd - > /dev/null 2>&1 
+echo "Updating/testing visualmetrics"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux && ./check-visual.sh"
 exit -1 
 
 # list installed packages 
