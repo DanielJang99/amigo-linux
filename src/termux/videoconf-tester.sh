@@ -207,7 +207,6 @@ run_webex(){
 		myprint "Turning on video..."
 		tap_screen 280 $y_coord 2
 	fi  
-	use_mute="false"
 	if [ $use_mute == "true" ] 
 	then 
 		tap_screen 160 $y_coord 2
@@ -271,7 +270,6 @@ run_meet(){
 	then 
 		tap_screen 175 855 1 
 	fi 
-	use_mute="false"
 	if [ $use_mute == "true" ] 
 	then 
 		tap_screen 295 855 1
@@ -349,6 +347,7 @@ video_recording="false"                  # record screen or not
 change_view="false"                      # change from default view 
 turn_off="false"                         # turn off the screen 
 big_packet="false"                       # keep track if big packet size was passed 
+use_mute="false"                         # FIXME 
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -702,7 +701,7 @@ then
 	ps aux | grep measure.py | grep -v "grep" > /dev/null
 	ans=$?
 	c=0
-	while [ $ans -ne 0 -a $c -lt 30 ] 
+	while [ $ans -eq 0 -a $c -lt 30 ] 
 	do 
 		ps aux | grep measure.py | grep -v "grep" > /dev/null
 		ans=$?
@@ -710,7 +709,7 @@ then
 		let "c++"
 	done
 	myprint "Cleaning PCAP file"
-	rm $pcap_file
+	sudo rm $pcap_file
 fi 
 
 # BDW readings
