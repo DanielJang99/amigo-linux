@@ -407,7 +407,7 @@ done
 
 # clean sync files 
 use_sync="true"
-clean_file ".status"
+clean_file ".videoconfstatus"
 clean_file ".localsync" 
 clean_file ".globalsync" 
 
@@ -649,17 +649,22 @@ fi
 
 # leave the meeting 
 myprint "Close $app..."
-if [ $app == "zoom" ]
+if [ $clear_state == "true" ] 
 then 
-    leave_zoom
-elif [ $app == "webex" ]
-then 
-    leave_webex
-elif [ $app == "meet" ]
-then 
-    leave_meet
+	sudo pm clear $package
+else 
+	if [ $app == "zoom" ]
+	then 
+	   leave_zoom
+	elif [ $app == "webex" ]
+	then 
+		leave_webex
+	elif [ $app == "meet" ]
+	then 
+		leave_meet
+	fi 
 fi 
-echo "done" > ".status"
+echo "done" > ".videoconfstatus"
 t_now=`date +%s`
 
 # stop CPU
