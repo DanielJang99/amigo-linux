@@ -694,8 +694,9 @@ sudo logcat -d > $log_cat
 if [ $pcap_collect == "true" ] 
 then 
 	myprint "Starting tshark analysis: $tshark_file"
-	tshark -nr $pcap_file -T fields -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file 
-	t_shark_size=`cat $tshark_file | awk -v my_ip=$my_ip '{if($4!=my_ip)tot += ($NF-8);}END{print tot/1000000}'`
+	tshark -nr $pcap_file -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file 
+	t_shark_size="N/A" # FIXME 
+	#t_shark_size=`cat $tshark_file | awk -F "," -v my_ip=$my_ip '{if($4!=my_ip)tot += ($NF-8);}END{print tot/1000000}'`
 
 	# clean pcap when done
 	ps aux | grep measure.py | grep -v "grep" > /dev/null
