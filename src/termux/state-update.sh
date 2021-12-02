@@ -241,8 +241,10 @@ do
 					comm_status=$?
 					myprint "Command started in background. Status: $comm_status"
 				else 
-					echo "eval timeout $duration $command"
-					eval timeout $duration $command
+					echo "#!/data/data/com.termux/files/usr/bin/env bash" > "command.sh"
+					echo "timeout $duration $command" >> "command.sh"
+					chmod +x "command.sh"
+					./command.sh
 					comm_status=$?
 					myprint "Command executed. Status: $comm_status"
 				fi
