@@ -239,8 +239,8 @@ do
 	# start pcap collection if needed
 	if [ $pcap_collect == "true" ]
 	then
-		pcap_file="${res_folder}/${test_id}.pcap"
-		tshark_file="${res_folder}/${test_id}.tshark"
+		pcap_file="${res_folder}/${curr_run_id}.pcap"
+		tshark_file="${res_folder}/${curr_run_id}.tshark"
 		sudo tcpdump -i $interface -w $pcap_file > /dev/null 2>&1 &
 		disown -h %1 # 
 		myprint "Started tcpdump: $pcap_file Interface: $interface"
@@ -258,5 +258,6 @@ do
 		sudo killall tcpdump
 		myprint "Stopped tcpdump. Starting background analysis: $pcap_file"
 		tshark -nr $pcap_file -T fields -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file
+		#rm $pcap_file  -- is it really much smaller? 
 	fi
 done
