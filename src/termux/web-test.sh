@@ -239,8 +239,8 @@ do
 	# start pcap collection if needed
 	if [ $pcap_collect == "true" ]
 	then
-		pcap_file="${res_folder}/${curr_run_id}.pcap"
-		tshark_file="${res_folder}/${curr_run_id}.tshark"
+		pcap_file="${res_folder}/${id}-${curr_run_id}.pcap"
+		tshark_file="${res_folder}/${id}-${curr_run_id}.tshark"
 		sudo tcpdump -i $interface -w $pcap_file > /dev/null 2>&1 &
 		disown -h %1 # 
 		myprint "Started tcpdump: $pcap_file Interface: $interface"

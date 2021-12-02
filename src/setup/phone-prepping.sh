@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/data/data/com.termux/files/usr/bin/env bash
 # upgrade 
 pkg upgrade -y 
 
@@ -29,8 +29,8 @@ pip install speedtest-cli
 # traffic collection 
 pkg install -y tcpdump
 
-# install perl for videoconferencing
-pkg install -y perl
+# install tshark to analyze pcap traces 
+pkg install -y tshark
 
 # video analysis of web performance metrics
 pkg install -y ffmpeg 
@@ -39,11 +39,14 @@ pkg install -y imagemagick
 echo "WARNING -- next command will take some time..."
 pip install pillow 
 #pip install pyssim     # skipping since takes forever and not needed? 
-if [ ! -d "visualmetrics" ] 
-then 
-	git clone https://github.com/WPO-Foundation/visualmetrics
-fi 
-cd visualmetrics
+if [ ! -d "visualmetrics" ]
+then
+    git clone https://github.com/WPO-Foundation/visualmetrics
+    cd visualmetrics
+else
+    cd visualmetrics
+    git pull
+fi
 python visualmetrics.py --check
 
 # install jobs in crontab

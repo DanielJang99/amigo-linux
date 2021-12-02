@@ -390,6 +390,15 @@ adb -s $device_id shell monkey -p $termux_boot 1 > /dev/null 2>&1
 sleep 5 
 adb -s $device_id shell "input keyevent KEYCODE_HOME"	
 
+# uninstall youtube go if there
+adb -s $device_id shell 'pm list packages -f' | grep "com.google.android.apps.youtube.mango" > /dev/null
+if [ $? -eq 0 ]
+then
+    echo "Disabling youtube-go since it conflicts with youtube" 
+    #sudo pm uninstall com.google.android.apps.youtube.mango
+	sudo pm disable-user --user 0 com.google.android.apps.youtube.mango
+fi
+
 # install apps needed
 package_list[0]="com.google.android.apps.maps"
 package_list[1]="us.zoom.videomeetings"

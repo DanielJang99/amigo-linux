@@ -36,18 +36,18 @@ install_simple(){
 	pkg=$1
 	apk=$2
 	echo "[install_simple] $pkg"
-	cat  "../installed-pkg/$wifi_ip" | grep $pkg 
+	cat  "../installed-pkg/$wifi_ip" | grep -w $pkg 
 	to_install=$?
 	if [ $to_install -eq 1 ]
 	then 
 		./install-app-wifi.sh $wifi_ip $apk
 	else
 		vrs=`ssh -oStrictHostKeyChecking=no -i ../id_rsa_mobile -p 8022 $wifi_ip "sudo dumpsys package $pkg | grep versionName" | cut -f 2 -d "="`
-		echo "$pkg is already installed - version:$vrs (last_vrs:$last_vrs)"
-		if [ $apk == -a $vrs != $last_vrs ] 
+		echo "$pkg is already installed - version:$vrs"
+		if [ $apk == "app-debug.apk" -a $vrs != $last_vrs ] 
 		then 
-			echo "Re-installing our app  since it is an old vesion!"
-			ssh -oStrictHostKeyChecking=no -i id_rsa_mobile -p 8022 $wifi_ip "sudo pm uninstall $pkg"
+			echo "Re-installing our app  since it is an old vesion: $vrs (last_vrs:$last_vrs)"
+			ssh -oStrictHostKeyChecking=no -i ../id_rsa_mobile -p 8022 $wifi_ip "sudo pm uninstall $pkg"
 			./install-app-wifi.sh $wifi_ip $apk
 		fi 
 	fi 
@@ -61,7 +61,7 @@ termux_pack="com.termux"          # termux package
 termux_boot="com.termux.boot"     # termux boot package 
 termux_api="com.termux.api"       # termux API package 
 production="false"                # default we are debugging 
-last_vrs="1.0"                    # last version of our app
+last_vrs="1.1"                    # last version of our app
 
 # check if we want to switch to production
 if [ $# -eq 2 ] 
@@ -82,17 +82,34 @@ fi
 sudo nmap -p 8022 $wifi_ip | grep closed
 if [ $? -eq 0 ] 
 then 
-	echo "ERROR. Phone is not reachable via $wifi_ip"
+	echo "ERROR. Phone is not reachable via SSH on IP $wifi_ip:8022"
 	exit -1 
 fi 
-echo "OK. Phone is reachable via $wifi_ip"
+echo "OK. Phone is reachable via SSH on $wifi_ip:8022"
+
+# log IMEI 
+uid=`ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "termux-telephony-deviceinfo" | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+echo -e "$wifi_ip\t$uid"
 
 # update codebase
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed && git pull"
 
+# verify visual metric is there 
+./check-visual.sh
+exit -1 
+
 # list installed packages 
 mkdir -p "installed-pkg"
-ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pm list packages -f" > "installed-pkg/$wifi_ip"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo pm list packages -f" > "installed-pkg/$wifi_ip"
+
+# uninstall youtube go if there 
+cat "installed-pkg/$wifi_ip" | grep -w "com.google.android.apps.youtube.mango"
+if [ $? -eq 0 ] 
+then
+	echo "Disabling youtube-go since it can create issues" 
+	#ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo pm uninstall com.google.android.apps.youtube.mango"
+	ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo pm disable-user --user 0 com.google.android.apps.youtube.mango"
+fi 
 
 # go HOME
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo input keyevent KEYCODE_HOME && sudo input keyevent 111"	
@@ -136,6 +153,7 @@ do
 done
 cd - > /dev/null 2>&1
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo input keyevent KEYCODE_HOME"	
+exit -1 
 
 # launch termux-boot to make sure it is ready 
 scp -oStrictHostKeyChecking=no -i $ssh_key -P 8022 "start-sshd.sh" $wifi_ip:.termux/boot/
@@ -188,7 +206,8 @@ ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "(crontab -l 2>/dev/
 echo "WARNING. Added need-to-run and reboot jobs for now"
 
 # make sure all packages are installed on phone
-./phone-prepping.sh "nocron"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd /data/data/com.termux/files/home/mobile-testbed/src/setup && ./phone-prepping.sh"
+exit -1 
 
 # testing REBOOT 
 echo "Testing REBOOT!"
