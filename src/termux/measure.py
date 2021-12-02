@@ -3,7 +3,7 @@ import re
 import os
 
 # check usage
-if len(sys.argv) != 4:
+if len(sys.argv) != 5:
     print("Usage: %s <dir> <id> <local-ip-address> <big-packet-size>" % (sys.argv[0]))
     exit()
 
