@@ -33,10 +33,16 @@ then
 	fi
 fi 
 
-# restart crond and inform server of reboot
-up_min=`uptime | awk '{print $3}'`
-echo "Uptime: $up_min mins"
-if [ $up_min -le 3 ] 
+# check if debugging or production
+if [ -f ".isDebug" ] 
+then 
+	debug=`cat .isDebug`
+fi 
+
+# inform server of reboot detected 
+uptime_sec=`sudo cat /proc/uptime | awk '{print $1}' | cut -f 1 -d "."`
+echo "Uptime: $uptime_sec sec"
+if [ $uptime_sec -le 180 ] 
 then
 	suffix=`date +%d-%m-%Y`
 	current_time=`date +%s`
@@ -47,11 +53,6 @@ then
 fi 
 
 # don't run if already running
-if [ -f ".isDebug" ] 
-then 
-	debug=`cat .isDebug`
-fi 
-ps aux | grep "state-update.sh" | grep "bash" > ".ps"
 ps aux | grep "state-update.sh" | grep "bash" > ".ps"
 N=`cat ".ps" | wc -l`
 if [ $N -eq 0 -a $debug == "false" ] 
