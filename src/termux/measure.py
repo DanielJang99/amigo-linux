@@ -2,15 +2,16 @@ import sys
 import re
 import os
 
-if len(sys.argv) != 3:
-    print("Usage: %s <dir> <local-ip-address>" % (sys.argv[0]))
+if len(sys.argv) != 4:
+    print("Usage: %s <dir> <id> <local-ip-address>" % (sys.argv[0]))
     exit()
 
 probe_dir = sys.argv[1]
-probe_cmd = "mtr -r %s > %s/%s &"
+test_id   = sys.argv[2]
+probe_cmd = "mtr -r %s > %s/%s-%s &"
 probe_tbl = dict()
-probe_tbl[sys.argv[2]] = 1
-delay_file = probe_dir + '/delay.txt'
+probe_tbl[sys.argv[3]] = 1
+delay_file = probe_dir + '/' + test_id + '-delay.txt'
 big_packet_size = 400   # for Zoom
 
 sys.stdout = open(delay_file, 'w')
@@ -33,7 +34,7 @@ for line in sys.stdin:
         #print(ts, src_ip, src_port, dst_ip, dst_port, size)
         if dst_ip not in probe_tbl:
             #print ("Probing %s" % dst_ip)
-            os.system(probe_cmd % (dst_ip, probe_dir, dst_ip))
+            os.system(probe_cmd % (dst_ip, probe_dir, test_id, dst_ip))
             probe_tbl[dst_ip] = 1
         
         if (size > big_packet_size) and (cur_ts > 10):
