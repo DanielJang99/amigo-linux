@@ -220,6 +220,7 @@ do
 	then 
 		let "i = RANDOM % num_urls"
 	    url=${urlList[$i]} 
+		myprint "Random URL: $url ($i)"
 		i=$num_urls
 	else 
 	    url=${urlList[$i]} 
