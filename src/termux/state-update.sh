@@ -241,6 +241,7 @@ do
 					comm_status=$?
 					myprint "Command started in background. Status: $comm_status"
 				else 
+					echo "eval timeout $duration $command"
 					eval timeout $duration $command
 					comm_status=$?
 					myprint "Command executed. Status: $comm_status"
