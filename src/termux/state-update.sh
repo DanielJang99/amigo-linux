@@ -79,6 +79,9 @@ then
 	testing="true"
 fi 
 
+# update code 
+git pull
+
 # retrieve unique ID for this device and pass to our app
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 sudo pm grant com.example.sensorexample android.permission.ACCESS_FINE_LOCATION
@@ -241,7 +244,7 @@ do
 					comm_status=$?
 					myprint "Command started in background. Status: $comm_status"
 				else 
-					eval timeout $duration $command & 
+					eval timeout $duration $command
 					#echo "#!/data/data/com.termux/files/usr/bin/env bash" > "command.sh"
 					#echo "$command" >> "command.sh"
 					#chmod +x "command.sh"

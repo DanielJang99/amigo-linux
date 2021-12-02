@@ -58,6 +58,7 @@ N=`cat ".ps" | wc -l`
 if [ $N -eq 0 -a $debug == "false" ] 
 then 
 	echo "need to run"
+	mkdir -p logs
 	./state-update.sh > "logs/log-state-update-"`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1 &
 fi
 

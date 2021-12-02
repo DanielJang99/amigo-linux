@@ -98,7 +98,6 @@ ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed &
 # verify visual metric is there 
 echo "Updating/testing visualmetrics"
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux && ./check-visual.sh"
-exit -1 
 
 # list installed packages 
 mkdir -p "installed-pkg"
@@ -155,7 +154,6 @@ do
 done
 cd - > /dev/null 2>&1
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo input keyevent KEYCODE_HOME"	
-exit -1 
 
 # launch termux-boot to make sure it is ready 
 scp -oStrictHostKeyChecking=no -i $ssh_key -P 8022 "start-sshd.sh" $wifi_ip:.termux/boot/
@@ -202,13 +200,16 @@ else
 	echo "CRON is correctly running"
 fi 
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "crontab -r"  #cleanup 
-ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "(crontab -l 2>/dev/null; echo \"*/3 * * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/ && ./need-to-run.sh > log-need-run\") | crontab -"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "(crontab -l 2>/dev/null; echo \"*/1 * * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/ && ./need-to-run.sh > log-need-run\") | crontab -"
 #ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "(crontab -l 2>/dev/null; echo \"0 2 * * * sudo reboot\") | crontab -"
 #ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "(crontab -l 2>/dev/null; echo \"50 21 * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/ && ls > loggamelo\") | crontab -"
-echo "WARNING. Added need-to-run and reboot jobs for now"
+echo "WARNING. Added need-to-run only to cron for now" 
 
 # make sure all packages are installed on phone
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd /data/data/com.termux/files/home/mobile-testbed/src/setup && ./phone-prepping.sh"
+
+# logging 
+echo "All good"
 exit -1 
 
 # testing REBOOT 
@@ -230,6 +231,3 @@ do
 	let "tp = tc - ts"
 	echo "TimePassed: $tp"
 done
-
-# logging 
-echo "All good"
