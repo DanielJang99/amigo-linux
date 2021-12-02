@@ -11,7 +11,7 @@ if len(sys.argv) != 5:
 probe_dir = sys.argv[1]
 test_id   = sys.argv[2]
 local_ip  = sys.argv[3]
-big_packet_size = sys.argv[4]
+big_packet_size = int(sys.argv[4])
 
 probe_cmd = "mtr -r %s > %s/%s-%s &"
 probe_tbl = dict()
