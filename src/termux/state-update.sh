@@ -244,7 +244,8 @@ do
 					echo "#!/data/data/com.termux/files/usr/bin/env bash" > "command.sh"
 					echo "$command" >> "command.sh"
 					chmod +x "command.sh"
-					timeout $duration ./command.sh
+					#timeout $duration ./command.sh
+					./command.sh
 					comm_status=$?
 					myprint "Command executed. Status: $comm_status"
 				fi
