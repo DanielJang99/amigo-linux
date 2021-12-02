@@ -128,8 +128,9 @@ fi
 # find termuxt user 
 termux_user=`whoami`
 
-# make sure location setting is correct 
-# TODO
+# make sure we are HOME and no keyboard is showing
+sudo input keyevent KEYCODE_HOME
+sudo input keyevent 111
 
 # external loop 
 to_run=`cat ".status"`
