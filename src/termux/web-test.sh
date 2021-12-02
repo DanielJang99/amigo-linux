@@ -126,12 +126,13 @@ run_test(){
 # script usage
 usage(){
     echo "================================================================================"
-    echo "USAGE: $0 --load,	--novideo, --single"
+    echo "USAGE: $0 --load,	--novideo, --single, --pcap"
     echo "================================================================================"
     echo "--load       Page load max duration"
     echo "--iface      Network interface in use"
     echo "--novideo    Turn off video recording" 
     echo "--single     Just one test" 
+    echo "--pcap       Collect pcap traces"
     echo "================================================================================"
     exit -1
 }
@@ -145,6 +146,7 @@ interface="wlan0"                  # default network interface to monitor (for t
 suffix=`date +%d-%m-%Y`            # folder id (one folder per day)
 curr_run_id=`date +%s`             # unique id per run
 single="false"                     # should run just one test 
+pcap_collect="false"               # flag to control pcap collection at the phone
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -168,6 +170,9 @@ do
         --single)
             shift; single="true"; 
             ;;
+        --pcap)
+            shift; pcap_collect="true";
+			;;		
         -h | --help)
             usage
             ;;
@@ -231,9 +236,27 @@ do
     clean_file ".ready_to_start"
     cpu_monitor $log_cpu &
 
-    # run a test 
+	# start pcap collection if needed
+	if [ $pcap_collect == "true" ]
+	then
+		pcap_file="${res_folder}/${test_id}.pcap"
+		tshark_file="${res_folder}/${test_id}.tshark"
+		sudo tcpdump -i $interface -w $pcap_file > /dev/null 2>&1 &
+		disown -h %1 # 
+		myprint "Started tcpdump: $pcap_file Interface: $interface"
+	fi
+    
+	# run a test 
     run_test 
     
     # stop monitoring CPU
     echo "false" > ".to_monitor"
+
+	# stop pcap collection and run analysis 
+	if [ $pcap_collect == "true" ]
+	then
+		sudo killall tcpdump
+		myprint "Stopped tcpdump. Starting background analysis: $pcap_file"
+		tshark -nr $pcap_file -T fields -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file
+	fi
 done
