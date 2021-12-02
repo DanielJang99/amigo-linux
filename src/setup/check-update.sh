@@ -95,7 +95,9 @@ echo -e "$wifi_ip\t$uid"
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed && git pull"
 
 # verify visual metric is there 
+cd ../termux 
 ./check-visual.sh
+cd - > /dev/null 2>&1 
 exit -1 
 
 # list installed packages 
