@@ -490,7 +490,7 @@ then
 	fi 
 	sudo tcpdump -i $iface port $port_num -w $pcap_file > /dev/null 2>&1 & 
 	disown -h %1 # what is this doing?
-	myprint "Started tcpdump: $pcap_file Interface: $iface Port: $port_num"
+	myprint "Started tcpdump: $pcap_file Interface: $iface Port: $port_num BigPacketSize: $big_packet_size"
 fi 
 
 # start background procees to monitor CPU on the device
