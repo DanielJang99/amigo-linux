@@ -478,6 +478,7 @@ close_all
 if [ $pcap_collect == "true" ] 
 then 
     pcap_file="${res_folder}/${test_id}.pcap"
+    tshark_file="${res_folder}/${test_id}.tshark"
     if [ $app == "zoom" ] 
 	then 
 		port_num=8801
@@ -511,7 +512,7 @@ uid=`sudo dumpsys package $package | grep "userId=" | head -n 1 | cut -f 2 -d "=
 app_start=`cat /proc/net/xt_qtaguid/stats | grep $iface | grep $uid | awk '{traffic += $6}END{print traffic}'` #NOTE: not working on S10
 
 # cleanup logcat
-#sudo logcat -c 
+sudo logcat -c 
 
 # start app 
 t_launch=`date +%s` #NOTE: use posterior time in case u want to filter launching and joining a conference
@@ -657,7 +658,7 @@ if [ $pcap_collect == "true" ]
 then 
 	sudo killall tcpdump 
 	myprint "Stopped tcpdump. Starting background analysis: $pcap_file"
-	echo "=> tcpdump -r $pcap_file -ttnn | python measure.py $res_folder $test_id $my_ip" 
+	#echo "=> tcpdump -r $pcap_file -ttnn | python measure.py $res_folder $test_id $my_ip $big_packet_size" 
 	tcpdump -r $pcap_file -ttnn | python measure.py $res_folder $test_id $my_ip $big_packet_size & 
 fi 
 
@@ -685,15 +686,32 @@ t_now=`date +%s`
 myprint "Done monitoring CPU"
 echo "false" > ".to_monitor"
 
-# collect logcat 
-#log_cat="${res_folder}/${test_id}.logcat"
-#sudo logcat -d > $log_cat
+# collect logcat #FIXME (add analysis for meet I believe?)
+log_cat="${res_folder}/${test_id}.logcat"
+sudo logcat -d > $log_cat
+# if 'IMC' in line and 'Statistics' in line and 'Encoded' not in line:
 
 # tshark analysis 
-#tshark_file="${res_folder}/${test_id}.tshark"
-#myprint "Starting tshark analysis: $tshark_file"
-#tshark -nr $pcap_file -T fields -e frame.number -e frame.time_epoch -e ip.src -e ip.dst -e tcp.srcport -e tcp.dstport -e udp.srcport -e udp.dstport -e _ws.col.Protocol -e frame.len -e tcp.window_size -e tcp.analysis.bytes_in_flight -e _ws.col.Info -e tcp.analysis.ack_rtt -e ipv6.dst -e ipv6.src -e tcp.analysis.retransmission > $tshark_file
-#rm $pcap_file
+if [ $pcap_collect == "true" ] 
+then 
+	myprint "Starting tshark analysis: $tshark_file"
+	tshark -nr $pcap_file -T fields -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file 
+	t_shark_size=`cat $tshark_file | awk -v my_ip=$my_ip '{if($4!=my_ip)tot += ($NF-8);}END{print tot/1000000}'`
+
+	# clean pcap when done
+	ps aux | grep measure.py | grep -v "grep" > /dev/null
+	ans=$?
+	c=0
+	while [ $ans -ne 0 -a $c -lt 30 ] 
+	do 
+		ps aux | grep measure.py | grep -v "grep" > /dev/null
+		ans=$?
+		sleep 2
+		let "c++"
+	done
+	myprint "Cleaning PCAP file"
+	rm $pcap_file
+fi 
 
 # BDW readings
 app_last=`cat /proc/net/xt_qtaguid/stats | grep $iface | grep $uid | awk '{traffic += $6}END{print traffic}'` #NOTE: not working on S10
@@ -703,7 +721,7 @@ app_traffic=`echo $app_start" "$app_last | awk '{delta=($2-$1)/1000000; print de
 #median_cpu=`python median-cpu.py $log_cpu`
 median_cpu="N/A"
 let "call_duration = t_now - t_actual_launch"
-myprint "[INFO] Device:$device\tApp:$app\tCallDuration:$call_duration\tApp-BDW:$app_traffic MB\tPi-BDW:$pi_traffic MB\tMedianCPU:$median_cpu %"
+myprint "[INFO] Device:$device\tApp:$app\tCallDuration:$call_duration\tApp-BDW:$app_traffic MB\tPi-BDW:$pi_traffic MB\tTsharkTraffic:$t_shark_size MB\tMedianCPU:$median_cpu %"
 log_traffic=$res_folder"/"$test_id".traffic"
 echo -e "$app_traffic\t$pi_traffic" > $log_traffic
 
