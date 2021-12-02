@@ -180,28 +180,75 @@ do
 		if [ $time_from_sel -lt $time_check ] 
 		then 
 			echo "User entered selection: $sel_id (Time: $time_sel -- $current_time)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
-			case $sel_id in
-  				"0")
-					./stop-net-testing.sh #FIXME
-					echo "Open a webpage -- ./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single"
-					./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single 
-					am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-quickly-the-page-loaded:1-star-(slow)--5-stars-(fast)"
-					sleep 30 # allow time to enter input	
-					continue # go back up to see if user wants to run another test 
-				    ;;
+			if [ $def_iface != "none" ] 
+			then
+				case $sel_id in
+					"0")
+						./stop-net-testing.sh #FIXME
+						echo "Open a webpage -- ./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single"
+						./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single 
+						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-quickly-the-page-loaded:1-star-(slow)--5-stars-(fast)"
+						sleep 30 # allow time to enter input	
+						continue # go back up to see if user wants to run another test 
+						;;
 
-  				"1")
-					echo "Watch a video -- ./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface"
-					./stop-net-testing.sh #FIXME
-					./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface
-					am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-the-video-played:1-star-(poor)--5-stars-(great)"
-					sleep 30 # allow time to enter input	
-					continue # go back up to see if user wants to run another test 
-				    ;;
-				  *)
-					echo "Option not supported"
-					;;
-			esac
+					"1")
+						echo "Watch a video -- ./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface"
+						./stop-net-testing.sh #FIXME
+						./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface
+						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-the-video-played:1-star-(poor)--5-stars-(great)"
+						sleep 30 # allow time to enter input	
+						continue # go back up to see if user wants to run another test 
+						;;
+					  *)
+						echo "Option not supported"
+						;;
+				esac
+			else 
+				am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-make-sure-the-device-is-on-line!"
+			fi  
+		fi 
+	fi 
+
+	# check if there is a new command to run
+	if [ $def_iface != "none" ] 
+	then	
+		prev_command="none"
+		if [ -f ".prev_command" ] 
+		then
+			prev_command=`cat ".prev_command"`
+		fi 
+		myprint "Checking if there is a command to execute (consider lowering/increasing frequency)..."
+		ans=`timeout 10 curl -s "https://mobile.batterylab.dev:8082/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`
+		if [[ "$ans" == *"No command matching"* ]]
+		then
+			myprint "No command found"
+		else 	
+			command=`echo $ans  | cut -f 1 -d ";"`
+			comm_id=`echo $ans  | cut -f 3 -d ";"`
+			duration=`echo $ans  | cut -f 4 -d ";"`	
+			background=`echo $ans  | cut -f 5 -d ";"`
+			myprint "Command:$command- ID:$comm_id - MaxDuration:$duration - IsBackground:$background - PrevCommand:$prev_command"
+
+			# verify command was not just run
+			if [ $prev_command == $comm_id ] 
+			then 
+				myprint "Command not allowed since it matches last command run!!"
+			else 
+				if [ $background == "true" ] 
+				then 
+					eval timeout $duration $command & 
+					comm_status=$?
+					myprint "Command started in background. Status: $comm_status"
+				else 
+					eval timeout $duration $command
+					comm_status=$?
+					myprint "Command executed. Status: $comm_status"
+				fi
+				ans=`timeout 10 curl -s "https://mobile.batterylab.dev:8082/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${termux_user}"`
+				myprint "Informed server about last command run. ANS: $ans"
+			fi 
+			echo $comm_id > ".prev_command"
 		fi 
 	fi 
 
@@ -380,48 +427,6 @@ do
 		echo $current_time > ".last_report"
 	fi 
 	
-	# check if there is a new command to run
-	if [ $def_iface != "none" ] 
-	then	
-		prev_command="none"
-		if [ -f ".prev_command" ] 
-		then
-			prev_command=`cat ".prev_command"`
-		fi 
-		myprint "Checking if there is a command to execute (consider lowering/increasing frequency)..."
-		ans=`timeout 10 curl -s "https://mobile.batterylab.dev:8082/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`
-		if [[ "$ans" == *"No command matching"* ]]
-		then
-			myprint "No command found"
-		else 	
-			command=`echo $ans  | cut -f 1 -d ";"`
-			comm_id=`echo $ans  | cut -f 3 -d ";"`
-			duration=`echo $ans  | cut -f 4 -d ";"`	
-			background=`echo $ans  | cut -f 5 -d ";"`
-			myprint "Command:$command- ID:$comm_id - MaxDuration:$duration - IsBackground:$background - PrevCommand:$prev_command"
-
-			# verify command was not just run
-			if [ $prev_command == $comm_id ] 
-			then 
-				myprint "Command not allowed since it matches last command run!!"
-			else 
-				if [ $background == "true" ] 
-				then 
-					eval timeout $duration $command & 
-					comm_status=$?
-					myprint "Command started in background. Status: $comm_status"
-				else 
-					eval timeout $duration $command
-					comm_status=$?
-					myprint "Command executed. Status: $comm_status"
-				fi
-				ans=`timeout 10 curl -s "https://mobile.batterylab.dev:8082/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${termux_user}"`
-				myprint "Informed server about last command run. ANS: $ans"
-			fi 
-			echo $comm_id > ".prev_command"
-		fi 
-	fi 
-
 	# stop here if testing 
 	if [ $testing == "true" ] 
 	then
