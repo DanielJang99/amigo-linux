@@ -148,6 +148,7 @@ suffix=`date +%d-%m-%Y`            # folder id (one folder per day)
 curr_run_id=`date +%s`             # unique id per run
 single="false"                     # should run just one test 
 pcap_collect="false"               # flag to control pcap collection at the phone
+app="chrome"                       # used to detect process in CPU monitoring
 
 # read input parameters
 while [ "$#" -gt 0 ]

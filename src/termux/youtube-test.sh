@@ -35,6 +35,7 @@ interface="wlan0"                  # default network interface to monitor (for t
 suffix=`date +%d-%m-%Y`            # folder id (one folder per day)
 curr_run_id=`date +%s`             # unique id per run
 disable_autoplay="false"           # flag to control usage of autoplay 
+app="youtube"                      # used to detect process in CPU monitoring 
 
 # read input parameters
 while [ "$#" -gt 0 ]
