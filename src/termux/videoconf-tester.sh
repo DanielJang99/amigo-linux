@@ -663,20 +663,19 @@ fi
 
 # leave the meeting 
 myprint "Close $app..."
+if [ $app == "zoom" ]
+then 
+   leave_zoom
+elif [ $app == "webex" ]
+then 
+	leave_webex
+elif [ $app == "meet" ]
+then 
+	leave_meet
+fi 
 if [ $clear_state == "true" ] 
 then 
 	sudo pm clear $package
-else 
-	if [ $app == "zoom" ]
-	then 
-	   leave_zoom
-	elif [ $app == "webex" ]
-	then 
-		leave_webex
-	elif [ $app == "meet" ]
-	then 
-		leave_meet
-	fi 
 fi 
 echo "done" > ".videoconfstatus"
 t_now=`date +%s`
