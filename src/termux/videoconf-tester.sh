@@ -38,7 +38,7 @@ cpu_monitor_top(){
     # continuous monitoring
     while [ $to_monitor == "true" ]
     do
-        top -n 1 | grep $key >> $log_cpu_top
+        sudo top -n 1 | grep $key | grep -v "grep" >> $log_cpu_top
         sleep $sleep_time
         to_monitor=`cat .to_monitor`
     done
