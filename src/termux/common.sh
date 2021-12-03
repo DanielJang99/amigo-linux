@@ -58,6 +58,15 @@ cpu_monitor_top(){
     elif [ $app == "webex" ]
     then
         key="webex"
+    elif [ $app == "youtube" ]
+    then
+        key="android.youtube"
+    elif [ $app == "chrome" ]
+    then
+        key="android.chrome"
+    elif [ $app == "brave" ]
+    then
+        key="brave"
     fi
 
     # logging
