@@ -5,9 +5,9 @@
 
 # import utilities files needed
 DEBUG=1
-util_file=`pwd`"/util.cfg"
+#util_file=`pwd`"/util.cfg"
 adb_file=`pwd`"/adb-utils.sh"
-source $util_file
+#source $util_file
 source $adb_file
 
 # monitor CPU usage using TOP
@@ -506,9 +506,9 @@ cpu_monitor $log_cpu &
 cpu_monitor_top $log_cpu_top &
 
 # get initial network data information
-pi_start=`cat /proc/net/dev | grep $iface  | awk '{print $10}'`
-uid=`sudo dumpsys package $package | grep "userId=" | head -n 1 | cut -f 2 -d "="`
-app_start=`cat /proc/net/xt_qtaguid/stats | grep $iface | grep $uid | awk '{traffic += $6}END{print traffic}'` #NOTE: not working on S10
+compute_bandwidth
+traffic_rx=$curr_traffic
+traffic_rx_last=$traffic_rx
 
 # cleanup logcat
 sudo logcat -c 
@@ -646,12 +646,6 @@ then
 	ssh -o StrictHostKeyChecking=no -i $key -f $user@$server "$remote_exec stop"
 fi 
 
-# make sure device is on and unlocked (needed when screen is off)
-if [ $turn_off == "true" ] 
-then 
-    unlock_device
-fi 
-
 # stop tcpdump 
 if [ $pcap_collect == "true" ] 
 then 
@@ -712,15 +706,15 @@ then
 	sudo rm $pcap_file
 fi 
 
-# BDW readings
-app_last=`cat /proc/net/xt_qtaguid/stats | grep $iface | grep $uid | awk '{traffic += $6}END{print traffic}'` #NOTE: not working on S10
-pi_last=`cat /proc/net/dev | grep $iface  | awk '{print $10}'`
-pi_traffic=`echo $pi_start" "$pi_last | awk '{delta=($2-$1)/1000000; print delta;}'`
-app_traffic=`echo $app_start" "$app_last | awk '{delta=($2-$1)/1000000; print delta;}'`
+# update traffic rx (for this URL)
+compute_bandwidth $traffic_rx_last
+traffic_rx_last=$curr_traffic
+
+# log results
 #median_cpu=`python median-cpu.py $log_cpu`
 median_cpu="N/A"
 let "call_duration = t_now - t_actual_launch"
-myprint "[INFO] Device:$device\tApp:$app\tCallDuration:$call_duration\tApp-BDW:$app_traffic MB\tPi-BDW:$pi_traffic MB\tTsharkTraffic:$t_shark_size MB\tMedianCPU:$median_cpu %"
+myprint "[INFO] App:$app\tCallDuration:$call_duration\tBDW:$traffic MB\tTsharkTraffic:$t_shark_size MB\t" #MedianCPU:$median_cpu %"
 log_traffic=$res_folder"/"$test_id".traffic"
 echo -e "$app_traffic\t$pi_traffic" > $log_traffic
 

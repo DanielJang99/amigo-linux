@@ -125,6 +125,9 @@ then
     sudo getenforce
 fi
 
+# set NTP server 
+#sudo settings put global ntp_server pool.ntp.org
+
 # find termuxt user 
 termux_user=`whoami`
 
