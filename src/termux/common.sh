@@ -74,10 +74,10 @@ cpu_monitor_top(){
     # continuous monitoring
     while [ $to_monitor == "true" ]
     do
-        #sudo top -n 1 | grep $key | grep -v "grep" >> $log_cpu_top
-        sudo top -n 2 | grep $key | grep -v "grep" >> $log_cpu_top
-		sleep 1 
-        #sleep $sleep_time
+        sudo top -n 1 | grep $key | grep -v "grep" >> $log_cpu_top
+        #sudo top -n 2 | grep $key | grep -v "grep" >> $log_cpu_top
+		#sleep 1 
+        sleep $sleep_time
         to_monitor=`cat .to_monitor`
     done
 

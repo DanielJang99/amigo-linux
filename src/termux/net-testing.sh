@@ -44,7 +44,6 @@ speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
 #sudo input keyevent KEYCODE_BACK
 #turn_device_off
 
-
 # run multiple MTR
 ./mtr.sh $suffix $t_s
 
@@ -57,10 +56,10 @@ speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
 # test multiple webages
 turn_device_on
 touch ".locked"
-./web-test.sh  --suffix $suffix --id $t_s --iface $iface
+./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap
 
 # video testing - skipping for now
-./youtube-test.sh --suffix $suffix --id $t_s --iface $iface
+./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap
 
 # save battery, screen off 
 turn_device_off
