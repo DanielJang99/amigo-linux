@@ -129,8 +129,8 @@ cpu_monitor_top $log_cpu_top &
 # start pcap collection if needed
 if [ $pcap_collect == "true" ]
 then
-    pcap_file="${res_folder}/${test_id}.pcap"
-    tshark_file="${res_folder}/${test_id}.tshark"
+    pcap_file="${res_folder}/${curr_run_id}.pcap"
+    tshark_file="${res_folder}/${curr_run_id}.tshark"
     sudo tcpdump -i $iface -w $pcap_file > /dev/null 2>&1 &
     disown -h %1
     myprint "Started tcpdump: $pcap_file Interface: $iface"
