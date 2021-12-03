@@ -506,6 +506,7 @@ cpu_monitor $log_cpu &
 cpu_monitor_top $log_cpu_top &
 
 # get initial network data information
+interface=$iface
 compute_bandwidth
 traffic_rx=$curr_traffic
 traffic_rx_last=$traffic_rx
