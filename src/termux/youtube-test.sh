@@ -80,7 +80,7 @@ if [ $N -gt 1 ]
 then
 	while read line
 	do 
-		pid=`cat "$line" | awk '{print $2}'`
+		pid=`echo "$line" | awk '{print $2}'`
 		if [ $pid -ne $my_pid ] 
 		then 		
 			myprint "WARNING. Found a pending process for $0. Killing it: $pid"
