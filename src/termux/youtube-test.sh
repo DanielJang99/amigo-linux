@@ -5,7 +5,7 @@
 
 # activate stats for nerds  
 activate_stats_nerds(){
-	echo "Activating stats for nerds!!"
+	myprint "Activating stats for nerds!!"
 	tap_screen 680 105 
 	tap_screen 680 105  
 	tap_screen 370 1125
@@ -70,6 +70,13 @@ do
             ;;
     esac
 done
+
+
+# make sure I am the only process running
+ps aux | grep "$0" | grep "bash" > ".ps-$0"
+N=`cat ".ps-$0" | wc -l`
+echo $N 
+exit -1 
 
 # folder creation
 res_folder="./youtube-results/$suffix"
@@ -154,7 +161,7 @@ do
 		if [ $? -eq 0 ] 
 		then
 			ready="true"		
-			echo "Ready to start!!"
+			myprint "Ready to start!!"
 			cat ".clipboard" > $log_file
 			echo "" >> $log_file
 		fi
