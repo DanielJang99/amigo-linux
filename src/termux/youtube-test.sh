@@ -71,13 +71,23 @@ do
     esac
 done
 
-
-# make sure I am the only process running
-echo $$ 
+# make sure only this instance of this script is running 
+my_pid=$$ 
+myprint "My PID: $my_pid"
 ps aux | grep "$0" | grep "bash" > ".ps-$app"
 N=`cat ".ps-$app" | wc -l`
-echo $N 
-exit -1 
+if [ $N -gt 1 ] 
+then
+	while read line
+	do 
+		pid=`cat "$line" | awk '{print $2}'`
+		if [ $pid -ne $my_pid ] 
+		then 		
+			myprint "WARNING. Found a pending process for $0. Killing it: $pid"
+			kill -9 $pid 
+		fi 
+	done < ".ps-$app"
+fi 
 
 # folder creation
 res_folder="./youtube-results/$suffix"
