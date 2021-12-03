@@ -14,11 +14,12 @@ activate_stats_nerds(){
 # script usage
 usage(){
     echo "================================================================================"
-    echo "USAGE: $0 --load, --novideo"
+    echo "USAGE: $0 --load, --novideo, --disable"
     echo "================================================================================"
     echo "--load       Page load max duration"
     echo "--iface      Network interface in use"
     echo "--novideo    Turn off video recording"
+	echo "--disable    Disable auto-play"
     echo "================================================================================"
     exit -1
 }
@@ -33,6 +34,7 @@ DURATION=30                        # experiment duration
 interface="wlan0"                  # default network interface to monitor (for traffic)
 suffix=`date +%d-%m-%Y`            # folder id (one folder per day)
 curr_run_id=`date +%s`             # unique id per run
+disable_autoplay="false"           # flag to control usage of autoplay 
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -49,6 +51,9 @@ do
             ;;
         --id)
             shift; curr_run_id="$1"; shift;
+            ;;
+		--disable)
+            shift; disable_autoplay="true"; 
             ;;
         -h | --help)
             usage
@@ -89,12 +94,15 @@ sudo input tap 665 100
 sleep 1 
 sudo input tap 370 1180
 sleep 1 
-sudo input tap 370 304
-sleep 1 
-sudo input tap 370 230 
-sleep 1 
-sudo input keyevent KEYCODE_BACK
-sleep 1
+if [ $disable_autoplay == "true" ] 
+then 
+	sudo input tap 370 304
+	sleep 1 
+	sudo input tap 370 230 
+	sleep 1 
+	sudo input keyevent KEYCODE_BACK
+	sleep 1
+fi 
 sudo input tap 370 200
 sleep 1 
 sudo input swipe 370 500 370 100
