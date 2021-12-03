@@ -109,6 +109,16 @@ sudo input swipe 370 500 370 100
 sleep 1 
 sudo input tap 370 1250
 
+# start CPU monitoring
+log_cpu="${res_folder}/${id}-${curr_run_id}.cpu"
+log_cpu_top="${res_folder}/${id}-${curr_run_id}.cpu_top"
+clean_file $log_cpu
+clean_file $log_cpu_top
+myprint "Starting cpu monitor. Log: $log_cpu"
+echo "true" > ".to_monitor"
+cpu_monitor $log_cpu &
+cpu_monitor_top $log_cpu_top &
+
 #launch test video
 am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
 
@@ -170,6 +180,9 @@ done
 
 # go HOME
 #sudo input keyevent KEYCODE_HOME
+
+# stop monitoring CPU
+echo "false" > ".to_monitor"
 
 # clean youtube state  
 myprint "Cleaning YT state"

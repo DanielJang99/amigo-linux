@@ -44,6 +44,43 @@ compute_bandwidth(){
 	fi
 }
 
+# monitor CPU usage using TOP
+cpu_monitor_top(){
+    sleep_time=3
+    to_monitor="true"
+
+    if [ $app == "zoom" ]
+    then
+        key="zoom"
+    elif [ $app == "meet" ]
+    then
+        key="com.google.and"
+    elif [ $app == "webex" ]
+    then
+        key="webex"
+    fi
+
+    # logging
+    myprint "Start monitoring CPU via TOP (PID: $$)"
+
+    # clean cpu sync barrier done via files
+    if [ -f ".ready_to_start" ]
+    then
+        rm ".ready_to_start"
+    fi
+
+    # continuous monitoring
+    while [ $to_monitor == "true" ]
+    do
+        sudo top -n 1 | grep $key | grep -v "grep" >> $log_cpu_top
+        sleep $sleep_time
+        to_monitor=`cat .to_monitor`
+    done
+
+    # logging
+    myprint "Done monitoring CPU via TOP (PID: $$)"
+}
+
 # monitor cpu
 cpu_monitor(){
     sleep_time=3

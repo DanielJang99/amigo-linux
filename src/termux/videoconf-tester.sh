@@ -5,47 +5,8 @@
 
 # import utilities files needed
 DEBUG=1
-#util_file=`pwd`"/util.cfg"
 adb_file=`pwd`"/adb-utils.sh"
-#source $util_file
 source $adb_file
-
-# monitor CPU usage using TOP
-cpu_monitor_top(){
-    sleep_time=3
-    to_monitor="true"
-
-    if [ $app == "zoom" ]
-    then
-        key="zoom"
-    elif [ $app == "meet" ]
-    then
-        key="com.google.and"
-    elif [ $app == "webex" ]
-    then
-        key="webex"
-    fi
-
-    # logging
-    myprint "Start monitoring CPU via TOP (PID: $$)"
-
-    # clean cpu sync barrier done via files
-    if [ -f ".ready_to_start" ]
-    then
-        rm ".ready_to_start"
-    fi
-
-    # continuous monitoring
-    while [ $to_monitor == "true" ]
-    do
-        sudo top -n 1 | grep $key | grep -v "grep" >> $log_cpu_top
-        sleep $sleep_time
-        to_monitor=`cat .to_monitor`
-    done
-
-    # logging
-    myprint "Done monitoring CPU via TOP (PID: $$)"
-}
 
 # sync barrier between devices 
 sync_barrier(){
@@ -689,7 +650,7 @@ if [ $pcap_collect == "true" ]
 then 
 	myprint "Starting tshark analysis: $tshark_file"
 	tshark -nr $pcap_file -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file 
-	t_shark_size=`cat $tshark_file | awk -F "," -v my_ip=$my_ip '{if($4!=my_ip){if($8=="UDP"){tot_udp += ($NF-8);} if($8=="TCP"){tot_tcp += ($11);}}}END{tot=(tot_tcp+tot_udp)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000}'`
+	tshark_size=`cat $tshark_file | awk -F "," -v my_ip=$my_ip '{if($4!=my_ip){if($8=="UDP"){tot_udp += ($NF-8);} if($8=="TCP"){tot_tcp += ($11);}}}END{tot=(tot_tcp+tot_udp)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000}'`
 	# clean pcap when done
 	ps aux | grep measure.py | grep -v "grep" > /dev/null
 	ans=$?
@@ -713,7 +674,7 @@ traffic_rx_last=$curr_traffic
 #median_cpu=`python median-cpu.py $log_cpu`
 median_cpu="N/A"
 let "call_duration = t_now - t_actual_launch"
-myprint "[INFO] App:$app\tCallDuration:$call_duration\tBDW:$traffic MB\tTsharkTraffic:$t_shark_size MB\t" #MedianCPU:$median_cpu %"
+myprint "[INFO] App:$app\tCallDuration:$call_duration\tBDW:$traffic MB\tTsharkTraffic:$tshark_size\t" #MedianCPU:$median_cpu %"
 log_traffic=$res_folder"/"$test_id".traffic"
 echo -e "$app_traffic\t$pi_traffic" > $log_traffic
 

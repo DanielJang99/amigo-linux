@@ -115,11 +115,10 @@ run_test(){
 	compute_bandwidth $traffic_rx_last
 	traffic_rx_last=$curr_traffic
 	
-	# log results 
+	# prepare info to log results 
 	energy="N/A"
 	t_now=`date +%s`
 	let "duration = t_now - t_launch"
-	myprint "[RESULTS]\tBrowser:$browser\tURL:$url\tBDW:$traffic MB\tLoadTime:$load_time"
 
 	# close the browser
 	close_all
@@ -211,6 +210,9 @@ am start -n $package/$activity
 sleep 10
 chrome_onboarding
 #browser_setup #FIXME => allow to skip chrome onboarding, but using a non working option
+
+# get private  IP in use
+my_ip=`ifconfig $iface | grep "\." | grep -v packets | awk '{print $2}'`
     
 # loop across URLs to be tested
 for((i=0; i<num_urls; i++))
@@ -229,15 +231,18 @@ do
     # file naming
     id=`echo $url | md5sum | cut -f1 -d " "`
     log_cpu="${res_folder}/${id}-${curr_run_id}.cpu"
+    log_cpu_top="${res_folder}/${id}-${curr_run_id}.cpu_top"
     log_traffic="${res_folder}/${id}-${curr_run_id}.traffic"
     log_run="${res_folder}/${id}-${curr_run_id}.run"
     
     # start background process to monitor CPU on the device
     clean_file $log_cpu
+    clean_file $log_cpu_top
     myprint "Starting cpu monitor. Log: $log_cpu"
     echo "true" > ".to_monitor"
     clean_file ".ready_to_start"
     cpu_monitor $log_cpu &
+	cpu_monitor_top $log_cpu_top &
 
 	# start pcap collection if needed
 	if [ $pcap_collect == "true" ]
@@ -256,11 +261,16 @@ do
     echo "false" > ".to_monitor"
 
 	# stop pcap collection and run analysis 
+	tshark_size="N/A"
 	if [ $pcap_collect == "true" ]
 	then
 		sudo killall tcpdump
 		myprint "Stopped tcpdump. Starting background analysis: $pcap_file"
 		tshark -nr $pcap_file -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file
+		tshark_size=`cat $tshark_file | awk -F "," -v my_ip=$my_ip '{if($4!=my_ip){if($8=="UDP"){tot_udp += ($NF-8);} if($8=="TCP"){tot_tcp += ($11);}}}END{tot=(tot_tcp+tot_udp)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000}'`
 		sudo rm $pcap_file
 	fi
+
+	# log results
+	myprint "[RESULTS]\tBrowser:$browser\tURL:$url\tBDW:$traffic MB\tTSharkTraffic:$tshark_size\tLoadTime:$load_time"
 done
