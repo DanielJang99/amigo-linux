@@ -73,6 +73,7 @@ done
 
 
 # make sure I am the only process running
+echo $$ 
 ps aux | grep "$0" | grep "bash" > ".ps-$app"
 N=`cat ".ps-$app" | wc -l`
 echo $N 
