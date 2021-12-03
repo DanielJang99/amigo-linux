@@ -116,8 +116,8 @@ sleep 1
 sudo input tap 370 1250
 
 # start CPU monitoring
-log_cpu="${res_folder}/${id}-${curr_run_id}.cpu"
-log_cpu_top="${res_folder}/${id}-${curr_run_id}.cpu_top"
+log_cpu="${res_folder}/${curr_run_id}.cpu"
+log_cpu_top="${res_folder}/${curr_run_id}.cpu_top"
 clean_file $log_cpu
 clean_file $log_cpu_top
 myprint "Starting cpu monitor. Log: $log_cpu"
@@ -132,8 +132,7 @@ then
     pcap_file="${res_folder}/${curr_run_id}.pcap"
     tshark_file="${res_folder}/${curr_run_id}.tshark"
     sudo tcpdump -i $interface -w $pcap_file > /dev/null 2>&1 &
-    disown -h %1
-    myprint "Started tcpdump: $pcap_file Interface: $interface"
+	myprint "Started tcpdump: $pcap_file Interface: $interface"
 fi
 
 #launch test video
@@ -198,7 +197,7 @@ done
 # stop tcpdump 
 if [ $pcap_collect == "true" ]
 then
-	my_ip=`ifconfig $iface | grep "\." | grep -v packets | awk '{print $2}'`
+	my_ip=`ifconfig $interface | grep "\." | grep -v packets | awk '{print $2}'`
     sudo killall tcpdump
     myprint "Stopped tcpdump. Starting tshark analysis"
     tshark -nr $pcap_file -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file
