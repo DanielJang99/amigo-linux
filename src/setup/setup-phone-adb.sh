@@ -394,7 +394,7 @@ adb -s $device_id shell "input keyevent KEYCODE_HOME"
 adb -s $device_id shell 'pm list packages -f' | grep "com.google.android.apps.youtube.mango" > /dev/null
 if [ $? -eq 0 ]
 then
-    echo "Disabling youtube-go since it conflicts with youtube" 
+    echo "Disabling youtube-go since it conflicts with youtube -- VERIFY" 
     #sudo pm uninstall com.google.android.apps.youtube.mango
 	sudo pm disable-user --user 0 com.google.android.apps.youtube.mango
 fi
