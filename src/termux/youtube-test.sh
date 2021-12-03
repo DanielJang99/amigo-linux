@@ -131,9 +131,9 @@ if [ $pcap_collect == "true" ]
 then
     pcap_file="${res_folder}/${curr_run_id}.pcap"
     tshark_file="${res_folder}/${curr_run_id}.tshark"
-    sudo tcpdump -i $iface -w $pcap_file > /dev/null 2>&1 &
+    sudo tcpdump -i $interface -w $pcap_file > /dev/null 2>&1 &
     disown -h %1
-    myprint "Started tcpdump: $pcap_file Interface: $iface"
+    myprint "Started tcpdump: $pcap_file Interface: $interface"
 fi
 
 #launch test video
