@@ -37,6 +37,7 @@ suffix=`date +%d-%m-%Y`            # folder id (one folder per day)
 curr_run_id=`date +%s`             # unique id per run
 disable_autoplay="false"           # flag to control usage of autoplay 
 app="youtube"                      # used to detect process in CPU monitoring 
+pcap_collect="false"               # flag to control pcap collection
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -93,7 +94,7 @@ sudo pm clear com.google.android.youtube
 
 # re-enable stats for nerds for the app
 myprint "Enabling stats for nerds and no autoplay"
-sudo monkey -p com.google.android.youtube 1
+sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
 sleep 10  # can take a while to load when cleaned...
 sudo input tap 665 100
 sleep 1 
