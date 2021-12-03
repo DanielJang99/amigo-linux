@@ -213,7 +213,7 @@ chrome_onboarding
 #browser_setup #FIXME => allow to skip chrome onboarding, but using a non working option
 
 # get private  IP in use
-my_ip=`ifconfig $iface | grep "\." | grep -v packets | awk '{print $2}'`
+my_ip=`ifconfig $interface | grep "\." | grep -v packets | awk '{print $2}'`
     
 # loop across URLs to be tested
 for((i=0; i<num_urls; i++))

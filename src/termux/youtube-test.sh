@@ -20,6 +20,7 @@ usage(){
     echo "--iface      Network interface in use"
     echo "--novideo    Turn off video recording"
 	echo "--disable    Disable auto-play"
+	echo "--pcap       Request pcap collection"	
     echo "================================================================================"
     exit -1
 }
@@ -55,6 +56,9 @@ do
             ;;
 		--disable)
             shift; disable_autoplay="true"; 
+            ;;
+		 --pcap)
+            shift; pcap_collect="true";
             ;;
         -h | --help)
             usage
@@ -120,6 +124,17 @@ echo "true" > ".to_monitor"
 cpu_monitor $log_cpu &
 cpu_monitor_top $log_cpu_top &
 
+# start traffic collection
+# start pcap collection if needed
+if [ $pcap_collect == "true" ]
+then
+    pcap_file="${res_folder}/${test_id}.pcap"
+    tshark_file="${res_folder}/${test_id}.tshark"
+    sudo tcpdump -i $iface -w $pcap_file > /dev/null 2>&1 &
+    disown -h %1
+    myprint "Started tcpdump: $pcap_file Interface: $iface"
+fi
+
 #launch test video
 am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
 
@@ -148,9 +163,6 @@ do
 		echo "Ready to start!!"
 	fi
 done
-
-# switch between portrait and landscape
-# ?? 
 
 # collect data 
 myprint "Collect data for $DURATION seconds..."
@@ -181,6 +193,18 @@ done
 
 # go HOME
 #sudo input keyevent KEYCODE_HOME
+
+# stop tcpdump 
+if [ $pcap_collect == "true" ]
+then
+	my_ip=`ifconfig $iface | grep "\." | grep -v packets | awk '{print $2}'
+    sudo killall tcpdump
+    myprint "Stopped tcpdump. Starting tshark analysis"
+    tshark -nr $pcap_file -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file
+    tshark_size=`cat $tshark_file | awk -F "," -v my_ip=$my_ip '{if($4!=my_ip){if($8=="UDP"){tot_udp += ($NF-8);} if($8=="TCP"){tot_tcp += ($11);}}}END{tot=(tot_tcp+tot_udp)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000}'`
+	myprint "$tshark_size"
+    sudo rm $pcap_file
+fi
 
 # stop monitoring CPU
 echo "false" > ".to_monitor"

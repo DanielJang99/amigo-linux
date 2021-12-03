@@ -48,7 +48,6 @@ compute_bandwidth(){
 cpu_monitor_top(){
     sleep_time=3
     to_monitor="true"
-
     if [ $app == "zoom" ]
     then
         key="zoom"
@@ -71,12 +70,6 @@ cpu_monitor_top(){
 
     # logging
     myprint "Start monitoring CPU via TOP (PID: $$)"
-
-    # clean cpu sync barrier done via files
-    if [ -f ".ready_to_start" ]
-    then
-        rm ".ready_to_start"
-    fi
 
     # continuous monitoring
     while [ $to_monitor == "true" ]
