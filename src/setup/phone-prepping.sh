@@ -5,9 +5,6 @@ pkg upgrade -y
 # install termux API
 pkg install -y termux-api
 
-# install termux job scheduled 
-termux-job-scheduler
-
 # install sudo 
 pkg install -y tsu
 

@@ -108,10 +108,6 @@ then
 	sshpass -p "$password" ssh -oStrictHostKeyChecking=no -p 8022 $wifi_ip "chmod +x .termux/boot/start-sshd.sh"
 fi 
 
-# log IMEI 
-uid=`ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "termux-telephony-deviceinfo" | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
-echo -e "$wifi_ip\t$uid"
-
 # update codebase
 echo "Updating our code" 
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed && git pull"
@@ -125,6 +121,13 @@ then
 		exit -1
 	fi 
 fi 
+
+# make sure all packages are installed
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd /data/data/com.termux/files/home/mobile-testbed/src/setup && ./package-check.sh"
+
+# log IMEI 
+uid=`ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "termux-telephony-deviceinfo" | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+echo -e "$wifi_ip\t$uid"
 
 # verify visual metric is there 
 echo "Updating/testing visualmetrics"
@@ -142,6 +145,12 @@ then
 	#ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo pm uninstall com.google.android.apps.youtube.mango"
 	ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo pm disable-user --user 0 com.google.android.apps.youtube.mango"
 fi 
+cat "installed-pkg/$wifi_ip" | grep -w "com.google.android.apps.mapslite"
+if [ $? -eq 0 ]
+then
+    echo "Disabling maps-lite to avoid conflicts with maps"
+	ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo pm disable-user --user 0 com.google.android.apps.mapslite"
+fi
 
 # go HOME
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo input keyevent KEYCODE_HOME && sudo input keyevent 111"	
@@ -237,9 +246,6 @@ ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "(crontab -l 2>/dev/
 #ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "(crontab -l 2>/dev/null; echo \"0 2 * * * sudo reboot\") | crontab -"
 #ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "(crontab -l 2>/dev/null; echo \"50 21 * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/ && ls > loggamelo\") | crontab -"
 echo "WARNING. Added need-to-run only to cron for now" 
-
-# make sure all packages are installed on phone
-ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd /data/data/com.termux/files/home/mobile-testbed/src/setup && ./phone-prepping.sh"
 
 # logging 
 echo "All good"

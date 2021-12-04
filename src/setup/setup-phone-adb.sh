@@ -262,85 +262,97 @@ then
 	sudo apt install -y nmap
 fi 
 
-# install SSH via termux (and update code) 
-#sudo nmap -p 8022 $wifi_ip | grep closed
-#if [ $? -eq 0 ] 
-#then 
-	echo "Setting up SSH (plus code updates)"
-	adb -s $device_id push install.sh /sdcard/	
-	adb -s $device_id shell "input keyevent KEYCODE_HOME"	
-	adb -s $device_id shell input keyevent 111
-	adb -s $device_id shell monkey -p com.termux 1 > /dev/null 2>&1
-	echo "Wait for termux bootstrapping to be done..."
-	sleep 15 
-	adb -s $device_id shell input text "pkg\ install\ -y\ tsu"
-	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-	echo "Allowing 30 secs to install sudo"
-	sleep 30 
-	adb -s $device_id shell input text "sudo\ setenforce\ \0"
-	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+# prepping inside termux
+echo "Setting up SSH (plus code updates)"
+adb -s $device_id push install.sh /sdcard/	
+adb -s $device_id shell "input keyevent KEYCODE_HOME"	
+adb -s $device_id shell input keyevent 111
+adb -s $device_id shell monkey -p com.termux 1 > /dev/null 2>&1
+echo "Wait for termux bootstrapping to be done..."
+sleep 15 
+
+###### testing changing repo  UNRELIABLE (maybe need a double click?)
+#adb -s $device_id shell input text "termux-change-repo"
+#adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+#sleep 2
+#adb -s $device_id shell "input tap 230 420"
+#sleep 2 
+#adb -s $device_id shell "input tap 230 530"
+#echo "Wait for packages updates..."
+#sleep 15 
+###### testing
+
+# set default password
+echo "Setting default password: $password"
+adb -s $device_id shell input text "passwd"
+adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+sleep 2
+adb -s $device_id shell input text "$password"
+adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+sleep 2 
+adb -s $device_id shell input text "$password"
+adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+sleep 2 
+
+# install sudo 
+adb -s $device_id shell input text "pkg\ install\ -y\ tsu"
+adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+echo "Allowing 30 secs to install sudo"
+sleep 30 
+
+# enable permissive selinux
+adb -s $device_id shell input text "sudo\ setenforce\ \0"
+adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+sleep 5 
+
+# enable and run install.sh 
+adb -s $device_id shell input text "sudo\ mv\ /\sdcard/\install.sh\ ./"
+adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+sleep 2 
+adb -s $device_id shell input text "sudo\ chmod\ +x\ install.sh"
+adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+sleep 2 
+adb -s $device_id shell input text "USER=\\\`whoami\\\`"
+adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+sleep 2 
+adb -s $device_id shell input text "sudo\ chown\ \\\$USER\ install.sh"
+adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+sleep 2 
+adb -s $device_id shell input text ".\/install.sh"
+adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+sleep 5  # watch out cause it is not blocking (ADB gets out) 
+
+# wait for above process to be done
+ssh_ready="false"
+ts=`date +%s`
+SSH_TIMEOUT=120
+while [ $ssh_ready == "false" ] 
+do 
+	tc=`date +%s`
+	let "tp = tc - ts"
+	sudo nmap -p 8022 $wifi_ip | grep "closed"
+	if [ $? -ne 0 ] 
+	then 
+		ssh_ready="true"
+	fi 
+	if [ $tp -gt $SSH_TIMEOUT ] 
+	then 
+		echo "ERROR! Timeout ($TIMEOUT sec) Something is wrong. SSH should be installed at this point"
+		exit -1 
+	fi 
 	sleep 5 
-	adb -s $device_id shell input text "sudo\ mv\ /\sdcard/\install.sh\ ./"
-	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-	sleep 2 
-	adb -s $device_id shell input text "sudo\ chmod\ +x\ install.sh"
-	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-	sleep 2 
-	adb -s $device_id shell input text "USER=\\\`whoami\\\`"
-	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-	sleep 2 
-	adb -s $device_id shell input text "sudo\ chown\ \\\$USER\ install.sh"
-	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-	sleep 2 
-	adb -s $device_id shell input text ".\/install.sh"
-	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+done
 
-	# wait for above process to be done
-	ssh_ready="false"
-	ts=`date +%s`
-	SSH_TIMEOUT=120
-	while [ $ssh_ready == "false" ] 
-	do 
-		tc=`date +%s`
-		let "tp = tc - ts"
-		sudo nmap -p 8022 $wifi_ip | grep "closed"
-		if [ $? -ne 0 ] 
-		then 
-			ssh_ready="true"
-		fi 
-		if [ $tp -gt $SSH_TIMEOUT ] 
-		then 
-			echo "ERROR! Timeout ($TIMEOUT sec) Something is wrong. SSH should be installed at this point"
-			exit -1 
-		fi 
-		sleep 5 
-	done
-
-	# set default password
-	echo "Setting default password: $password"
-	adb -s $device_id shell input text "passwd"
-	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-	sleep 2
-	adb -s $device_id shell input text "$password"
-	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-	sleep 2 
-	adb -s $device_id shell input text "$password"
-	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-	sleep 2 
-
-	# restart termux and enable crontab 
-	adb -s $device_id shell input text "exit"
-	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-	sleep 2
-	adb -s $device_id shell monkey -p com.termux 1 > /dev/null 2>&1
-	sleep 3
-	adb -s $device_id shell input text "sv-enable\ crond"
-	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-	sleep 1 
-	adb -s $device_id shell "input keyevent KEYCODE_HOME"
-#else 
-#	echo "SSH already available -- assuming all rest was done  too" 
-#fi 
+# restart termux and enable crontab -- no need can be done via SSH
+#adb -s $device_id shell input text "exit"
+#adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+#sleep 2
+#adb -s $device_id shell monkey -p com.termux 1 > /dev/null 2>&1
+#sleep 3
+#adb -s $device_id shell input text "sv-enable\ crond"
+#adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+#sleep 1 
+#adb -s $device_id shell "input keyevent KEYCODE_HOME"
 
 # test SSH 
 c=0
@@ -390,13 +402,28 @@ adb -s $device_id shell monkey -p $termux_boot 1 > /dev/null 2>&1
 sleep 5 
 adb -s $device_id shell "input keyevent KEYCODE_HOME"	
 
-# uninstall youtube go if there
+# setup cron jobs 
+ssh -oStrictHostKeyChecking=no -t -i $ssh_key -p 8022 $wifi_ip 'sh -c "sv-enable crond"'
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pgrep cron"
+if [ $? -ne 0 ]
+then
+	echo "ERROR Something went wrong!"
+else
+	echo "CRON is correctly running"
+fi
+
+# disable youtube go and maps if there
 adb -s $device_id shell 'pm list packages -f' | grep "com.google.android.apps.youtube.mango" > /dev/null
 if [ $? -eq 0 ]
 then
-    echo "Disabling youtube-go since it conflicts with youtube -- VERIFY" 
-    #sudo pm uninstall com.google.android.apps.youtube.mango
+    echo "Disabling youtube-go since it conflicts with youtube" 
 	sudo pm disable-user --user 0 com.google.android.apps.youtube.mango
+fi
+adb -s $device_id shell 'pm list packages -f' | grep "com.google.android.apps.mapslite" > /dev/null
+if [ $? -eq 0 ]
+then
+    echo "Disabling maps-lite to avoid conflicts with maps" 
+	sudo pm disable-user --user 0 com.google.android.apps.mapslite
 fi
 
 # install apps needed
@@ -457,4 +484,9 @@ do
 	ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "ps aux | grep phone-prepping.sh | grep -v grep"
 	ans=$?
 done
+
+# make sure cron is enabled
+ssh -oStrictHostKeyChecking=no -t -i $ssh_key -p 8022 $wifi_ip 'sh -c "sv-enable crond"'
+
+# logging 
 echo "All good"
