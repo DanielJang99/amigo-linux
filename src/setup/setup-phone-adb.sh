@@ -435,7 +435,7 @@ adb -s $device_id shell "input keyevent KEYCODE_HOME"
 # clone code and run phone prepping script
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pkg install -y git"
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "git clone git@github.com:svarvel/mobile-testbed.git"
-ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "termux-notification -c \"ADB:$device_id\" --icon warning --prio high --vibrate pattern 500,500"
+#ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "termux-notification -c \"ADB:$device_id\" --icon warning --prio high --vibrate pattern 500,500"
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/setup && (./phone-prepping.sh &)"
 if [ $production == "true" ] 
 then 

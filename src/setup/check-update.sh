@@ -78,14 +78,35 @@ then
 	sudo apt install -y nmap
 fi 
 
-# verify phone is on wifi
-sudo nmap -p 8022 $wifi_ip | grep closed
+# verify phone is on wifi and port is open 
+sudo nmap -p 8022 $wifi_ip | grep "closed"
 if [ $? -eq 0 ] 
 then 
-	echo "ERROR. Phone is not reachable via SSH on IP $wifi_ip:8022"
+	echo "ERROR. Port 8022 is not reachable. Need SSH to be enabled via USB. Device: $wifi_ip"
 	exit -1 
 fi 
-echo "OK. Phone is reachable via SSH on $wifi_ip:8022"
+echo "OK. Port 8022 is open. Device: $wifi_ip"
+
+# verify SSH is working properly - if not try to fix 
+password="termux"
+timeout 5 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pwd" > /dev/null 2>&1
+if [ $? -ne 0 ] 
+then 
+	echo "ERROR. SSH connection did not work. Trying to fix!"
+	timeout 5 sshpass -p "$password" ssh -oStrictHostKeyChecking=no -p 8022 $wifi_ip "mkdir -p .ssh"
+	if [ $? -ne 0 ]
+	then 
+		echo "ERROR. It seems password $password was not set. Need to be enabled via USB"
+		exit -1 
+	fi 
+	echo "SSH connection via password ($password) works. Setting up keys and then continuing..."
+	sshpass -p "$password" scp -oStrictHostKeyChecking=no -P 8022 $ssh_key $wifi_ip:.ssh
+	sshpass -p "$password" scp -oStrictHostKeyChecking=no -P 8022 "authorized_keys" "config" $wifi_ip:.ssh
+	sshpass -p "$password" scp -oStrictHostKeyChecking=no -P 8022 "bashrc" $wifi_ip:.bashrc
+	sshpass -p "$password" ssh -oStrictHostKeyChecking=no -p 8022 $wifi_ip "mkdir -p .termux/boot/"
+	sshpass -p "$password" scp -oStrictHostKeyChecking=no -P 8022 "start-sshd.sh" $wifi_ip:.termux/boot/
+	sshpass -p "$password" ssh -oStrictHostKeyChecking=no -p 8022 $wifi_ip "chmod +x .termux/boot/start-sshd.sh"
+fi 
 
 # log IMEI 
 uid=`ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "termux-telephony-deviceinfo" | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
@@ -94,6 +115,16 @@ echo -e "$wifi_ip\t$uid"
 # update codebase
 echo "Updating our code" 
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed && git pull"
+if [ $? != 0 ] 
+then 
+	echo "Repo missing, checkign out..."
+	ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pkg install -y git && git clone git@github.com:svarvel/mobile-testbed.git"
+	if [ $? != 0 ] 
+	then 
+		echo "ERROR checking code"
+		exit -1
+	fi 
+fi 
 
 # verify visual metric is there 
 echo "Updating/testing visualmetrics"
@@ -173,6 +204,8 @@ else
 fi 
 
 # make sure all permissions are granted 
+todo="sudo pm grant com.termux.api android.permission.ACCESS_FINE_LOCATION"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "$todo"
 todo="sudo pm grant com.termux.api android.permission.READ_PHONE_STATE"
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "$todo"
 todo="sudo pm grant com.google.android.apps.maps android.permission.ACCESS_FINE_LOCATION"

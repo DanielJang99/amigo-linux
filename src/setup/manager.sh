@@ -17,7 +17,7 @@ ssh_key="id_rsa_mobile"
 num_devices=0
 while read line 
 do 
-	ip=`echo "$line" | cut -f 2`
+	ip=`echo "$line" | cut -f 1`
 	ip_list[$num_devices]=$ip
 	let "num_devices++"
 done < $ip_file
@@ -54,6 +54,7 @@ do
 	elif [ $opt == "prep" ] 
 	then
 		echo "Prepping phone: $wifi_ip:8022"
+		#echo "./check-update.sh $wifi_ip > logs/log-prepping-$wifi_ip 2>&1 &"
 		./check-update.sh $wifi_ip > logs/log-prepping-$wifi_ip 2>&1 &
 	else 
 		echo "Command $opt not supported yet!"
