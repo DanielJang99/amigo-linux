@@ -123,7 +123,7 @@ do
 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
 done
 sleep 10
-myprint "Enabling stats for nerds and no autoplay"
+myprint "Enabling stats for nerds and no autoplay (in account settings)"
 sudo input tap 665 100
 sleep 3
 sudo input tap 370 1180
@@ -165,6 +165,7 @@ fi
 
 #launch test video
 am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
+sleep 5 
 
 # make sure stats for nerds are active
 myprint "Make sure stats for nerds are active"
