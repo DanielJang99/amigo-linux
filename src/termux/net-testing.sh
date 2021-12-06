@@ -61,6 +61,18 @@ touch ".locked"
 # video testing - skipping for now
 ./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap
 
+
+################ safety cleanup ########################
+sudo pm clear com.android.chrome
+sudo pm clear com.google.android.youtube
+close_all
+sudo killall tcpdump
+for pid in `ps aux | grep 'youtube-test\|web-test\|mtr.sh\|cdn-test.sh\|speedtest-cli'  | grep -v "grep" | grep -v "stop" | awk '{print $2}'`
+do
+    kill -9 $pid
+done
+#########################################
+
 # save battery, screen off 
 turn_device_off
 rm ".locked"

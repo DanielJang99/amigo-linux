@@ -180,7 +180,6 @@ do
 		echo "User is asking to stop!"
 		echo "false" > ".status"
 		./stop-net-testing.sh 
-		echo "FIXME: need to potentially stop more stuff"
 		break 
 	fi 
 
