@@ -82,14 +82,20 @@ then
 fi 
 
 # update code 
+myprint "Updating our code..."
 git pull
+
+# ensure that BT is enabled 
+myprint "Make sure that BT is running" 
+sudo service call bluetooth_manager 6
 
 # retrieve unique ID for this device and pass to our app
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
-sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
-sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
 
 # restart Kenzo - so that background service runs and info is populated 
+myprint "Granting Kenzo permission and restart..."
+sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
+sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
 sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
 sleep 5
 sudo sh -c "echo $uid > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
@@ -128,10 +134,6 @@ fi
 
 # set NTP server 
 #sudo settings put global ntp_server pool.ntp.org
-
-# ensure that BT is enabled 
-myprint "Make sure that BT is running" 
-sudo service call bluetooth_manager 6
 
 # find termuxt user 
 termux_user=`whoami`
