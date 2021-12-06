@@ -120,6 +120,7 @@ do
 	sudo dumpsys window windows | grep -E 'mCurrentFocus'
 	sleep 1 
 done
+exit -1 
 #sleep 10  # can take a while to load when cleaned...
 sudo input tap 665 100
 sleep 1 
