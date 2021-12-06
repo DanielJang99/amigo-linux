@@ -27,10 +27,11 @@ generate_post_data(){
     "uid":"${uid}",
     "uptime":"${uptime_info}",
     "num_kenzo":"${N_kenzo}",
-	"free_space_GB":"${free_space}",
+    "free_space_GB":"${free_space}",
     "cpu_util_perc":"${cpu_util}",
     "mem_info":"${mem_info}", 
     "battery_level":"${phone_battery}",
+    "charging":"${charging}",
     "location_info":"${loc_str}",
     "foreground_app":"${foreground}",
     "net_testing_proc":"${num}", 
@@ -130,12 +131,14 @@ fi
 #sudo settings put global ntp_server pool.ntp.org
 
 # ensure that BT is enabled 
+myprint "Make sure that BT is running" 
 sudo service call bluetooth_manager 6
 
 # find termuxt user 
 termux_user=`whoami`
 
 # make sure we are HOME and no keyboard is showing
+myprint "Going HOME!"
 sudo input keyevent KEYCODE_HOME
 sudo input keyevent 111
 
@@ -175,7 +178,7 @@ do
 	then 
 		echo "User is asking to stop!"
 		echo "false" > ".status"
-		./stop-net-testing.sh #FIXME
+		./stop-net-testing.sh 
 		echo "FIXME: need to potentially stop more stuff"
 		break 
 	fi 
