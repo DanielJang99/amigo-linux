@@ -35,7 +35,7 @@ DURATION=30                        # experiment duration
 interface="wlan0"                  # default network interface to monitor (for traffic)
 suffix=`date +%d-%m-%Y`            # folder id (one folder per day)
 curr_run_id=`date +%s`             # unique id per run
-disable_autoplay="true"            # flag to control usage of autoplay 
+disable_autoplay="false"           # flag to control usage of autoplay 
 app="youtube"                      # used to detect process in CPU monitoring 
 pcap_collect="false"               # flag to control pcap collection
 
@@ -97,12 +97,6 @@ log_file="${res_folder}/youtube-${curr_run_id}.txt"
 # cleanup the clipboard
 termux-clipboard-set "none"
 
-# lower all the volumes
-myprint "Making sure volume is off"
-sudo media volume --stream 3 --set 0  # media volume
-sudo media volume --stream 1 --set 0	 # ring volume
-sudo media volume --stream 4 --set 0	 # alarm volume
-
 # make sure screen is ON
 turn_device_on
 
@@ -114,15 +108,21 @@ sudo pm clear com.google.android.youtube
 myprint "Launching YT and allow to settle..."
 sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
 
+# lower all the volumes
+myprint "Making sure volume is off"
+sudo media volume --stream 3 --set 0  # media volume
+sudo media volume --stream 1 --set 0	 # ring volume
+sudo media volume --stream 4 --set 0	 # alarm volume
+
 ###### TEMP
 myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
 curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
 while [ $curr_activity != "WatchWhileActivity" ] 
 do 
-	sleep 5 
+	sleep 3 
 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
 done
-sleep 5 
+sleep 10
 myprint "Enabling stats for nerds and no autoplay"
 sudo input tap 665 100
 sleep 3
