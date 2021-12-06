@@ -6,9 +6,9 @@
 # activate stats for nerds  
 activate_stats_nerds(){
 	myprint "Activating stats for nerds!!"
-	tap_screen 680 105 
-	tap_screen 680 105  
-	tap_screen 370 1125
+	tap_screen 680 105  3
+	tap_screen 680 105  3
+	tap_screen 370 1125 3
 }
 
 # script usage
@@ -35,7 +35,7 @@ DURATION=30                        # experiment duration
 interface="wlan0"                  # default network interface to monitor (for traffic)
 suffix=`date +%d-%m-%Y`            # folder id (one folder per day)
 curr_run_id=`date +%s`             # unique id per run
-disable_autoplay="false"           # flag to control usage of autoplay 
+disable_autoplay="true"            # flag to control usage of autoplay 
 app="youtube"                      # used to detect process in CPU monitoring 
 pcap_collect="false"               # flag to control pcap collection
 
@@ -111,34 +111,36 @@ myprint "Cleaning YT state"
 sudo pm clear com.google.android.youtube
 
 # re-enable stats for nerds for the app
-myprint "Enabling stats for nerds and no autoplay"
+myprint "Launching YT and allow to settle..."
 sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
 
 ###### TEMP
-for((i=0; i<20; i++))
+myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
+curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+while [ $curr_activity != "WatchWhileActivity" ] 
 do 
-	sudo dumpsys window windows | grep -E 'mCurrentFocus'
-	sleep 1 
+	sleep 5 
+	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
 done
-exit -1 
-#sleep 10  # can take a while to load when cleaned...
+sleep 5 
+myprint "Enabling stats for nerds and no autoplay"
 sudo input tap 665 100
-sleep 1 
+sleep 3
 sudo input tap 370 1180
-sleep 1 
+sleep 3 
 if [ $disable_autoplay == "true" ] 
 then 
 	sudo input tap 370 304
-	sleep 1 
+	sleep 3
 	sudo input tap 370 230 
-	sleep 1 
+	sleep 3 
 	sudo input keyevent KEYCODE_BACK
-	sleep 1
+	sleep 3
 fi 
 sudo input tap 370 200
-sleep 1 
+sleep 3
 sudo input swipe 370 500 370 100
-sleep 1 
+sleep 3 
 sudo input tap 370 1250
 
 # start CPU monitoring
