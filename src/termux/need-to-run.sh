@@ -12,7 +12,7 @@ generate_post_data(){
     "uid":"${uid}",
     "uptime":"${uptime_info}",
     "debug":"${debug}",
-    "msg":"reboot"
+    "msg":"${msg}"
     }
 EOF
 }
@@ -48,6 +48,7 @@ then
 	current_time=`date +%s`
 	uid=`termux-telephony-deviceinfo | grep "device_id" | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 	uptime_info=`uptime`
+	msg="reboot"
 	echo "$(generate_post_data)"
 	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
 fi 
@@ -58,6 +59,16 @@ N=`cat ".ps" | wc -l`
 if [ $N -eq 0 -a $debug == "false" ] 
 then 
 	echo "need to run"
+	# inform server of restart needed
+	suffix=`date +%d-%m-%Y`
+	current_time=`date +%s`
+	uid=`termux-telephony-deviceinfo | grep "device_id" | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+	uptime_info=`uptime`
+	msg="script-restart"
+	echo "$(generate_post_data)"
+	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
+
+	# restart script 
 	mkdir -p logs
 	./state-update.sh > "logs/log-state-update-"`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1 &
 fi
