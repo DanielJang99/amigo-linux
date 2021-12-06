@@ -113,7 +113,14 @@ sudo pm clear com.google.android.youtube
 # re-enable stats for nerds for the app
 myprint "Enabling stats for nerds and no autoplay"
 sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
-sleep 10  # can take a while to load when cleaned...
+
+###### TEMP
+for((i=0; i<20; i++))
+do 
+	sudo dumpsys window windows | grep -E 'mCurrentFocus'
+	sleep 1 
+done
+#sleep 10  # can take a while to load when cleaned...
 sudo input tap 665 100
 sleep 1 
 sudo input tap 370 1180
@@ -141,7 +148,7 @@ clean_file $log_cpu_top
 myprint "Starting cpu monitor. Log: $log_cpu"
 echo "true" > ".to_monitor"
 cpu_monitor $log_cpu &
-cpu_monitor_top $log_cpu_top &
+#cpu_monitor_top $log_cpu_top &
 
 # start traffic collection
 # start pcap collection if needed
