@@ -9,17 +9,23 @@ then
 		echo -e "$ip\t$device\t$uid"
 	done 
 else 
-	if [ $# -ne 1 ] 
+	if [ $# -eq 1 ] 
 	then 
-		echo "ERROR. Without ADB please pass a list of IP addresses"
-		exit -1 
+		echo "Using list: $1"
+		ip_list=$1
+	else 
+		echo "Discovering connected devices..."
+		#sudo nmap -p 8022 192.168.1.0/24 > ".nmap-log"
+		cat .nmap-log  | grep -B 4 "open" | grep report | awk '{print $NF}' > "nmap-based-ip-list"	
+		ip_list="nmap-based-ip-list"
 	fi 
+	echo "Loading IPs from list $ip_list" 
 	num_ips=0
 	while read line
 	do 
 		ip[$num_ips]=$line
 		let "num_ips++"
-	done < $1
+	done < "$ip_list"
 	for((i=0; i<num_ips; i++))
 	do 
 		curr_ip=${ip[$i]}

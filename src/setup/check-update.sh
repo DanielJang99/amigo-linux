@@ -61,7 +61,7 @@ termux_pack="com.termux"          # termux package
 termux_boot="com.termux.boot"     # termux boot package 
 termux_api="com.termux.api"       # termux API package 
 production="false"                # default we are debugging 
-last_vrs="1.1"                    # last version of our app
+last_vrs="1.2"                    # last version of our app
 
 # check if we want to switch to production
 if [ $# -eq 2 ] 
@@ -243,9 +243,11 @@ else
 fi 
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "crontab -r"  #cleanup 
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "(crontab -l 2>/dev/null; echo \"*/1 * * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/ && ./need-to-run.sh > log-need-run\") | crontab -"
-#ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "(crontab -l 2>/dev/null; echo \"0 2 * * * sudo reboot\") | crontab -"
 #ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "(crontab -l 2>/dev/null; echo \"50 21 * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/ && ls > loggamelo\") | crontab -"
-echo "WARNING. Added need-to-run only to cron for now" 
+echo "Added main CRON job" 
+
+# run one test
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && ./state-update.sh test"
 
 # logging 
 echo "All good"

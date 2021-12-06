@@ -192,6 +192,11 @@ fi
 adb -s $device_id shell "input keyevent KEYCODE_HOME"	
 adb -s $device_id shell input keyevent 111
 
+
+# always make sure screen is in portrait
+#adb -s $device_id shell "content insert --uri content://settings/system --bind name:s:accelerometer_rotation --bind value:i:0"
+#adb -s $device_id shell "content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:0"
+
 # verify phone is on wifi
 adb -s $device_id shell dumpsys netstats > .data
 wifi_iface=`cat .data | grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
@@ -269,7 +274,7 @@ adb -s $device_id shell "input keyevent KEYCODE_HOME"
 adb -s $device_id shell input keyevent 111
 adb -s $device_id shell monkey -p com.termux 1 > /dev/null 2>&1
 echo "Wait for termux bootstrapping to be done..."
-sleep 15 
+sleep 30
 
 ###### testing changing repo  UNRELIABLE (maybe need a double click?)
 #adb -s $device_id shell input text "termux-change-repo"
@@ -284,13 +289,20 @@ sleep 15
 
 # set default password
 echo "Setting default password: $password"
+adb -s $device_id shell input text "pkg\ install\ -y\ termux-auth"
+sleep 1
+adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+sleep 15 
 adb -s $device_id shell input text "passwd"
+sleep 1
 adb -s $device_id shell "input keyevent KEYCODE_ENTER"
 sleep 2
 adb -s $device_id shell input text "$password"
+sleep 1 
 adb -s $device_id shell "input keyevent KEYCODE_ENTER"
 sleep 2 
 adb -s $device_id shell input text "$password"
+sleep 1 
 adb -s $device_id shell "input keyevent KEYCODE_ENTER"
 sleep 2 
 
@@ -306,6 +318,7 @@ adb -s $device_id shell "input keyevent KEYCODE_ENTER"
 sleep 5 
 
 # enable and run install.sh 
+echo "Preparing to run <<install.sh>>"
 adb -s $device_id shell input text "sudo\ mv\ /\sdcard/\install.sh\ ./"
 adb -s $device_id shell "input keyevent KEYCODE_ENTER"
 sleep 2 
@@ -320,9 +333,10 @@ adb -s $device_id shell "input keyevent KEYCODE_ENTER"
 sleep 2 
 adb -s $device_id shell input text ".\/install.sh"
 adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-sleep 5  # watch out cause it is not blocking (ADB gets out) 
+sleep 30  # watch out cause it is not blocking (ADB gets out) 
 
 # wait for above process to be done
+echo "Wait $SSH_TIMEOUT sec to see if SSH PORT (8022) becomes reachable...."
 ssh_ready="false"
 ts=`date +%s`
 SSH_TIMEOUT=120
@@ -371,6 +385,7 @@ do
 		exit -1 
 	fi 
 done 
+echo "SSH test was succesful!" 
 
 # install local packages 
 hash jq
@@ -402,28 +417,18 @@ adb -s $device_id shell monkey -p $termux_boot 1 > /dev/null 2>&1
 sleep 5 
 adb -s $device_id shell "input keyevent KEYCODE_HOME"	
 
-# setup cron jobs 
-ssh -oStrictHostKeyChecking=no -t -i $ssh_key -p 8022 $wifi_ip 'sh -c "sv-enable crond"'
-ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pgrep cron"
-if [ $? -ne 0 ]
-then
-	echo "ERROR Something went wrong!"
-else
-	echo "CRON is correctly running"
-fi
-
 # disable youtube go and maps if there
 adb -s $device_id shell 'pm list packages -f' | grep "com.google.android.apps.youtube.mango" > /dev/null
 if [ $? -eq 0 ]
 then
     echo "Disabling youtube-go since it conflicts with youtube" 
-	sudo pm disable-user --user 0 com.google.android.apps.youtube.mango
+	adb -s $device_id shell 'pm disable-user --user 0 com.google.android.apps.youtube.mango'
 fi
 adb -s $device_id shell 'pm list packages -f' | grep "com.google.android.apps.mapslite" > /dev/null
 if [ $? -eq 0 ]
 then
     echo "Disabling maps-lite to avoid conflicts with maps" 
-	sudo pm disable-user --user 0 com.google.android.apps.mapslite
+	adb -s $device_id shell 'pm disable-user --user 0 com.google.android.apps.mapslite'
 fi
 
 # install apps needed
@@ -485,8 +490,17 @@ do
 	ans=$?
 done
 
-# make sure cron is enabled
+# setup cron jobs 
+echo "Setting up CRON jobs..."
 ssh -oStrictHostKeyChecking=no -t -i $ssh_key -p 8022 $wifi_ip 'sh -c "sv-enable crond"'
+sleep 5 
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pgrep cron"
+if [ $? -ne 0 ]
+then
+	echo "ERROR Something went wrong!"
+else
+	echo "CRON is correctly running"
+fi
 
 # logging 
 echo "All good"

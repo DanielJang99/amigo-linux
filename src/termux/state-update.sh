@@ -26,7 +26,8 @@ generate_post_data(){
     "timestamp":"${current_time}",
     "uid":"${uid}",
     "uptime":"${uptime_info}",
-    "free_space_GB":"${free_space}",
+    "num_kenzo":"${N_kenzo}",
+	"free_space_GB":"${free_space}",
     "cpu_util_perc":"${cpu_util}",
     "mem_info":"${mem_info}", 
     "battery_level":"${phone_battery}",
@@ -64,7 +65,7 @@ check_cpu(){
 freq=10                                # interval for checking things to do 
 REPORT_INTERVAL=180                    # interval of status reporting (seconds)
 NET_INTERVAL=600                       # interval of networking testing 
-package="com.example.sensorexample"    # our app 
+kenzo_pkg="com.example.sensorexample"  # our app 
 last_report_time="1635969639"          # last time a report was sent (init to an old time)
 last_net="1635969639"                  # last time a net test was done (init to an old time) 
 asked_to_charge="false"                # keep track if we already asked user to charge their phone
@@ -84,11 +85,11 @@ git pull
 
 # retrieve unique ID for this device and pass to our app
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
-sudo pm grant com.example.sensorexample android.permission.ACCESS_FINE_LOCATION
-sudo pm grant com.example.sensorexample android.permission.READ_PHONE_STATE
+sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
+sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
 if [ ! -d "/storage/emulated/0/Android/data/com.example.sensorexample/" ] 
 then 
-	sudo monkey -p com.example.sensorexample 1 > /dev/null 2>&1
+	sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
 	sleep 5
 fi 
 sudo sh -c "echo $uid > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
@@ -127,6 +128,9 @@ fi
 
 # set NTP server 
 #sudo settings put global ntp_server pool.ntp.org
+
+# ensure that BT is enabled 
+sudo service call bluetooth_manager 6
 
 # find termuxt user 
 termux_user=`whoami`
@@ -268,6 +272,16 @@ do
 	last_loop_time=$current_time
 	to_run=`cat ".status"`
 	current_time=`date +%s`
+
+	# check if our foreground/background service is still running
+	N_kenzo=`sudo ps aux | grep "com.example.sensor" | grep -v "grep" | grep -v "curl" | wc -l `
+	if [ $N_kenzo -eq 0 ] 
+	then 
+		myprint "BT background process (kenzo service) was stopped. Restarting!"
+		sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
+		sleep 5
+		sudo input keyevent KEYCODE_HOME
+	fi 
 
 	# get update on data sent/received
 	wifi_today_file="./data/wifi/"$suffix".txt"
