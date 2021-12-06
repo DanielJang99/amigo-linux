@@ -88,11 +88,10 @@ git pull
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
 sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
-if [ ! -d "/storage/emulated/0/Android/data/com.example.sensorexample/" ] 
-then 
-	sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
-	sleep 5
-fi 
+
+# restart Kenzo - so that background service runs and info is populated 
+sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
+sleep 5
 sudo sh -c "echo $uid > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
 sudo input keyevent KEYCODE_HOME
 
