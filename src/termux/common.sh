@@ -95,7 +95,7 @@ cpu_monitor(){
         myprint "Started saving CPU values to $log_cpu"        
         while [ $to_monitor == "true" ]
         do
-            val=``cat .cpu-usage`
+            val=`cat .cpu-usage`
             echo -e $curr_time"\t"$val >> $log_cpu
             sleep $sleep_time
             to_monitor=`cat .to_monitor`    

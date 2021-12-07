@@ -498,7 +498,7 @@ do
 					# make sure we have fresh wifi/mobile info
 					update_wifi_mobile 
 					t_wifi_mobile_update=`date +%s`							
-					(./net-testing.sh $suffix $current_time $iface >  logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+					(./net-testing.sh $suffix $current_time $def_iface > logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
 					num=1
 					echo $current_time > ".last_net"
 				fi 
