@@ -83,7 +83,7 @@ check_cpu(){
 }
 
 # parameters
-freq=10                                # interval for checking things to do 
+freq=15                                # interval for checking things to do 
 REPORT_INTERVAL=180                    # interval of status reporting (seconds)
 NET_INTERVAL=1200                      # interval of networking testing 
 kenzo_pkg="com.example.sensorexample"  # our app 
@@ -126,7 +126,7 @@ myprint "Updating our code..."
 git pull
 
 # start CPU monitoring (background)
-./monitor-cpu.sh &
+#./monitor-cpu.sh &
 
 # ensure that BT is enabled 
 myprint "Make sure that BT is running" 
@@ -143,15 +143,17 @@ fi
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 
 # restart Kenzo - so that background service runs and info is populated 
-myprint "Granting Kenzo permission and restart..."
-sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
-sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
-sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
-sleep 5
-foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
-myprint "Confirm Kenzo is in the foregound: $foreground" 
-sudo sh -c "echo $uid > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
-sudo input keyevent KEYCODE_HOME
+#myprint "Granting Kenzo permission and restart..."
+#sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
+#sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
+#sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
+#sleep 5
+#foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+#myprint "Confirm Kenzo is in the foregound: $foreground" 
+#sudo sh -c "echo $uid > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
+
+# close all
+#close_all
 
 # derive B from GB
 let "MAX_MOBILE = MAX_MOBILE_GB * 1000000000"
@@ -205,7 +207,7 @@ do
 	current_time=`date +%s`
 	suffix=`date +%d-%m-%Y`
 
-	# understand WiFi and mobile phone connectivity
+	# update WiFi and mobile phone connectivity
 	sudo dumpsys netstats > .data
 	wifi_iface=`cat .data | grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
 	mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
@@ -251,7 +253,7 @@ do
 		else 
 			strike=0
 		fi 
-		myprint "CPU usage: $cpu_util"
+		myprint "CPU usage: $cpu_util StrikeCount: $strike"
 	fi 
 
 	# check if user wants to run a test 
@@ -338,14 +340,16 @@ do
 	fi 
 
 	# loop rate control 
+	current_time=`date +%s`
 	let "t_p = freq - (current_time - last_loop_time)"
+	#echo "Sleep time: $t_p"
 	if [ $t_p -gt 0 ] 
 	then 
 		sleep $t_p
 	fi 
-	last_loop_time=$current_time
 	to_run=`cat ".status"`
 	current_time=`date +%s`
+	last_loop_time=$current_time
 
 	# check if our foreground/background service is still running
 	N_kenzo=`sudo ps aux | grep "com.example.sensor" | grep -v "grep" | grep -v "curl" | wc -l `
@@ -354,6 +358,7 @@ do
 		myprint "BT background process (kenzo service) was stopped. Restarting!"
 		sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
 		sleep 5
+		close_all
 		sudo input keyevent KEYCODE_HOME
 	fi 
 
@@ -505,6 +510,7 @@ do
 			# needed in case maps ask for storage...
 			sudo input tap 108 1220		
 			sleep 10
+			close_all				
 			sudo input keyevent KEYCODE_HOME
 			turn_device_off
 		fi 
