@@ -61,7 +61,7 @@ termux_pack="com.termux"          # termux package
 termux_boot="com.termux.boot"     # termux boot package 
 termux_api="com.termux.api"       # termux API package 
 production="false"                # default we are debugging 
-last_vrs="1.2"                    # last version of our app
+last_vrs="1.3"                    # last version of our app
 
 # check if we want to switch to production
 if [ $# -eq 2 ] 
@@ -225,14 +225,15 @@ todo="sudo pm grant com.example.sensorexample android.permission.READ_PHONE_STAT
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "$todo"
 
 # make sure crontab is enabled
-ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pgrep cron"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pidof crond"
 if [ $? -ne 0 ] 
 then 
 	echo "Setting up CRON"
 	ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pkg install -y cronie termux-services"
-	sleep 10 
+	sleep 2
 	ssh -oStrictHostKeyChecking=no -t -i $ssh_key -p 8022 $wifi_ip 'sh -c "sv-enable crond"'
-	ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pgrep cron"
+	sleep 2 	
+	ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pidof crond"
 	if [ $? -ne 0 ] 
 	then
 		echo "ERROR Something went wrong!"

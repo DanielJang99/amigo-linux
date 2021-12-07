@@ -1,6 +1,13 @@
 #!/bin/bash
 ## Note: script to start experiment at N nodes
 
+# trap ctrl-c and call ctrl_c()
+trap ctrl_c INT
+function ctrl_c() {
+    echo "Trapped CTRL-C"
+    exit -1
+}
+
 #check input 
 if [ $# -ne 2 -a $# -ne 3 ] 
 then 
@@ -57,6 +64,44 @@ do
 		timeout 5 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "ps aux | grep bash | grep -v grep"
 	elif [ $opt == "cron" ]
 	then 
+		ans=`timeout 5 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pidof crond" 2>/dev/null`
+		ret_code=$? 
+		if [ $ret_code -eq 0 -o $ret_code -eq 1 ] 
+		then 
+			if [ ! -z $ans ] 
+			then 
+				echo -e "$wifi_ip\tPID:$ans\t$ret_code"
+			else
+				#echo "attempting to enable cron for $wifi_ip..." 
+				ssh -oStrictHostKeyChecking=no -t -i $ssh_key -p 8022 $wifi_ip 'sh -c "sv-enable crond"'
+				sleep 3 
+				#echo "checking again...."
+				ans=`timeout 5 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pidof crond" 2>/dev/null`
+				ret_code=$?
+				if [ ! -z $ans ] 
+				then 
+					echo -e "$wifi_ip\tPID:$ans\t$ret_code"
+				else 
+					echo -e "$wifi_ip\tNO-CRON\t$ret_code"
+				fi 
+			fi 
+		else 
+			if [ $ret_code -eq 255 ] 
+			then 
+				echo -e "$wifi_ip\tSSH-NO_ROUTE\t$ret_code"
+			elif [ $ret_code -eq 124 ] 
+			then 
+				echo -e "$wifi_ip\tSSH-TIMEOUT\t$ret_code"
+			else
+				echo -e "$wifi_ip\tSSH-FAIL\t$ret_code"
+			fi 
+		fi 
+	elif [ $opt == "activate-cron" ]
+	then 
+		timeout 5 ssh -oStrictHostKeyChecking=no -t -i $ssh_key -p 8022 $wifi_ip 'sh -c "sv-enable crond"'
+		echo $? 
+		exit -1 
+		sleep 2 
 		ans=`timeout 5 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pidof crond"`
 		echo -e "$wifi_ip:8022\t$ans"
 	elif [ $opt == "test" ]

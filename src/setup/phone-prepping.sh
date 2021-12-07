@@ -77,6 +77,7 @@ fi
 
 # run one test 
 cd ../../termux
+mkdir -p logs 
 ./state-update.sh test > logs/log-testing-`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1
 
 ############################ TESTING, TO BE DECIDED 

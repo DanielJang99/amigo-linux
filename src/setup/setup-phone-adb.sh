@@ -173,7 +173,7 @@ termux_boot="com.termux.boot"     # termux boot package
 termux_api="com.termux.api"       # termux API package 
 production="false"                # default we are debugging 
 use_fdroid="false"                # control how to intall termux stuff 
-#use_fdroid="true"
+full_setup="true"                 # flag to control if to redo command inside termux (enable SSH, etc)
 
 # check if we want to switch to production
 if [ $# -eq 2 ] 
@@ -267,15 +267,6 @@ then
 	sudo apt install -y nmap
 fi 
 
-# prepping inside termux
-echo "Setting up SSH (plus code updates)"
-adb -s $device_id push install.sh /sdcard/	
-adb -s $device_id shell "input keyevent KEYCODE_HOME"	
-adb -s $device_id shell input keyevent 111
-adb -s $device_id shell monkey -p com.termux 1 > /dev/null 2>&1
-echo "Wait for termux bootstrapping to be done..."
-sleep 30
-
 ###### testing changing repo  UNRELIABLE (maybe need a double click?)
 #adb -s $device_id shell input text "termux-change-repo"
 #adb -s $device_id shell "input keyevent KEYCODE_ENTER"
@@ -288,55 +279,63 @@ sleep 30
 ###### testing
 
 # set default password
-todo="false" 
-if [ $todo == "true" ] 
+if [ $full_setup == "true" ] 
 then 
-echo "Setting default password: $password"
-adb -s $device_id shell input text "pkg\ install\ -y\ termux-auth"
-sleep 1
-adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-sleep 15 
-adb -s $device_id shell input text "passwd"
-sleep 1
-adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-sleep 2
-adb -s $device_id shell input text "$password"
-sleep 1 
-adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-sleep 2 
-adb -s $device_id shell input text "$password"
-sleep 1 
-adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-sleep 2 
+	# prepping inside termux
+	echo "Setting up SSH (plus code updates)"
+	adb -s $device_id push install.sh /sdcard/	
+	adb -s $device_id shell "input keyevent KEYCODE_HOME"	
+	adb -s $device_id shell input keyevent 111
+	adb -s $device_id shell monkey -p com.termux 1 > /dev/null 2>&1
+	echo "Wait for termux bootstrapping to be done..."
+	sleep 30
 
-# install sudo 
-adb -s $device_id shell input text "pkg\ install\ -y\ tsu"
-adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-echo "Allowing 30 secs to install sudo"
-sleep 30 
+	echo "Setting default password: $password"
+	adb -s $device_id shell input text "pkg\ install\ -y\ termux-auth"
+	sleep 1
+	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+	sleep 15 
+	adb -s $device_id shell input text "passwd"
+	sleep 1
+	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+	sleep 2
+	adb -s $device_id shell input text "$password"
+	sleep 1 
+	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+	sleep 2 
+	adb -s $device_id shell input text "$password"
+	sleep 1 
+	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+	sleep 2 
 
-# enable permissive selinux
-adb -s $device_id shell input text "sudo\ setenforce\ \0"
-adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-sleep 5 
+	# install sudo 
+	adb -s $device_id shell input text "pkg\ install\ -y\ tsu"
+	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+	echo "Allowing 30 secs to install sudo"
+	sleep 30 
 
-# enable and run install.sh 
-echo "Preparing to run <<install.sh>>"
-adb -s $device_id shell input text "sudo\ mv\ /\sdcard/\install.sh\ ./"
-adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-sleep 2 
-adb -s $device_id shell input text "sudo\ chmod\ +x\ install.sh"
-adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-sleep 2 
-adb -s $device_id shell input text "USER=\\\`whoami\\\`"
-adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-sleep 2 
-adb -s $device_id shell input text "sudo\ chown\ \\\$USER\ install.sh"
-adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-sleep 2 
-adb -s $device_id shell input text ".\/install.sh"
-adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-sleep 30  # watch out cause it is not blocking (ADB gets out) 
+	# enable permissive selinux
+	adb -s $device_id shell input text "sudo\ setenforce\ \0"
+	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+	sleep 5 
+
+	# enable and run install.sh 
+	echo "Preparing to run <<install.sh>>"
+	adb -s $device_id shell input text "sudo\ mv\ /\sdcard/\install.sh\ ./"
+	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+	sleep 2 
+	adb -s $device_id shell input text "sudo\ chmod\ +x\ install.sh"
+	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+	sleep 2 
+	adb -s $device_id shell input text "USER=\\\`whoami\\\`"
+	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+	sleep 2 
+	adb -s $device_id shell input text "sudo\ chown\ \\\$USER\ install.sh"
+	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+	sleep 2 
+	adb -s $device_id shell input text ".\/install.sh"
+	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
+	sleep 30  # watch out cause it is not blocking (ADB gets out) 
 fi 
 
 # wait for above process to be done
@@ -498,7 +497,7 @@ done
 echo "Setting up CRON jobs..."
 ssh -oStrictHostKeyChecking=no -t -i $ssh_key -p 8022 $wifi_ip 'sh -c "sv-enable crond"'
 sleep 5 
-ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pgrep cron"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pidof crond"
 if [ $? -ne 0 ]
 then
 	echo "ERROR Something went wrong!"
