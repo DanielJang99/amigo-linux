@@ -224,7 +224,8 @@ chrome_onboarding
 
 # get private  IP in use
 my_ip=`ifconfig $interface | grep "\." | grep -v packets | awk '{print $2}'`
-    
+myprint "Interface: $interface IP: $my_ip" 
+
 # loop across URLs to be tested
 for((i=0; i<num_urls; i++))
 do
