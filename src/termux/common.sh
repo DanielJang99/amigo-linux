@@ -96,6 +96,7 @@ cpu_monitor(){
         while [ $to_monitor == "true" ]
         do
             val=`cat .cpu-usage`
+            curr_time=`date +%s`
             echo -e $curr_time"\t"$val >> $log_cpu
             sleep $sleep_time
             to_monitor=`cat .to_monitor`    

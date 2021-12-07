@@ -269,7 +269,7 @@ do
     run_test 
     
 	# stop monitoring CPU
-	myprint "Stop monitoring CPU -- give time"    
+	myprint "Stop monitoring CPU"
 	echo "false" > ".to_monitor"
 	t_1=`date +%s`
 
@@ -285,7 +285,7 @@ do
 	fi
 	t_2=`date +%s`
 	let "t_sleep = 5 - (t_2 - t_1)"
-	if [ $t_sleep -gt 0 ] 
+	if [ $t_sleep -gt 0  -a $single != "true" ] 
 	then 
 		sleep $t_sleep
 	fi 
