@@ -239,7 +239,7 @@ do
 	# check CPU usage 
 	if [ -f ".cpu-usage" ] 
 	then 
-		cpu_util=`cat ".cpu-usage"`
+		cpu_util=`cat ".cpu-usage" | cut -f 1 -d "."`
 		if [ $cpu_util -gt 80 ] 
 		then 
 			let "strike++"
