@@ -81,6 +81,25 @@ then
 	testing="true"
 fi 
 
+# make sure only this instance of this script is running
+my_pid=$$
+app="stateupdate"
+myprint "My PID: $my_pid"
+ps aux | grep "$0" | grep "bash" > ".ps-$app"
+N=`cat ".ps-$app" | wc -l`
+if [ $N -gt 1 ]
+then
+    while read line
+    do
+        pid=`echo "$line" | awk '{print $2}'`
+        if [ $pid -ne $my_pid ]
+        then
+            myprint "WARNING. Found a pending process for $0. Killing it: $pid"
+            kill -9 $pid
+        fi
+    done < ".ps-$app"
+fi
+
 # update code 
 myprint "Updating our code..."
 git pull
