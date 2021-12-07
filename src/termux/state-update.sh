@@ -125,6 +125,9 @@ fi
 myprint "Updating our code..."
 git pull
 
+# start CPU monitoring (background)
+./monitor_cpu.sh &
+
 # ensure that BT is enabled 
 myprint "Make sure that BT is running" 
 bt_status=`sudo settings get global bluetooth_on`
@@ -191,9 +194,6 @@ termux_user=`whoami`
 myprint "Going HOME!"
 sudo input keyevent KEYCODE_HOME
 sudo input keyevent 111
-
-# start CPU monitoring (background)
-./monitor_cpu.sh &
 
 # external loop 
 to_run=`cat ".status"`
