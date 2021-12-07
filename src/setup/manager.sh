@@ -4,7 +4,7 @@
 #check input 
 if [ $# -ne 2 -a $# -ne 3 ] 
 then 
-	echo "USAGE: $0 <ip-file> <opt> [start/stop/prep/check/kill] <script>"
+	echo "USAGE: $0 <ip-file> <opt> [start/stop/prep/check/cron/test/kill] <script>"
 	exit -1 
 fi 
 
@@ -21,6 +21,10 @@ do
 	ip_list[$num_devices]=$ip
 	let "num_devices++"
 done < $ip_file
+
+#folder org
+mkdir -p logs
+mkdir -p test-logs
 
 # iterate on devices
 for((i=0; i<num_devices; i++))
@@ -51,6 +55,14 @@ do
 	then
 		echo "Checking phone at $wifi_ip:8022"
 		timeout 5 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "ps aux | grep bash | grep -v grep"
+	elif [ $opt == "cron" ]
+	then 
+		ans=`timeout 5 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pidof crond"`
+		echo -e "$wifi_ip:8022\t$ans"
+	elif [ $opt == "test" ]
+	then
+		echo "Running a test at $wifi_ip:8022 -- test-logs/log-$wifi_ip"
+		ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && ./state-update.sh test" > test-logs/log-$wifi_ip 2>&1 &
 	elif [ $opt == "prep" ] 
 	then
 		echo "Prepping phone: $wifi_ip:8022"

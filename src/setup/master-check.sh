@@ -2,7 +2,14 @@
 
 res_folder="./check-results/"`date +%d-%m-%Y`
 mkdir -p $res_folder
-for device in `cat device-list  | grep Prepped | cut -f 3`
+c=0
+while read line
 do 
-	timeout 600 ./check-update.sh $device > $res_folder"/"$device
+	devices[$c]=$line
+	let "c++"
+done < $1
+for((i=0; i<$c; i++))
+do 
+	curr_device=${devices[$i]}
+	echo "timeout 1800 ./check-update.sh $curr_device > $res_folder"/"$curr_device &"
 done

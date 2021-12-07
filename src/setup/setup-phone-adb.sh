@@ -288,6 +288,9 @@ sleep 30
 ###### testing
 
 # set default password
+todo="false" 
+if [ $todo == "true" ] 
+then 
 echo "Setting default password: $password"
 adb -s $device_id shell input text "pkg\ install\ -y\ termux-auth"
 sleep 1
@@ -334,12 +337,13 @@ sleep 2
 adb -s $device_id shell input text ".\/install.sh"
 adb -s $device_id shell "input keyevent KEYCODE_ENTER"
 sleep 30  # watch out cause it is not blocking (ADB gets out) 
+fi 
 
 # wait for above process to be done
+SSH_TIMEOUT=120
 echo "Wait $SSH_TIMEOUT sec to see if SSH PORT (8022) becomes reachable...."
 ssh_ready="false"
 ts=`date +%s`
-SSH_TIMEOUT=120
 while [ $ssh_ready == "false" ] 
 do 
 	tc=`date +%s`

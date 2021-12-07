@@ -65,9 +65,19 @@ termux-wake-lock
 sleep 2 
 sudo input tap 587 832
 
+# ensure that BT is enabled
+bt_status=`sudo settings get global bluetooth_on`
+if [ $bt_status -ne 1 ]
+then
+    echo "Activating BT"
+    sudo service call bluetooth_manager 6
+else
+ 	echo "BT is active: $bt_status"
+fi 
+
 # run one test 
 cd ../../termux
-./state-update.sh test
+./state-update.sh test > logs/log-testing-`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1
 
 ############################ TESTING, TO BE DECIDED 
 # aioquic 

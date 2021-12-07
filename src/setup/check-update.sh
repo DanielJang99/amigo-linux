@@ -230,6 +230,7 @@ if [ $? -ne 0 ]
 then 
 	echo "Setting up CRON"
 	ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pkg install -y cronie termux-services"
+	sleep 10 
 	ssh -oStrictHostKeyChecking=no -t -i $ssh_key -p 8022 $wifi_ip 'sh -c "sv-enable crond"'
 	ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pgrep cron"
 	if [ $? -ne 0 ] 
