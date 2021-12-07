@@ -449,7 +449,6 @@ do
 		sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
 		sleep 5
 		close_all
-		sudo input keyevent KEYCODE_HOME
 	fi 
 
 	# check simple stats
@@ -543,7 +542,6 @@ do
 			sudo input tap 108 1220		
 			sleep 10
 			close_all				
-			sudo input keyevent KEYCODE_HOME
 			turn_device_off
 		fi 
 		sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
