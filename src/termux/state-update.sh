@@ -3,6 +3,17 @@
 ## Author: Matteo Varvello (matteo.varvello@nokia.com)
 ## Date: 11/3/2021
 
+# trap ctrl-c and call ctrl_c()
+trap ctrl_c INT
+function ctrl_c() {
+	myprint "Trapped CTRL-C"
+	echo "false" > ".cpu_monitor"
+	echo "false" > ".status"
+	echo "false" > ".cpu_monitor"
+	./stop-net-testing.sh
+	exit -1 
+}
+
 # import util file
 DEBUG=1
 util_file=`pwd`"/util.cfg"
