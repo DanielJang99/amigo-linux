@@ -99,12 +99,6 @@ cpu_monitor(){
 	# logging 
 	myprint "Start monitoring CPU (PID: $$)"
 					
-	# clean cpu sync barrier done via files 
-	if [ -f ".ready_to_start" ] 
-	then 
-		rm ".ready_to_start"
-	fi 
-
     # continuous monitoring
     while [ $to_monitor == "true" ]
     do

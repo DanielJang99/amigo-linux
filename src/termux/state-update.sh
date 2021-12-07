@@ -52,14 +52,23 @@ EOF
 
 # compute current CPU usage 
 check_cpu(){
+	myprint "Start monitoring CPU (PID: $$)"
+	echo "true" > ".cpu_monitor"
+	to_monitor=`cat ".cpu_monitor"`
+	to_monitor="true"
 	prev_total=0
 	prev_idle=0
-	result=`sudo cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
-	prev_idle=`echo "$result" | cut -f 2`
-	prev_total=`echo "$result" | cut -f 3`
-	sleep 2
-	result=`sudo cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
-	cpu_util=`echo "$result" | cut -f 1 | cut -f 1 -d "%"`
+	while [ $to_monitor == "true" ]
+	do 
+		result=`sudo cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
+		prev_idle=`echo "$result" | cut -f 2`
+		prev_total=`echo "$result" | cut -f 3`
+		sleep 2
+		result=`sudo cat /proc/stat | head -n 1 | awk -v prev_total=$prev_total -v prev_idle=$prev_idle '{idle=$5; total=0; for (i=2; i<=NF; i++) total+=$i; print (1-(idle-prev_idle)/(total-prev_total))*100"%\t"idle"\t"total}'`
+		echo "$result" | cut -f 1 | cut -f 1 -d "%" > ".cpu-usage"
+		sleep 2 
+		to_monitor=`cat ".cpu_monitor"`
+	done
 }
 
 # parameters
@@ -74,6 +83,7 @@ prev_wifi_traffic=0                    # keep track of wifi traffic used today
 prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=3                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
+strike=0                               # keep time of how many times in a row high CPU was detected 
 
 # check if testing
 if [ $# -eq 1 ] 
@@ -171,6 +181,9 @@ myprint "Going HOME!"
 sudo input keyevent KEYCODE_HOME
 sudo input keyevent 111
 
+# start CPU monitoring (background)
+./monitor_cpu.sh &
+
 # external loop 
 to_run=`cat ".status"`
 myprint "Script will run with a $freq sec frequency. To stop: <<echo \"false\" > \".status\""
@@ -207,8 +220,27 @@ do
 	then 
 		echo "User is asking to stop!"
 		echo "false" > ".status"
+		echo "false" > ".cpu_monitor"
 		./stop-net-testing.sh 
 		break 
+	fi 
+
+	# check CPU usage 
+	if [ -f ".cpu-usage" ] 
+	then 
+		cpu_util=`cat ".cpu-usage"`
+		if [ $cpu_util -gt 80 ] 
+		then 
+			let "strike++"
+			if [ $strike -eq 5 ] 
+			then 
+				myprint "Detected high CPU 5 times in a row!!"
+				# sudo reboot 
+			fi 
+		else 
+			strike=0
+		fi 
+		myprint "CPU usage: $cpu_util"
 	fi 
 
 	# check if user wants to run a test 
@@ -226,7 +258,7 @@ do
 			then
 				case $sel_id in
 					"0")
-						./stop-net-testing.sh #FIXME
+						./stop-net-testing.sh
 						echo "Open a webpage -- ./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single"
 						./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single 
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-quickly-the-page-loaded:1-star-(slow)--5-stars-(fast)"
@@ -236,7 +268,7 @@ do
 
 					"1")
 						echo "Watch a video -- ./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface"
-						./stop-net-testing.sh #FIXME
+						./stop-net-testing.sh
 						./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-the-video-played:1-star-(poor)--5-stars-(great)"
 						sleep 30 # allow time to enter input	
@@ -441,11 +473,13 @@ do
 	fi 
 	let "time_from_last_report = current_time - last_report_time"
 	myprint "Time from last report: $time_from_last_report sec"
+	if [ $testing == "true" ] 
+	then 
+		myprint "Since testing, forcing time-from-last-report to 180000"
+		time_from_last_report=18000
+	fi 
 	if [ $time_from_last_report -gt $REPORT_INTERVAL ] 
 	then 
-		# check CPU usage (background)
-		check_cpu
-
 		# dump location information (only start googlemaps if not net-testing to avoid collusion)
 		res_dir="locationlogs/${suffix}"
 		mkdir -p $res_dir
@@ -491,4 +525,5 @@ do
 done
 
 # logging 
+echo "false" > ".cpu_monitor"
 myprint "A request to interrupt $0 was received and executed. All good!"
