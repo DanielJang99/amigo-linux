@@ -85,8 +85,29 @@ cpu_monitor_top(){
     myprint "Done monitoring CPU via TOP (PID: $$)"
 }
 
-# monitor cpu
+
+# monitor CPU assuming background process doing so is there
 cpu_monitor(){
+    sleep_time=3
+    to_monitor="true"
+    if [ -f ".cpu-usage" ]
+    then 
+        myprint "Started saving CPU values to $log_cpu"        
+        while [ $to_monitor == "true" ]
+        do
+            val=``cat .cpu-usage`
+            echo -e $curr_time"\t"$val >> $log_cpu
+            sleep $sleep_time
+            to_monitor=`cat .to_monitor`    
+        done
+    else 
+        myprint "Background process monitoring CPU not found"
+    fi 
+}
+
+
+# monitor cpu
+cpu_monitor_old(){
     sleep_time=3
     prev_total=0
     prev_idle=0

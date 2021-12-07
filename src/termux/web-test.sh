@@ -15,15 +15,7 @@ adb_file=$script_dir"/adb-utils.sh"
 source $adb_file 
 
 # safe run interruption
-safe_stop(){
-	myprint "Stop CPU monitor (give it 10 seconds...)"
-	if [ $monitor == "true" ] 
-	then 
-   		echo "False" > ".to_monitor"
-		to_monitor="False"
-		sleep 10
-	fi 
-	
+safe_stop(){	
     # go HOME and close all 
     close_all
 
@@ -257,11 +249,10 @@ do
     # start background process to monitor CPU on the device
     clean_file $log_cpu
     clean_file $log_cpu_top
-    myprint "Starting cpu monitor. Log: $log_cpu"
+    myprint "Starting listener to CPU monitor. Log: $log_cpu"
     echo "true" > ".to_monitor"
-    clean_file ".ready_to_start"
     cpu_monitor $log_cpu &
-	cpu_monitor_top $log_cpu_top &
+	#cpu_monitor_top $log_cpu_top &
 
 	# start pcap collection if needed
 	if [ $pcap_collect == "true" ]

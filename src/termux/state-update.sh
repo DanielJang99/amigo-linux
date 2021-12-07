@@ -323,13 +323,13 @@ do
 	if [ -f ".cpu-usage" ] 
 	then 
 		cpu_util=`cat ".cpu-usage" | cut -f 1 -d "."`
-		if [ $cpu_util -gt 80 ] 
+		if [ $cpu_util -gt 85 ] 
 		then 
 			let "strike++"
-			if [ $strike -eq 5 ] 
+			if [ $strike -eq 6 ] 
 			then 
-				myprint "Detected high CPU 5 times in a row!!"
-				# sudo reboot 
+				myprint "Detected high CPU (>85%) in the last 90 seconds. Rebooting"
+				sudo reboot 
 			fi 
 		else 
 			strike=0

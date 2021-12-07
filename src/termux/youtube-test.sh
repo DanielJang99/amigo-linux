@@ -148,12 +148,11 @@ log_cpu="${res_folder}/${curr_run_id}.cpu"
 log_cpu_top="${res_folder}/${curr_run_id}.cpu_top"
 clean_file $log_cpu
 clean_file $log_cpu_top
-myprint "Starting cpu monitor. Log: $log_cpu"
+myprint "Starting listener to CPU monitor. Log: $log_cpu"
 echo "true" > ".to_monitor"
 cpu_monitor $log_cpu &
 #cpu_monitor_top $log_cpu_top &
 
-# start traffic collection
 # start pcap collection if needed
 if [ $pcap_collect == "true" ]
 then
