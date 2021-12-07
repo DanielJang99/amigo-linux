@@ -82,6 +82,91 @@ check_cpu(){
 	done
 }
 
+# helper to maintain up-to-date wifi/mobile info 
+update_wifi_mobile(){
+	sudo dumpsys netstats > .data
+	wifi_iface=`cat .data | grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
+	mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
+	def_iface="none"
+	if [ ! -z $wifi_iface ]
+	then 
+		def_iface=$wifi_iface
+	else  
+		if [ ! -z $mobile_iface ]
+		then
+			def_iface=$mobile_iface
+		fi 
+	fi 
+
+	# get update on data sent/received
+	wifi_today_file="./data/wifi/"$suffix".txt"
+	mobile_today_file="./data/mobile/"$suffix".txt"
+	wifi_data=0
+	mobile_data=0
+	if [ -f $wifi_today_file ] 
+	then 
+		wifi_data=`cat $wifi_today_file`
+	fi 
+	if [ -f $mobile_today_file ] 
+	then 
+		mobile_data=`cat $mobile_today_file`
+	fi 
+
+	# understand WiFi and mobile phone connectivity
+	myprint "Discover wifi ($wifi_iface) and mobile ($mobile_iface)"
+	wifi_ip="None"
+	phone_wifi_ssid="None"
+
+	# get more wifi info if active 
+	if [ ! -z $wifi_iface ]
+	then 
+		wifi_ip=`ifconfig $wifi_iface | grep "\." | grep -v packets | awk '{print $2}'` 
+		wifi_ssid=`sudo dumpsys netstats | grep -E 'iface=wlan.*networkId' | head -n 1  | awk '{print $4}' | cut -f 2 -d "=" | sed s/","// | sed s/"\""//g`
+		sudo dumpsys wifi > ".wifi"
+		wifi_info=`cat ".wifi" | grep "mWifiInfo"`
+		wifi_qual=`cat ".wifi" | grep "mLastSignalLevel"`
+		wifi_traffic=`ifconfig $wifi_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
+	
+		# update data consumed 
+		if [ $prev_wifi_traffic != 0 ] 
+		then 
+			let "wifi_data += (wifi_traffic - prev_wifi_traffic)"
+			echo $wifi_data > $wifi_today_file
+		fi 
+		prev_wifi_traffic=$wifi_traffic
+	else
+		wifi_ip="none"
+		wifi_ssid="none"
+		wifi_info="none"
+		wifi_qual="none"
+		wifi_traffic="none"
+	fi 
+	
+	# get more mobile info if active 
+	if [ ! -z $mobile_iface ]
+	then
+		mobile_ip=`ifconfig $mobile_iface | grep "\." | grep -v packets | awk '{print $2}'`
+		sudo dumpsys telephony.registry > ".tel"
+		mobile_state=`cat ".tel" | grep "mServiceState" | head -n 1`
+		mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
+		mobile_traffic=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
+		if [ $prev_mobile_traffic != 0 ] 
+		then 
+			let "mobile_data += (mobile_traffic - prev_mobile_traffic)"
+			echo $mobile_data > $mobile_today_file
+		fi 
+		prev_mobile_traffic=$mobile_traffic
+	else 
+		mobile_state="none"
+		mobile_ip="none"
+		mobile_signal="none"
+		mobile_traffic="none"
+	fi 
+	myprint "Device info. Wifi: $wifi_ip Mobile: $mobile_ip DefaultIface: $def_iface"
+
+}
+
+
 # parameters
 freq=15                                # interval for checking things to do 
 REPORT_INTERVAL=180                    # interval of status reporting (seconds)
@@ -89,6 +174,7 @@ NET_INTERVAL=1200                      # interval of networking testing
 kenzo_pkg="com.example.sensorexample"  # our app 
 last_report_time="1635969639"          # last time a report was sent (init to an old time)
 last_net="1635969639"                  # last time a net test was done (init to an old time) 
+t_wifi_mobile_update="1635969639"      # last time wifi/mobile info was checked (init to an old time)
 asked_to_charge="false"                # keep track if we already asked user to charge their phone
 prev_wifi_traffic=0                    # keep track of wifi traffic used today
 prev_mobile_traffic=0                  # keep track of mobile traffic used today
@@ -207,21 +293,14 @@ do
 	current_time=`date +%s`
 	suffix=`date +%d-%m-%Y`
 
-	# update WiFi and mobile phone connectivity
-	sudo dumpsys netstats > .data
-	wifi_iface=`cat .data | grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
-	mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
-	def_iface="none"
-	if [ ! -z $wifi_iface ]
+	# update WiFi and mobile phone connectivity if it is time to do so 
+	let "t_last_wifi_mobile_update =  current_time - t_wifi_mobile_update"
+	if [ $t_last_wifi_mobile_update -gt 60 ] # check once a minute
 	then 
-		def_iface=$wifi_iface
-	else  
-		if [ ! -z $mobile_iface ]
-		then
-			def_iface=$mobile_iface
-		fi 
+		update_wifi_mobile 
+		t_wifi_mobile_update=`date +%s`
 	fi 
-
+	
 	# check if user wants us to pause 
 	user_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/running.txt"
 	user_status="true"
@@ -271,7 +350,14 @@ do
 			then
 				case $sel_id in
 					"0")
+						# make sure no other test is running
 						./stop-net-testing.sh
+
+						# update wifi/mobile info
+						update_wifi_mobile 
+						t_wifi_mobile_update=`date +%s`	
+						
+						# open a random webpage 
 						echo "Open a webpage -- ./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single"
 						./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single 
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-quickly-the-page-loaded:1-star-(slow)--5-stars-(fast)"
@@ -280,8 +366,10 @@ do
 						;;
 
 					"1")
-						echo "Watch a video -- ./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface"
 						./stop-net-testing.sh
+						update_wifi_mobile 
+						t_wifi_mobile_update=`date +%s`	
+						echo "Watch a video -- ./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface"						
 						./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-the-video-played:1-star-(poor)--5-stars-(great)"
 						sleep 30 # allow time to enter input	
@@ -362,77 +450,11 @@ do
 		sudo input keyevent KEYCODE_HOME
 	fi 
 
-	# get update on data sent/received
-	wifi_today_file="./data/wifi/"$suffix".txt"
-	mobile_today_file="./data/mobile/"$suffix".txt"
-	wifi_data=0
-	mobile_data=0
-	if [ -f $wifi_today_file ] 
-	then 
-		wifi_data=`cat $wifi_today_file`
-	fi 
-	if [ -f $mobile_today_file ] 
-	then 
-		mobile_data=`cat $mobile_today_file`
-	fi 
-
-	# understand WiFi and mobile phone connectivity
-	myprint "Discover wifi ($wifi_iface) and mobile ($mobile_iface)"
-	wifi_ip="None"
-	phone_wifi_ssid="None"
-
-	# get more wifi info if active 
-	if [ ! -z $wifi_iface ]
-	then 
-		wifi_ip=`ifconfig $wifi_iface | grep "\." | grep -v packets | awk '{print $2}'` 
-		wifi_ssid=`sudo dumpsys netstats | grep -E 'iface=wlan.*networkId' | head -n 1  | awk '{print $4}' | cut -f 2 -d "=" | sed s/","// | sed s/"\""//g`
-		sudo dumpsys wifi > ".wifi"
-		wifi_info=`cat ".wifi" | grep "mWifiInfo"`
-		wifi_qual=`cat ".wifi" | grep "mLastSignalLevel"`
-		wifi_traffic=`ifconfig $wifi_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
-	
-		# update data consumed 
-		if [ $prev_wifi_traffic != 0 ] 
-		then 
-			let "wifi_data += (wifi_traffic - prev_wifi_traffic)"
-			echo $wifi_data > $wifi_today_file
-		fi 
-		prev_wifi_traffic=$wifi_traffic
-	else
-		wifi_ip="none"
-		wifi_ssid="none"
-		wifi_info="none"
-		wifi_qual="none"
-		wifi_traffic="none"
-	fi 
-	
-	# get more mobile info if active 
-	if [ ! -z $mobile_iface ]
-	then
-		mobile_ip=`ifconfig $mobile_iface | grep "\." | grep -v packets | awk '{print $2}'`
-		sudo dumpsys telephony.registry > ".tel"
-		mobile_state=`cat ".tel" | grep "mServiceState" | head -n 1`
-		mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
-		mobile_traffic=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
-		if [ $prev_mobile_traffic != 0 ] 
-		then 
-			let "mobile_data += (mobile_traffic - prev_mobile_traffic)"
-			echo $mobile_data > $mobile_today_file
-		fi 
-		prev_mobile_traffic=$mobile_traffic
-	else 
-		mobile_state="none"
-		mobile_ip="none"
-		mobile_signal="none"
-		mobile_traffic="none"
-	fi 
-	myprint "Device info. Wifi: $wifi_ip Mobile: $mobile_ip DefaultIface: $def_iface"
-
 	# check simple stats
 	free_space=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 	mem_info=`free -m | grep "Mem" | awk '{print "Total:"$2";Used:"$3";Free:"$4";Available:"$NF}'`
 
-	# get phone battery level
+	# get phone battery level and ask to charge if needed # TBD
 	phone_battery=`sudo dumpsys battery | grep "level"  | cut -f 2 -d ":"`
 	charging=`sudo dumpsys battery | grep "AC powered"  | cut -f 2 -d ":"`
 	if [ $phone_battery -lt 20 -a $charging == "false" ] 
@@ -470,6 +492,9 @@ do
 				then 
 					myprint "Skipping net-testing since we are on mobile and data limit passed ($mobile_data -> $MAX_MOBILE)"
 				else 
+					# make sure we have fresh wifi/mobile info
+					update_wifi_mobile 
+					t_wifi_mobile_update=`date +%s`							
 					(./net-testing.sh $suffix $current_time $iface >  logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
 					num=1
 					echo $current_time > ".last_net"
@@ -495,7 +520,11 @@ do
 		time_from_last_report=18000
 	fi 
 	if [ $time_from_last_report -gt $REPORT_INTERVAL ] 
-	then 
+	then
+		# make sure we have fresh wifi/mobile info		 
+		update_wifi_mobile 
+		t_wifi_mobile_update=`date +%s`	
+						
 		# dump location information (only start googlemaps if not net-testing to avoid collusion)
 		res_dir="locationlogs/${suffix}"
 		mkdir -p $res_dir
