@@ -15,15 +15,7 @@ adb_file=$script_dir"/adb-utils.sh"
 source $adb_file 
 
 # safe run interruption
-safe_stop(){
-	myprint "Stop CPU monitor (give it 10 seconds...)"
-	if [ $monitor == "true" ] 
-	then 
-   		echo "False" > ".to_monitor"
-		to_monitor="False"
-		sleep 10
-	fi 
-	
+safe_stop(){	
     # go HOME and close all 
     close_all
 
@@ -232,7 +224,8 @@ chrome_onboarding
 
 # get private  IP in use
 my_ip=`ifconfig $interface | grep "\." | grep -v packets | awk '{print $2}'`
-    
+myprint "Interface: $interface IP: $my_ip" 
+
 # loop across URLs to be tested
 for((i=0; i<num_urls; i++))
 do
@@ -257,11 +250,10 @@ do
     # start background process to monitor CPU on the device
     clean_file $log_cpu
     clean_file $log_cpu_top
-    myprint "Starting cpu monitor. Log: $log_cpu"
+    myprint "Starting listener to CPU monitor. Log: $log_cpu"
     echo "true" > ".to_monitor"
-    clean_file ".ready_to_start"
     cpu_monitor $log_cpu &
-	cpu_monitor_top $log_cpu_top &
+	#cpu_monitor_top $log_cpu_top &
 
 	# start pcap collection if needed
 	if [ $pcap_collect == "true" ]
@@ -277,7 +269,7 @@ do
     run_test 
     
 	# stop monitoring CPU
-	myprint "Stop monitoring CPU -- give time"    
+	myprint "Stop monitoring CPU"
 	echo "false" > ".to_monitor"
 	t_1=`date +%s`
 
@@ -293,7 +285,7 @@ do
 	fi
 	t_2=`date +%s`
 	let "t_sleep = 5 - (t_2 - t_1)"
-	if [ $t_sleep -gt 0 ] 
+	if [ $t_sleep -gt 0  -a $single != "true" ] 
 	then 
 		sleep $t_sleep
 	fi 

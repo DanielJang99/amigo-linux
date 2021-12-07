@@ -11,6 +11,8 @@ function ctrl_c() {
 	echo "false" > ".status"
 	echo "false" > ".cpu_monitor"
 	./stop-net-testing.sh
+	close_all
+	sudo input keyevent KEYCODE_POWER
 	exit -1 
 }
 
@@ -228,18 +230,18 @@ fi
 # retrieve unique ID for this device and pass to our app
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 
-# restart Kenzo - so that background service runs and info is populated 
-#myprint "Granting Kenzo permission and restart..."
-#sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
-#sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
-#sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
-#sleep 5
-#foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
-#myprint "Confirm Kenzo is in the foregound: $foreground" 
-#sudo sh -c "echo $uid > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
+#restart Kenzo - so that background service runs and info is populated 
+myprint "Granting Kenzo permission and restart..."
+sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
+sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
+sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
+sleep 5
+foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+myprint "Confirm Kenzo is in the foregound: $foreground" 
+sudo sh -c "echo $uid > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
 
-# close all
-#close_all
+#close all pending apps
+close_all
 
 # derive B from GB
 let "MAX_MOBILE = MAX_MOBILE_GB * 1000000000"
@@ -321,13 +323,13 @@ do
 	if [ -f ".cpu-usage" ] 
 	then 
 		cpu_util=`cat ".cpu-usage" | cut -f 1 -d "."`
-		if [ $cpu_util -gt 80 ] 
+		if [ $cpu_util -gt 85 ] 
 		then 
 			let "strike++"
-			if [ $strike -eq 5 ] 
+			if [ $strike -eq 6 ] 
 			then 
-				myprint "Detected high CPU 5 times in a row!!"
-				# sudo reboot 
+				myprint "Detected high CPU (>85%) in the last 90 seconds. Rebooting"
+				sudo reboot 
 			fi 
 		else 
 			strike=0
@@ -455,15 +457,16 @@ do
 	mem_info=`free -m | grep "Mem" | awk '{print "Total:"$2";Used:"$3";Free:"$4";Available:"$NF}'`
 
 	# get phone battery level and ask to charge if needed # TBD
-	phone_battery=`sudo dumpsys battery | grep "level"  | cut -f 2 -d ":"`
-	charging=`sudo dumpsys battery | grep "AC powered"  | cut -f 2 -d ":"`
+	sudo dumpsys battery > ".dump"
+	phone_battery=`cat ".dump" | grep "level"  | cut -f 2 -d ":"`
+	charging=`cat ".dump" | grep "AC powered"  | cut -f 2 -d ":"`
 	if [ $phone_battery -lt 20 -a $charging == "false" ] 
 	then 
  		if [ $asked_to_charge == "false" ] 
 		then 
 			myprint "Phone battery is low. Asking to recharge!"
 			termux-notification -c "Please charge your phone!" -t "recharge" --icon warning --prio high --vibrate pattern 500,500
-			am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Phone-battery-is-low.-Consider-charging!"
+			#am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Phone-battery-is-low.-Consider-charging!"
 			asked_to_charge="true"
 		fi 
 	else 
@@ -495,7 +498,7 @@ do
 					# make sure we have fresh wifi/mobile info
 					update_wifi_mobile 
 					t_wifi_mobile_update=`date +%s`							
-					(./net-testing.sh $suffix $current_time $iface >  logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+					(./net-testing.sh $suffix $current_time $def_iface > logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
 					num=1
 					echo $current_time > ".last_net"
 				fi 
