@@ -123,9 +123,9 @@ myprint "Granting Kenzo permission and restart..."
 sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
 sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
 sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
+sleep 5
 foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
 myprint "Confirm Kenzo is in the foregound: $foreground" 
-sleep 5
 sudo sh -c "echo $uid > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
 sudo input keyevent KEYCODE_HOME
 

@@ -10,12 +10,18 @@ echo "[`date`] net-testing START"
 suffix=`date +%d-%m-%Y`
 t_s=`date +%s`
 iface="wlan0"
-if [ $# -eq 2 ] 
+if [ $# -eq 3 ] 
 then
 	suffix=$1
 	t_s=$2
 	iface=$3
 fi  
+
+# TEMP ###########
+echo "./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap"
+echo "./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap"
+exit -1 
+##################
 
 # run a speedtest 
 echo "[`date`] speedtest-cli..."

@@ -165,17 +165,19 @@ fi
 
 #launch test video
 am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
-sleep 5 
+sleep 5 # FIXME: normally not needed...
 
 # make sure stats for nerds are active
 myprint "Make sure stats for nerds are active"
 ready="false"
+attempt=0
 while [ $ready == "false" ]
 do 
 	termux-clipboard-get > ".clipboard"
 	cat ".clipboard" | grep "cplayer"
 	if [ $? -ne 0 ] 
-	then 		
+	then
+		let "attempt++" 		
 		activate_stats_nerds
 		tap_screen 592 216 1
 		termux-clipboard-get > ".clipboard"
@@ -187,6 +189,12 @@ do
 			cat ".clipboard" > $log_file
 			echo "" >> $log_file
 		fi
+		if [ $attempt -gt 3 ] 
+		then 
+			myprint "Something is WRONG. Clearing YT and exiting!"
+			sudo pm clear com.google.android.youtube
+			exit -1 
+		fi 
 	else
 		ready="true"		
 		echo "Ready to start!!"
@@ -194,7 +202,7 @@ do
 done
 
 # collect data 
-myprint "Collect data for $DURATION seconds..."
+myprint "Stats-for-nerds correctly detecting. Starting data collection for $DURATION seconds..."
 t_s=`date +%s`
 t_e=`date +%s`
 let "t_p = t_s - t_e"
@@ -241,6 +249,3 @@ echo "false" > ".to_monitor"
 # clean youtube state  
 myprint "Cleaning YT state"
 sudo pm clear com.google.android.youtube
-
-# turn device off when done
-#turn_device_on

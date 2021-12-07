@@ -276,6 +276,11 @@ do
 	# run a test 
     run_test 
     
+	# stop monitoring CPU
+	myprint "Stop monitoring CPU -- give time"    
+	echo "false" > ".to_monitor"
+	t_1=`date +%s`
+
    	# stop pcap collection and run analysis 
 	tshark_size="N/A"
 	if [ $pcap_collect == "true" ]
@@ -286,15 +291,13 @@ do
 		tshark_size=`cat $tshark_file | awk -F "," -v my_ip=$my_ip '{if($4!=my_ip){if($8=="UDP"){tot_udp += ($NF-8);} if($8=="TCP"){tot_tcp += ($11);}}}END{tot=(tot_tcp+tot_udp)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000}'`
 		sudo rm $pcap_file
 	fi
-
- 	# stop monitoring CPU
-	myprint "Stop monitoring CPU -- give time"    
-	echo "false" > ".to_monitor"
-	if [ $single != "true" ] 
+	t_2=`date +%s`
+	let "t_sleep = 5 - (t_2 - t_1)"
+	if [ $t_sleep -gt 0 ] 
 	then 
-		sleep 5 
+		sleep $t_sleep
 	fi 
-
+	
 	# log results
 	myprint "[RESULTS]\tBrowser:$browser\tURL:$url\tBDW:$traffic MB\tTSharkTraffic:$tshark_size\tLoadTime:$load_time"
 done
