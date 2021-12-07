@@ -87,7 +87,14 @@ git pull
 
 # ensure that BT is enabled 
 myprint "Make sure that BT is running" 
-sudo service call bluetooth_manager 6
+bt_status=`sudo settings get global bluetooth_on`
+if [ $bt_status -ne 1 ] 
+then 
+	myprint "Activating BT" 
+	sudo service call bluetooth_manager 6
+else 
+	myprint "BT is active: $bt_status"
+fi 
 
 # retrieve unique ID for this device and pass to our app
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
@@ -97,6 +104,8 @@ myprint "Granting Kenzo permission and restart..."
 sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
 sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
 sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
+foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+myprint "Confirm Kenzo is in the foregound: $foreground" 
 sleep 5
 sudo sh -c "echo $uid > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
 sudo input keyevent KEYCODE_HOME
@@ -427,7 +436,10 @@ do
 			myprint "Launching googlemaps to improve location accuracy"
 			sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
 			sleep 5 
-			sudo input tap 108 1220
+			foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+			myprint "Confirm Maps is in the foregound: $foreground" 
+			# needed in case maps ask for storage...
+			sudo input tap 108 1220		
 			sleep 10
 			sudo input keyevent KEYCODE_HOME
 			turn_device_off
