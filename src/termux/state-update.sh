@@ -126,7 +126,7 @@ myprint "Updating our code..."
 git pull
 
 # start CPU monitoring (background)
-./monitor_cpu.sh &
+./monitor-cpu.sh &
 
 # ensure that BT is enabled 
 myprint "Make sure that BT is running" 
