@@ -131,10 +131,7 @@ run_test(){
 	# update traffic rx (for this URL, after scroll)
 	compute_bandwidth $traffic_rx_last
 	traffic_rx_last=$curr_traffic
-	traffic_after_scroll=$traffic
-	
-	# close the browser
-	close_all
+	traffic_after_scroll=$traffic	
 }
 
 # script usage
@@ -317,7 +314,10 @@ do
 		myprint "Waiting for scrolling + screenshotting to be done!"
 	done
 
-	# make sure CPU back process is done
+	# close the browser
+	close_all
+
+	# make sure CPU background process is done
 	t_2=`date +%s`
 	let "t_sleep = 5 - (t_2 - t_1)"
 	if [ $t_sleep -gt 0  -a $single != "true" ] 
