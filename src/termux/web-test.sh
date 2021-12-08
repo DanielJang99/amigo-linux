@@ -245,6 +245,7 @@ my_ip=`ifconfig $interface | grep "\." | grep -v packets | awk '{print $2}'`
 myprint "Interface: $interface IP: $my_ip" 
 
 # loop across URLs to be tested
+screenshots_flag="false"
 for((i=0; i<num_urls; i++))
 do
     # get URL to be tested 
@@ -306,9 +307,11 @@ do
 	if [ $time_passed -ge 3600 ] # only take one per hour, to save space 
 	then
 		take_screenshots &
-		echo "$t_1" > ".time_last_scroll"
+		screenshots_flag="true"		 
+	else 
+		touch ".done-screenshots"
 	fi 
-	
+
    	# stop pcap collection and run analysis 
 	tshark_size="N/A"
 	if [ $pcap_collect == "true" ]
@@ -327,6 +330,7 @@ do
 		sleep 2
 		#myprint "Waiting for scrolling + screenshotting to be done!"
 	done
+	rm ".done-screenshots"
 
 	# close the browser
 	close_all
@@ -342,3 +346,10 @@ do
 	# log results
 	myprint "[RESULTS]\tBrowser:$browser\tURL:$url\tBDW-LOAD:$traffic_before_scroll MB\tBDW-SCROLL:$traffic_after_scroll MB\tTSharkTraffic:$tshark_size\tLoadTime:$load_time"
 done
+
+# keep track of time when screenshots were taken
+if [ $screenshots_flag == "true" ]
+then
+	echo `date +%s` > ".time_last_scroll"
+fi
+
