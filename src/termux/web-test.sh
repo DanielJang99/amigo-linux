@@ -42,17 +42,18 @@ load_file(){
 take_screenshots(){
 	if [ -f ".done-screenshots" ]
 	then 
-		counter=0
-		while [ $counter -lt 5 ]
-		do 
-			screen_file="${res_folder}/${id}-${curr_run_id}-${counter}.png"
-			sudo screencap -p $screen_file
-			sudo chown $USER:$USER $screen_file
-			sudo input swipe 300 1000 300 300
-			sleep 2 
-			let "counter++"
-		done
+		rm ".done-screenshots"
 	fi 
+	counter=0
+	while [ $counter -lt 5 ]
+	do 
+		screen_file="${res_folder}/${id}-${curr_run_id}-${counter}.png"
+		sudo screencap -p $screen_file
+		sudo chown $USER:$USER $screen_file
+		sudo input swipe 300 1000 300 300
+		sleep 2 
+		let "counter++"
+	done	 
 	touch ".done-screenshots"
 }
 
@@ -295,7 +296,7 @@ do
 	t_1=`date +%s`
 
 	# take last screenshots 
-	take_screenshots
+	take_screenshots &
 
    	# stop pcap collection and run analysis 
 	tshark_size="N/A"
@@ -307,7 +308,7 @@ do
 		tshark_size=`cat $tshark_file | awk -F "," -v my_ip=$my_ip '{if($4!=my_ip){if($8=="UDP"){tot_udp += ($NF-8);} if($8=="TCP"){tot_tcp += ($11);}}}END{tot=(tot_tcp+tot_udp)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000}'`
 		sudo rm $pcap_file
 	fi
-	muyprint "Done with tshark analysis"
+	myprint "Done with tshark analysis"
 	
 	# wait for screenshotting to be done
 	while [ ! -f ".done-screenshots" ]
