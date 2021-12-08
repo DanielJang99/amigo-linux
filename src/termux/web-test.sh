@@ -90,6 +90,7 @@ run_test(){
 	# take final screenshot 
 	screen_file="${res_folder}/${id}-${curr_run_id}.png"
 	sudo screencap -p $screen_file
+	sudo chown $USER:$USER $screen_file
 
 	# stop video recording and run we perf analysis
 	if [ $video_recording == "true" ]
