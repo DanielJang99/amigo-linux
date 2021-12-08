@@ -188,7 +188,7 @@ do
 			cat ".clipboard" > $log_file
 			echo "" >> $log_file
 		fi
-		if [ $attempt -gt 3 ] 
+		if [ $attempt -ge 2 ] 
 		then 
 			myprint "Something is WRONG. Clearing YT and exiting!"
 			sudo pm clear com.google.android.youtube
