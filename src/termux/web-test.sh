@@ -102,6 +102,7 @@ run_test(){
 	# update traffic rx (for this URL)
 	compute_bandwidth $traffic_rx_last
 	traffic_rx_last=$curr_traffic
+	traffic_before_scroll=$traffic
 	
 	# prepare info to log results 
 	energy="N/A"
@@ -119,6 +120,11 @@ run_test(){
 		let "counter++"
 	done
 
+	# update traffic rx (for this URL, after scroll)
+	compute_bandwidth $traffic_rx_last
+	traffic_rx_last=$curr_traffic
+	traffic_after_scroll=$traffic
+	
 	# close the browser
 	close_all
 }
@@ -298,5 +304,5 @@ do
 	fi 
 	
 	# log results
-	myprint "[RESULTS]\tBrowser:$browser\tURL:$url\tBDW:$traffic MB\tTSharkTraffic:$tshark_size\tLoadTime:$load_time"
+	myprint "[RESULTS]\tBrowser:$browser\tURL:$url\tBDW-LOAD:$traffic_before_scroll MB\tBDW-SCROLL:$traffic_after_scroll MB\tTSharkTraffic:$tshark_size\tLoadTime:$load_time"
 done
