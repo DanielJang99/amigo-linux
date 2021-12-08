@@ -38,6 +38,25 @@ load_file(){
     fi
 }
 
+# take final screenshot + scrolling 
+take_screenshots(){
+	if [ -f ".done-screenshots" ]
+	then 
+		rm ".done-screenshots"
+	fi 
+	counter=1
+	while [ $counter -lt 5 ]
+	do 
+		sudo input swipe 300 1000 300 300
+		sleep 2 
+		screen_file="${res_folder}/${id}-${curr_run_id}-${counter}.png"
+		sudo screencap -p $screen_file
+		sudo chown $USER:$USER $screen_file		
+		let "counter++"
+	done	 
+	touch ".done-screenshots"
+}
+
 # run video ananlysis for web perf
 visual(){
 	myprint "Running visualmetrics/visualmetrics.py (background - while visual prep is done)"
@@ -87,11 +106,6 @@ run_test(){
 	# artificial time for page loading
 	sleep $load_time 
 
-	# take final screenshot 
-	screen_file="${res_folder}/${id}-${curr_run_id}.png"
-	sudo screencap -p $screen_file
-	sudo chown $USER:$USER $screen_file
-
 	# stop video recording and run we perf analysis
 	if [ $video_recording == "true" ]
 	then
@@ -103,18 +117,21 @@ run_test(){
 			visual &
 		fi 
 	fi	
-	
+
 	# update traffic rx (for this URL)
 	compute_bandwidth $traffic_rx_last
 	traffic_rx_last=$curr_traffic
+	traffic_before_scroll=$traffic
 	
 	# prepare info to log results 
 	energy="N/A"
 	t_now=`date +%s`
 	let "duration = t_now - t_launch"
 
-	# close the browser
-	close_all
+	# update traffic rx (for this URL, after scroll)
+	compute_bandwidth $traffic_rx_last
+	traffic_rx_last=$curr_traffic
+	traffic_after_scroll=$traffic	
 }
 
 # script usage
@@ -235,6 +252,7 @@ do
 	then 
 		let "i = RANDOM % num_urls"
 	    url=${urlList[$i]} 
+	    #url="https://cnn.com"
 		myprint "Random URL: $url ($i)"
 		i=$num_urls
 	else 
@@ -262,7 +280,7 @@ do
 		pcap_file="${res_folder}/${id}-${curr_run_id}.pcap"
 		tshark_file="${res_folder}/${id}-${curr_run_id}.tshark"
 		sudo tcpdump -i $interface -w $pcap_file > /dev/null 2>&1 &
-		disown -h %1 # 
+		disown -h %1  
 		myprint "Started tcpdump: $pcap_file Interface: $interface"
 	fi
     
@@ -274,16 +292,46 @@ do
 	echo "false" > ".to_monitor"
 	t_1=`date +%s`
 
+	# take last screenshots 
+	counter=0
+	screen_file="${res_folder}/${id}-${curr_run_id}-${counter}.png"
+	sudo screencap -p $screen_file
+	sudo chown $USER:$USER $screen_file		
+	t_last_scroll=0
+	if [ -f ".time_last_scroll" ] 
+	then
+		t_last_scroll=`cat ".time_last_scroll"`
+	fi
+	let "time_passed = t_1 - t_last_scroll"
+	if [ $time_passed -ge 3600 ] # only take one per hour, to save space 
+	then
+		take_screenshots &
+		echo "$t_1" > ".time_last_scroll"
+	fi 
+	
    	# stop pcap collection and run analysis 
 	tshark_size="N/A"
 	if [ $pcap_collect == "true" ]
 	then
-		sudo killall tcpdump
+		sudo killall tcpdump	
 		myprint "Stopped tcpdump. Starting background analysis: $pcap_file"
 		tshark -nr $pcap_file -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file
 		tshark_size=`cat $tshark_file | awk -F "," -v my_ip=$my_ip '{if($4!=my_ip){if($8=="UDP"){tot_udp += ($NF-8);} if($8=="TCP"){tot_tcp += ($11);}}}END{tot=(tot_tcp+tot_udp)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000}'`
 		sudo rm $pcap_file
 	fi
+	myprint "Done with tshark analysis"
+	
+	# wait for screenshotting to be done
+	while [ ! -f ".done-screenshots" ]
+	do 
+		sleep 2
+		#myprint "Waiting for scrolling + screenshotting to be done!"
+	done
+
+	# close the browser
+	close_all
+
+	# make sure CPU background process is done
 	t_2=`date +%s`
 	let "t_sleep = 5 - (t_2 - t_1)"
 	if [ $t_sleep -gt 0  -a $single != "true" ] 
@@ -292,5 +340,5 @@ do
 	fi 
 	
 	# log results
-	myprint "[RESULTS]\tBrowser:$browser\tURL:$url\tBDW:$traffic MB\tTSharkTraffic:$tshark_size\tLoadTime:$load_time"
+	myprint "[RESULTS]\tBrowser:$browser\tURL:$url\tBDW-LOAD:$traffic_before_scroll MB\tBDW-SCROLL:$traffic_after_scroll MB\tTSharkTraffic:$tshark_size\tLoadTime:$load_time"
 done
