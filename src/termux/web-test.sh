@@ -87,11 +87,6 @@ run_test(){
 	# artificial time for page loading
 	sleep $load_time 
 
-	# take final screenshot 
-	screen_file="${res_folder}/${id}-${curr_run_id}.png"
-	sudo screencap -p $screen_file
-	sudo chown $USER:$USER $screen_file
-
 	# stop video recording and run we perf analysis
 	if [ $video_recording == "true" ]
 	then
@@ -103,7 +98,7 @@ run_test(){
 			visual &
 		fi 
 	fi	
-	
+
 	# update traffic rx (for this URL)
 	compute_bandwidth $traffic_rx_last
 	traffic_rx_last=$curr_traffic
@@ -112,6 +107,17 @@ run_test(){
 	energy="N/A"
 	t_now=`date +%s`
 	let "duration = t_now - t_launch"
+
+	# take final screenshot + scrolling 
+	counter=0
+	while [ $counter -lt 5 ]
+	do 
+		screen_file="${res_folder}/${id}-${curr_run_id}-${counter}.png"
+		sudo screencap -p $screen_file
+		sudo chown $USER:$USER $screen_file
+		sudo input swipe 300 1000 300 300
+		let "counter++"
+	done
 
 	# close the browser
 	close_all
