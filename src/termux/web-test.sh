@@ -44,14 +44,14 @@ take_screenshots(){
 	then 
 		rm ".done-screenshots"
 	fi 
-	counter=0
+	counter=1
 	while [ $counter -lt 5 ]
 	do 
-		screen_file="${res_folder}/${id}-${curr_run_id}-${counter}.png"
-		sudo screencap -p $screen_file
-		sudo chown $USER:$USER $screen_file
 		sudo input swipe 300 1000 300 300
 		sleep 2 
+		screen_file="${res_folder}/${id}-${curr_run_id}-${counter}.png"
+		sudo screencap -p $screen_file
+		sudo chown $USER:$USER $screen_file		
 		let "counter++"
 	done	 
 	touch ".done-screenshots"
@@ -251,8 +251,8 @@ do
 	if [ $single == "true" ] 
 	then 
 		let "i = RANDOM % num_urls"
-	    #url=${urlList[$i]} 
-	    url="https://cnn.com"
+	    url=${urlList[$i]} 
+	    #url="https://cnn.com"
 		myprint "Random URL: $url ($i)"
 		i=$num_urls
 	else 
@@ -280,7 +280,7 @@ do
 		pcap_file="${res_folder}/${id}-${curr_run_id}.pcap"
 		tshark_file="${res_folder}/${id}-${curr_run_id}.tshark"
 		sudo tcpdump -i $interface -w $pcap_file > /dev/null 2>&1 &
-		disown -h %1 # 
+		disown -h %1  
 		myprint "Started tcpdump: $pcap_file Interface: $interface"
 	fi
     
@@ -293,8 +293,22 @@ do
 	t_1=`date +%s`
 
 	# take last screenshots 
-	take_screenshots &
-
+	counter=0
+	screen_file="${res_folder}/${id}-${curr_run_id}-${counter}.png"
+	sudo screencap -p $screen_file
+	sudo chown $USER:$USER $screen_file		
+	t_last_scroll=0
+	if [ -f ".time_last_scroll" ] 
+	then
+		t_last_scroll=`cat ".time_last_scroll"`
+	fi
+	let "time_passed = t_1 - t_last_scroll"
+	if [ $time_passed -ge 3600 ] # only take one per hour, to save space 
+	then
+		take_screenshots &
+		echo "$t_1" > ".time_last_scroll"
+	fi 
+	
    	# stop pcap collection and run analysis 
 	tshark_size="N/A"
 	if [ $pcap_collect == "true" ]
@@ -310,8 +324,8 @@ do
 	# wait for screenshotting to be done
 	while [ ! -f ".done-screenshots" ]
 	do 
-		sleep 1 
-		myprint "Waiting for scrolling + screenshotting to be done!"
+		sleep 2
+		#myprint "Waiting for scrolling + screenshotting to be done!"
 	done
 
 	# close the browser
