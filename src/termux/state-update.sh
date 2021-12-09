@@ -171,7 +171,8 @@ update_wifi_mobile(){
 
 
 # parameters
-freq=15                                # interval for checking things to do 
+slow_freq=15                           # interval for checking commands to run (slower)
+fast_freq=3                            # interval for checking the app (faster)
 REPORT_INTERVAL=180                    # interval of status reporting (seconds)
 NET_INTERVAL=1200                      # interval of networking testing 
 kenzo_pkg="com.example.sensorexample"  # our app 
@@ -298,8 +299,9 @@ sudo input keyevent 111
 
 # external loop 
 to_run=`cat ".status"`
-myprint "Script will run with a $freq sec frequency. To stop: <<echo \"false\" > \".status\""
+myprint "Script will run with a <$fast_freq, $slow_freq> frequency. To stop: <<echo \"false\" > \".status\""
 last_loop_time=0
+last_slow_loop_time=0
 while [ $to_run == "true" ] 
 do 
 	# update google status 
@@ -331,24 +333,6 @@ do
 		echo "false" > ".cpu_monitor"
 		./stop-net-testing.sh 
 		break 
-	fi 
-
-	# check CPU usage 
-	if [ -f ".cpu-usage" ] 
-	then 
-		cpu_util=`cat ".cpu-usage" | cut -f 1 -d "."`
-		if [ $cpu_util -gt 85 ] 
-		then 
-			let "strike++"
-			if [ $strike -eq 6 ] 
-			then 
-				myprint "Detected high CPU (>85%) in the last 90 seconds. Rebooting"
-				sudo reboot 
-			fi 
-		else 
-			strike=0
-		fi 
-		myprint "CPU usage: $cpu_util StrikeCount: $strike"
 	fi 
 
 	# check if user wants to run a test 
@@ -401,6 +385,29 @@ do
 		fi 
 	fi 
 
+	# loop rate control (fast)
+	current_time=`date +%s`
+	let "t_p = fast_freq - (current_time - last_loop_time)"
+	echo "=> Fast loop. Sleep time: $t_p"
+	if [ $t_p -gt 0 ] 
+	then 
+		sleep $t_p
+	fi 
+	to_run=`cat ".status"`
+	current_time=`date +%s`
+	last_loop_time=$current_time
+
+	# loop rate control (slow)
+	current_time=`date +%s`
+	let "t_p = (current_time - last_slow_loop_time)"
+	if [ $t_p -lt $slow_freq ] 
+	then 
+		echo "=> Slow lopp. Not time to check the rest yet..."
+		continue
+	fi 
+	to_run=`cat ".status"`
+	last_slow_loop_time=$current_time
+
 	# check if there is a new command to run
 	if [ $def_iface != "none" ] 
 	then	
@@ -409,7 +416,7 @@ do
 		then
 			prev_command=`cat ".prev_command"`
 		fi 
-		myprint "Checking if there is a command to execute (consider lowering/increasing frequency)..."
+		myprint "Checking if there is a command to execute"
 		ans=`timeout 10 curl -s "https://mobile.batterylab.dev:8082/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`
 		if [[ "$ans" == *"No command matching"* ]]
 		then
@@ -443,17 +450,23 @@ do
 		fi 
 	fi 
 
-	# loop rate control 
-	current_time=`date +%s`
-	let "t_p = freq - (current_time - last_loop_time)"
-	#echo "Sleep time: $t_p"
-	if [ $t_p -gt 0 ] 
+	# check CPU usage 
+	if [ -f ".cpu-usage" ] 
 	then 
-		sleep $t_p
+		cpu_util=`cat ".cpu-usage" | cut -f 1 -d "."`
+		if [ $cpu_util -gt 85 ] 
+		then 
+			let "strike++"
+			if [ $strike -eq 6 ] 
+			then 
+				myprint "Detected high CPU (>85%) in the last 90 seconds. Rebooting"
+				sudo reboot 
+			fi 
+		else 
+			strike=0
+		fi 
+		myprint "CPU usage: $cpu_util StrikeCount: $strike"
 	fi 
-	to_run=`cat ".status"`
-	current_time=`date +%s`
-	last_loop_time=$current_time
 
 	# check if our foreground/background service is still running
 	N_kenzo=`sudo ps aux | grep "com.example.sensor" | grep -v "grep" | grep -v "curl" | wc -l `
