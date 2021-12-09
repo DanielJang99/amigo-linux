@@ -308,7 +308,7 @@ usage(){
 }
 
 # general parameters
-clear_state="false"                      # clear zoom state before the run 
+clear_state="true"                       # clear zoom state before the run 
 use_video="false" 	                     # flag to control video usage or not 
 package=""                               # package of videoconferencing app to be tested
 duration=10                              # default test duration before leaving the call
@@ -520,9 +520,7 @@ sleep 5
 # needed to handle warning of zoom on rooted device 
 if [ $clear_state == "true" -a $app == "zoom" ] 
 then 
-	sudo dumpsys window windows | grep -E 'mCurrentFocus'
-	sudo input tap 435 832 &&	sleep 0.1 &&	sudo input tap 435 832
-	sudo dumpsys window windows | grep -E 'mCurrentFocus'
+	sudo input tap 435 832
 fi 
 
 # join a meeting in the app to be tested
