@@ -295,8 +295,8 @@ close_all(){
 	# press close all 
 	tap_screen 370 1210 
 
-	# go back HOME 
-	#sudo input keyevent KEYCODE_HOME
+	# go back HOME  (needed when there was nothing to close)
+	sudo input keyevent KEYCODE_HOME
 }
 
 # setup phone priot to an experiment 
