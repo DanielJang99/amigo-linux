@@ -520,7 +520,9 @@ sleep 5
 # needed to handle warning of zoom on rooted device 
 if [ $clear_state == "true" -a $app == "zoom" ] 
 then 
+	sudo dumpsys window windows | grep -E 'mCurrentFocus'
 	sudo input tap 435 832 &&	sleep 0.1 &&	sudo input tap 435 832
+	sudo dumpsys window windows | grep -E 'mCurrentFocus'
 fi 
 
 # join a meeting in the app to be tested
