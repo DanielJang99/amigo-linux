@@ -114,15 +114,44 @@ sudo media volume --stream 3 --set 0  # media volume
 sudo media volume --stream 1 --set 0	 # ring volume
 sudo media volume --stream 4 --set 0	 # alarm volume
 
-###### TEMP
+# wait for YT 
 myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
 curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
 while [ $curr_activity != "WatchWhileActivity" ] 
 do 
 	sleep 3 
 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+	echo $curr_activity
 done
+sleep 3
+sudo input tap 560 725
 sleep 10
+sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep MinuteMaidActivity
+if [ $? -eq 0 ]
+then
+    echo "Authorization needed"
+    sleep 10 
+    sudo input tap 600 1200
+    sleep 5
+    sudo input text "Bremen2013"
+    sleep 3
+    sudo input keyevent KEYCODE_ENTER
+    sleep 10
+    sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep MinuteMaidActivity
+    if [ $? -eq 0 ]
+    then
+        echo "ERROR"
+    else
+        echo "ALL-GOOD"
+    fi
+else
+    echo "Nothing to do"
+fi
+
+# potentiall issue when clicking a warning which is not there
+sudo input keyevent KEYCODE_BACK
+sleep 2 
+
 myprint "Enabling stats for nerds and no autoplay (in account settings)"
 sudo input tap 665 100
 sleep 3
