@@ -31,6 +31,69 @@ fi
 adb_file=`pwd`"/adb-utils.sh"
 source $adb_file
 
+
+# check account verification via YT
+check_account_via_YT(){
+
+	# clean youtube state  
+	myprint "Cleaning YT state"
+	sudo pm clear com.google.android.youtube
+
+	# re-enable stats for nerds for the app
+	myprint "Launching YT and allow to settle..."
+	sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
+
+	# lower all the volumes
+	myprint "Making sure volume is off"
+	sudo media volume --stream 3 --set 0  # media volume
+	sudo media volume --stream 1 --set 0	 # ring volume
+	sudo media volume --stream 4 --set 0	 # alarm volume
+
+	# wait for YT 
+	myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
+	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+	while [ $curr_activity != "WatchWhileActivity" ] 
+	do 
+		sleep 3 
+		curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+		echo $curr_activity
+	done
+	sleep 3
+
+	# click account notification if there (guessing so far)
+	sudo input tap 560 725
+	sleep 10
+	sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep "MinuteMaidActivity"
+	need_to_verify=$?
+	if [ $need_to_verify -eq 0 ]
+	then
+	    myprint "Google account validation needed"
+	    sleep 10 
+	    sudo input tap 600 1200
+	    sleep 5
+	    sudo input text "Bremen2013"
+	    sleep 3
+	    sudo input keyevent KEYCODE_ENTER
+	    sleep 10
+	    sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep MinuteMaidActivity
+	    if [ $? -eq 0 ]
+	    then
+	        myprint "ERROR - notification cannot be accepted. Inform USER"
+	        echo "not-authorized" > ".google_status"
+	    	safe_stop
+	    else
+	    	echo "authorized" > ".google_status"
+	        myprint "Google account is now verified"
+	    fi
+	else
+		echo "authorized" > ".google_status"
+	    myprint "Google account is already verified"
+	fi
+
+	# clear YouTube
+	sudo pm clear com.google.android.youtube
+}
+
 # generate data to be POSTed to my server 
 generate_post_data(){
   cat <<EOF
@@ -211,13 +274,14 @@ then
     done < ".ps-$app"
 fi
 
-# read authorization status
+# update Google account authorization status
+check_account_via_YT
 if [ ! -f ".google_status" ] 
 then  
 	echo "authorized" > ".google_status"
 fi 
 google_status=`cat ".google_status"`
-myprint "Google account status: $isAuthorized"
+myprint "Google account status: $google_status"
 
 # update code 
 myprint "Updating our code..."
@@ -388,7 +452,6 @@ do
 	# loop rate control (fast)
 	current_time=`date +%s`
 	let "t_p = fast_freq - (current_time - last_loop_time)"
-	echo "=> Fast loop. Sleep time: $t_p"
 	if [ $t_p -gt 0 ] 
 	then 
 		sleep $t_p
@@ -402,7 +465,6 @@ do
 	let "t_p = (current_time - last_slow_loop_time)"
 	if [ $t_p -lt $slow_freq ] 
 	then 
-		echo "=> Slow lopp. Not time to check the rest yet..."
 		continue
 	fi 
 	to_run=`cat ".status"`
