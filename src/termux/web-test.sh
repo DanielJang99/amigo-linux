@@ -90,7 +90,8 @@ run_test(){
 	# attempt page load 
 	myprint "URL: $url PROTO: $PROTO  RES-FOLDER: $res_folder TIMEOUT: $MAX_DURATION"
 	t_launch=`date +%s`
-	am start -n $package/$activity -a $intent -d $url 
+	#am start -n $package/$activity -a $intent -d $url 
+	am start -n $package/$activity -d $url 	
 	t_now=`date +%s`
 
 	# manage screen recording
@@ -252,8 +253,8 @@ do
 	if [ $single == "true" ] 
 	then 
 		let "i = RANDOM % num_urls"
-	    url=${urlList[$i]} 
-	    #url="https://cnn.com"
+	    #url=${urlList[$i]} 
+	    url="https://www.bbc.com/news"
 		myprint "Random URL: $url ($i)"
 		i=$num_urls
 	else 
