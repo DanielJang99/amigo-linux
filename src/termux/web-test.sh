@@ -257,7 +257,6 @@ then
 	uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 fi 
 myprint "UID: $uid"
-exit -1 
 
 # folder creation
 res_folder="./website-testing-results/$suffix"
