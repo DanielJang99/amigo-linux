@@ -1,5 +1,5 @@
-#!/data/data/com.termux/files/usr/bin/bash
-## NOTE: testing getting <<stats for nerds>> on youtube
+#!/data/data/com.termux/files/usr/bin/env bash
+## NOTE: 1) get <<stats for nerds>> on youtube ; 2) manage Google account
 ## Author: Matteo Varvello (matteo.varvello@nokia.com)
 ## Date: 11/15/2021
 
@@ -15,6 +15,7 @@ safe_stop(){
 	sudo pm clear com.google.android.youtube
 	sudo killall tcpdump
 	sudo input keyevent KEYCODE_HOME
+	turn_device_off
 }
 
 send_report(){
@@ -226,7 +227,22 @@ myprint "Enabling stats for nerds and no autoplay (in account settings)"
 sudo input tap 665 100
 sleep 3
 sudo input tap 370 1180
-sleep 3 
+curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+c=0
+while [ $curr_activity != "SettingsActivity" ] 
+do 
+ 	sleep 3 
+	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+	let "c++"
+	if [ $c -eq 5 ]
+	then
+		myprint "Something went wrong entering settings!" 
+		msg="ERROR-ENTERING-SETTINGS"
+        send_report
+		safe_stop			
+		exit -1
+	fi 
+done
 if [ $disable_autoplay == "true" ] 
 then 
 	sudo input tap 370 304
@@ -267,7 +283,7 @@ traffic_rx_last=$traffic_rx
 
 #launch test video
 am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
-sleep 2 
+#sleep 2 
 #sleep 5 # FIXME: normally not needed...
 
 # make sure stats for nerds are active
@@ -301,7 +317,7 @@ do
 			cat ".clipboard" > $log_file
 			echo "" >> $log_file
 		fi
-		if [ $attempt -ge 2 ] 
+		if [ $attempt -ge 1 ] # allow just one attempt, doing more does not seem to help
 		then 
 			myprint "Something is WRONG. Clearing YT and exiting!"
 			sudo pm clear com.google.android.youtube			
