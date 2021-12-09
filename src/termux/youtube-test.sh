@@ -11,6 +11,13 @@ function ctrl_c() {
 	exit -1 
 }
 
+send_report(){
+	current_time=`date +%s`
+	myprint "Sending report to the server: "
+	echo "$(generate_post_data)" 
+	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/youtubetest
+}
+
 safe_stop(){
 	sudo pm clear com.google.android.youtube
 	sudo killall tcpdump
@@ -49,7 +56,8 @@ generate_post_data(){
     "uid":"${uid}",
     "cpu_util_midload_perc":"${cpu_usage_middle}",
     "bdw_used_MB":"${traffic}",
-    "tshark_traffic_MB":"${tshark_size}"
+    "tshark_traffic_MB":"${tshark_size}", 
+    "msg":"${msg}"
     }
 EOF
 }
@@ -185,6 +193,8 @@ then
     then
         myprint "ERROR - notification cannot be accepted. Inform USER"
         echo "not-authorized" > ".google_status"
+        msg="ERROR-GOOGLE-ACCOUNT"
+        send_report
     	safe_stop
     else
     	echo "authorized" > ".google_status"
@@ -195,18 +205,20 @@ else
     myprint "Google account is already verified"
 fi
 
-# potential issue when clicking a warning which is not there
-if [ $need_to_verify -eq 1 ]
-then 
-	sudo input keyevent KEYCODE_BACK
-	sleep 2 
+# handle issue when clicking a warning which is not there (basically redo step)
+myprint "Launching YT and allow to settle..."
+sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
+myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
+curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+while [ $curr_activity != "WatchWhileActivity" ] 
+do 
+	sleep 3 
 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-	if [ $curr_activity != "WatchWhileActivity" ] 
-	then 
-		sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
-		sleep 5 
-	fi 
-fi 
+	echo $curr_activity
+done
+sleep 3
+
+# enable stats for nerds in the main account 
 myprint "Enabling stats for nerds and no autoplay (in account settings)"
 sudo input tap 665 100
 sleep 3
@@ -229,13 +241,11 @@ sudo input tap 370 1250
 
 # start CPU monitoring
 log_cpu="${res_folder}/${curr_run_id}.cpu"
-log_cpu_top="${res_folder}/${curr_run_id}.cpu_top"
 clean_file $log_cpu
 clean_file $log_cpu_top
 myprint "Starting listener to CPU monitor. Log: $log_cpu"
 echo "true" > ".to_monitor"
 cpu_monitor $log_cpu &
-#cpu_monitor_top $log_cpu_top &
 
 # start pcap collection if needed
 if [ $pcap_collect == "true" ]
@@ -254,7 +264,8 @@ traffic_rx_last=$traffic_rx
 
 #launch test video
 am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
-sleep 5 # FIXME: normally not needed...
+sleep 2 
+#sleep 5 # FIXME: normally not needed...
 
 # make sure stats for nerds are active
 myprint "Make sure stats for nerds are active"
@@ -271,7 +282,9 @@ do
 		curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
 		if [ $curr_activity != "WatchWhileActivity" ] 
 		then
-			myprint "Something went wrong!" 
+			myprint "Something went VERY wrong!" 
+			msg="ERROR-STATS-NERDS-LEFT-APP"
+        	send_report
 			safe_stop			
 		fi 
 		tap_screen 592 216 1
@@ -287,7 +300,9 @@ do
 		if [ $attempt -ge 2 ] 
 		then 
 			myprint "Something is WRONG. Clearing YT and exiting!"
-			sudo pm clear com.google.android.youtube
+			sudo pm clear com.google.android.youtube			
+			msg="ERROR-STATS-NERDS"
+        	send_report
 			exit -1 
 		fi 
 	else
@@ -352,16 +367,12 @@ fi
 echo "false" > ".to_monitor"
 
 # log and report 
-current_time=`date +%s`
-myprint "Sending report to the server: "
-if [ -f $log_file ]  # FIXME 
-then
-	data=`tail -n 1 $log_file`
-fi 
-current_time=`date +%s`
-myprint "Sending report to the server: "
-echo "$(generate_post_data)" 
-timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/youtubetest
+msg="All good!"
+send_report
+#if [ -f $log_file ]  # FIXME 
+#then
+#	data=`tail -n 1 $log_file`
+#fi 
 
 # clean youtube state and anything else 
 safe_stop
