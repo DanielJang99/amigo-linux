@@ -146,7 +146,7 @@ sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep "MinuteMaidActivity
 need_to_verify=$?
 if [ $need_to_verify -eq 0 ]
 then
-    myprint "Authorization needed"
+    myprint "Google account validation needed"
     sleep 10 
     sudo input tap 600 1200
     sleep 5
@@ -158,11 +158,15 @@ then
     if [ $? -eq 0 ]
     then
         myprint "ERROR - notification cannot be accepted. Inform USER"
+        echo "not-authorized" > ".google_status"
+    	safe_stop
     else
-        myprint "ALL-GOOD"
+    	echo "authorized" > ".google_status"
+        myprint "Google account is now verified"
     fi
 else
-    myprint "Account is already verified"
+	echo "authorized" > ".google_status"
+    myprint "Google account is already verified"
 fi
 
 # potential issue when clicking a warning which is not there

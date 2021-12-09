@@ -38,6 +38,7 @@ generate_post_data(){
     "today":"${suffix}", 
     "timestamp":"${current_time}",
     "uid":"${uid}",
+    "googleStatus":"${google_status}",
     "uptime":"${uptime_info}",
     "num_kenzo":"${N_kenzo}",
     "free_space_GB":"${free_space}",
@@ -209,6 +210,14 @@ then
     done < ".ps-$app"
 fi
 
+# read authorization status
+if [ ! -f ".google_status" ] 
+then  
+	echo "authorized" > ".google_status"
+fi 
+google_status=`cat ".google_status"`
+myprint "Google account status: $isAuthorized"
+
 # update code 
 myprint "Updating our code..."
 git pull
@@ -293,6 +302,9 @@ myprint "Script will run with a $freq sec frequency. To stop: <<echo \"false\" >
 last_loop_time=0
 while [ $to_run == "true" ] 
 do 
+	# update google status 
+	google_status=`cat ".google_status"`
+
 	# keep track of time
 	current_time=`date +%s`
 	suffix=`date +%d-%m-%Y`

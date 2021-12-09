@@ -53,17 +53,17 @@ speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
 # QUIC test? 
 # TODO 
 
-# # test multiple webages
-# turn_device_on
-# touch ".locked"
-# ./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap
+# test multiple webages
+turn_device_on
+touch ".locked"
+./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap
 
-# # video testing - skipping for now
-# ./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap
+# video testing with youtube
+./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap
 
-# # save battery, screen off 
-# turn_device_off
-# rm ".locked"
+# save battery, screen off 
+turn_device_off
+rm ".locked"
 
 ################ safety cleanup ########################
 sudo pm clear com.android.chrome
