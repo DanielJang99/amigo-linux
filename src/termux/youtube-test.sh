@@ -49,8 +49,7 @@ generate_post_data(){
     "uid":"${uid}",
     "cpu_util_midload_perc":"${cpu_usage_middle}",
     "bdw_used_MB":"${traffic}",
-    "tshark_traffic_MB":"${tshark_size}",
-    "data:"${data}"
+    "tshark_traffic_MB":"${tshark_size}"
     }
 EOF
 }
@@ -319,7 +318,7 @@ do
 	let "t_p = t_e - t_s"
 
 	# keep track of CPU in the middle
-	if [ $t_p -le $HALF_DURATION] 
+	if [ $t_p -le $HALF_DURATION ] 
 	then 
 		if [ -f ".cpu-usage" ]
     	then 
@@ -355,14 +354,14 @@ echo "false" > ".to_monitor"
 # log and report 
 current_time=`date +%s`
 myprint "Sending report to the server: "
-if [ -f $log_file ] 
+if [ -f $log_file ]  # FIXME 
 then
 	data=`tail -n 1 $log_file`
-	current_time=`date +%s`
-	myprint "Sending report to the server: "
-	echo "$(generate_post_data)" 
-	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/youtubetest
 fi 
+current_time=`date +%s`
+myprint "Sending report to the server: "
+echo "$(generate_post_data)" 
+timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/youtubetest
 
 # clean youtube state and anything else 
 safe_stop
