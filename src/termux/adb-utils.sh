@@ -190,11 +190,12 @@ chrome_onboarding(){
 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -f 2 -d "/" | sed s/"}"// | awk -F '.' '{print $NF}'`
 	if [ $curr_activity == "FirstRunActivity" ]
 	then 
-		tap_screen 370 1210 1   # sign-in 
+		tap_screen 370 1210 1   # click ACCEPT 
 		#tap_screen 370 1210 1  # yes to sync 
 		tap_screen 120 1200 1   # no sync		
-		tap_screen 600 1200 1   # lite mode? 
-		tap_screen 600 1200 1   # ?? 
+		# below is needed in case of lite mode 
+		#tap_screen 600 1200 1    
+		#tap_screen 600 1200 1    
 	else 
 		myprint "No onboarding was detected"
 	fi 

@@ -17,12 +17,6 @@ then
 	iface=$3
 fi  
 
-# TEMP ###########
-echo "./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap"
-echo "./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap"
-exit -1 
-##################
-
 # run a speedtest 
 echo "[`date`] speedtest-cli..."
 res_folder="speedtest-cli-logs/${suffix}"
@@ -59,14 +53,17 @@ speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
 # QUIC test? 
 # TODO 
 
-# test multiple webages
-turn_device_on
-touch ".locked"
-./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap
+# # test multiple webages
+# turn_device_on
+# touch ".locked"
+# ./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap
 
-# video testing - skipping for now
-./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap
+# # video testing - skipping for now
+# ./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap
 
+# # save battery, screen off 
+# turn_device_off
+# rm ".locked"
 
 ################ safety cleanup ########################
 sudo pm clear com.android.chrome
@@ -79,9 +76,6 @@ do
 done
 #########################################
 
-# save battery, screen off 
-turn_device_off
-rm ".locked"
 
 #logging 
 echo "[`date`] net-testing END"
