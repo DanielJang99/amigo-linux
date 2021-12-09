@@ -39,6 +39,26 @@ usage(){
     exit -1
 }
 
+# generate data to be POSTed to my server
+generate_post_data(){
+  cat <<EOF
+    {
+    "today":"${suffix}",
+    "timestamp":"${current_time}",
+    "uid":"${uid}",
+    "cpu_util_midloadperc":"${cpu_usage_middle}",
+    "browser":"${browser}",
+    "URL":"${url}",
+    "bdw_load_MB":"${traffic_before_scroll}",
+    "bdw_scroll_MB":"${traffic_after_scroll}",
+    "tshark_traffic_MB":"${tshark_size}",
+    "load_dur_sec":"${load_time}",
+    "speed_index_ms":"${speed_index}",
+    "last_visual_change_ms":"${last_change}"
+    }
+EOF
+}
+
 # import utilities files needed
 script_dir=`pwd`
 adb_file=$script_dir"/adb-utils.sh"
@@ -106,7 +126,7 @@ fi
 # folder creation
 res_folder="./youtube-results/$suffix"
 mkdir -p $res_folder
-log_file="${res_folder}/youtube-${curr_run_id}.txt"
+log_file="${res_folder}/${curr_run_id}-nerdstats.txt"
 
 # cleanup the clipboard
 termux-clipboard-set "none"
@@ -291,7 +311,6 @@ done
 #sleep 2 
 #tap_screen 670 1130 1 
 
-
 # stop tcpdump 
 if [ $pcap_collect == "true" ]
 then
@@ -306,6 +325,16 @@ fi
 
 # stop monitoring CPU
 echo "false" > ".to_monitor"
+
+# log and report 
+current_time=`date +%s`
+myprint "Sending report to the server: "
+if [ -f $log_file ] 
+then
+	data=`tail -n 1 $log_file`
+	echo $data 
+	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$data" https://mobile.batterylab.dev:8082/youtubetest
+fi 
 
 # clean youtube state and anything else 
 safe_stop
