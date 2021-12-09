@@ -58,9 +58,9 @@ visual(){
 	clean_file ".visualmetrics"
 	myprint "Running visualmetrics/visualmetrics.py (background - while visual prep is done)"
 	python visualmetrics/visualmetrics.py --video $screen_video --viewport > $perf_video 2>&1
-	speed_index=`cat $perf_video | grep "Speed Index"`
-	last_change=`cat $perf_video | grep "Last"`
-	myprint "VisualMetric\t$speed_index\t$last_change" > ".visualmetrics"
+	speed_index=`cat $perf_video | grep "Speed Index" | cut -f 2 -d ":" | sed s/" "//g`
+	last_change=`cat $perf_video | grep "Last" | cut -f 2 -d ":" | sed s/" "//g`
+	echo -e "$speed_index\t$last_change" > ".visualmetrics"
 	rm $screen_video
 }
 
@@ -415,8 +415,8 @@ do
 	myprint "Waiting for visual metrics - DONE"
 	if [ -f ".visualmetrics" ] 
 	then
-		speed_index=`cat ".visualmetrics" | cut -f 2`
-		last_change=`cat ".visualmetrics" | cut -f 3`
+		speed_index=`cat ".visualmetrics" | cut -f 1`
+		last_change=`cat ".visualmetrics" | cut -f 2`
 	fi 
 
 	# log and report 
