@@ -103,6 +103,10 @@ run_test(){
 	# artificial time for page loading
 	let "half = load_time/2"
 	sleep $half
+	if [ -f ".cpu-usage" ]
+    then 
+        cpu_usage_middle=`cat .cpu-usage`
+    fi  
 	if [ $url == "https://www.nytimes.com/" ]
 	then 
 		myprint "Attempt accepting cookies"
@@ -145,13 +149,13 @@ generate_post_data(){
     "today":"${suffix}",
     "timestamp":"${current_time}",
     "uid":"${uid}",
+    "cpu_util_midloadperc":"${cpu_usage_middle}",
     "browser":"${browser}",
     "URL":"${url}",
     "bdw_load":"${traffic_before_scroll}",
     "bdw_scroll":"${traffic_after_scroll}",
-    "tshark_traffict":"${browser}",
-    "browser":"${tshark_size}",
-    "load_time":"${$load_time}",
+    "tshark_traffic":"${tshark_size}",
+    "load_time":"${load_time}",
     "speed_index":"${speed_index}",
     "last_visual_change":"${last_change}"
     }
