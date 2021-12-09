@@ -124,12 +124,15 @@ do
 	echo $curr_activity
 done
 sleep 3
+
+# click account notification if there (guessing so far)
 sudo input tap 560 725
 sleep 10
-sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep MinuteMaidActivity
-if [ $? -eq 0 ]
+sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep "MinuteMaidActivity"
+need_to_verify=$?
+if [ $need_to_verify -eq 0 ]
 then
-    echo "Authorization needed"
+    myprint "Authorization needed"
     sleep 10 
     sudo input tap 600 1200
     sleep 5
@@ -140,18 +143,25 @@ then
     sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep MinuteMaidActivity
     if [ $? -eq 0 ]
     then
-        echo "ERROR"
+        myprint "ERROR - notification cannot be accepted. Inform USER"
     else
-        echo "ALL-GOOD"
+        myprint "ALL-GOOD"
     fi
 else
-    echo "Nothing to do"
+    myprint "Account is already verified"
 fi
 
-# potentiall issue when clicking a warning which is not there
-sudo input keyevent KEYCODE_BACK
-sleep 2 
-
+# potential issue when clicking a warning which is not there
+if [ $need_to_verify -eq 1 ]
+then 
+	sudo input keyevent KEYCODE_BACK
+	sleep 2 
+	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+	if [ $curr_activity != "WatchWhileActivity" ] 
+	then 
+		sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
+	fi 
+fi 
 myprint "Enabling stats for nerds and no autoplay (in account settings)"
 sudo input tap 665 100
 sleep 3
