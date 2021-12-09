@@ -392,7 +392,7 @@ do
 	fi 
 	
 	# log and report 
-	curr_time=`date +%s`
+	current_time=`date +%s`
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 	
 	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
