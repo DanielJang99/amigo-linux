@@ -61,7 +61,6 @@ visual(){
 	last_change=`cat $perf_video | grep "Last"`
 	myprint "VisualMetric - $speed_index - $last_change"
 	rm $screen_video
-	#(python visualmetrics/visualmetrics.py --video $final_screen_video --dir frames -q 75 --histogram histograms.json.gz --orange --viewport > $perf_video 2>&1 &)
 }
 
 # helper to extra last frame of a video
@@ -391,11 +390,32 @@ do
 		sleep $t_sleep
 	fi 
 	
+	# make sure visual analysis is done 
+	ps aux | grep "visualmetrics.py" | grep -v "grep"
+	ans=$?
+	while [ $ans -eq 0 ]
+	do 
+		sleep 2
+		ps aux | grep "visualmetrics.py" | grep -v "grep"
+		ans=$?
+		let "c++"
+		if [ $c -ge 10 ]
+		then
+			# stop process 						 
+			myprint "visualmetrics.py seems stuck. Killing it."
+			for pid in `ps aux | grep "visualmetrics.py" | grep -v "grep" | awk '{print $2}'`
+			do 
+				kill -9 $pid
+			done			
+			break 
+		fi 
+	done
+
 	# log and report 
 	current_time=`date +%s`
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 	
-	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
+	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/webtest
 	myprint "[RESULTS]\tBrowser:$browser\tURL:$url\tBDW-LOAD:$traffic_before_scroll MB\tBDW-SCROLL:$traffic_after_scroll MB\tTSharkTraffic:$tshark_size\tLoadTime:$load_time"
 done
 

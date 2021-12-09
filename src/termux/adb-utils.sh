@@ -203,8 +203,9 @@ chrome_onboarding(){
 	then
 		tap_screen 370 1210 1   # click ACCEPT 
 		#tap_screen 370 1210 1  # yes to sync 
-		tap_screen 120 1200 1   # no sync		
-		tap_screen 120 1200 1   # no sync (no idea why need a double tap)
+		sudo input tap 120 1200 && sleep 0.1 && sudo input tap 120 1200
+		#tap_screen 120 1200 1   # no sync		
+		#tap_screen 120 1200 1   # no sync (no idea why need a double tap)
 		# below is needed in case of lite mode 
 		#tap_screen 600 1200 1    
 		#tap_screen 600 1200 1    
