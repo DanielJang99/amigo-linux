@@ -12,6 +12,7 @@ function ctrl_c() {
 }
 
 safe_stop(){
+	myprint "Entering safe stop..."
 	sudo pm clear com.google.android.youtube
 	sudo killall tcpdump
 	sudo input keyevent KEYCODE_HOME
@@ -316,15 +317,17 @@ do
 			myprint "Ready to start!!"
 			cat ".clipboard" > $log_file
 			echo "" >> $log_file
+		else 
+			if [ $attempt -ge 1 ] # allow just one attempt, doing more does not seem to help
+			then 
+				myprint "Something is WRONG. Clearing YT and exiting!"
+				sudo pm clear com.google.android.youtube			
+				msg="ERROR-STATS-NERDS"
+	        	send_report
+	        	safe_stop
+				exit -1 
+			fi 
 		fi
-		if [ $attempt -ge 1 ] # allow just one attempt, doing more does not seem to help
-		then 
-			myprint "Something is WRONG. Clearing YT and exiting!"
-			sudo pm clear com.google.android.youtube			
-			msg="ERROR-STATS-NERDS"
-        	send_report
-			exit -1 
-		fi 
 	else
 		ready="true"		
 		echo "Ready to start!!"
