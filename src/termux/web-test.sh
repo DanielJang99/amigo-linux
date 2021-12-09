@@ -55,11 +55,12 @@ take_screenshots(){
 
 # run video ananlysis for web perf
 visual(){
+	clean_file ".visualmetrics"
 	myprint "Running visualmetrics/visualmetrics.py (background - while visual prep is done)"
 	python visualmetrics/visualmetrics.py --video $screen_video --viewport > $perf_video 2>&1
 	speed_index=`cat $perf_video | grep "Speed Index"`
 	last_change=`cat $perf_video | grep "Last"`
-	myprint "VisualMetric - $speed_index - $last_change"
+	myprint "VisualMetric\t$speed_index\t$last_change" > ".visualmetrics"
 	rm $screen_video
 }
 
@@ -151,8 +152,8 @@ generate_post_data(){
     "cpu_util_midloadperc":"${cpu_usage_middle}",
     "browser":"${browser}",
     "URL":"${url}",
-    "bdw_load":"${traffic_before_scroll}",
-    "bdw_scroll":"${traffic_after_scroll}",
+    "bdw_load_MB":"${traffic_before_scroll}",
+    "bdw_scroll_MB":"${traffic_after_scroll}",
     "tshark_traffic":"${tshark_size}",
     "load_time":"${load_time}",
     "speed_index":"${speed_index}",
@@ -391,6 +392,7 @@ do
 	fi 
 	
 	# make sure visual analysis is done 
+	myprint "Waiting for visual metrics - START"
 	ps aux | grep "visualmetrics.py" | grep -v "grep"
 	ans=$?
 	while [ $ans -eq 0 ]
@@ -410,13 +412,19 @@ do
 			break 
 		fi 
 	done
+	myprint "Waiting for visual metrics - DONE"
+	if [ -f ".visualmetrics" ] 
+	then
+		speed_index=`cat ".visualmetrics" | cut -f 2`
+		last_change=`cat ".visualmetrics" | cut -f 3`
+	fi 
 
 	# log and report 
 	current_time=`date +%s`
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 	
 	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/webtest
-	myprint "[RESULTS]\tBrowser:$browser\tURL:$url\tBDW-LOAD:$traffic_before_scroll MB\tBDW-SCROLL:$traffic_after_scroll MB\tTSharkTraffic:$tshark_size\tLoadTime:$load_time"
+	myprint "[RESULTS]\tBrowser:$browser\tURL:$url\tBDW-LOAD:$traffic_before_scroll MB\tBDW-SCROLL:$traffic_after_scroll MB\tTSharkTraffic:$tshark_size\tLoadTime:$load_time\tSpeedIndex:$speed_index\tLastVisualChange:$last_change"
 done
 
 # keep track of time when screenshots were taken
