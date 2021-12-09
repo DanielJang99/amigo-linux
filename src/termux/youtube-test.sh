@@ -206,7 +206,8 @@ else
 fi
 
 # handle issue when clicking a warning which is not there (basically redo step)
-myprint "Launching YT and allow to settle..."
+sudo pm clear com.google.android.youtube
+myprint "Launching YT (AGAIN) and allow to settle - should be faster now..."
 sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
 myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
 curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
