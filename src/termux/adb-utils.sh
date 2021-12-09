@@ -188,13 +188,22 @@ accept_cookies(){
 # needed unless I can fix the other thing
 chrome_onboarding(){
 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -f 2 -d "/" | sed s/"}"// | awk -F '.' '{print $NF}'`
+	c=0
+	while [ $curr_activity != "FirstRunActivity" ]
+	do 
+		curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -f 2 -d "/" | sed s/"}"// | awk -F '.' '{print $NF}'`
+		sleep 2 
+		let "c++"
+		if [ $c -eq 0 ]
+		then 
+			break 
+		fi 
+	done
 	if [ $curr_activity == "FirstRunActivity" ]
-	then
-		echo "=> Click ACCEPT " 
 		tap_screen 370 1210 1   # click ACCEPT 
 		#tap_screen 370 1210 1  # yes to sync 
-		echo "=> Click NO SYNC"
 		tap_screen 120 1200 1   # no sync		
+		tap_screen 120 1200 1   # no sync (no idea why need a double tap)
 		# below is needed in case of lite mode 
 		#tap_screen 600 1200 1    
 		#tap_screen 600 1200 1    
