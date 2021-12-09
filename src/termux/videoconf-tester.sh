@@ -520,7 +520,7 @@ sleep 5
 # needed to handle warning of zoom on rooted device 
 if [ $clear_state == "true" -a $app == "zoom" ] 
 then 
-	tap_screen tap 435 832
+	sudo input tap 435 832 &&	sleep 0.1 &&	sudo input tap 435 832
 fi 
 
 # join a meeting in the app to be tested
