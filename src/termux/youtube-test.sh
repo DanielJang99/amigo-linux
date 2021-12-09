@@ -210,15 +210,16 @@ fi
 sudo pm clear com.google.android.youtube
 myprint "Launching YT (AGAIN) and allow to settle - should be faster now..."
 sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
-myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
-curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-while [ $curr_activity != "WatchWhileActivity" ] 
-do 
-	sleep 3 
-	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-	echo $curr_activity
-done
-sleep 3
+sleep 10 
+# myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
+# curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+# while [ $curr_activity != "WatchWhileActivity" ] 
+# do 
+# 	sleep 3 
+# 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+# 	echo $curr_activity
+# done
+# sleep 3
 
 # enable stats for nerds in the main account 
 myprint "Enabling stats for nerds and no autoplay (in account settings)"
