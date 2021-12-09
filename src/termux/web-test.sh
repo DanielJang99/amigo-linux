@@ -16,13 +16,9 @@ source $adb_file
 
 # safe run interruption
 safe_stop(){	
-    # go HOME and close all 
     close_all
-
-    # turn screen off 
     turn_device_off
-   
-    # all done
+	sudo pm clear $package
     myprint "[safe_stop] EXIT!"
     exit 0
 }
@@ -61,9 +57,9 @@ take_screenshots(){
 visual(){
 	myprint "Running visualmetrics/visualmetrics.py (background - while visual prep is done)"
 	python visualmetrics/visualmetrics.py --video $screen_video --viewport > $perf_video 2>&1
-	ans=`cat $perf_video | grep "Speed Index"`
-	ans_more=`cat $perf_video | grep "Last"`
-	myprint "VisualMetric - $perf_video - $ans $ans_more"
+	speed_index=`cat $perf_video | grep "Speed Index"`
+	last_change=`cat $perf_video | grep "Last"`
+	myprint "VisualMetric - $speed_index - $last_change"
 	rm $screen_video
 	#(python visualmetrics/visualmetrics.py --video $final_screen_video --dir frames -q 75 --histogram histograms.json.gz --orange --viewport > $perf_video 2>&1 &)
 }
@@ -142,10 +138,30 @@ run_test(){
 	traffic_after_scroll=$traffic	
 }
 
+# generate data to be POSTed to my server
+generate_post_data(){
+  cat <<EOF
+    {
+    "today":"${suffix}",
+    "timestamp":"${current_time}",
+    "uid":"${uid}",
+    "browser":"${browser}",
+    "URL":"${url}",
+    "bdw_load":"${traffic_before_scroll}",
+    "bdw_scroll":"${traffic_after_scroll}",
+    "tshark_traffict":"${browser}",
+    "browser":"${tshark_size}",
+    "load_time":"${$load_time}",
+    "speed_index":"${speed_index}",
+    "last_visual_change":"${last_change}"
+    }
+EOF
+}
+
 # script usage
 usage(){
     echo "================================================================================"
-    echo "USAGE: $0 --load,	--novideo, --single, --url, --pcap"
+    echo "USAGE: $0 --load,	--novideo, --single, --url, --pcap, --uid"
     echo "================================================================================"
     echo "--load       Page load max duration"
     echo "--iface      Network interface in use"
@@ -153,6 +169,7 @@ usage(){
     echo "--single     Just one test" 
     echo "--url        Force using a passed URL"       
     echo "--pcap       Collect pcap traces"
+    echo "--uid        IMEI of the device"
     echo "================================================================================"
     exit -1
 }
@@ -169,6 +186,7 @@ single="false"                     # should run just one test
 pcap_collect="false"               # flag to control pcap collection at the phone
 app="chrome"                       # used to detect process in CPU monitoring
 url="none"                         # URL to test 
+uid="none"                         # user ID
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -194,6 +212,9 @@ do
             ;;
         --url)
         	shift; url="$1"; single="true"; shift;
+            ;;
+        --uid)
+        	shift; uid="$1"; shift;
             ;;
         --pcap)
             shift; pcap_collect="true";
@@ -226,6 +247,12 @@ then
     done < ".ps-$app"
 fi
 
+# update UID if needed 
+if [ $uid == "none" ]
+then 
+	uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+fi 
+
 # folder creation
 res_folder="./website-testing-results/$suffix"
 mkdir -p $res_folder
@@ -249,7 +276,6 @@ activity="com.google.android.apps.chrome.Main"
 myprint "[INFO] Cleaning browser data ($app-->$package)"
 sudo pm clear $package
 am start -n $package/$activity
-sleep 10
 chrome_onboarding
 #browser_setup #FIXME => allow to skip chrome onboarding, but using a non working option
 
@@ -361,7 +387,11 @@ do
 		sleep $t_sleep
 	fi 
 	
-	# log results
+	# log and report 
+	curr_time=`date +%s`
+	myprint "Sending report to the server: "
+	echo "$(generate_post_data)" 	
+	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
 	myprint "[RESULTS]\tBrowser:$browser\tURL:$url\tBDW-LOAD:$traffic_before_scroll MB\tBDW-SCROLL:$traffic_after_scroll MB\tTSharkTraffic:$tshark_size\tLoadTime:$load_time"
 done
 
@@ -370,4 +400,7 @@ if [ $screenshots_flag == "true" ]
 then
 	echo `date +%s` > ".time_last_scroll"
 fi
+
+# all done
+safe_stop
 

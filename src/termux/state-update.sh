@@ -640,7 +640,7 @@ do
 		uptime_info=`uptime`
 
 		# send status update to the server
-		myprint "Report to send: "
+		myprint "Sending data to the server: "
 		echo "$(generate_post_data)" 
 	
 		if [ $def_iface == "none" ] 
