@@ -138,12 +138,13 @@ run_test(){
 # script usage
 usage(){
     echo "================================================================================"
-    echo "USAGE: $0 --load,	--novideo, --single, --pcap"
+    echo "USAGE: $0 --load,	--novideo, --single, --url, --pcap"
     echo "================================================================================"
     echo "--load       Page load max duration"
     echo "--iface      Network interface in use"
     echo "--novideo    Turn off video recording" 
     echo "--single     Just one test" 
+    echo "--url        Force using a passed URL"       
     echo "--pcap       Collect pcap traces"
     echo "================================================================================"
     exit -1
@@ -160,6 +161,7 @@ curr_run_id=`date +%s`             # unique id per run
 single="false"                     # should run just one test 
 pcap_collect="false"               # flag to control pcap collection at the phone
 app="chrome"                       # used to detect process in CPU monitoring
+url="none"                         # URL to test 
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -182,6 +184,9 @@ do
             ;;
         --single)
             shift; single="true"; 
+            ;;
+        --url)
+        	shift; url="$1"; single="true"; shift;
             ;;
         --pcap)
             shift; pcap_collect="true";
@@ -250,16 +255,20 @@ screenshots_flag="false"
 for((i=0; i<num_urls; i++))
 do
     # get URL to be tested 
-	if [ $single == "true" ] 
-	then 
-		let "i = RANDOM % num_urls"
-	    #url=${urlList[$i]} 
-	    url="https://www.bbc.com/news"
-		myprint "Random URL: $url ($i)"
-		i=$num_urls
+    if [ $url == "none" ] 
+   	then
+		if [ $single == "true" ] 
+		then 
+			let "i = RANDOM % num_urls"
+		    url=${urlList[$i]} 
+		    myprint "Random URL: $url ($i)"
+			i=$num_urls
+		else 
+		    url=${urlList[$i]} 
+	 	fi 
 	else 
-	    url=${urlList[$i]} 
- 	fi 
+	 	myprint "Using URL passed by user: $url"
+	fi 
  
     # file naming
     id=`echo $url | md5sum | cut -f1 -d " "`
