@@ -629,7 +629,8 @@ fi
 # sleep up to mid experiment then take a screenshot 
 let "half_duration = duration/2 - 5"
 sleep $half_duration 
-(sudo screencap -p $res_folder"/"$test_id".png" &)
+sudo screencap -p $res_folder"/"$test_id".png" 
+sudo chown $USER:$USER $screen_file		
 
 # sleep rest of the experiment
 sleep $half_duration 
