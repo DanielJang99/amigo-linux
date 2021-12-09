@@ -3,6 +3,22 @@
 ## Author: Matteo Varvello
 ## Date:   11/29/2021
 
+
+# trap ctrl-c and call ctrl_c()
+trap ctrl_c INT
+function ctrl_c() {
+	safe_stop
+	exit -1 
+}
+
+safe_stop(){
+	sudo pm clear $package
+	echo "done" > ".videoconfstatus"
+	echo "false" > ".to_monitor"
+	sudo killall tcpdump
+}
+
+
 # import utilities files needed
 DEBUG=1
 adb_file=`pwd`"/adb-utils.sh"
@@ -498,14 +514,14 @@ t_launch=`date +%s` #NOTE: use posterior time in case u want to filter launching
 myprint "Launching $app..."
 sudo monkey -p $package 1 > /dev/null 2>&1
 
+# allow time for app to launch
+sleep 5 
+
 # needed to handle warning of zoom on rooted device 
 if [ $clear_state == "true" -a $app == "zoom" ] 
 then 
 	tap_screen 440 835 
 fi 
-
-# allow time for app to launch
-sleep 5 
 
 # join a meeting in the app to be tested
 user="azureuser"
