@@ -200,6 +200,7 @@ chrome_onboarding(){
 		fi 
 	done
 	if [ $curr_activity == "FirstRunActivity" ]
+	then
 		tap_screen 370 1210 1   # click ACCEPT 
 		#tap_screen 370 1210 1  # yes to sync 
 		tap_screen 120 1200 1   # no sync		
