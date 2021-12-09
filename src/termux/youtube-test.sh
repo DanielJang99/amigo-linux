@@ -47,8 +47,10 @@ generate_post_data(){
     "today":"${suffix}",
     "timestamp":"${current_time}",
     "uid":"${uid}",
-    "cpu_util_midloadperc":"${cpu_usage_middle}",
-    "data:"${data}",
+    "cpu_util_midload_perc":"${cpu_usage_middle}",
+    "bdw_used_MB":"${traffic}",
+    "tshark_traffic_MB":"${tshark_size}",
+    "data:"${data}"
     }
 EOF
 }
@@ -245,6 +247,12 @@ then
 	myprint "Started tcpdump: $pcap_file Interface: $interface"
 fi
 
+# get initial network data information
+compute_bandwidth
+traffic_rx=$curr_traffic
+traffic_rx_last=$traffic_rx
+# myprint "[INFO] Abs. Bandwidth: $traffic_rx"
+
 #launch test video
 am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
 sleep 5 # FIXME: normally not needed...
@@ -320,11 +328,14 @@ do
     fi 
 done
 
-# stop playing 
-#myprint "Stop playing!"
-#sudo input keyevent KEYCODE_BACK
-#sleep 2 
-#tap_screen 670 1130 1 
+# stop playing (attempt)
+myprint "Stop playing!"
+sudo input keyevent KEYCODE_BACK
+sleep 2 
+tap_screen 670 1130 1 
+
+# update traffic rx
+compute_bandwidth $traffic_rx_last
 
 # stop tcpdump 
 if [ $pcap_collect == "true" ]
