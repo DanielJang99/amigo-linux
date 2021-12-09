@@ -28,13 +28,14 @@ activate_stats_nerds(){
 # script usage
 usage(){
     echo "================================================================================"
-    echo "USAGE: $0 --load, --novideo, --disable"
+    echo "USAGE: $0 --load, --novideo, --disable, --uid"
     echo "================================================================================"
     echo "--load       Page load max duration"
     echo "--iface      Network interface in use"
     echo "--novideo    Turn off video recording"
 	echo "--disable    Disable auto-play"
 	echo "--pcap       Request pcap collection"	
+	echo "--uid        IMEI of the device"
     echo "================================================================================"
     exit -1
 }
@@ -47,14 +48,7 @@ generate_post_data(){
     "timestamp":"${current_time}",
     "uid":"${uid}",
     "cpu_util_midloadperc":"${cpu_usage_middle}",
-    "browser":"${browser}",
-    "URL":"${url}",
-    "bdw_load_MB":"${traffic_before_scroll}",
-    "bdw_scroll_MB":"${traffic_after_scroll}",
-    "tshark_traffic_MB":"${tshark_size}",
-    "load_dur_sec":"${load_time}",
-    "speed_index_ms":"${speed_index}",
-    "last_visual_change_ms":"${last_change}"
+    "data:"${data}",
     }
 EOF
 }
@@ -72,6 +66,7 @@ curr_run_id=`date +%s`             # unique id per run
 disable_autoplay="false"           # flag to control usage of autoplay 
 app="youtube"                      # used to detect process in CPU monitoring 
 pcap_collect="false"               # flag to control pcap collection
+uid="none"                         # user ID
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -94,6 +89,9 @@ do
             ;;
 		 --pcap)
             shift; pcap_collect="true";
+            ;;
+        --uid)
+        	shift; uid="$1"; shift;
             ;;
         -h | --help)
             usage
@@ -122,6 +120,13 @@ then
 		fi 
 	done < ".ps-$app"
 fi 
+
+# update UID if needed 
+if [ $uid == "none" ]
+then 
+	uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+fi 
+myprint "UID: $uid"
 
 # folder creation
 res_folder="./youtube-results/$suffix"
@@ -289,6 +294,8 @@ myprint "Stats-for-nerds correctly detecting. Starting data collection for $DURA
 t_s=`date +%s`
 t_e=`date +%s`
 let "t_p = t_s - t_e"
+cpu_usage_middle="N/A"
+let "HALF_DURATION = DURATION/2"
 while [ $t_p -lt $DURATION ] 
 do 
 	# click to copy clipboard 
@@ -302,7 +309,15 @@ do
 	sleep 1 
 	t_e=`date +%s`
 	let "t_p = t_e - t_s"
-	#echo "TimePassed: $t_p"
+
+	# keep track of CPU in the middle
+	if [ $t_p -le $HALF_DURATION] 
+	then 
+		if [ -f ".cpu-usage" ]
+    	then 
+        	cpu_usage_middle=`cat .cpu-usage`
+    	fi
+    fi 
 done
 
 # stop playing 
@@ -332,8 +347,10 @@ myprint "Sending report to the server: "
 if [ -f $log_file ] 
 then
 	data=`tail -n 1 $log_file`
-	echo $data 
-	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$data" https://mobile.batterylab.dev:8082/youtubetest
+	current_time=`date +%s`
+	myprint "Sending report to the server: "
+	echo "$(generate_post_data)" 
+	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/youtubetest
 fi 
 
 # clean youtube state and anything else 
