@@ -12,7 +12,7 @@ function ctrl_c() {
 	echo "false" > ".cpu_monitor"
 	./stop-net-testing.sh
 	close_all
-	sudo input keyevent KEYCODE_POWER
+	turn_device_off
 	exit -1 
 }
 

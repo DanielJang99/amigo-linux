@@ -189,9 +189,11 @@ accept_cookies(){
 chrome_onboarding(){
 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -f 2 -d "/" | sed s/"}"// | awk -F '.' '{print $NF}'`
 	if [ $curr_activity == "FirstRunActivity" ]
-	then 
+	then
+		echo "=> Click ACCEPT " 
 		tap_screen 370 1210 1   # click ACCEPT 
 		#tap_screen 370 1210 1  # yes to sync 
+		echo "=> Click NO SYNC"
 		tap_screen 120 1200 1   # no sync		
 		# below is needed in case of lite mode 
 		#tap_screen 600 1200 1    

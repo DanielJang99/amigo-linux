@@ -105,7 +105,14 @@ run_test(){
 	fi
 
 	# artificial time for page loading
-	sleep $load_time 
+	let "half = load_time/2"
+	sleep $half
+	if [ $url == "https://www.nytimes.com/" ]
+	then 
+		myprint "Attempt accepting cookies"
+		tap_screen 120 1200
+	fi 
+	sleep $half
 
 	# stop video recording and run we perf analysis
 	if [ $video_recording == "true" ]
@@ -268,6 +275,7 @@ do
 	 	fi 
 	else 
 	 	myprint "Using URL passed by user: $url"
+		i=$num_urls	
 	fi 
  
     # file naming
