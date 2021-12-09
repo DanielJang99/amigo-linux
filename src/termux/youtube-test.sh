@@ -3,6 +3,20 @@
 ## Author: Matteo Varvello (matteo.varvello@nokia.com)
 ## Date: 11/15/2021
 
+# trap ctrl-c and call ctrl_c()
+trap ctrl_c INT
+function ctrl_c() {
+	myprint "Trapped CTRL-C"
+	safe_stop
+	exit -1 
+}
+
+safe_stop(){
+	sudo pm clear com.google.android.youtube
+	sudo killall tcpdump
+	sudo input keyevent KEYCODE_HOME
+}
+
 # activate stats for nerds  
 activate_stats_nerds(){
 	myprint "Activating stats for nerds!!"
@@ -160,6 +174,7 @@ then
 	if [ $curr_activity != "WatchWhileActivity" ] 
 	then 
 		sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
+		sleep 5 
 	fi 
 fi 
 myprint "Enabling stats for nerds and no autoplay (in account settings)"
@@ -217,6 +232,12 @@ do
 	then
 		let "attempt++" 		
 		activate_stats_nerds
+		curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+		if [ $curr_activity != "WatchWhileActivity" ] 
+		then
+			myprint "Something went wrong!" 
+			safe_stop			
+		fi 
 		tap_screen 592 216 1
 		termux-clipboard-get > ".clipboard"
 		cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
@@ -266,8 +287,6 @@ done
 #sleep 2 
 #tap_screen 670 1130 1 
 
-# go HOME
-#sudo input keyevent KEYCODE_HOME
 
 # stop tcpdump 
 if [ $pcap_collect == "true" ]
@@ -284,6 +303,5 @@ fi
 # stop monitoring CPU
 echo "false" > ".to_monitor"
 
-# clean youtube state  
-myprint "Cleaning YT state"
-sudo pm clear com.google.android.youtube
+# clean youtube state and anything else 
+safe_stop
