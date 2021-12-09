@@ -154,10 +154,10 @@ generate_post_data(){
     "URL":"${url}",
     "bdw_load_MB":"${traffic_before_scroll}",
     "bdw_scroll_MB":"${traffic_after_scroll}",
-    "tshark_traffic":"${tshark_size}",
-    "load_time":"${load_time}",
-    "speed_index":"${speed_index}",
-    "last_visual_change":"${last_change}"
+    "tshark_traffic_MB":"${tshark_size}",
+    "load_dur_sec":"${load_time}",
+    "speed_index_ms":"${speed_index}",
+    "last_visual_change_ms":"${last_change}"
     }
 EOF
 }
@@ -256,6 +256,8 @@ if [ $uid == "none" ]
 then 
 	uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 fi 
+myprint "UID: $uid"
+exit -1 
 
 # folder creation
 res_folder="./website-testing-results/$suffix"
