@@ -521,6 +521,7 @@ sleep 5
 if [ $clear_state == "true" -a $app == "zoom" ] 
 then 
 	sudo input tap 435 832
+	sleep 5
 fi 
 
 # join a meeting in the app to be tested
