@@ -11,17 +11,17 @@ function ctrl_c() {
 	exit -1 
 }
 
+safe_stop(){
+	sudo pm clear com.google.android.youtube
+	sudo killall tcpdump
+	sudo input keyevent KEYCODE_HOME
+}
+
 send_report(){
 	current_time=`date +%s`
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 
 	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/youtubetest
-}
-
-safe_stop(){
-	sudo pm clear com.google.android.youtube
-	sudo killall tcpdump
-	sudo input keyevent KEYCODE_HOME
 }
 
 # activate stats for nerds  
@@ -196,6 +196,7 @@ then
         msg="ERROR-GOOGLE-ACCOUNT"
         send_report
     	safe_stop
+  		exit -1
     else
     	echo "authorized" > ".google_status"
         myprint "Google account is now verified"
@@ -287,6 +288,7 @@ do
 			msg="ERROR-STATS-NERDS-LEFT-APP"
         	send_report
 			safe_stop			
+			exit -1
 		fi 
 		tap_screen 592 216 1
 		termux-clipboard-get > ".clipboard"
