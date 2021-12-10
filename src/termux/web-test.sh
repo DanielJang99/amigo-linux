@@ -45,15 +45,14 @@ take_screenshots(){
 	do 
 		sudo input swipe 300 1000 300 300
 		sleep 2 
-		screen_file="${res_folder}/${id}-${curr_run_id}-${counter}.png"
-		sudo screencap -p $screen_file
-		sudo chown $USER:$USER $screen_file		
-		screen_file_short=`echo $screen_file | cut -f 1 -d "."`
-		cwebp -q 80 ${screen_file} -o "${screen_file_short}.webp" > /dev/null 2>&1 
-		if [ -f "${screen_file_short}.webp" ]
+		screen_file="${res_folder}/${id}-${curr_run_id}-${counter}"
+		sudo screencap -p $screen_file".png"
+		sudo chown $USER:$USER $screen_file".png"
+		cwebp -q 80 ${screen_file}".png" -o ${screen_file}".webp" > /dev/null 2>&1 
+		if [ -f ${screen_file}".webp" ]
 		then 
-			chmod 644 "${screen_file_short}.webp"
-			rm ${screen_file}
+			chmod 644 ${screen_file}".webp"
+			rm ${screen_file}".png"
 		fi 
 		let "counter++"
 	done	 
@@ -358,7 +357,6 @@ do
 	screen_file="${res_folder}/${id}-${curr_run_id}-${counter}"
 	sudo screencap -p $screen_file".png"
 	sudo chown $USER:$USER $screen_file".png"
-	echo "cwebp -q 80 ${screen_file}\".png\" -o ${screen_file}\".webp\""	
 	cwebp -q 80 ${screen_file}".png" -o ${screen_file}".webp" > /dev/null 2>&1 
 	if [ -f ${screen_file}".webp" ]
 	then 
