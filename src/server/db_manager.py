@@ -56,7 +56,7 @@ def insert_data_pool(tester_id, post_type, timestamp, data_json, postgreSQL_pool
 			insert_sql = "insert into status_update(tester_id, type, timestamp, data) values(%s, %s, %s, %s::jsonb);"
 			data = (tester_id, post_type, timestamp, json.dumps(data_json))
 			ps_cursor.execute(insert_sql, data)
-			conn.commit()   # make database changes persistent 	
+			ps_connection.commit()   # make database changes persistent 	
 			ps_cursor.close()
 
 			# Use this method to release the connection object and send back to connection pool
