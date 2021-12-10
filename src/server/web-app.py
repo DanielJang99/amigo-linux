@@ -46,7 +46,6 @@ session_data = {}
 supportedIDs = ['c95ad2777d56']   # list of client IDs supported 
 id_control  = False               # flag for client ID control 
 postgreSQL_pool = None            # pool of connection to DB
-num_threads = 5                   # number of concurrent threads
 
 # function to run a bash command
 def run_bash(bashCommand, verbose = True):
@@ -90,6 +89,7 @@ def web_app():
         'server.socket_port': port, 
         'server.ssl_module':'builtin',
         'server.ssl_certificate':'certificate.pem',
+        'server.thread_pool': 100,
     }
     cherrypy.config.update(server_config)
 
@@ -120,10 +120,9 @@ def signal_handler(signal, frame):
 	print('You pressed Ctrl+C!')
 
 	# kill throughput thread 
-	for i in range(num_threads):
-		print("stopping main thread")
-		THREADS[i].do_run = False
-		THREADS[i].join()
+	print("stopping main thread")
+	THREADS[0].do_run = False
+	THREADS[0].join()
 	
 	# kill cherrypy
 	print("stopping cherrypy webapp")
@@ -238,10 +237,6 @@ class StringGeneratorWebService(object):
 	# handle POST requests 
 	def POST(self, name="test"):
 	
-
-		# testing
-		print("ThreadID:", threading.current_thread().ident)
-
 		# parameters 
 		ret_code = 202	   # default return code 
 		result = []        # result to be returned when needed 
@@ -294,7 +289,7 @@ class StringGeneratorWebService(object):
 				command_id = command + '-'  + str(timestamp)
 				msg = insert_command(command_id, user_id, timestamp, command)
 			#else:
-			#	#msg = insert_data(user_id, post_type, timestamp, data_json)
+				#msg = insert_data(user_id, post_type, timestamp, data_json)
 			#	msg = insert_data_pool(user_id, post_type, timestamp, data_json, postgreSQL_pool)	
 			print(msg)
 	
@@ -330,11 +325,9 @@ if __name__ == '__main__':
 		print("Issue creating the connection pool")
 		sys.exit(-1)
 
-	# start N threads which handle client-server communication 
-	for i in range(num_threads):
-		thread = Thread(target = web_app())
-		THREADS.append(thread)
-		thread.start()
-
+	# start a thread which handle client-server communication 
+	THREADS.append(Thread(target = web_app()))
+	THREADS[-1].start()
+	
 	# listen to Ctrl+C
 	signal.signal(signal.SIGINT, signal_handler)
