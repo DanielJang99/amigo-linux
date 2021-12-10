@@ -377,6 +377,7 @@ sudo input keyevent 111
 myprint "Script will run with a <$fast_freq, $slow_freq> frequency. To stop: <<echo \"false\" > \".status\""
 last_loop_time=0
 last_slow_loop_time=0
+firstPause="true"
 while [ $to_run == "true" ] 
 do 
 	# update google status 
@@ -403,10 +404,15 @@ do
 	fi 
 	if [ $user_status == "false" ] 
 	then 
-		echo "Paused by user"
+		if [ $firstPause == "true" ]
+		then
+			myprint "Paused by user"
+			firstPause="false"
+		fi 
 		echo "true" > ".isPaused"
 		./stop-net-testing.sh  
 	else 
+		firstPause="true"
 		echo "false" > ".isPaused"	
 	fi 
 

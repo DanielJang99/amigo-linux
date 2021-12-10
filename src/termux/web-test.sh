@@ -383,7 +383,11 @@ do
 	rm ".done-screenshots"
 
 	# close the browser
-	close_all
+	if [ $single != "true" ]
+	then
+		close_all
+	fi
+	sudo pm clear $package
 
 	# make sure CPU background process is done
 	t_2=`date +%s`
@@ -436,5 +440,7 @@ then
 fi
 
 # all done
-safe_stop
-
+if [ $single != "true" ]
+then
+	safe_stop
+fi 

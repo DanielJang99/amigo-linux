@@ -37,7 +37,7 @@ activate_stats_nerds(){
 # script usage
 usage(){
     echo "================================================================================"
-    echo "USAGE: $0 --load, --novideo, --disable, --uid"
+    echo "USAGE: $0 --load, --novideo, --disable, --uid, --pcap, --single"
     echo "================================================================================"
     echo "--load       Page load max duration"
     echo "--iface      Network interface in use"
@@ -45,6 +45,7 @@ usage(){
 	echo "--disable    Disable auto-play"
 	echo "--pcap       Request pcap collection"	
 	echo "--uid        IMEI of the device"
+	echo "--single     User test, make it easier"
     echo "================================================================================"
     exit -1
 }
@@ -78,6 +79,7 @@ disable_autoplay="false"           # flag to control usage of autoplay
 app="youtube"                      # used to detect process in CPU monitoring 
 pcap_collect="false"               # flag to control pcap collection
 uid="none"                         # user ID
+single="false"                     # user initiated test (same logic as per web)
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -103,6 +105,9 @@ do
             ;;
         --uid)
         	shift; uid="$1"; shift;
+            ;;
+        --single)
+            shift; single="true"; 
             ;;
         -h | --help)
             usage
@@ -176,52 +181,57 @@ done
 sleep 3
 
 # click account notification if there (guessing so far)
-sudo input tap 560 725
-sleep 10
-sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep "MinuteMaidActivity"
-need_to_verify=$?
-if [ $need_to_verify -eq 0 ]
-then
-    myprint "Google account validation needed"
-    sleep 10 
-    sudo input tap 600 1200
-    sleep 5
-    sudo input text "Bremen2013"
-    sleep 3
-    sudo input keyevent KEYCODE_ENTER
-    sleep 10
-    sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep MinuteMaidActivity
-    if [ $? -eq 0 ]
-    then
-        myprint "ERROR - notification cannot be accepted. Inform USER"
-        echo "not-authorized" > ".google_status"
-        msg="ERROR-GOOGLE-ACCOUNT"
-        send_report
-    	safe_stop
-  		exit -1
-    else
-    	echo "authorized" > ".google_status"
-        myprint "Google account is now verified"
-    fi
-else
-	echo "authorized" > ".google_status"
-    myprint "Google account is already verified"
-fi
+if [ $single != "true" ] 
+then 
+	sudo input tap 560 725
+	sleep 10
+	sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep "MinuteMaidActivity"
+	need_to_verify=$?
+	if [ $need_to_verify -eq 0 ]
+	then
+	    myprint "Google account validation needed"
+	    sleep 10 
+	    sudo input tap 600 1200
+	    sleep 5
+	    sudo input text "Bremen2013"
+	    sleep 3
+	    sudo input keyevent KEYCODE_ENTER
+	    sleep 10
+	    sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep MinuteMaidActivity
+	    if [ $? -eq 0 ]
+	    then
+	        myprint "ERROR - notification cannot be accepted. Inform USER"
+	        echo "not-authorized" > ".google_status"
+	        msg="ERROR-GOOGLE-ACCOUNT"
+	        send_report
+	    	safe_stop
+	  		exit -1
+	    else
+	    	echo "authorized" > ".google_status"
+	        myprint "Google account is now verified"
+	    fi
+	else
+		echo "authorized" > ".google_status"
+	    myprint "Google account is already verified"
+	fi
 
-# handle issue when clicking a warning which is not there (basically redo step)
-sudo pm clear com.google.android.youtube
-myprint "Launching YT (AGAIN) and allow to settle - should be faster now..."
-sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
-sleep 10 
-# myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
-# curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-# while [ $curr_activity != "WatchWhileActivity" ] 
-# do 
-# 	sleep 3 
-# 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-# 	echo $curr_activity
-# done
-# sleep 3
+	# handle issue when clicking a warning which is not there (basically redo step)
+	sudo pm clear com.google.android.youtube
+	myprint "Launching YT (AGAIN) and allow to settle - should be faster now..."
+	sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
+	sleep 10 
+	# myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
+	# curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+	# while [ $curr_activity != "WatchWhileActivity" ] 
+	# do 
+	# 	sleep 3 
+	# 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+	# 	echo $curr_activity
+	# done
+	# sleep 3
+else 
+	myprint "Skipping account verification"
+fi 
 
 # enable stats for nerds in the main account 
 myprint "Enabling stats for nerds and no autoplay (in account settings)"
@@ -398,4 +408,10 @@ send_report
 #fi 
 
 # clean youtube state and anything else 
-safe_stop
+if [ $single != "true" ] 
+then 
+	safe_stop
+else 
+	sudo pm clear com.google.android.youtube
+	sudo killall tcpdump
+fi 
