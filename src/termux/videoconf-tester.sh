@@ -142,12 +142,13 @@ run_zoom(){
 	else 
 		myprint "Entering Password: $password" 
 		sudo input text "$password" 
+		sleep 2 
 		tap_screen 530 535 
 	fi 
 
 	# sync barrier 
 	myprint "WARNING -- skipping sync barrier...might be to hard to manage" 
-	sleep 5 
+	sleep 10
 	#sync_barrier
 	
 	# click join with video or not
@@ -157,7 +158,7 @@ run_zoom(){
 	else 
 		y_coord="1180"     
 	fi 
-	tap_screen $x_center $y_coord 2
+	tap_screen $x_center $y_coord 5
 
 	# click to join audio
 	tap_screen 200 1110 2 
