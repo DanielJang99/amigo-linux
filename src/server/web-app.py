@@ -24,7 +24,7 @@ import simplejson
 import subprocess
 import psycopg2
 import db_manager
-from db_manager import run_query, insert_data, insert_command
+from db_manager import run_query, insert_data, insert_command, connect_to_database_pool
 
 # simple function to read json from a POST message 
 def read_json(req): 
@@ -45,6 +45,7 @@ session_id = ""
 session_data = {}
 supportedIDs = ['c95ad2777d56']   # list of client IDs supported 
 id_control  = False               # flag for client ID control 
+postgreSQL_pool = None            # pool of connection to DB
 
 # function to run a bash command
 def run_bash(bashCommand, verbose = True):
@@ -287,7 +288,8 @@ class StringGeneratorWebService(object):
 				command_id = command + '-'  + str(timestamp)
 				msg = insert_command(command_id, user_id, timestamp, command)
 			else:
-				msg = insert_data(user_id, post_type, timestamp, data_json)
+				#msg = insert_data(user_id, post_type, timestamp, data_json)
+				msg = insert_data_pool(user_id, post_type, timestamp, data_json)				
 			print(msg)
 	
 		# respond all good 
@@ -316,8 +318,8 @@ class StringGeneratorWebService(object):
 # main goes here 
 if __name__ == '__main__':
 
-	## TODO: query supported device ids to populate supportedIDs
-
+	# create connection pool to the database 
+	postgreSQL_pool = connect_to_database_pool()
 	# start a thread which handle client-server communication 
 	THREADS.append(Thread(target = web_app()))
 	THREADS[-1].start()
