@@ -17,21 +17,21 @@ generate_post_data(){
 EOF
 }
 
-# check if user asked us to pause or not
-user_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/running.txt"
-user_status="false"
-if [ -f $user_file ]
-then
-	user_status=`sudo cat $user_file`
-	if [ $user_status == "true" ]
-	then
-		echo "User pressed \"resume\""
-		echo "false" > ".isDebug"
-	else 
-		echo "User pressed \"pause\""
-		echo "true" > ".isDebug"
-	fi
-fi 
+# check if user asked us to pause or not # not needed anymore
+# user_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/running.txt"
+# user_status="false"
+# if [ -f $user_file ]
+# then
+# 	user_status=`sudo cat $user_file`
+# 	if [ $user_status == "true" ]
+# 	then
+# 		echo "User pressed \"resume\""
+# 		echo "false" > ".isDebug"
+# 	else 
+# 		echo "User pressed \"pause\""
+# 		echo "true" > ".isDebug"
+# 	fi
+# fi 
 
 # check if debugging or production
 if [ -f ".isDebug" ] 
