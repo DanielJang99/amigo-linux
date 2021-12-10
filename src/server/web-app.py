@@ -256,7 +256,7 @@ class StringGeneratorWebService(object):
 		url = cherrypy.url()
 		if 'status' in url or 'appstatus' in url or 'ratings' in url or 'tags' in url or 'webtest' in url or 'youtubetest' in url or 'videoconftest' in url or 'benchmarking' in url:
 			data_json = read_json(cherrypy.request)
-			print(data_json)
+			#print(data_json)
 			user_id = data_json['uid']
 			if user_id not in supportedIDs and id_control:  			
 				cherrypy.response.status = 400
@@ -291,7 +291,7 @@ class StringGeneratorWebService(object):
 			#else:
 				#msg = insert_data(user_id, post_type, timestamp, data_json)
 			#	msg = insert_data_pool(user_id, post_type, timestamp, data_json, postgreSQL_pool)	
-			print(msg)
+			#print(msg)
 	
 		# respond all good 
 		cherrypy.response.headers['Content-Type'] = 'application/json'
