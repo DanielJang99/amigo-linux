@@ -369,6 +369,7 @@ sudo input keyevent 111
 
 # external loop 
 to_run=`cat ".status"`
+sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"
 myprint "Script will run with a <$fast_freq, $slow_freq> frequency. To stop: <<echo \"false\" > \".status\""
 last_loop_time=0
 last_slow_loop_time=0
@@ -463,6 +464,7 @@ do
 		sleep $t_p
 	fi 
 	to_run=`cat ".status"`
+	sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"
 	current_time=`date +%s`
 	last_loop_time=$current_time
 

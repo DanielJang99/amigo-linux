@@ -44,9 +44,9 @@ install_simple(){
 	else
 		vrs=`ssh -oStrictHostKeyChecking=no -i ../id_rsa_mobile -p 8022 $wifi_ip "sudo dumpsys package $pkg | grep versionName" | cut -f 2 -d "="`
 		echo "$pkg is already installed - version:$vrs"
-		if [ $apk == "app-debug.apk" -a $vrs != $last_vrs ] 
+		if [ $apk == "app-debug.apk" -a $vrs != $kenzo_vrs ] 
 		then 
-			echo "Re-installing our app  since it is an old vesion: $vrs (last_vrs:$last_vrs)"
+			echo "Re-installing our app  since it is an old vesion: $vrs (last_vrs:$kenzo_vrs)"
 			ssh -oStrictHostKeyChecking=no -i ../id_rsa_mobile -p 8022 $wifi_ip "sudo pm uninstall $pkg"
 			./install-app-wifi.sh $wifi_ip $apk
 		fi 
@@ -61,7 +61,7 @@ termux_pack="com.termux"          # termux package
 termux_boot="com.termux.boot"     # termux boot package 
 termux_api="com.termux.api"       # termux API package 
 production="false"                # default we are debugging 
-last_vrs="1.3"                    # last version of our app
+kenzo_vrs="1.4"                   # last version of our app
 
 # check if we want to switch to production
 if [ $# -eq 2 ] 
