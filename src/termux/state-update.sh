@@ -400,7 +400,7 @@ do
 	fi 
 	if [ $user_status == "false" ] 
 	then 
-		echo "User is asking to pause!"
+		echo "Paused by user"
 		echo "true" > ".isPaused"
 		./stop-net-testing.sh  
 	fi 
@@ -469,7 +469,7 @@ do
 
 	# if we are paused we stop here 
 	isPaused=`cat ".isPaused"`
-	if [ $isPaused -eq "true" ]
+	if [ $isPaused == "true" ]
 	then
 		continue
 	fi 
