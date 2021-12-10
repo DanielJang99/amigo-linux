@@ -57,6 +57,7 @@ take_screenshots(){
 visual(){
 	clean_file ".visualmetrics"
     sleep 5 # allow things to finish (maybe can be saved)
+    ps aux | grep screenrecord
 	myprint "Running visualmetrics/visualmetrics.py (background - while visual prep is done)"
 	python visualmetrics/visualmetrics.py --video $screen_video --viewport > $perf_video 2>&1
 	speed_index=`cat $perf_video | grep "Speed Index" | cut -f 2 -d ":" | sed s/" "//g`
