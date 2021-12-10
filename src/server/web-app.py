@@ -325,11 +325,21 @@ if __name__ == '__main__':
 		sys.exit(-1)
 
 	# start N threads which handle client-server communication 
-	num_threads = 5 
-	for i in range(num_threads):
-		print("starting thread:", i)
-		THREADS.append(Thread(target = web_app()))
-		THREADS[-1].start()
+	THREADS.append(Thread(target = web_app()))
+	THREADS.append(Thread(target = web_app()))
+	THREADS.append(Thread(target = web_app()))
+	THREADS.append(Thread(target = web_app()))
+	THREADS.append(Thread(target = web_app()))	
+	print("starting thread:")
+	THREADS[-1].start()
+	print("starting thread:")
+	THREADS[-2].start()
+	print("starting thread:")
+	THREADS[-3].start()
+	print("starting thread:")
+	THREADS[-4].start()
+	print("starting thread:")
+	THREADS[-5].start()	
 	
 	# listen to Ctrl+C
 	signal.signal(signal.SIGINT, signal_handler)
