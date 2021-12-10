@@ -1,5 +1,4 @@
 https://www.bbc.com/news
-https://www.nytimes.com/
 https://foxnews.com/
 https://www.washingtonpost.com/
 https://www.wsj.com/

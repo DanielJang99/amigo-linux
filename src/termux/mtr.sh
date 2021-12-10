@@ -7,10 +7,12 @@
 test(){
 	prefix=$2
 	sudo mtr -r4wc $num $1  >  $res_dir/$prefix-ipv4-$ts.txt 2>&1
+	gzip $res_dir/$prefix-ipv4-$ts.txt
 	ping6 -c 3 $1 > /dev/null 2>&1
 	if [ $? -eq 0 ] 
 	then 
 		sudo mtr -r6wc $num $1   >  $res_dir/$prefix-ipv6-$ts.txt 2>&1
+		gzip $res_dir/$prefix-ipv6-$ts.txt 
 	fi 
 }
 
@@ -39,9 +41,13 @@ test amazon.com amazon
 
 # popular DNS
 sudo mtr -r4wc $num 8.8.8.8 >  $res_dir/google-dns-ipv4-$ts.txt 2>&1
+gzip $res_dir/google-dns-ipv4-$ts.txt
 sudo mtr -r6wc $num 2001:4860:4860::8888 >  $res_dir/google-dns-ipv6-$ts.txt 2>&1
+gzip $res_dir/google-dns-ipv6-$ts.txt 
 sudo mtr -r4wc $num 1.1.1.1 >  $res_dir/cloudflare-dns-ipv4-$ts.txt 2>&1
+gzip $res_dir/cloudflare-dns-ipv4-$ts.txt 
 sudo mtr -r6wc $num 2606:4700:4700::1111 >  $res_dir/cloudflare-dns-ipv6-$ts.txt 2>&1
+gzip $res_dir/cloudflare-dns-ipv6-$ts.txt 
 
 # logging 
 t_e=`date +%s`

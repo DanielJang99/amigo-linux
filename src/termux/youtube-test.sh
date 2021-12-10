@@ -373,6 +373,7 @@ do
     	fi
     fi 
 done
+gzip $log_file
 
 # stop playing (attempt)
 myprint "Stop playing!"
@@ -391,8 +392,8 @@ then
     myprint "Stopped tcpdump. Starting tshark analysis"
     tshark -nr $pcap_file -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file
     tshark_size=`cat $tshark_file | awk -F "," -v my_ip=$my_ip '{if($4!=my_ip){if($8=="UDP"){tot_udp += ($NF-8);} if($8=="TCP"){tot_tcp += ($11);}}}END{tot=(tot_tcp+tot_udp)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000}'`
-	myprint "$tshark_size"
-    sudo rm $pcap_file
+	gzip $tshark_file
+	sudo rm $pcap_file
 fi
 
 # stop monitoring CPU

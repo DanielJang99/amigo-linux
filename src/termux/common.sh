@@ -101,6 +101,8 @@ cpu_monitor(){
             sleep $sleep_time
             to_monitor=`cat .to_monitor`    
         done
+        myprint "Stopped saving CPU values to $log_cpu"
+        gzip $log_cpu
     else 
         myprint "Background process monitoring CPU not found"
     fi 

@@ -22,6 +22,7 @@ echo "[`date`] speedtest-cli..."
 res_folder="speedtest-cli-logs/${suffix}"
 mkdir -p $res_folder
 speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
+gzip "${res_folder}/speedtest-$t_s.json"
 
 # run a speedtest in the browser (fast.com) -- having issue on this phone 
 #./speed-browse-test.sh $suffix $t_s
