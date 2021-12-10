@@ -319,7 +319,11 @@ class StringGeneratorWebService(object):
 if __name__ == '__main__':
 
 	# create connection pool to the database 
-	postgreSQL_pool = connect_to_database_pool()
+	connected, postgreSQL_pool = connect_to_database_pool()
+	if not connected: 
+		print("Issue creating the connection pool")
+		return -1
+
 	# start a thread which handle client-server communication 
 	THREADS.append(Thread(target = web_app()))
 	THREADS[-1].start()

@@ -31,7 +31,6 @@ def connect_to_database_pool():
 		if (postgreSQL_pool):
 			print("Connection pool created successfully")
 			status = True
-			postgreSQL_pool.getconn()
 		else: 
 			print("Something is wrong")
 			status = False 
