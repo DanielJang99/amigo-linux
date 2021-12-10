@@ -24,7 +24,7 @@ import simplejson
 import subprocess
 import psycopg2
 import db_manager
-from db_manager import run_query, insert_data, insert_command, connect_to_database_pool
+from db_manager import run_query, insert_data, insert_command, connect_to_database_pool, insert_data_pool
 
 # simple function to read json from a POST message 
 def read_json(req): 
