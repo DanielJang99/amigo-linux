@@ -311,6 +311,12 @@ fi
 # retrieve unique ID for this device and pass to our app
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 
+# status update
+echo "true" > ".status"
+to_run=`cat ".status"`
+sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"
+echo "false" > ".isPaused"
+
 #restart Kenzo - so that background service runs and info is populated 
 turn_device_on
 myprint "Granting Kenzo permission and restart..."
@@ -341,7 +347,6 @@ if [ ! -f ".last_command_pi" ]
 then
 	echo "testing" > ".last_command_pi"
 fi 
-echo "true" > ".status"
 if [ ! -f ".net_status" ] 
 then
 	echo "false" > ".net_status"
@@ -369,8 +374,6 @@ sudo input keyevent KEYCODE_HOME
 sudo input keyevent 111
 
 # external loop 
-to_run=`cat ".status"`
-echo "false" > ".isPaused"
 myprint "Script will run with a <$fast_freq, $slow_freq> frequency. To stop: <<echo \"false\" > \".status\""
 last_loop_time=0
 last_slow_loop_time=0
