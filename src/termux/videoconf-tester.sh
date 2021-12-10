@@ -39,7 +39,7 @@ send_report(){
 	msg="ALL-GOOD"
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 
-	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/youtubetest
+	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/videoconftest
 }
 
 # import utilities files needed
@@ -661,7 +661,7 @@ fi
 let "half_duration = duration/2 - 5"
 sleep $half_duration 
 sudo screencap -p $res_folder"/"$test_id".png" 
-sudo chown $USER:$USER $screen_file		
+sudo chown $USER:$USER $res_folder"/"$test_id".png"
 
 # sleep rest of the experiment
 sleep $half_duration 
