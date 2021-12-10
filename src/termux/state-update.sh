@@ -236,8 +236,8 @@ update_wifi_mobile(){
 # parameters
 slow_freq=15                           # interval for checking commands to run (slower)
 fast_freq=3                            # interval for checking the app (faster)
-REPORT_INTERVAL=180                    # interval of status reporting (seconds)
-NET_INTERVAL=1200                      # interval of networking testing 
+REPORT_INTERVAL=300                    # interval of status reporting (seconds)
+NET_INTERVAL=1800                      # interval of networking testing (3600)
 kenzo_pkg="com.example.sensorexample"  # our app 
 last_report_time="1635969639"          # last time a report was sent (init to an old time)
 last_net="1635969639"                  # last time a net test was done (init to an old time) 
@@ -403,6 +403,8 @@ do
 		echo "Paused by user"
 		echo "true" > ".isPaused"
 		./stop-net-testing.sh  
+	else 
+		echo "false" > ".isPaused"	
 	fi 
 
 	# check if user wants to run a test 
@@ -428,8 +430,8 @@ do
 						t_wifi_mobile_update=`date +%s`	
 						
 						# open a random webpage 
-						echo "Open a webpage -- ./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single"
-						./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single 
+						echo "Open a random webpage -- ./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single --pcap"
+						./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single --pcap
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-quickly-the-page-loaded:1-star-(slow)--5-stars-(fast)"
 						sleep 30 # allow time to enter input	
 						continue # go back up to see if user wants to run another test 
@@ -440,7 +442,7 @@ do
 						update_wifi_mobile 
 						t_wifi_mobile_update=`date +%s`	
 						echo "Watch a video -- ./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface"						
-						./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface
+						./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface --pcap
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-the-video-played:1-star-(poor)--5-stars-(great)"
 						sleep 30 # allow time to enter input	
 						continue # go back up to see if user wants to run another test 
