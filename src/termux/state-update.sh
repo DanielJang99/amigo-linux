@@ -9,6 +9,7 @@ function ctrl_c() {
 	myprint "Trapped CTRL-C"
 	echo "false" > ".cpu_monitor"
 	echo "false" > ".status"
+	sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"	
 	echo "false" > ".cpu_monitor"
 	./stop-net-testing.sh
 	close_all
@@ -369,7 +370,7 @@ sudo input keyevent 111
 
 # external loop 
 to_run=`cat ".status"`
-sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"
+#sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"
 myprint "Script will run with a <$fast_freq, $slow_freq> frequency. To stop: <<echo \"false\" > \".status\""
 last_loop_time=0
 last_slow_loop_time=0
@@ -401,6 +402,7 @@ do
 	then 
 		echo "User is asking to stop!"
 		echo "false" > ".status"
+		sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"
 		echo "false" > ".cpu_monitor"
 		./stop-net-testing.sh 
 		break 
@@ -413,8 +415,8 @@ do
 		sel_id=`sudo cat $sel_file | cut -f 1`
 		time_sel=`sudo cat $sel_file | cut -f 2`
 		let "time_from_sel = current_time - time_sel"
-		let "time_check = freq + freq/2"
-		if [ $time_from_sel -lt $time_check ] 
+		let "time_check = slow_freq + slow_freq/2" # cut some slack, we check more often than this
+		if [ $time_from_sel -lt $time_check ]  
 		then 
 			echo "User entered selection: $sel_id (Time: $time_sel -- $current_time)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
 			if [ $def_iface != "none" ] 
@@ -469,13 +471,11 @@ do
 	last_loop_time=$current_time
 
 	# loop rate control (slow)
-	current_time=`date +%s`
 	let "t_p = (current_time - last_slow_loop_time)"
 	if [ $t_p -lt $slow_freq ] 
 	then 
 		continue
 	fi 
-	to_run=`cat ".status"`
 	last_slow_loop_time=$current_time
 
 	# check if there is a new command to run
