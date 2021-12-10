@@ -287,9 +287,9 @@ class StringGeneratorWebService(object):
 				timestamp = data_json['timestamp']
 				command_id = command + '-'  + str(timestamp)
 				msg = insert_command(command_id, user_id, timestamp, command)
-			else:
-				#msg = insert_data(user_id, post_type, timestamp, data_json)
-				msg = insert_data_pool(user_id, post_type, timestamp, data_json, postgreSQL_pool)	
+			#else:
+			#	#msg = insert_data(user_id, post_type, timestamp, data_json)
+			#	msg = insert_data_pool(user_id, post_type, timestamp, data_json, postgreSQL_pool)	
 			print(msg)
 	
 		# respond all good 
@@ -323,10 +323,12 @@ if __name__ == '__main__':
 	if not connected: 
 		print("Issue creating the connection pool")
 		sys.exit(-1)
-		
+
 	# start a thread which handle client-server communication 
 	THREADS.append(Thread(target = web_app()))
+	THREADS.append(Thread(target = web_app()))	
 	THREADS[-1].start()
+	THREADS[-2].start()
 	
 	# listen to Ctrl+C
 	signal.signal(signal.SIGINT, signal_handler)
