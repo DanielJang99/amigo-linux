@@ -288,10 +288,10 @@ class StringGeneratorWebService(object):
 				timestamp = data_json['timestamp']
 				command_id = command + '-'  + str(timestamp)
 				msg = insert_command(command_id, user_id, timestamp, command)
-			#else:
+			else:
 				#msg = insert_data(user_id, post_type, timestamp, data_json)
-			#	msg = insert_data_pool(user_id, post_type, timestamp, data_json, postgreSQL_pool)	
-			#print(msg)
+				msg = insert_data_pool(user_id, post_type, timestamp, data_json, postgreSQL_pool)	
+			print(msg)
 	
 		# respond all good 
 		cherrypy.response.headers['Content-Type'] = 'application/json'
