@@ -19,6 +19,7 @@ def connect_to_database():
 
 # connect to databse (with a pool)
 def connect_to_database_pool(): 
+	postgreSQL_pool = None
 	try:
 		print("connecting to database with a pool")
 		postgreSQL_pool = psycopg2.pool.SimpleConnectionPool(1, 20, user="nyu",
