@@ -6,6 +6,7 @@ import time
 import json 
 import sys
 import psycopg2
+from psycopg2 import pool
 
 # connect to databse 
 def connect_to_database(): 
