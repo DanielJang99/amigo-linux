@@ -233,7 +233,6 @@ update_wifi_mobile(){
 
 }
 
-
 # parameters
 slow_freq=15                           # interval for checking commands to run (slower)
 fast_freq=3                            # interval for checking the app (faster)
@@ -249,6 +248,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=3                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
+vrs="1.0"                              # code version 
 
 # check if testing
 if [ $# -eq 1 ] 
@@ -370,7 +370,7 @@ sudo input keyevent 111
 
 # external loop 
 to_run=`cat ".status"`
-#sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"
+echo "false" > ".isPaused"
 myprint "Script will run with a <$fast_freq, $slow_freq> frequency. To stop: <<echo \"false\" > \".status\""
 last_loop_time=0
 last_slow_loop_time=0
@@ -383,9 +383,9 @@ do
 	current_time=`date +%s`
 	suffix=`date +%d-%m-%Y`
 
-	# update WiFi and mobile phone connectivity if it is time to do so 
+	# update WiFi and mobile phone connectivity if it is time to do so (once a minute)
 	let "t_last_wifi_mobile_update =  current_time - t_wifi_mobile_update"
-	if [ $t_last_wifi_mobile_update -gt 60 ] # check once a minute
+	if [ $t_last_wifi_mobile_update -gt 60 ] 
 	then 
 		update_wifi_mobile 
 		t_wifi_mobile_update=`date +%s`
@@ -400,12 +400,9 @@ do
 	fi 
 	if [ $user_status == "false" ] 
 	then 
-		echo "User is asking to stop!"
-		echo "false" > ".status"
-		sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"
-		echo "false" > ".cpu_monitor"
-		./stop-net-testing.sh 
-		break 
+		echo "User is asking to pause!"
+		echo "true" > ".isPaused"
+		./stop-net-testing.sh  
 	fi 
 
 	# check if user wants to run a test 
@@ -470,6 +467,13 @@ do
 	current_time=`date +%s`
 	last_loop_time=$current_time
 
+	# if we are paused we stop here 
+	isPaused=`cat ".isPaused"`
+	if [ $isPaused -eq "true" ]
+	then
+		continue
+	fi 
+		
 	# loop rate control (slow)
 	let "t_p = (current_time - last_slow_loop_time)"
 	if [ $t_p -lt $slow_freq ] 
