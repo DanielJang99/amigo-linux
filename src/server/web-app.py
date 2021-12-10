@@ -324,11 +324,11 @@ if __name__ == '__main__':
 		print("Issue creating the connection pool")
 		sys.exit(-1)
 
-	# start a thread which handle client-server communication 
-	THREADS.append(Thread(target = web_app()))
-	THREADS.append(Thread(target = web_app()))	
-	THREADS[-1].start()
-	THREADS[-2].start()
+	# start N threads which handle client-server communication 
+	num_threads = 5 
+	for i in range(num_threads)
+		THREADS.append(Thread(target = web_app()))
+		THREADS[-1].start()
 	
 	# listen to Ctrl+C
 	signal.signal(signal.SIGINT, signal_handler)
