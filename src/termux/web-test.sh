@@ -48,7 +48,7 @@ take_screenshots(){
 		screen_file="${res_folder}/${id}-${curr_run_id}-${counter}.png"
 		sudo screencap -p $screen_file
 		sudo chown $USER:$USER $screen_file		
-		screen_file_short=`echo $screen_file | cut -f 1 -d "."``
+		screen_file_short=`echo $screen_file | cut -f 1 -d "."`
 		cwebp -q 80 ${screen_file} -o "${screen_file_short}.webp" > /dev/null 2>&1 
 		if [ -f "${screen_file_short}.webp" ]
 		then 
@@ -358,7 +358,7 @@ do
 	screen_file="${res_folder}/${id}-${curr_run_id}-${counter}.png"
 	sudo screencap -p $screen_file
 	sudo chown $USER:$USER $screen_file
-	screen_file_short=`echo $screen_file | cut -f 1 -d "."``
+	screen_file_short=`echo $screen_file | cut -f 1 -d "."`
 	cwebp -q 80 ${screen_file} -o "${screen_file_short}.webp" > /dev/null 2>&1 
 	if [ -f "${screen_file_short}.webp" ]
 	then 

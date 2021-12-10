@@ -82,7 +82,7 @@ done
 
 # current free space 
 free_space_e=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
-let "space_used = free_space_s - free_space_e"
+space_used=`echo "$free_space_s $free_space_e" | awk '{print($1-$2)}'`
 
 #logging 
 echo "[`date`] net-testing END. FreeSpace: $free_space_e SpaceUsed: $space_used"
