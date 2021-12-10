@@ -485,7 +485,7 @@ do
 			prev_command=`cat ".prev_command"`
 		fi 
 		myprint "Checking if there is a command to execute"
-		ans=`timeout 10 curl -s "https://mobile.batterylab.dev:8082/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`
+		ans=`timeout 15 curl -s "https://mobile.batterylab.dev:8082/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`
 		if [[ "$ans" == *"No command matching"* ]]
 		then
 			myprint "No command found"
@@ -511,7 +511,7 @@ do
 					comm_status=$?
 					myprint "Command executed. Status: $comm_status"
 				fi
-				ans=`timeout 10 curl -s "https://mobile.batterylab.dev:8082/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${termux_user}"`
+				ans=`timeout 15 curl -s "https://mobile.batterylab.dev:8082/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${termux_user}"`
 				myprint "Informed server about last command run. ANS: $ans"
 			fi 
 			echo $comm_id > ".prev_command"
@@ -653,7 +653,7 @@ do
 		then
 			myprint "Skipping report sending since not connected"
 		else 
-			timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
+			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
 		fi 
 		echo $current_time > ".last_report"
 	fi 

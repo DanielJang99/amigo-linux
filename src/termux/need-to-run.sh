@@ -50,7 +50,7 @@ then
 	uptime_info=`uptime`
 	msg="reboot"
 	echo "$(generate_post_data)"
-	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
+	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
 fi 
 
 # don't run if already running

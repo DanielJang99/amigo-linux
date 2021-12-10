@@ -425,7 +425,7 @@ do
 	current_time=`date +%s`
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 	
-	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/webtest
+	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/webtest
 	myprint "[RESULTS]\tBrowser:$browser\tURL:$url\tBDW-LOAD:$traffic_before_scroll MB\tBDW-SCROLL:$traffic_after_scroll MB\tTSharkTraffic:$tshark_size\tLoadTime:$load_time\tSpeedIndex:$speed_index\tLastVisualChange:$last_change"
 done
 

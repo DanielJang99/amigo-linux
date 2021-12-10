@@ -39,7 +39,7 @@ send_report(){
 	msg="ALL-GOOD"
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 
-	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/videoconftest
+	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/videoconftest
 }
 
 # import utilities files needed
