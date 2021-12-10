@@ -289,7 +289,7 @@ class StringGeneratorWebService(object):
 				msg = insert_command(command_id, user_id, timestamp, command)
 			else:
 				#msg = insert_data(user_id, post_type, timestamp, data_json)
-				msg = insert_data_pool(user_id, post_type, timestamp, data_json)				
+				msg = insert_data_pool(user_id, post_type, timestamp, data_json, postgreSQL_pool)	
 			print(msg)
 	
 		# respond all good 
