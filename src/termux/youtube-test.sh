@@ -390,7 +390,7 @@ fi
 echo "false" > ".to_monitor"
 
 # log and report 
-msg="All good!"
+msg="ALL-GOOD"
 send_report
 #if [ -f $log_file ]  # FIXME 
 #then

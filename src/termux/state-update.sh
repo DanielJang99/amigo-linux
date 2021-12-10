@@ -274,6 +274,12 @@ then
     done < ".ps-$app"
 fi
 
+# always make sure screen is in portrait 
+#sudo content insert --uri content://settings/system --bind name:s:accelerometer_rotation --bind value:i:0
+#sudo content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:0  # 1 => for landscape 
+sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
+sudo  settings put system user_rotation 0          # put in portrait
+
 # update Google account authorization status
 check_account_via_YT
 if [ ! -f ".google_status" ] 

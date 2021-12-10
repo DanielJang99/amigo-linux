@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/data/data/com.termux/files/usr/bin/env bash
 ## Author: Matteo Varvello 
 ## Date:   11/10/2021
 
@@ -101,6 +101,7 @@ run_test(){
 	fi
 
 	# artificial time for page loading
+	cpu_usage_middle="N/A"
 	let "half = load_time/2"
 	sleep $half
 	if [ -f ".cpu-usage" ]
@@ -149,7 +150,7 @@ generate_post_data(){
     "today":"${suffix}",
     "timestamp":"${current_time}",
     "uid":"${uid}",
-    "cpu_util_midloadperc":"${cpu_usage_middle}",
+    "cpu_util_midload_perc":"${cpu_usage_middle}",
     "browser":"${browser}",
     "URL":"${url}",
     "bdw_load_MB":"${traffic_before_scroll}",

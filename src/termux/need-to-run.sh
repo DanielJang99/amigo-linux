@@ -58,7 +58,7 @@ ps aux | grep "state-update.sh" | grep "bash" > ".ps"
 N=`cat ".ps" | wc -l`
 if [ $N -eq 0 -a $debug == "false" ] 
 then 
-	echo "need to run"
+	echo "Time to run!"
 	# inform server of restart needed
 	suffix=`date +%d-%m-%Y`
 	current_time=`date +%s`
@@ -71,6 +71,8 @@ then
 	# restart script 
 	mkdir -p logs
 	./state-update.sh > "logs/log-state-update-"`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1 &
+else 
+	echo "No need to run"
 fi
 
 # logging

@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/data/data/com.termux/files/usr/bin/env bash
 ## Note:   Script to automate videoconferencing clients
 ## Author: Matteo Varvello
 ## Date:   11/29/2021
@@ -18,6 +18,29 @@ safe_stop(){
 	sudo killall tcpdump
 }
 
+# generate data to be POSTed to my server
+generate_post_data(){
+  cat <<EOF
+    {
+    "today":"${suffix}",
+    "timestamp":"${current_time}",
+    "uid":"${uid}",
+    "cpu_util_midload_perc":"${cpu_usage_middle}",
+    "bdw_used_MB":"${traffic}",
+    "tshark_traffic_MB":"${tshark_size}", 
+    "msg":"${msg}"
+    }
+EOF
+}
+
+# send report to our server 
+send_report(){
+	current_time=`date +%s`
+	msg="ALL-GOOD"
+	myprint "Sending report to the server: "
+	echo "$(generate_post_data)" 
+	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/youtubetest
+}
 
 # import utilities files needed
 DEBUG=1
@@ -42,9 +65,6 @@ sync_barrier(){
 
 # make sure a device is unlocked 
 unlock_device(){
-	# make sure screen is on
-	turn_device_on
-
 	# check if device is locked or not
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
 	if [[ "$foreground" == *"StatusBar"* ]]
@@ -288,7 +308,7 @@ leave_meet(){
 # script usage
 usage(){
     echo "====================================================================================================================================================================="
-    echo "USAGE: $0 -a/--app, -p/--pass, -m/--meet, -v/--video, -D/--dur, -c/--clear, -i/--id, --pcap, --iface, --remote, --vpn, --view"
+    echo "USAGE: $0 -a/--app, -p/--pass, -m/--meet, -v/--video, -D/--dur, -c/--clear, -i/--id, --pcap, --iface, --remote, --vpn, --view,  --uid"
     echo "====================================================================================================================================================================="
     echo "-a/--app        videoconf app to use: zoom, meet, webex" 
     echo "-p/--pass       zoom meeting password" 
@@ -303,6 +323,7 @@ usage(){
     echo "--remote        start a remote client in Azure"
     echo "--rec           record video of the screen"
     echo "--view          change from default view"
+    echo "--uid           IMEI of the device"
     echo "====================================================================================================================================================================="
     exit -1
 }
@@ -325,6 +346,7 @@ change_view="false"                      # change from default view
 turn_off="false"                         # turn off the screen 
 big_packet="false"                       # keep track if big packet size was passed 
 use_mute="false"                         # FIXME 
+uid="none"                               # user ID
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -375,9 +397,12 @@ do
         --view)
             shift; change_view="true";
             ;;
-         --off)
+        --off)
             shift; turn_off="true"; 
             ;;      
+        --uid)
+        	shift; uid="$1"; shift;
+            ;;
         -*)
             echo "ERROR: Unknown option $1"
             usage
@@ -402,6 +427,13 @@ then
         fi
     done < ".ps-videoconf"
 fi
+
+# update UID if needed 
+if [ $uid == "none" ]
+then 
+	uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+fi 
+myprint "UID: $uid"
 
 # clean sync files 
 use_sync="true"
@@ -442,19 +474,18 @@ find_package
 res_folder="./videoconferencing/${suffix}"
 mkdir -p $res_folder 
 
-# ntp update 
-use_ntp="false"
-if [ $use_ntp == "tru" ] 
-then 
-	sudo ntpdate 0.us.pool.ntp.org
-fi 
+# # ntp update  # currently not supported on termux
+# use_ntp="false"
+# if [ $use_ntp == "tru" ] 
+# then 
+# 	sudo ntpdate 0.us.pool.ntp.org
+# fi 
 
-# make sure device is on and unlocked
+# make sure screen is on
+turn_device_on
+
+# make sure device is on and unlocked # no need
 unlock_device
-
-# always make sure screen is in portrait 
-sudo content insert --uri content://settings/system --bind name:s:accelerometer_rotation --bind value:i:0
-sudo content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:0  # 1 => for landscape 
 
 # clear app states and  re-grant permissions
 if [ $clear_state == "true" ] 
@@ -707,15 +738,13 @@ compute_bandwidth $traffic_rx_last
 traffic_rx_last=$curr_traffic
 
 # log results
-#median_cpu=`python median-cpu.py $log_cpu`
 median_cpu="N/A"
 let "call_duration = t_now - t_actual_launch"
-myprint "[INFO] App:$app\tCallDuration:$call_duration\tBDW:$traffic MB\tTsharkTraffic:$tshark_size\t" #MedianCPU:$median_cpu %"
 log_traffic=$res_folder"/"$test_id".traffic"
 echo -e "$app_traffic\t$pi_traffic" > $log_traffic
 
-# always make sure screen is in portrait 
-sudo content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:0  # 1 => for landscape 
+# send report to the server
+send_report
 
 # return HOME and turn off screen 
 sudo input keyevent HOME

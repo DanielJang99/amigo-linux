@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/data/data/com.termux/files/usr/bin/env bash
 # import utilities files needed
 adb_file=`pwd`"/adb-utils.sh"
 source $adb_file
