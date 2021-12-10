@@ -55,8 +55,8 @@ take_screenshots(){
 
 # run video ananlysis for web perf
 visual(){
-	sleep 5 # allow things to finish (maybe can be saved)		
 	clean_file ".visualmetrics"
+    sleep 5 # allow things to finish (maybe can be saved)
 	myprint "Running visualmetrics/visualmetrics.py (background - while visual prep is done)"
 	python visualmetrics/visualmetrics.py --video $screen_video --viewport > $perf_video 2>&1
 	speed_index=`cat $perf_video | grep "Speed Index" | cut -f 2 -d ":" | sed s/" "//g`
@@ -397,30 +397,46 @@ do
 		sleep $t_sleep
 	fi 
 	
-	# make sure visual analysis is done 
-	myprint "Waiting for visual metrics - START"
-	ps aux | grep "visualmetrics.py" | grep -v "grep"
-	ans=$?
-	while [ $ans -eq 0 ]
+	# # make sure visual analysis is done 
+	# myprint "Waiting for visual metrics - START"
+	# ps aux | grep "visualmetrics.py" | grep -v "grep"
+	# ans=$?
+	# while [ $ans -eq 0 ]
+	# do 
+	# 	sleep 2
+	# 	ps aux | grep "visualmetrics.py" | grep -v "grep"
+	# 	ans=$?
+	# 	let "c++"
+	# 	if [ $c -ge 10 ]
+	# 	then
+	# 		# stop process 						 
+	# 		myprint "visualmetrics.py seems stuck. Killing it."
+	# 		for pid in `ps aux | grep "visualmetrics.py" | grep -v "grep" | awk '{print $2}'`
+	# 		do 
+	# 			kill -9 $pid
+	# 		done			
+	# 		break 
+	# 	fi 
+	# done
+	myprint "Waiting for visual metrics to be done..."
+	while [ ! -f ".visualmetrics" ] 
 	do 
-		sleep 2
-		ps aux | grep "visualmetrics.py" | grep -v "grep"
-		ans=$?
+		sleep 2 
 		let "c++"
-		if [ $c -ge 10 ]
-		then
+		if [ $c -eq 20 ]
+		then 
 			# stop process 						 
 			myprint "visualmetrics.py seems stuck. Killing it."
 			for pid in `ps aux | grep "visualmetrics.py" | grep -v "grep" | awk '{print $2}'`
 			do 
 				kill -9 $pid
-			done			
+			done
 			break 
 		fi 
 	done
-	myprint "Waiting for visual metrics - DONE"
 	if [ -f ".visualmetrics" ] 
 	then
+		myprint "DONE and metrics found"		
 		speed_index=`cat ".visualmetrics" | cut -f 1`
 		last_change=`cat ".visualmetrics" | cut -f 2`
 	fi 
