@@ -55,13 +55,14 @@ take_screenshots(){
 
 # run video ananlysis for web perf
 visual(){
+	sleep 5 # allow things to finish (maybe can be saved)		
 	clean_file ".visualmetrics"
 	myprint "Running visualmetrics/visualmetrics.py (background - while visual prep is done)"
 	python visualmetrics/visualmetrics.py --video $screen_video --viewport > $perf_video 2>&1
 	speed_index=`cat $perf_video | grep "Speed Index" | cut -f 2 -d ":" | sed s/" "//g`
 	last_change=`cat $perf_video | grep "Last" | cut -f 2 -d ":" | sed s/" "//g`
 	echo -e "$speed_index\t$last_change" > ".visualmetrics"
-	rm $screen_video
+	#rm $screen_video
 }
 
 # helper to extra last frame of a video
@@ -118,7 +119,6 @@ run_test(){
 	# stop video recording and run we perf analysis
 	if [ $video_recording == "true" ]
 	then
-		sleep 5 # allow things to finish (maybe can be saved)
 		sudo chown $USER:$USER $screen_video
 		if [ -f "visualmetrics/visualmetrics.py" ] 
 		then

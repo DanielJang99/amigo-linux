@@ -272,7 +272,6 @@ sudo input tap 370 1250
 # start CPU monitoring
 log_cpu="${res_folder}/${curr_run_id}.cpu"
 clean_file $log_cpu
-clean_file $log_cpu_top
 myprint "Starting listener to CPU monitor. Log: $log_cpu"
 echo "true" > ".to_monitor"
 cpu_monitor $log_cpu &

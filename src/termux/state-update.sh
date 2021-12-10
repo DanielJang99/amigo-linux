@@ -444,7 +444,7 @@ do
 						./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single --pcap
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-quickly-the-page-loaded:1-star-(slow)--5-stars-(fast)"
 						sleep 30 # allow time to enter input	
-						continue # go back up to see if user wants to run another test 
+						#continue # go back up to see if user wants to run another test 
 						;;
 
 					"1")
@@ -455,7 +455,7 @@ do
 						./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface --pcap --single
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-the-video-played:1-star-(poor)--5-stars-(great)"
 						sleep 30 # allow time to enter input	
-						continue # go back up to see if user wants to run another test 
+						#continue # go back up to see if user wants to run another test 
 						;;
 					  *)
 						echo "Option not supported"
