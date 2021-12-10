@@ -274,11 +274,6 @@ do
     urlList[$num_urls]="$line"
     let "num_urls++"
 done < $url_file
-for((ii=0; ii<num_urls; ii++))
-do
- 	echo ${urlList[$ii]}
-done
-exit 0
 
 # clean the browser before testing 
 browser="chrome"
@@ -311,11 +306,13 @@ do
 			ii=$num_urls
 		else 
 		    url=${urlList[$ii]} 
+		    myprint "Next URL: $url ($i)"
 	 	fi 
 	else 
 	 	myprint "Using URL passed by user: $url"
 		ii=$num_urls	
 	fi 
+	continue
  
     # file naming
     id=`echo $url | md5sum | cut -f1 -d " "`
