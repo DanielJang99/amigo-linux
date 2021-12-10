@@ -99,6 +99,7 @@ check_account_via_YT(){
 generate_post_data(){
   cat <<EOF
     {
+    "vrs_num":"${vrs}",  
     "today":"${suffix}", 
     "timestamp":"${current_time}",
     "uid":"${uid}",
