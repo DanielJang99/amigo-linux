@@ -76,7 +76,7 @@ def insert_data_pool(tester_id, post_type, timestamp, data_json, postgreSQL_pool
 		msg = "Issue getting a connection from the pool"    
 
 	# all done 
-return msg
+	return msg
 
 # run a generic query on the database
 def run_query(query):
