@@ -325,7 +325,7 @@ if __name__ == '__main__':
 		sys.exit(-1)
 
 	# start N threads which handle client-server communication 
-	for i in range(5):
+	for i in range(20):
 		thread = Thread(target = web_app())
 		THREADS.append(thread)
 		thread.start()
