@@ -326,7 +326,8 @@ if __name__ == '__main__':
 
 	# start N threads which handle client-server communication 
 	num_threads = 5 
-	for i in range(num_threads)
+	for i in range(num_threads):
+		print("starting thread:", i)
 		THREADS.append(Thread(target = web_app()))
 		THREADS[-1].start()
 	
