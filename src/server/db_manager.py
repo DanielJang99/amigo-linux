@@ -45,24 +45,24 @@ def insert_data_pool(tester_id, post_type, timestamp, data_json, postgreSQL_pool
 	msg = '' 
 
 	# Use getconn() to Get Connection from connection pool
-    ps_connection = postgreSQL_pool.getconn()
+	ps_connection = postgreSQL_pool.getconn()
 
-    if (ps_connection):
-    	try:
-	        print("successfully received connection from connection pool ")
-	        ps_cursor = ps_connection.cursor()
-	        insert_sql = "insert into status_update(tester_id, type, timestamp, data) values(%s, %s, %s, %s::jsonb);"
+	if (ps_connection):
+		try:
+			print("successfully received connection from connection pool ")
+			ps_cursor = ps_connection.cursor()
+			insert_sql = "insert into status_update(tester_id, type, timestamp, data) values(%s, %s, %s, %s::jsonb);"
 			data = (tester_id, post_type, timestamp, json.dumps(data_json))
 			ps_cursor.execute(insert_sql, data)
 			conn.commit()   # make database changes persistent 	
-	        ps_cursor.close()
-	        
-	        # Use this method to release the connection object and send back to connection pool
-	        postgreSQL_pool.putconn(ps_connection)
-	        print("Put away a PostgreSQL connection")
-	        msg = "status_update:all good" 				
-	    
-	    # handle exception 
+			ps_cursor.close()
+
+			# Use this method to release the connection object and send back to connection pool
+			postgreSQL_pool.putconn(ps_connection)
+			print("Put away a PostgreSQL connection")
+			msg = "status_update:all good" 				
+
+		# handle exception 
 		except Exception as e:
 			msg += 'Issue inserting into database. Error %s' % e    
 
@@ -74,9 +74,9 @@ def insert_data_pool(tester_id, post_type, timestamp, data_json, postgreSQL_pool
 				postgreSQL_pool.putconn(ps_connection)
 	else:
 		msg = "Issue getting a connection from the pool"    
-	
+
 	# all done 
-	return msg
+return msg
 
 # run a generic query on the database
 def run_query(query):
