@@ -24,7 +24,7 @@ import simplejson
 import subprocess
 import psycopg2
 import db_manager
-from db_manager import run_query, insert_data, insert_command
+from db_manager import run_query, insert_data, insert_command, connect_to_database_pool, insert_data_pool
 
 # simple function to read json from a POST message 
 def read_json(req): 
@@ -45,6 +45,7 @@ session_id = ""
 session_data = {}
 supportedIDs = ['c95ad2777d56']   # list of client IDs supported 
 id_control  = False               # flag for client ID control 
+postgreSQL_pool = None            # pool of connection to DB
 
 # function to run a bash command
 def run_bash(bashCommand, verbose = True):
@@ -88,6 +89,7 @@ def web_app():
         'server.socket_port': port, 
         'server.ssl_module':'builtin',
         'server.ssl_certificate':'certificate.pem',
+        'server.thread_pool': 200,
     }
     cherrypy.config.update(server_config)
 
@@ -102,6 +104,10 @@ def web_app():
     cherrypy.tree.mount(StringGeneratorWebService(), '/appstatus', conf)     # report charging state, wifi password, etc. 
     cherrypy.tree.mount(StringGeneratorWebService(), '/ratings', conf)       # kenzo app reporting some user ratings
     cherrypy.tree.mount(StringGeneratorWebService(), '/tags', conf)          # report tag status 
+    cherrypy.tree.mount(StringGeneratorWebService(), '/webtest', conf)       # report web results 
+    cherrypy.tree.mount(StringGeneratorWebService(), '/youtubetest', conf)   # report youtube results 
+    cherrypy.tree.mount(StringGeneratorWebService(), '/videoconftest', conf) # report videoconf  results 
+    cherrypy.tree.mount(StringGeneratorWebService(), '/benchmarking', conf)  # benchmarking
 
     # start cherrypy engine 
     cherrypy.engine.start()
@@ -178,11 +184,13 @@ class StringGeneratorWebService(object):
 			for entry in info:
 				print(entry)
 				timestamp = entry[5]
-				user_target = entry[1]
+				user_target_list = entry[1]
 				status = entry[6]
-				if user_target == "*" and user_id in status:
-					continue
-				if user_target == user_id and ('DONE' in status or unique_id in status):
+				#if user_target == "*" and user_id in status:
+				#	continue
+				#if user_target == user_id and ('DONE' in status or unique_id in status):
+				#	continue
+				if unique_id in status:  # it means this user already completed this job
 					continue
 				if timestamp > max_timestamp: 
 					max_timestamp = timestamp 
@@ -245,25 +253,33 @@ class StringGeneratorWebService(object):
 				return "Error: Forbidden" 
 
 		# status update reporting 
-		if 'status' in cherrypy.url() or 'appstatus' in cherrypy.url() or 'ratings' in cherrypy.url() or 'tags' in cherrypy.url():
+		url = cherrypy.url()
+		if 'status' in url or 'appstatus' in url or 'ratings' in url or 'tags' in url or 'webtest' in url or 'youtubetest' in url or 'videoconftest' in url or 'benchmarking' in url:
 			data_json = read_json(cherrypy.request)
-			print(data_json)
-			#user_id = data_json['adb_id']
+			#print(data_json)
 			user_id = data_json['uid']
-			if user_id not in supportedIDs and id_control:  			
-				cherrypy.response.status = 400
-				print("User %s is not supported" %(user_id))
-				return "Error: User is not supported"
-			else: 
-				print("User %s is supported" %(user_id))
+			# if user_id not in supportedIDs and id_control:  			
+			# 	cherrypy.response.status = 400
+			# 	print("User %s is not supported" %(user_id))
+			# 	return "Error: User is not supported"
+			# else: 
+			# 	print("User %s is supported" %(user_id))
 			if 'status' in cherrypy.url():
 				post_type = "status"
+			elif 'benchmarking' in cherrypy.url():
+				post_type = "bench"
 			elif 'appstatus' in cherrypy.url():
 				post_type = "appstatus"
 			elif 'ratings' in cherrypy.url():
 				post_type = "ratings"
 			elif 'tags' in cherrypy.url():
 				post_type = "tags"
+			elif 'webtest' in cherrypy.url():
+				post_type = "webtest"
+			elif 'youtubetest' in cherrypy.url():
+				post_type = "youtubetest"
+			elif 'videoconftest' in cherrypy.url():
+				post_type = "videoconftest"
 			timestamp = data_json['timestamp']			
 			msg = ''
 			if 'appstatus' in cherrypy.url():
@@ -272,9 +288,10 @@ class StringGeneratorWebService(object):
 				timestamp = data_json['timestamp']
 				command_id = command + '-'  + str(timestamp)
 				msg = insert_command(command_id, user_id, timestamp, command)
-			else:
-				msg = insert_data(user_id, post_type, timestamp, data_json)
-			print(msg)
+			#else:
+				#msg = insert_data(user_id, post_type, timestamp, data_json)
+			#	msg = insert_data_pool(user_id, post_type, timestamp, data_json, postgreSQL_pool)	
+			#print(msg)
 	
 		# respond all good 
 		cherrypy.response.headers['Content-Type'] = 'application/json'
@@ -302,7 +319,11 @@ class StringGeneratorWebService(object):
 # main goes here 
 if __name__ == '__main__':
 
-	## TODO: query supported device ids to populate supportedIDs
+	# create connection pool to the database 
+	connected, postgreSQL_pool = connect_to_database_pool()
+	if not connected: 
+		print("Issue creating the connection pool")
+		sys.exit(-1)
 
 	# start a thread which handle client-server communication 
 	THREADS.append(Thread(target = web_app()))

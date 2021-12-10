@@ -10,6 +10,7 @@ import psutil
 import db_manager
 import os 
 from db_manager import run_query, insert_data, insert_command, insert_pi_command
+import time 
 
 ## Eample to cleanup status updates
 ## python db-interface.py query "delete from status_update;"
@@ -22,7 +23,7 @@ from db_manager import run_query, insert_data, insert_command, insert_pi_command
 
 # read input
 if len(sys.argv) < 2:
-	print("USAGE: " + sys.argv[0] + " opt [ssh/update/restart/generic] [uid-list] [command]")
+	print("USAGE: " + sys.argv[0] + " opt [ssh/update/restart/wifi/generic] [uid-list] [command]")
 	sys.exit(-1)
 opt = sys.argv[1]
 
@@ -61,17 +62,43 @@ elif opt == "update":
 	info = insert_pi_command(command_id, uid_list, time.time(), "git pull", str(10), "false")
 elif opt == "restart":
 	if len(sys.argv) == 3:
-		uid_list = sys.argv[2]
+		uid_list = sys.argv[2].split(',')
 	print("Requested code restart for devices:", uid_list)
 	info = insert_pi_command(command_id, uid_list, time.time(), "echo \"false\" > \".status\"", str(10), "false")
+elif opt == "stop":
+	if len(sys.argv) == 3:
+		uid_list = sys.argv[2].split(',')
+	print("Requested STOP for devices:", uid_list)
+	info = insert_pi_command(command_id, uid_list, time.time(), "echo \"true\" > \".isDebug\"", str(10), "false") # this stops monitor script 
+	time.sleep(5)
+	info = insert_pi_command(command_id, uid_list, time.time(), "echo \"false\" > \".status\"", str(10), "false")
+elif opt == "wifi":
+	if len(sys.argv) != 4:
+		print("USAGE: " + sys.argv[1] + " <generic> <uid_list> <command>")
+		sys.exit(-1)
+	uid_list = sys.argv[2].split(',')
+	switch  = sys.argv[3]
+	if switch == "enable": 
+		command = "termux-wifi-enable true"
+	elif switch == "disable":
+		command = "termux-wifi-enable false"
+	else: 
+		print("ERROR")
+		sys.exit(-1)
+	info = insert_pi_command(command_id, uid_list, time.time(), command, str(10), "false")
+	print(info)
 elif opt == "generic":
 	if len(sys.argv) != 4:
 		print("USAGE: " + sys.argv[1] + " <generic> <uid_list> <command>")
 		sys.exit(-1)
 	uid_list = sys.argv[2].split(',')
-	command = sys.argv[3]
-	command = "./videoconf-tester.sh -a meet -m grp-ehna-qya --dur 30 --suffix prova --pcap --iface wlan0 --clear --big 500"
-	#command = "./videoconf-tester.sh -a meet -m grp-ehna-qya --dur 30 --suffix `date +%d-%m-%Y` --pcap --iface wlan0 --clear --big 500"
+	#command = sys.argv[3]
+	#command = "echo \"true\" > \".net_status\""
+	command = "echo \"false\" > \".net_status\""
+	#command = "./videoconf-tester.sh -a meet -m grp-ehna-qya --dur 30 --suffix prova --pcap --iface wlan0 --clear --big 500"                 # meet example
+	#command = "./videoconf-tester.sh -a zoom -m 4170438763 -p 6m2jmA --dur 30 --suffix prova --pcap --iface wlan0 --clear --big 500"         # zoom example
+	#command = "./videoconf-tester.sh -a webex -m 1828625842 --dur 30 --suffix prova --pcap --iface wlan0 --clear --big 500"                  # webex example
+	#command = "./videoconf-tester.sh -a meet -m grp-ehna-qya --dur 30 --suffix `date +%d-%m-%Y` --pcap --iface wlan0 --clear --big 500"      #NOT WORKING (FIXME)
 	info = insert_pi_command(command_id, uid_list, time.time(), command, str(300), "false")
 	print(info)
 else: 
