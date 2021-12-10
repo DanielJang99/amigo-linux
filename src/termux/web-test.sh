@@ -274,6 +274,11 @@ do
     urlList[$num_urls]="$line"
     let "num_urls++"
 done < $url_file
+for((ii=0; ii<num_urls; ii++))
+do
+ 	echo urlList[$ii]
+done
+exit 0
 
 # clean the browser before testing 
 browser="chrome"
