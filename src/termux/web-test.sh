@@ -276,7 +276,7 @@ do
 done < $url_file
 for((ii=0; ii<num_urls; ii++))
 do
- 	echo urlList[$ii]
+ 	echo ${urlList[$ii]}
 done
 exit 0
 
