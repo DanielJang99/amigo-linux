@@ -363,7 +363,7 @@ do
 	if [ -f ${screen_file}".webp" ]
 	then 
 		chmod 644 ${screen_file}".webp"
-		#rm ${screen_file}".png"
+		rm ${screen_file}".png"
 	fi 
 	t_last_scroll=0
 	if [ -f ".time_last_scroll" ] 
