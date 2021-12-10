@@ -89,7 +89,7 @@ def web_app():
         'server.socket_port': port, 
         'server.ssl_module':'builtin',
         'server.ssl_certificate':'certificate.pem',
-        'server.thread_pool': 100,
+        'server.thread_pool': 200,
     }
     cherrypy.config.update(server_config)
 
@@ -258,12 +258,12 @@ class StringGeneratorWebService(object):
 			data_json = read_json(cherrypy.request)
 			#print(data_json)
 			user_id = data_json['uid']
-			if user_id not in supportedIDs and id_control:  			
-				cherrypy.response.status = 400
-				print("User %s is not supported" %(user_id))
-				return "Error: User is not supported"
-			else: 
-				print("User %s is supported" %(user_id))
+			# if user_id not in supportedIDs and id_control:  			
+			# 	cherrypy.response.status = 400
+			# 	print("User %s is not supported" %(user_id))
+			# 	return "Error: User is not supported"
+			# else: 
+			# 	print("User %s is supported" %(user_id))
 			if 'status' in cherrypy.url():
 				post_type = "status"
 			elif 'benchmarking' in cherrypy.url():
