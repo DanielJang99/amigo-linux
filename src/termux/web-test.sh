@@ -292,8 +292,9 @@ myprint "Interface: $interface IP: $my_ip"
 # loop across URLs to be tested
 myprint "Loaded $num_urls URLs"
 screenshots_flag="false"
-for((i=0; i<num_urls; i++))
+for((ii=0; ii<num_urls; ii++))
 do
+	echo "index value: $ii"
     # get URL to be tested 
     if [ $url == "none" ] 
    	then
@@ -302,13 +303,13 @@ do
 			let "i = RANDOM % num_urls"
 		    url=${urlList[$i]} 
 		    myprint "Random URL: $url ($i)"
-			i=$num_urls
+			ii=$num_urls
 		else 
-		    url=${urlList[$i]} 
+		    url=${urlList[$ii]} 
 	 	fi 
 	else 
 	 	myprint "Using URL passed by user: $url"
-		i=$num_urls	
+		ii=$num_urls	
 	fi 
  
     # file naming
@@ -383,21 +384,14 @@ do
 	done
 	rm ".done-screenshots"
 
-	# # close the browser
-	# if [ $single != "true" ]
-	# then
-	# 	close_all
-	# fi
-	
-
-	# make sure CPU background process is done
-	t_2=`date +%s`
-	let "t_sleep = 5 - (t_2 - t_1)"
-	if [ $t_sleep -gt 0  -a $single != "true" ] 
-	then 
-		echo "Sleeping: $t_sleep"
-		sleep $t_sleep
-	fi 
+	# # make sure CPU background process is done
+	# t_2=`date +%s`
+	# let "t_sleep = 5 - (t_2 - t_1)"
+	# if [ $t_sleep -gt 0  -a $single != "true" ] 
+	# then 
+	# 	echo "Sleeping: $t_sleep"
+	# 	sleep $t_sleep
+	# fi 
 	
 	# # make sure visual analysis is done 
 	# myprint "Waiting for visual metrics - START"
@@ -421,6 +415,7 @@ do
 	# 	fi 
 	# done
 	myprint "Waiting for visual metrics to be done..."
+	c=0
 	while [ ! -f ".visualmetrics" ] 
 	do 
 		sleep 2 
@@ -438,7 +433,6 @@ do
 	done
 	if [ -f ".visualmetrics" ] 
 	then
-		myprint "DONE and metrics found"		
 		speed_index=`cat ".visualmetrics" | cut -f 1`
 		last_change=`cat ".visualmetrics" | cut -f 2`
 	fi 
