@@ -17,6 +17,9 @@ then
 	iface=$3
 fi  
 
+# current free space 
+free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
+
 # run a speedtest 
 echo "[`date`] speedtest-cli..."
 res_folder="speedtest-cli-logs/${suffix}"
@@ -77,6 +80,9 @@ do
 done
 #########################################
 
+# current free space 
+free_space_e=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
+let "space_used = free_space_s - free_space_e"
 
 #logging 
-echo "[`date`] net-testing END"
+echo "[`date`] net-testing END. FreeSpace: $free_space_e SpaceUsed: $space_used"
