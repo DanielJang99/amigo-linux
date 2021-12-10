@@ -57,13 +57,12 @@ take_screenshots(){
 visual(){
 	clean_file ".visualmetrics"
     sleep 5 # allow things to finish (maybe can be saved)
-    ps aux | grep screenrecord
-	myprint "Running visualmetrics/visualmetrics.py (background - while visual prep is done)"
+    myprint "Running visualmetrics/visualmetrics.py (background - while visual prep is done)"
 	python visualmetrics/visualmetrics.py --video $screen_video --viewport > $perf_video 2>&1
 	speed_index=`cat $perf_video | grep "Speed Index" | cut -f 2 -d ":" | sed s/" "//g`
 	last_change=`cat $perf_video | grep "Last" | cut -f 2 -d ":" | sed s/" "//g`
 	echo -e "$speed_index\t$last_change" > ".visualmetrics"
-	#rm $screen_video
+	rm $screen_video
 }
 
 # helper to extra last frame of a video
@@ -287,10 +286,11 @@ chrome_onboarding
 #browser_setup #FIXME => allow to skip chrome onboarding, but using a non working option
 
 # get private  IP in use
-my_ip=`ifconfig $interface | grep "\." | grep -v packets | awk '{print $2}'`
+my_ip=`ifconfig $interface | grep "\." | grep -v "packets" | awk '{print $2}'`
 myprint "Interface: $interface IP: $my_ip" 
 
 # loop across URLs to be tested
+myprint "Loaded $num_urls URLs"
 screenshots_flag="false"
 for((i=0; i<num_urls; i++))
 do
@@ -344,7 +344,7 @@ do
 	echo "false" > ".to_monitor"
 	t_1=`date +%s`
 
-	# take last screenshots 
+	# take screenshot of final load
 	counter=0
 	screen_file="${res_folder}/${id}-${curr_run_id}-${counter}.png"
 	sudo screencap -p $screen_file
@@ -383,18 +383,19 @@ do
 	done
 	rm ".done-screenshots"
 
-	# close the browser
-	if [ $single != "true" ]
-	then
-		close_all
-	fi
-	sudo pm clear $package
+	# # close the browser
+	# if [ $single != "true" ]
+	# then
+	# 	close_all
+	# fi
+	
 
 	# make sure CPU background process is done
 	t_2=`date +%s`
 	let "t_sleep = 5 - (t_2 - t_1)"
 	if [ $t_sleep -gt 0  -a $single != "true" ] 
 	then 
+		echo "Sleeping: $t_sleep"
 		sleep $t_sleep
 	fi 
 	
@@ -460,4 +461,6 @@ fi
 if [ $single != "true" ]
 then
 	safe_stop
+else 
+	sudo pm clear $package
 fi 
