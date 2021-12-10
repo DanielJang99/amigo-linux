@@ -450,8 +450,8 @@ do
 						./stop-net-testing.sh
 						update_wifi_mobile 
 						t_wifi_mobile_update=`date +%s`	
-						echo "Watch a video -- ./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface"						
-						./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface --pcap
+						echo "Watch a video -- ./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface --pcap --single"						
+						./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface --pcap --single
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-the-video-played:1-star-(poor)--5-stars-(great)"
 						sleep 30 # allow time to enter input	
 						continue # go back up to see if user wants to run another test 
