@@ -20,22 +20,24 @@ def connect_to_database():
 # connect to databse (with a pool)
 def connect_to_database_pool(): 
 	try:
-	    print("connecting to database with a pool")
-	    postgreSQL_pool = psycopg2.pool.SimpleConnectionPool(1, 20, user="nyu",
-	                                                         password="pa0l1n0",
-	                                                         host="127.0.0.1",
-	                                                         port="5432",
-	                                                         database="mobile_testbed")
-	    if (postgreSQL_pool):
-	        print("Connection pool created successfully")
-	        status = True
-	    else: 
-	        print("Something is wrong")
-	        status = False 
+		print("connecting to database with a pool")
+		postgreSQL_pool = psycopg2.pool.SimpleConnectionPool(1, 20, user="nyu",
+					password="pa0l1n0",
+					host="127.0.0.1",
+					port="5432",
+					database="mobile_testbed")
+		if (postgreSQL_pool):
+			print("Connection pool created successfully")
+			status = True
+		else: 
+			print("Something is wrong")
+			status = False 
 	except (Exception, psycopg2.DatabaseError) as error:
-    	print("Error while connecting to PostgreSQL", error)
-    	status = False 
-    return status, postgreSQL_pool
+		print("Error while connecting to PostgreSQL", error)
+		status = False 
+	
+	# all good 
+	return status, postgreSQL_pool
 
 # insert status update from a device in the database
 def insert_data_pool(tester_id, post_type, timestamp, data_json, postgreSQL_pool):
