@@ -454,4 +454,10 @@ send_report
 #fi 
 
 # clean youtube state and anything else 
-safe_stop
+if [ $single != "true" ] 
+then
+	safe_stop
+else 
+	sudo killall tcpdump
+	close_all
+fi

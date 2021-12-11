@@ -89,6 +89,7 @@ check_account_via_YT(){
 	fi
 
 	# make sure screen is off
+	close_all # resume YT state 
 	turn_device_off
 }
 
