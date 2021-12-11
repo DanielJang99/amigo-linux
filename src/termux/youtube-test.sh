@@ -16,7 +16,10 @@ safe_stop(){
 	#sudo pm clear com.google.android.youtube
 	sudo killall tcpdump
 	close_all
-	turn_device_off
+	if [ $single != "true" ] 
+	then
+		turn_device_off
+	fi 
 }
 
 send_report(){
@@ -384,6 +387,7 @@ then
 		msg="ERROR-STATS-NERDS"
  	    send_report
  	    safe_stop
+ 	    exit -1 
 	else
 		cat ".clipboard" > $log_file
 		echo "" >> $log_file
@@ -454,10 +458,4 @@ send_report
 #fi 
 
 # clean youtube state and anything else 
-if [ $single != "true" ] 
-then
-	safe_stop
-else 
-	sudo killall tcpdump
-	close_all
-fi
+safe_stop
