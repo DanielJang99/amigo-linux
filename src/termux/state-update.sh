@@ -377,6 +377,8 @@ sudo input keyevent KEYCODE_HOME
 sudo input keyevent 111
 
 # external loop 
+sel_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/selection.txt"
+user_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/running.txt"	
 myprint "Script will run with a <$fast_freq, $slow_freq> frequency. To stop: <<echo \"false\" > \".status\""
 last_loop_time=0
 last_slow_loop_time=0
@@ -399,7 +401,6 @@ do
 	fi 
 	
 	# check if user wants us to pause 
-	user_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/running.txt"
 	user_status="true"
 	if [ -f $user_file ] 
 	then 
@@ -420,7 +421,6 @@ do
 	fi 
 
 	# check if user wants to run a test 
-	sel_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/selection.txt"
 	if [ -f $sel_file ] 
 	then 
 		sel_id=`sudo cat $sel_file | cut -f 1`
