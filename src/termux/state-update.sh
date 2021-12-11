@@ -540,9 +540,9 @@ do
 	if [ -f ".cpu-usage" ] 
 	then 
 		cpu_util=`cat ".cpu-usage" | cut -f 1 -d "."`
-		if [ $cpu_util -gt 85 ] 
+		num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`			
+		if [ $cpu_util -ge 85 ] 
 		then 
-			num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`
 			if [ $num -eq 0 ]
 			then 
 				let "strike++"
@@ -557,7 +557,7 @@ do
 		else 
 			strike=0
 		fi 
-		myprint "CPU usage: $cpu_util StrikeCount: $strike"
+		myprint "CPU usage: $cpu_util StrikeCount: $strike NetTesting: $num"
 	fi 
 
 	# check if our foreground/background service is still running
@@ -602,7 +602,7 @@ do
 	fi 
 	net_status=`cat ".net_status"`
 	let "time_from_last_net = current_time - last_net"
-	myprint "Time from last net: $time_from_last_net sec ShouldRun: $net_status"
+	myprint "Time from last net: $time_from_last_net sec ShouldRunIfTime: $net_status"
 	if [ $time_from_last_net -gt $NET_INTERVAL -a $net_status == "true" ] # if it is time and we should run
 	then 
 		if [ $num -eq 0 ]                       # if previous test is not still running 
