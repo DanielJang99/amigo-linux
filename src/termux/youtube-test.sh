@@ -35,7 +35,7 @@ send_report(){
 
 # activate stats for nerds  
 activate_stats_nerds(){
-	myprint "Activating stats for nerds!! -- FIXME"
+	myprint "Activating stats for nerds!!"
 	#tap_screen 680 105  3
 	#tap_screen 680 105  3	
 	sudo input tap 680 105 && sleep 0.1 && sudo input tap 680 105
@@ -48,15 +48,15 @@ activate_stats_nerds(){
 # script usage
 usage(){
     echo "================================================================================"
-    echo "USAGE: $0 --load, --novideo, --disable, --uid, --pcap, --single"
+    echo "USAGE: $0 --load, --novideo, --disable, --uid, --pcap, --single, --dur"
     echo "================================================================================"
-    echo "--load       Page load max duration"
     echo "--iface      Network interface in use"
     echo "--novideo    Turn off video recording"
 	echo "--disable    Disable auto-play"
 	echo "--pcap       Request pcap collection"	
 	echo "--uid        IMEI of the device"
 	echo "--single     User test, make it easier"
+    echo "--dur        How long to run (seconds)"    
     echo "================================================================================"
     exit -1
 }
@@ -124,6 +124,9 @@ do
         --single)
             shift; single="true"; 
             ;;
+        --dur)
+			shift; DURATION="$1"; shift; 
+            ;;
         -h | --help)
             usage
             ;;
@@ -181,25 +184,25 @@ sudo rm -rf  /data/data/com.google.android.youtube/cache
 #myprint "Cleaning YT state"
 #sudo pm clear com.google.android.youtube
 
-# launching app and allow to settle 
-myprint "Launching YT and allow to settle..."
-sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
+# # launching app and allow to settle 
+# myprint "Launching YT and allow to settle..."
+# sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
 
-# lower all the volumes
-myprint "Making sure volume is off"
-sudo media volume --stream 3 --set 0  # media volume
-sudo media volume --stream 1 --set 0	 # ring volume
-sudo media volume --stream 4 --set 0	 # alarm volume
+# # lower all the volumes
+# myprint "Making sure volume is off"
+# sudo media volume --stream 3 --set 0  # media volume
+# sudo media volume --stream 1 --set 0	 # ring volume
+# sudo media volume --stream 4 --set 0	 # alarm volume
 
-# wait for YT 
-myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
-curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-while [ $curr_activity != "WatchWhileActivity" ] 
-do 
-	sleep 3 
-	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-done
-sleep 10
+# # wait for YT 
+# myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
+# curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+# while [ $curr_activity != "WatchWhileActivity" ] 
+# do 
+# 	sleep 3 
+# 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+# done
+# sleep 10
 
 # click account notification if there (guessing so far)
 if [ $single != "true" ] 
@@ -317,54 +320,54 @@ traffic_rx_last=$traffic_rx
 
 #launch test video
 am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
-sleep 5 
+sleep 10
 
 # make sure stats for nerds are active
-myprint "Make sure stats for nerds are active"
-ready="false"
-attempt=0
-while [ $ready == "false" ]
-do 
-	termux-clipboard-get > ".clipboard"
-	cat ".clipboard" | grep "cplayer"
-	if [ $? -ne 0 ] 
-	then
-		let "attempt++" 		
-		activate_stats_nerds
-		curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-		if [ $curr_activity != "WatchWhileActivity" ] 
-		then
-			myprint "Something went VERY wrong!" 
-			msg="ERROR-STATS-NERDS-LEFT-APP"
-        	send_report
-			safe_stop			
-			exit -1
-		fi 
-		tap_screen 592 216 1
-		termux-clipboard-get > ".clipboard"
-		cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
-		if [ $? -eq 0 ] 
-		then
-			ready="true"		
-			myprint "Ready to start!!"
-			cat ".clipboard" > $log_file
-			echo "" >> $log_file
-		else 
-			if [ $attempt -ge 1 ] # allow just one attempt, doing more does not seem to help
-			then 
-				myprint "Something is WRONG. Clearing YT and exiting!"
-				#sudo pm clear com.google.android.youtube			
-				msg="ERROR-STATS-NERDS"
-	        	send_report
-	        	safe_stop
-				exit -1 
-			fi 
-		fi
-	else
-		ready="true"		
-		echo "Ready to start!!"
-	fi
-done
+# myprint "Make sure stats for nerds are active"
+# ready="false"
+# attempt=0
+# while [ $ready == "false" ]
+# do 
+# 	termux-clipboard-get > ".clipboard"
+# 	cat ".clipboard" | grep "cplayer"
+# 	if [ $? -ne 0 ] 
+# 	then
+# 		let "attempt++" 		
+# 		activate_stats_nerds
+# 		curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+# 		if [ $curr_activity != "WatchWhileActivity" ] 
+# 		then
+# 			myprint "Something went VERY wrong!" 
+# 			msg="ERROR-STATS-NERDS-LEFT-APP"
+#         	send_report
+# 			safe_stop			
+# 			exit -1
+# 		fi 
+# 		tap_screen 592 216 1
+# 		termux-clipboard-get > ".clipboard"
+# 		cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
+# 		if [ $? -eq 0 ] 
+# 		then
+# 			ready="true"		
+# 			myprint "Ready to start!!"
+# 			cat ".clipboard" > $log_file
+# 			echo "" >> $log_file
+# 		else 
+# 			if [ $attempt -ge 1 ] # allow just one attempt, doing more does not seem to help
+# 			then 
+# 				myprint "Something is WRONG. Clearing YT and exiting!"
+# 				#sudo pm clear com.google.android.youtube			
+# 				msg="ERROR-STATS-NERDS"
+# 	        	send_report
+# 	        	safe_stop
+# 				exit -1 
+# 			fi 
+# 		fi
+# 	else
+# 		ready="true"		
+# 		echo "Ready to start!!"
+# 	fi
+# done
 
 # collect data 
 myprint "Stats-for-nerds correctly detecting. Starting data collection for $DURATION seconds..."
