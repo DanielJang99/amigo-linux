@@ -41,8 +41,8 @@ activate_stats_nerds(){
 	sudo input tap 680 105 && sleep 0.1 && sudo input tap 680 105
 	sleep 3
 	#tap_screen 370 1125 3
-	tap_screen 370 1125 1
-	#tap_screen 370 1024 1  # what happened????
+	#tap_screen 370 1125 1
+	tap_screen 370 1022 1 
 }
 
 # script usage
