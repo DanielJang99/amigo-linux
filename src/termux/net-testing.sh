@@ -23,11 +23,11 @@ free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 # run multiple MTR
 ./mtr.sh $suffix $t_s
 
-# video testing with youtube
-touch ".locked"
-./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
-rm ".locked"
-turn_device_off
+# # video testing with youtube -- SKIPPING, NOT RELIABLE
+# touch ".locked"
+# ./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
+# rm ".locked"
+# turn_device_off
 
 # run a speedtest 
 echo "[`date`] speedtest-cli..."

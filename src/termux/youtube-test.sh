@@ -180,7 +180,8 @@ termux-clipboard-set "none"
 turn_device_on
 
 # clean youtube cache
-sudo rm -rf /data/data/com.google.android.youtube/files /data/data/com.google.android.youtube/app_dg_cache /data/data/com.google.android.youtube/cache /data/data/com.google.android.youtube/no_backup /data/data/com.google.android.youtube/databases
+#sudo rm -rf /data/data/com.google.android.youtube/files /data/data/com.google.android.youtube/app_dg_cache /data/data/com.google.android.youtube/cache /data/data/com.google.android.youtube/no_backup /data/data/com.google.android.youtube/databases
+sudo rm -rf /data/data/com.google.android.youtube/app_dg_cache /data/data/com.google.android.youtube/cache
 myprint "Cleaning YT state"
 #sudo pm clear com.google.android.youtube
 
