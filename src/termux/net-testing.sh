@@ -17,11 +17,21 @@ then
 	iface=$3
 fi  
 
+# current free space 
+free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
+
+# video testing with youtube
+touch ".locked"
+./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap
+rm ".locked"
+turn_device_off
+
 # run a speedtest 
 echo "[`date`] speedtest-cli..."
 res_folder="speedtest-cli-logs/${suffix}"
 mkdir -p $res_folder
 speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
+gzip "${res_folder}/speedtest-$t_s.json"
 
 # run a speedtest in the browser (fast.com) -- having issue on this phone 
 #./speed-browse-test.sh $suffix $t_s
@@ -54,18 +64,11 @@ speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
 # TODO 
 
 # test multiple webages
-turn_device_on
 touch ".locked"
 ./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap
-
-# video testing with youtube
-./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap
-
-# save battery, screen off 
-turn_device_off
 rm ".locked"
 
-################ safety cleanup ########################
+# safety cleanup 
 sudo pm clear com.android.chrome
 sudo pm clear com.google.android.youtube
 close_all
@@ -74,8 +77,11 @@ for pid in `ps aux | grep 'youtube-test\|web-test\|mtr.sh\|cdn-test.sh\|speedtes
 do
     kill -9 $pid
 done
-#########################################
+turn_device_off
 
+# current free space 
+free_space_e=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
+space_used=`echo "$free_space_s $free_space_e" | awk '{print($1-$2)}'`
 
 #logging 
-echo "[`date`] net-testing END"
+echo "[`date`] net-testing END. FreeSpace: $free_space_e SpaceUsed: $space_used"

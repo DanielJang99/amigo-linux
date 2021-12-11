@@ -66,49 +66,54 @@ test_download(){
 #	echo "curl -v -H \"Accept-Encoding: gzip\" -H 'user-agent: $UA' -w \"@curl-format.txt\" -s $dst -o $out_file"
 	#curl -v -H "Accept-Encoding: gzip" -H 'user-agent: $UA' -w "@curl-format.txt" -s $dst -o $out_file > $stats  2>$headers
 	timeout 15 curl -v -w "@curl-format.txt" -s $dst -o $out_file > $stats  2>$headers
-	type=`cat "$stats" | head -n 1 | cut -f 1 | cut -f 2 -d ":"`
-	code=`cat "$stats" | head -n 1 |cut -f 2 | cut -f 2 -d ":"`
-	remoteIP=`cat "$stats" | head -n 1 |cut -f 3 | cut -f 2 -d ":"`
-	download_speed=`cat "$stats" | head -n 1 |cut -f 4 | cut -f 2 -d ":"`
-	t_dns=`cat "$stats" | head -n 1 |cut -f 5 | cut -f 2 -d ":"`
-	t_connect=`cat "$stats" | head -n 1 | cut -f 6 | cut -f 2 -d ":"`
-	t_appconnect=`cat "$stats" | head -n 1 | cut -f 7 | cut -f 2 -d ":"`
-	t_pretransfer=`cat "$stats" | head -n 1 | cut -f 8 | cut -f 2 -d ":"`
-	t_redirect=`cat "$stats" | head -n 1 | cut -f 9 | cut -f 2 -d ":"`
-	t_starttransfer=`cat "$stats" | head -n 1 | cut -f 10 | cut -f 2 -d ":"`
-	t_total=`cat "$stats" | head -n 1 | cut -f 11 | cut -f 2 -d ":"`
-	size_download=`cat "$stats" | head -n 1 | cut -f 12 | cut -f 2 -d ":"`
-	size_header=`cat "$stats" | head -n 1 | cut -f 13 | cut -f 2 -d ":"`
+	gzip $stats
+	gzip $headers	
+
+	# stopping here 
 	
-	# check return code 
-	cache_hit="N/A" 
-	x_served="N/A"
-	age="N/A"
-	if [ -f "$headers" ] 
-	then
-		tr '\r' '\n' < "$headers" > t
-		mv t "$headers"
-		x_served=`cat "$headers" | grep "x-amz-cf-pop\|x-served-by" | awk '{print $NF}'`
-		age=`cat "$headers" | grep "age:" | awk '{print $NF}'`
-		cat "$headers" | grep -i "HIT" > /dev/null
-		if [ $? -eq 0 ] 
-		then 
-			cache_hit="True"
-		else 
-			cache_hit="False"
-		fi 
-	fi 
+	# type=`cat "$stats" | head -n 1 | cut -f 1 | cut -f 2 -d ":"`
+	# code=`cat "$stats" | head -n 1 |cut -f 2 | cut -f 2 -d ":"`
+	# remoteIP=`cat "$stats" | head -n 1 |cut -f 3 | cut -f 2 -d ":"`
+	# download_speed=`cat "$stats" | head -n 1 |cut -f 4 | cut -f 2 -d ":"`
+	# t_dns=`cat "$stats" | head -n 1 |cut -f 5 | cut -f 2 -d ":"`
+	# t_connect=`cat "$stats" | head -n 1 | cut -f 6 | cut -f 2 -d ":"`
+	# t_appconnect=`cat "$stats" | head -n 1 | cut -f 7 | cut -f 2 -d ":"`
+	# t_pretransfer=`cat "$stats" | head -n 1 | cut -f 8 | cut -f 2 -d ":"`
+	# t_redirect=`cat "$stats" | head -n 1 | cut -f 9 | cut -f 2 -d ":"`
+	# t_starttransfer=`cat "$stats" | head -n 1 | cut -f 10 | cut -f 2 -d ":"`
+	# t_total=`cat "$stats" | head -n 1 | cut -f 11 | cut -f 2 -d ":"`
+	# size_download=`cat "$stats" | head -n 1 | cut -f 12 | cut -f 2 -d ":"`
+	# size_header=`cat "$stats" | head -n 1 | cut -f 13 | cut -f 2 -d ":"`
 	
-	# logging 
-	t_end=`date +%s`
-	let "t_passed = t_end - t_start"
-	if [ $isMacOS == "true" ] 
-	then
-		file_size=`stat $out_file  | cut -f 8 -d " "`
-	else 
-		file_size=`stat $out_file | grep "Size"  | cut -f 1 | awk -F ":" '{print int($2)}'`
-	fi 
-	myprint "File:$out_file\t Size:$file_size\tCache-HIT:$cache_hit\tX-served-by:$x_served\tAge:$age"
+	# # check return code 
+	# cache_hit="N/A" 
+	# x_served="N/A"
+	# age="N/A"
+	# if [ -f "$headers" ] 
+	# then
+	# 	tr '\r' '\n' < "$headers" > t
+	# 	mv t "$headers"
+	# 	x_served=`cat "$headers" | grep "x-amz-cf-pop\|x-served-by" | awk '{print $NF}'`
+	# 	age=`cat "$headers" | grep "age:" | awk '{print $NF}'`
+	# 	cat "$headers" | grep -i "HIT" > /dev/null
+	# 	if [ $? -eq 0 ] 
+	# 	then 
+	# 		cache_hit="True"
+	# 	else 
+	# 		cache_hit="False"
+	# 	fi 
+	# fi 
+	
+	# # logging 
+	# t_end=`date +%s`
+	# let "t_passed = t_end - t_start"
+	# if [ $isMacOS == "true" ] 
+	# then
+	# 	file_size=`stat $out_file  | cut -f 8 -d " "`
+	# else 
+	# 	file_size=`stat $out_file | grep "Size"  | cut -f 1 | awk -F ":" '{print int($2)}'`
+	# fi 
+	# myprint "File:$out_file\t Size:$file_size\tCache-HIT:$cache_hit\tX-served-by:$x_served\tAge:$age"
 
 	# report to the server
 	# echo "$(generate_post_data)" 

@@ -9,6 +9,7 @@ function ctrl_c() {
 	myprint "Trapped CTRL-C"
 	echo "false" > ".cpu_monitor"
 	echo "false" > ".status"
+	sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"	
 	echo "false" > ".cpu_monitor"
 	./stop-net-testing.sh
 	close_all
@@ -98,6 +99,7 @@ check_account_via_YT(){
 generate_post_data(){
   cat <<EOF
     {
+    "vrs_num":"${vrs}",  
     "today":"${suffix}", 
     "timestamp":"${current_time}",
     "uid":"${uid}",
@@ -232,12 +234,11 @@ update_wifi_mobile(){
 
 }
 
-
 # parameters
 slow_freq=15                           # interval for checking commands to run (slower)
 fast_freq=3                            # interval for checking the app (faster)
-REPORT_INTERVAL=180                    # interval of status reporting (seconds)
-NET_INTERVAL=1200                      # interval of networking testing 
+REPORT_INTERVAL=300                    # interval of status reporting (seconds)
+NET_INTERVAL=1800                      # interval of networking testing (3600)
 kenzo_pkg="com.example.sensorexample"  # our app 
 last_report_time="1635969639"          # last time a report was sent (init to an old time)
 last_net="1635969639"                  # last time a net test was done (init to an old time) 
@@ -248,6 +249,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=3                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
+vrs="1.0"                              # code version 
 
 # check if testing
 if [ $# -eq 1 ] 
@@ -310,6 +312,12 @@ fi
 # retrieve unique ID for this device and pass to our app
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 
+# status update
+echo "true" > ".status"
+to_run=`cat ".status"`
+sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"
+echo "false" > ".isPaused"
+
 #restart Kenzo - so that background service runs and info is populated 
 turn_device_on
 myprint "Granting Kenzo permission and restart..."
@@ -340,7 +348,6 @@ if [ ! -f ".last_command_pi" ]
 then
 	echo "testing" > ".last_command_pi"
 fi 
-echo "true" > ".status"
 if [ ! -f ".net_status" ] 
 then
 	echo "false" > ".net_status"
@@ -368,11 +375,10 @@ sudo input keyevent KEYCODE_HOME
 sudo input keyevent 111
 
 # external loop 
-to_run=`cat ".status"`
-sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"
 myprint "Script will run with a <$fast_freq, $slow_freq> frequency. To stop: <<echo \"false\" > \".status\""
 last_loop_time=0
 last_slow_loop_time=0
+firstPause="true"
 while [ $to_run == "true" ] 
 do 
 	# update google status 
@@ -382,9 +388,9 @@ do
 	current_time=`date +%s`
 	suffix=`date +%d-%m-%Y`
 
-	# update WiFi and mobile phone connectivity if it is time to do so 
+	# update WiFi and mobile phone connectivity if it is time to do so (once a minute)
 	let "t_last_wifi_mobile_update =  current_time - t_wifi_mobile_update"
-	if [ $t_last_wifi_mobile_update -gt 60 ] # check once a minute
+	if [ $t_last_wifi_mobile_update -gt 60 ] 
 	then 
 		update_wifi_mobile 
 		t_wifi_mobile_update=`date +%s`
@@ -399,11 +405,16 @@ do
 	fi 
 	if [ $user_status == "false" ] 
 	then 
-		echo "User is asking to stop!"
-		echo "false" > ".status"
-		echo "false" > ".cpu_monitor"
-		./stop-net-testing.sh 
-		break 
+		if [ $firstPause == "true" ]
+		then
+			myprint "Paused by user"
+			firstPause="false"
+		fi 
+		echo "true" > ".isPaused"
+		./stop-net-testing.sh  
+	else 
+		firstPause="true"
+		echo "false" > ".isPaused"	
 	fi 
 
 	# check if user wants to run a test 
@@ -413,8 +424,8 @@ do
 		sel_id=`sudo cat $sel_file | cut -f 1`
 		time_sel=`sudo cat $sel_file | cut -f 2`
 		let "time_from_sel = current_time - time_sel"
-		let "time_check = freq + freq/2"
-		if [ $time_from_sel -lt $time_check ] 
+		let "time_check = slow_freq + slow_freq/2" # cut some slack, we check more often than this
+		if [ $time_from_sel -lt $time_check ]  
 		then 
 			echo "User entered selection: $sel_id (Time: $time_sel -- $current_time)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
 			if [ $def_iface != "none" ] 
@@ -429,22 +440,22 @@ do
 						t_wifi_mobile_update=`date +%s`	
 						
 						# open a random webpage 
-						echo "Open a webpage -- ./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single"
-						./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single 
+						echo "Open a random webpage -- ./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single --pcap"
+						./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single --pcap
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-quickly-the-page-loaded:1-star-(slow)--5-stars-(fast)"
 						sleep 30 # allow time to enter input	
-						continue # go back up to see if user wants to run another test 
+						#continue # go back up to see if user wants to run another test 
 						;;
 
 					"1")
 						./stop-net-testing.sh
 						update_wifi_mobile 
 						t_wifi_mobile_update=`date +%s`	
-						echo "Watch a video -- ./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface"						
-						./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface
+						echo "Watch a video -- ./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface --pcap --single"						
+						./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface --pcap --single
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-the-video-played:1-star-(poor)--5-stars-(great)"
 						sleep 30 # allow time to enter input	
-						continue # go back up to see if user wants to run another test 
+						#continue # go back up to see if user wants to run another test 
 						;;
 					  *)
 						echo "Option not supported"
@@ -468,14 +479,19 @@ do
 	current_time=`date +%s`
 	last_loop_time=$current_time
 
+	# if we are paused we stop here 
+	isPaused=`cat ".isPaused"`
+	if [ $isPaused == "true" ]
+	then
+		continue
+	fi 
+		
 	# loop rate control (slow)
-	current_time=`date +%s`
 	let "t_p = (current_time - last_slow_loop_time)"
 	if [ $t_p -lt $slow_freq ] 
 	then 
 		continue
 	fi 
-	to_run=`cat ".status"`
 	last_slow_loop_time=$current_time
 
 	# check if there is a new command to run
@@ -524,18 +540,24 @@ do
 	if [ -f ".cpu-usage" ] 
 	then 
 		cpu_util=`cat ".cpu-usage" | cut -f 1 -d "."`
-		if [ $cpu_util -gt 85 ] 
+		num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`			
+		if [ $cpu_util -ge 85 ] 
 		then 
-			let "strike++"
-			if [ $strike -eq 6 ] 
+			if [ $num -eq 0 ]
 			then 
-				myprint "Detected high CPU (>85%) in the last 90 seconds. Rebooting"
-				sudo reboot 
+				let "strike++"
+				if [ $strike -eq 6 ] 
+				then 
+					myprint "Detected high CPU (>85%) in the last 90 seconds. Rebooting"
+					sudo reboot 
+				fi 
+			else 
+				myprint "Detected high CPU (>85%). Ignoring since we are net-testing"
 			fi 
 		else 
 			strike=0
 		fi 
-		myprint "CPU usage: $cpu_util StrikeCount: $strike"
+		myprint "CPU usage: $cpu_util StrikeCount: $strike NetTesting: $num"
 	fi 
 
 	# check if our foreground/background service is still running
@@ -580,7 +602,7 @@ do
 	fi 
 	net_status=`cat ".net_status"`
 	let "time_from_last_net = current_time - last_net"
-	myprint "Time from last net: $time_from_last_net sec ShouldRun: $net_status"
+	myprint "Time from last net:$time_from_last_net sec ShouldRunIfTime:$net_status Running:$num"
 	if [ $time_from_last_net -gt $NET_INTERVAL -a $net_status == "true" ] # if it is time and we should run
 	then 
 		if [ $num -eq 0 ]                       # if previous test is not still running 
