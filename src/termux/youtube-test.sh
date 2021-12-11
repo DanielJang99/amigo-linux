@@ -41,7 +41,8 @@ activate_stats_nerds(){
 	sudo input tap 680 105 && sleep 0.1 && sudo input tap 680 105
 	sleep 3
 	#tap_screen 370 1125 3
-	tap_screen 370 1024 1  # what happened????
+	tap_screen 370 1125 1
+	#tap_screen 370 1024 1  # what happened????
 }
 
 # script usage
@@ -180,25 +181,25 @@ sudo rm -rf  /data/data/com.google.android.youtube/cache
 #myprint "Cleaning YT state"
 #sudo pm clear com.google.android.youtube
 
-# launching app and allow to settle 
-myprint "Launching YT and allow to settle..."
-sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
+# # launching app and allow to settle 
+# myprint "Launching YT and allow to settle..."
+# sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
 
-# lower all the volumes
-myprint "Making sure volume is off"
-sudo media volume --stream 3 --set 0  # media volume
-sudo media volume --stream 1 --set 0	 # ring volume
-sudo media volume --stream 4 --set 0	 # alarm volume
+# # lower all the volumes
+# myprint "Making sure volume is off"
+# sudo media volume --stream 3 --set 0  # media volume
+# sudo media volume --stream 1 --set 0	 # ring volume
+# sudo media volume --stream 4 --set 0	 # alarm volume
 
-# wait for YT 
-myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
-curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-while [ $curr_activity != "WatchWhileActivity" ] 
-do 
-	sleep 3 
-	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-done
-sleep 10
+# # wait for YT 
+# myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
+# curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+# while [ $curr_activity != "WatchWhileActivity" ] 
+# do 
+# 	sleep 3 
+# 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+# done
+# sleep 10
 
 # click account notification if there (guessing so far)
 if [ $single != "true" ] 
