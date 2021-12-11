@@ -542,11 +542,17 @@ do
 		cpu_util=`cat ".cpu-usage" | cut -f 1 -d "."`
 		if [ $cpu_util -gt 85 ] 
 		then 
-			let "strike++"
-			if [ $strike -eq 6 ] 
+			num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`
+			if [ $num -eq 0 ]
 			then 
-				myprint "Detected high CPU (>85%) in the last 90 seconds. Rebooting"
-				sudo reboot 
+				let "strike++"
+				if [ $strike -eq 6 ] 
+				then 
+					myprint "Detected high CPU (>85%) in the last 90 seconds. Rebooting"
+					sudo reboot 
+				fi 
+			else 
+				myprint "Detected high CPU (>85%). Ignoring since we are net-testing"
 			fi 
 		else 
 			strike=0
