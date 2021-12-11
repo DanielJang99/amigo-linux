@@ -166,7 +166,11 @@ update_wifi_mobile(){
 			mobile_iface="N/A"
 		fi 
 	fi 
-
+	if [ -z $mobile_iface ]
+	then
+		mobile_iface="N/A"
+	fi 
+		
 	# get update on data sent/received
 	wifi_today_file="./data/wifi/"$suffix".txt"
 	mobile_today_file="./data/mobile/"$suffix".txt"
