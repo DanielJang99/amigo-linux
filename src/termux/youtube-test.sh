@@ -93,6 +93,7 @@ uid="none"                         # user ID
 single="false"                     # user initiated test (same logic as per web)
 sleep_time=5                       # time to sleep between clicks
 first_run="false"                  # first time ever youtube was run
+cpu_usage_middle="N/A"
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -369,7 +370,6 @@ myprint "Stats-for-nerds correctly detecting. Starting data collection for $DURA
 t_s=`date +%s`
 t_e=`date +%s`
 let "t_p = t_s - t_e"
-cpu_usage_middle="N/A"
 let "HALF_DURATION = DURATION/2"
 while [ $t_p -lt $DURATION ] 
 do 
