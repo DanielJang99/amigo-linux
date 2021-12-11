@@ -21,9 +21,12 @@ safe_stop(){
 
 send_report(){
 	current_time=`date +%s`
-	if [ $cpu_usage_middle == "N/A" -a -f ".cpu-usage" ] 
+	if [ $cpu_usage_middle == "N/A" ]
 	then
-		cpu_usage_middle=`cat .cpu-usage`
+		if [ -f ".cpu-usage" ] 
+		then
+			cpu_usage_middle=`cat .cpu-usage`
+		fi
 	fi 
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 
