@@ -24,6 +24,7 @@ free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 touch ".locked"
 ./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap
 rm ".locked"
+turn_device_off
 
 # run a speedtest 
 echo "[`date`] speedtest-cli..."
