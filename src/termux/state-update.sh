@@ -40,7 +40,7 @@ check_account_via_YT(){
 	myprint "Cleaning YT state"
 	sudo pm clear com.google.android.youtube
 
-	# re-enable stats for nerds for the app
+	# launch youtube
 	myprint "Launching YT and allow to settle..."
 	sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
 
@@ -104,6 +104,7 @@ generate_post_data(){
     "timestamp":"${current_time}",
     "uid":"${uid}",
     "googleStatus":"${google_status}",
+    "timeGoogleCheck":"${t_last_google}",
     "uptime":"${uptime_info}",
     "num_kenzo":"${N_kenzo}",
     "free_space_GB":"${free_space}",
@@ -230,7 +231,7 @@ update_wifi_mobile(){
 		mobile_signal="none"
 		mobile_traffic="none"
 	fi 
-	myprint "Device info. Wifi: $wifi_ip Mobile: $mobile_ip DefaultIface: $def_iface"
+	myprint "Device info. Wifi:$wifi_ip Mobile:$mobile_ip DefaultIface:$def_iface GoogleAccountStatus:$google_status CPULast:$cpu_util IsPaused:$isPaused NetTesting:$num"
 
 }
 
@@ -238,8 +239,9 @@ update_wifi_mobile(){
 slow_freq=15                           # interval for checking commands to run (slower)
 fast_freq=3                            # interval for checking the app (faster)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
-NET_INTERVAL=1800                      # interval of networking testing (3600)
-kenzo_pkg="com.example.sensorexample"  # our app 
+NET_INTERVAL=3600                      # interval of networking testing 
+GOOGLE_CHECK_FREQ=18000                # interval of Google account check via YT (seconds)
+kenzo_pkg="com.example.sensorexample"  # our app package name 
 last_report_time="1635969639"          # last time a report was sent (init to an old time)
 last_net="1635969639"                  # last time a net test was done (init to an old time) 
 t_wifi_mobile_update="1635969639"      # last time wifi/mobile info was checked (init to an old time)
@@ -283,13 +285,11 @@ sudo  settings put system accelerometer_rotation 0 # disable (shows portrait)
 sudo  settings put system user_rotation 0          # put in portrait
 
 # update Google account authorization status
+#echo "authorized" > ".google_status"
 check_account_via_YT
-if [ ! -f ".google_status" ] 
-then  
-	echo "authorized" > ".google_status"
-fi 
 google_status=`cat ".google_status"`
 myprint "Google account status: $google_status"
+echo `date +%s` > ".time_google_check"
 
 # update code 
 myprint "Updating our code..."
@@ -381,13 +381,26 @@ last_slow_loop_time=0
 firstPause="true"
 while [ $to_run == "true" ] 
 do 
-	# update google status 
-	google_status=`cat ".google_status"`
-
 	# keep track of time
 	current_time=`date +%s`
 	suffix=`date +%d-%m-%Y`
-
+	
+	# check if net-testing is running
+	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`			
+		
+	# update Google account authorization status
+	t_last_google=`cat ".time_google_check"`
+	let "t_p = current_time - t_last_google"
+	if [ $t_p -gt $GOOGLE_CHECK_FREQ -a $num -eq 0 ] 
+	then
+		myprint "Time to check Google account status via YT"
+		check_account_via_YT	  
+		t_last_google=$current_time
+		echo $current_time > ".time_google_check"
+		myprint "Google account status: $google_status"	
+	fi 
+	google_status=`cat ".google_status"`
+	
 	# update WiFi and mobile phone connectivity if it is time to do so (once a minute)
 	let "t_last_wifi_mobile_update =  current_time - t_wifi_mobile_update"
 	if [ $t_last_wifi_mobile_update -gt 60 ] 
@@ -540,7 +553,6 @@ do
 	if [ -f ".cpu-usage" ] 
 	then 
 		cpu_util=`cat ".cpu-usage" | cut -f 1 -d "."`
-		num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`			
 		if [ $cpu_util -ge 85 ] 
 		then 
 			if [ $num -eq 0 ]
