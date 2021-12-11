@@ -517,8 +517,9 @@ do
 		then
 			prev_command=`cat ".prev_command"`
 		fi 
-		myprint "Checking if there is a command to execute"
 		ans=`timeout 15 curl -s "https://mobile.batterylab.dev:8082/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`
+		ret_code=$?
+		myprint "Checking if there is a command to execute. $ans -- $ret_code"		
 		if [[ "$ans" == *"No command matching"* ]]
 		then
 			myprint "No command found"

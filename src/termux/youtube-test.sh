@@ -32,8 +32,9 @@ send_report(){
 
 # activate stats for nerds  
 activate_stats_nerds(){
-	myprint "Activating stats for nerds!!"
+	myprint "Activating stats for nerds!! -- FIXME"
 	tap_screen 680 105  3
+	#sudo input tap 680 105 && sleep 0.1 && sudo input tap 680 105
 	tap_screen 680 105  3
 	tap_screen 370 1125 3
 }
@@ -62,7 +63,7 @@ generate_post_data(){
     "timestamp":"${current_time}",
     "uid":"${uid}",
     "cpu_util_midload_perc":"${cpu_usage_middle}",
-    "avg_ping":"${avg_ping}"
+    "avg_ping":"${avg_ping}",
     "bdw_used_MB":"${traffic}",
     "tshark_traffic_MB":"${tshark_size}", 
     "msg":"${msg}"
