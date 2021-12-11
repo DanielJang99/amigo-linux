@@ -21,6 +21,10 @@ safe_stop(){
 
 send_report(){
 	current_time=`date +%s`
+	if [ $cpu_usage_middle == "N/A" -a -f ".cpu-usage" ] 
+	then
+		cpu_usage_middle=`cat .cpu-usage`
+	fi 
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 
 	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/youtubetest
@@ -58,6 +62,7 @@ generate_post_data(){
     "timestamp":"${current_time}",
     "uid":"${uid}",
     "cpu_util_midload_perc":"${cpu_usage_middle}",
+    "avg_ping":"${avg_ping}"
     "bdw_used_MB":"${traffic}",
     "tshark_traffic_MB":"${tshark_size}", 
     "msg":"${msg}"
@@ -137,6 +142,12 @@ then
 		fi 
 	done < ".ps-$app"
 fi 
+
+
+# measure ping to youtube 
+ping -c 5 -W 2 youtube.com > notes-ping 2>&1
+avg_ping=``cat notes-ping | grep "mdev" | cut -f 2 -d "=" | cut -f 2 -d "/"``
+myprint "Average ping to youtube: $avg_ping"
 
 # update UID if needed 
 if [ $uid == "none" ]

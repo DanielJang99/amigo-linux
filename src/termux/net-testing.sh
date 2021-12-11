@@ -28,8 +28,6 @@ touch ".locked"
 ./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
 rm ".locked"
 turn_device_off
-echo "TEMP EXIT!"
-exit -1 
 
 # run a speedtest 
 echo "[`date`] speedtest-cli..."

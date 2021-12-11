@@ -3,9 +3,21 @@
 ## Author: Matteo Varvello (varvello@gmail.com)
 ## NOTE: script to run bunch of mtr tests (both ipv4 and ipv6)
 
+# import common file
+common_file=`pwd`"/common.sh"
+if [ -f $common_file ]
+then
+	source $common_file
+else
+	echo "Common file $common_file is missing"
+	exit -1
+fi
+
 # helper to run a test 
 test(){
 	prefix=$2
+	myprint "Testing $prefix"
+
 	sudo mtr -r4wc $num $1  >  $res_dir/$prefix-ipv4-$ts.txt 2>&1
 	gzip $res_dir/$prefix-ipv4-$ts.txt
 	ping6 -c 3 $1 > /dev/null 2>&1
@@ -32,11 +44,7 @@ mkdir -p $res_dir
 num=10
 
 # logging
-echo "Starting MTR reporting..."
-
-# TESTING
-test youtube.com youtube
-exit -1 
+myprint "Starting MTR reporting..."
 
 # popular providers
 test google.com google 
@@ -53,7 +61,7 @@ gzip $res_dir/cloudflare-dns-ipv4-$ts.txt
 sudo mtr -r6wc $num 2606:4700:4700::1111 >  $res_dir/cloudflare-dns-ipv6-$ts.txt 2>&1
 gzip $res_dir/cloudflare-dns-ipv6-$ts.txt 
 
-########### test youtube right before youtube test ##############
+# test youtube right before youtube test (to better correlated)
 test youtube.com youtube
 
 # logging 
