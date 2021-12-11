@@ -158,17 +158,10 @@ update_wifi_mobile(){
 	then 
 		def_iface=$wifi_iface
 	else  
-		wifi_iface="N/A"
 		if [ ! -z $mobile_iface ]
 		then
 			def_iface=$mobile_iface
-		else 
-			mobile_iface="N/A"
-		fi 
-	fi 
-	if [ -z $mobile_iface ]
-	then
-		mobile_iface="N/A"
+	 	fi 
 	fi 
 		
 	# get update on data sent/received
@@ -396,7 +389,6 @@ do
 	# check if net-testing is running
 	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`			
 	
-
 	# update WiFi and mobile phone connectivity if it is time to do so (once a minute)
 	let "t_last_wifi_mobile_update =  current_time - t_wifi_mobile_update"
 	if [ $t_last_wifi_mobile_update -gt 60 ] 
@@ -632,13 +624,21 @@ do
 		then 	
 			if [ $def_iface != "none" ]         # if a connectivity is found
 			then
-				if [ $def_iface == $mobile_iface -a $mobile_data -gt $MAX_MOBILE ]      # if enough mobile data is available 
-				then 
-					myprint "Skipping net-testing since we are on mobile and data limit passed ($mobile_data -> $MAX_MOBILE)"
-				else 
-					# make sure we have fresh wifi/mobile info
-					update_wifi_mobile 
-					t_wifi_mobile_update=`date +%s`							
+				# make sure we have fresh wifi/mobile info
+				skipping="false"
+				update_wifi_mobile 
+				t_wifi_mobile_update=`date +%`					
+				if [ ! -z $mobile_iface ]
+				then
+  	 	  		    # if enough mobile data is available 
+					if [ $def_iface == $mobile_iface -a $mobile_data -gt $MAX_MOBILE ]   
+					then 
+						myprint "Skipping net-testing since we are on mobile and data limit passed ($mobile_data -> $MAX_MOBILE)"
+						skipping="true"
+					fi 
+				fi  
+				if [ $skipping == "false" ]
+				then
 					(./net-testing.sh $suffix $current_time $def_iface > logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
 					num=1
 					echo $current_time > ".last_net"
