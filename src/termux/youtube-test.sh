@@ -40,8 +40,8 @@ send_report(){
 activate_stats_nerds(){
 	myprint "Activating stats for nerds!!"
 	sudo input tap 680 105 && sleep 0.2 && sudo input tap 680 105
-	#sleep 1
-	tap_screen 370 1022 1 #3
+	sleep 1
+	tap_screen 370 1022 #1 #3
 	#tap_screen 370 1125 1 #3
 }
 
