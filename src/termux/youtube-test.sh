@@ -386,6 +386,8 @@ then
  	    send_report
  	    safe_stop
 	else
+		cat ".clipboard" > $log_file
+		echo "" >> $log_file
 		myprint "Stats-for-nerds correctly detecting. Starting data collection for $DURATION seconds..."
 	fi 
 fi 
