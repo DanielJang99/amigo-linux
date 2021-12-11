@@ -384,6 +384,13 @@ do
 	termux-clipboard-get >> $log_file
 	echo "" >> $log_file
 
+	# check stats for nerds
+	cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
+	if [ $? -ne 0 ] 
+	then
+		activate_stats_nerds
+	fi 
+
 	# update on time passed 
 	sleep 1 
 	t_e=`date +%s`
