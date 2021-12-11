@@ -33,10 +33,12 @@ send_report(){
 # activate stats for nerds  
 activate_stats_nerds(){
 	myprint "Activating stats for nerds!! -- FIXME"
-	tap_screen 680 105  3
-	#sudo input tap 680 105 && sleep 0.1 && sudo input tap 680 105
-	tap_screen 680 105  3
-	tap_screen 370 1125 3
+	#tap_screen 680 105  3
+	#tap_screen 680 105  3	
+	sudo input tap 680 105 && sleep 0.1 && sudo input tap 680 105
+	sleep 3
+	#tap_screen 370 1125 3
+	tap_screen 370 1024 1  # what happened????
 }
 
 # script usage
