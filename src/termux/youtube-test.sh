@@ -176,9 +176,8 @@ while [ $curr_activity != "WatchWhileActivity" ]
 do 
 	sleep 3 
 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-	echo $curr_activity
 done
-sleep 3
+sleep 10 # more? 
 
 # click account notification if there (guessing so far)
 if [ $single != "true" ] 
@@ -293,8 +292,7 @@ traffic_rx_last=$traffic_rx
 
 #launch test video
 am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
-#sleep 2 
-#sleep 5 # FIXME: normally not needed...
+sleep 5 
 
 # make sure stats for nerds are active
 myprint "Make sure stats for nerds are active"

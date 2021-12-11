@@ -35,6 +35,8 @@ source $adb_file
 
 # check account verification via YT
 check_account_via_YT(){
+	# make sure screen is on 
+	turn_device_on
 
 	# clean youtube state  
 	myprint "Cleaning YT state"
@@ -57,7 +59,6 @@ check_account_via_YT(){
 	do 
 		sleep 3 
 		curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-		echo $curr_activity
 	done
 	sleep 3
 
@@ -93,6 +94,9 @@ check_account_via_YT(){
 
 	# clear YouTube
 	sudo pm clear com.google.android.youtube
+	
+	# make sure screen is off
+	turn_device_off
 }
 
 # generate data to be POSTed to my server 
