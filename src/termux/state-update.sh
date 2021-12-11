@@ -158,9 +158,12 @@ update_wifi_mobile(){
 	then 
 		def_iface=$wifi_iface
 	else  
+		wifi_iface="N/A"
 		if [ ! -z $mobile_iface ]
 		then
 			def_iface=$mobile_iface
+		else 
+			mobile_iface="N/A"
 		fi 
 	fi 
 
