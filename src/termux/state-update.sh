@@ -235,6 +235,10 @@ update_wifi_mobile(){
 		mobile_signal="none"
 		mobile_traffic="none"
 	fi 
+	if [ -f ".cpu-usage" ] 
+	then 
+		cpu_util=`cat ".cpu-usage" | cut -f 1 -d "."`
+	fi 
 	myprint "Device info. Wifi:$wifi_ip Mobile:$mobile_ip DefaultIface:$def_iface GoogleAccountStatus:$google_status CPULast:$cpu_util IsPaused:$isPaused NetTesting:$num"
 
 }

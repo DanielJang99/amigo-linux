@@ -20,6 +20,9 @@ fi
 # current free space 
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 
+# run multiple MTR
+./mtr.sh $suffix $t_s
+
 # video testing with youtube
 touch ".locked"
 ./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
@@ -56,8 +59,6 @@ gzip "${res_folder}/speedtest-$t_s.json"
 #sudo input keyevent KEYCODE_BACK
 #turn_device_off
 
-# run multiple MTR
-./mtr.sh $suffix $t_s
 
 # test multiple CDNs
 ./cdn-test.sh $suffix $t_s

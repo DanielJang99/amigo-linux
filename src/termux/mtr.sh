@@ -34,6 +34,10 @@ num=10
 # logging
 echo "Starting MTR reporting..."
 
+# TESTING
+test youtube.com youtube
+exit -1 
+
 # popular providers
 test google.com google 
 test facebook.com facebook
@@ -48,6 +52,9 @@ sudo mtr -r4wc $num 1.1.1.1 >  $res_dir/cloudflare-dns-ipv4-$ts.txt 2>&1
 gzip $res_dir/cloudflare-dns-ipv4-$ts.txt 
 sudo mtr -r6wc $num 2606:4700:4700::1111 >  $res_dir/cloudflare-dns-ipv6-$ts.txt 2>&1
 gzip $res_dir/cloudflare-dns-ipv6-$ts.txt 
+
+########### test youtube right before youtube test ##############
+test youtube.com youtube
 
 # logging 
 t_e=`date +%s`

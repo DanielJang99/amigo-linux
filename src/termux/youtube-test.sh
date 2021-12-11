@@ -80,6 +80,7 @@ app="youtube"                      # used to detect process in CPU monitoring
 pcap_collect="false"               # flag to control pcap collection
 uid="none"                         # user ID
 single="false"                     # user initiated test (same logic as per web)
+sleep_time=5                       # time to sleep between clicks
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -234,14 +235,14 @@ fi
 
 # enable stats for nerds in the main account 
 myprint "Enabling stats for nerds and no autoplay (in account settings)"
-sudo input tap 665 100
-sleep 3
+sudo input tap 665 100  # click on account 
+sleep 10
 sudo input tap 370 1180
 curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
 c=0
 while [ $curr_activity != "SettingsActivity" ] 
 do 
- 	sleep 3 
+	sleep $sleep_time
 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
 	let "c++"
 	if [ $c -eq 5 ]
@@ -256,16 +257,16 @@ done
 if [ $disable_autoplay == "true" ] 
 then 
 	sudo input tap 370 304
-	sleep 3
+	sleep $sleep_time
 	sudo input tap 370 230 
-	sleep 3 
+	sleep $sleep_time
 	sudo input keyevent KEYCODE_BACK
-	sleep 3
+	sleep $sleep_time	
 fi 
 sudo input tap 370 200
-sleep 3
+sleep $sleep_time
 sudo input swipe 370 500 370 100
-sleep 3 
+sleep $sleep_time
 sudo input tap 370 1250
 
 # start CPU monitoring
