@@ -323,7 +323,8 @@ traffic_rx_last=$traffic_rx
 #launch test video
 am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
 #sleep 10
-sleep 5 
+#sleep 5 
+#sleep 1 
 
 # make sure stats for nerds are active
 # myprint "Make sure stats for nerds are active"
