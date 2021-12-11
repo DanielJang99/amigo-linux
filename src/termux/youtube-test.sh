@@ -180,8 +180,8 @@ termux-clipboard-set "none"
 turn_device_on
 
 # clean youtube cache
-sudo rm -rf  /data/data/com.google.android.youtube/cache
-#myprint "Cleaning YT state"
+sudo rm -rf /data/data/com.google.android.youtube/files /data/data/com.google.android.youtube/app_dg_cache /data/data/com.google.android.youtube/cache /data/data/com.google.android.youtube/no_backup /data/data/com.google.android.youtube/databases
+myprint "Cleaning YT state"
 #sudo pm clear com.google.android.youtube
 
 # # launching app and allow to settle 
@@ -321,7 +321,7 @@ traffic_rx_last=$traffic_rx
 #launch test video
 am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
 #sleep 10
-#sleep 5 
+sleep 5 
 #sleep 1 
 
 # make sure stats for nerds are active
