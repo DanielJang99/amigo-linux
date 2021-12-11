@@ -602,7 +602,7 @@ do
 	fi 
 	net_status=`cat ".net_status"`
 	let "time_from_last_net = current_time - last_net"
-	myprint "Time from last net: $time_from_last_net sec ShouldRunIfTime: $net_status"
+	myprint "Time from last net:$time_from_last_net sec ShouldRunIfTime:$net_status Running:$num"
 	if [ $time_from_last_net -gt $NET_INTERVAL -a $net_status == "true" ] # if it is time and we should run
 	then 
 		if [ $num -eq 0 ]                       # if previous test is not still running 
