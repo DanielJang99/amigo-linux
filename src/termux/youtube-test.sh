@@ -369,8 +369,30 @@ sleep 10
 # 	fi
 # done
 
+
+# check stats for nerds
+tap_screen 592 216 1
+termux-clipboard-get > $log_file
+echo "" >> $log_file
+cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
+if [ $? -ne 0 ] 
+then
+	activate_stats_nerds
+	tap_screen 592 216 1
+	termux-clipboard-get > $log_file
+	echo "" >> $log_file
+	cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
+	if [ $? -ne 0 ] 
+	then
+		msg="ERROR-STATS-NERDS"
+ 	    send_report
+ 	    safe_stop
+	else
+		myprint "Stats-for-nerds correctly detecting. Starting data collection for $DURATION seconds..."
+	fi 
+fi 
+
 # collect data 
-#myprint "Stats-for-nerds correctly detecting. Starting data collection for $DURATION seconds..."
 t_s=`date +%s`
 t_e=`date +%s`
 let "t_p = t_s - t_e"
