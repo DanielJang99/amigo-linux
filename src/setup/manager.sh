@@ -21,19 +21,28 @@ opt=$2
 ssh_key="id_rsa_mobile"      
 command_dur=10 
 
-# read IPs
+# check if passed a list or IP
+echo $ip_file | grep "192.168" > /dev/null
 num_devices=1
-while read line 
-do 
-	ip=`echo "$line" | cut -f 1`
-	ip_list[$num_devices]=$ip
+if [ $? -eq 0 ] 
+then 
+	ip_list[$num_devices]=$ip_file
 	let "num_devices++"
-done < $ip_file
+else 
+	# read IPs
+	while read line 
+	do 
+		ip=`echo "$line" | cut -f 1`
+		ip_list[$num_devices]=$ip
+		let "num_devices++"
+	done < $ip_file
+fi 
 
 #folder org
 mkdir -p logs
 mkdir -p test-logs
-mkdir -p visual 
+mkdir -p visual-logs
+mkdir -p update-logs 
 
 # iterate on devices
 for((i=1; i<num_devices; i++))
@@ -53,6 +62,10 @@ do
 	then 
 		ans=`ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo dumpsys battery | grep \"level\""`
 		echo -e "$i\t$wifi_ip\t$ans"
+	elif [ $opt == "update" ] 
+	then 
+		ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && git pull" > update-logs/log-$wifi_ip 2>&1 &
+		sleep 0.5
 	elif [ $opt == "volume" ] 
 	then 
 		ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && git pull && ./volume.sh" &
@@ -64,8 +77,8 @@ do
 		#ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && ./state-update.sh > \"logs/log-state-update-\"\`date +\%m-\\%d-\%y_\%H:\%M\`\".txt &"
 	elif [ $opt == "stop" ] 
 	then 
-		echo "Stopping ./state-update.sh at $wifi_ip:8022"
-		timeout 5 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip 'sh -c "pkill -9 -f state-update"'
+		echo "Stopping ./state-update.sh and need-to-run at $wifi_ip:8022"
+		ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && echo \"true\" > \".isDebug\" && echo \"false\" > \".status\""
 	elif [ $opt == "kill" ] 
 	then 
 		if [ $# -ne 3 ]
@@ -139,11 +152,31 @@ do
 				echo -e "$i\t$wifi_ip\tSSH-FAIL\t$ret_code"
 			fi 
 		fi 
+	elif [ $opt == "activate" ]
+	then
+		echo "Activating phone $wifi_ip:8022" 
+		ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && echo \"false\" > \".isDebug\""
 	elif [ $opt == "test" ]
 	then
 		echo "Running a test at $wifi_ip:8022" #-- test-logs/log-$wifi_ip"
 		ssh -T -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip 'sh -c "cd mobile-testbed/src/termux/ && ./state-update.sh test > logs/log-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &"'
 		#sleep 1 
+	elif [ $opt == "webtest" ]
+	then
+		#echo "Running a webtest at $wifi_ip:8022" 
+		#ssh -T -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip 'sh -c "cd mobile-testbed/src/termux/ && ./web-test.sh  --suffix `date +%d-%m-%Y` --id `date +%s` --iface wlan0 --pcap --single > logs/log-web-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &"'
+		ans=`ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cat mobile-testbed/src/termux/logs/log-web-testing-* | grep report"`
+		echo -e "$i\t$wifi_ip\t$ans"
+	elif [ $opt == "youtubetest" ]
+	then
+		echo "Running a youtubetest at $wifi_ip:8022" 
+		ssh -T -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip 'sh -c "cd mobile-testbed/src/termux/ && ./youtube-test.sh  --suffix `date +%d-%m-%Y` --id `date +%s` --iface wlan0 --pcap > logs/log-youtube-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &"'
+		sleep 0.5
+	elif [ $opt == "videoconftest" ]
+	then
+		echo "Running a videoconftest at $wifi_ip:8022" 
+		ssh -T -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip 'sh -c "cd mobile-testbed/src/termux/ &&  ./videoconf-tester.sh -a zoom -m 4170438763 -p 6m2jmA --pcap --iface wlan0 --clear > logs/log-videoconf-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &"'
+		sleep 0.5
 	elif [ $opt == "visual" ]
 	then
 		echo "Checking visual at $wifi_ip:8022 -- visual/log-$wifi_ip"

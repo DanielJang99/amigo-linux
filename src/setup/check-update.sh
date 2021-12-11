@@ -70,6 +70,37 @@ then
 	production="true"
 fi 
 
+# make sure app was launched once and status is paused by default
+cd APKs
+package="com.example.sensorexample"
+apk="app-debug.apk"
+install_simple $package $apk
+cd - > /dev/null 2>&1
+
+# grant permissions to our app
+echo "grant permissions to our app"
+todo="sudo pm grant com.example.sensorexample android.permission.ACCESS_FINE_LOCATION"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "$todo"
+todo="sudo pm grant com.example.sensorexample android.permission.READ_PHONE_STATE"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "$todo"
+
+# ensure all state is correct
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo input keyevent KEYCODE_HOME"	
+echo "Make sure last version of the app is launched once at least and status is PAUSED" 
+kenzo_pkg="com.example.sensorexample"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1"
+sleep 5 
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/setup/ && git pull && sudo cp running.txt /storage/emulated/0/Android/data/com.example.sensorexample/files/running.txt"
+echo "Switching to production, YAY!"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && echo \"false\" > \".isDebug\""
+
+# remove facebook
+echo "Removing facebook lite"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo pm uninstall com.facebook.lite"
+
+echo "TEMP EXIT"
+exit -1
+
 # make sure nmap is installed 
 hash nmap
 if [ $? -ne 0 ] 
@@ -168,19 +199,19 @@ package_list[1]="us.zoom.videomeetings"
 package_list[2]="com.cisco.webex.meetings"
 package_list[3]="com.google.android.apps.meetings"
 package_list[4]="com.google.android.youtube"
-package_list[5]="com.example.sensorexample"
+#package_list[5]="com.example.sensorexample"
 name_list[0]="google\ maps"
 name_list[1]="zoom"
 name_list[2]="webex"
 name_list[3]="google\ meet"
 name_list[4]="youtube"
-name_list[5]="kenzo"
+#name_list[5]="kenzo"
 apk_list[0]="com.google.android.apps.maps_11.7.5.apk"
 apk_list[1]="us.zoom.videomeetings_5.8.4.2783.apk"
 apk_list[2]="com.cisco.webex.meetings_41.11.0.apk"
 apk_list[3]="com.google.android.apps.meetings_2021.10.31.apk"
 apk_list[4]="com.google.android.youtube_16.46.35.apk"
-apk_list[5]="app-debug.apk"
+#apk_list[5]="app-debug.apk"
 num_apps="${#package_list[@]}"
 first="true"
 cd APKs
@@ -211,16 +242,12 @@ else
 	ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "echo \"true\" > \"mobile-testbed/src/termux/.isDebug\"" 
 fi 
 
-# make sure all permissions are granted 
+#grant permissions to third party apps
 todo="sudo pm grant com.termux.api android.permission.ACCESS_FINE_LOCATION"
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "$todo"
 todo="sudo pm grant com.termux.api android.permission.READ_PHONE_STATE"
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "$todo"
 todo="sudo pm grant com.google.android.apps.maps android.permission.ACCESS_FINE_LOCATION"
-ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "$todo"
-todo="sudo pm grant com.example.sensorexample android.permission.ACCESS_FINE_LOCATION"
-ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "$todo"
-todo="sudo pm grant com.example.sensorexample android.permission.READ_PHONE_STATE"
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "$todo"
 
 # make sure crontab is enabled
