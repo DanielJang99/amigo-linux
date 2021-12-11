@@ -564,7 +564,8 @@ do
 				if [ $strike -eq 6 ] 
 				then 
 					myprint "Detected high CPU (>85%) in the last 90 seconds. Rebooting"
-					sudo reboot 
+					myprint "Detected high CPU (>85%) in the last 90 seconds.  -- Temporarily disabling rebooting"
+					#sudo reboot 
 				fi 
 			else 
 				myprint "Detected high CPU (>85%). Ignoring since we are net-testing"
