@@ -434,3 +434,4 @@ else
 	sudo killall tcpdump
 	sudo input keyevent KEYCODE_HOME
 fi 
+close_all
