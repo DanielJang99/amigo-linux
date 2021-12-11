@@ -38,10 +38,6 @@ check_account_via_YT(){
 	# make sure screen is on 
 	turn_device_on
 
-	# clean youtube state  
-	myprint "Cleaning YT state"
-	sudo pm clear com.google.android.youtube
-
 	# launch youtube
 	myprint "Launching YT and allow to settle..."
 	sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
@@ -92,9 +88,6 @@ check_account_via_YT(){
 	    myprint "Google account is already verified"
 	fi
 
-	# clear YouTube
-	sudo pm clear com.google.android.youtube
-	
 	# make sure screen is off
 	turn_device_off
 }

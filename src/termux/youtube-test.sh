@@ -13,7 +13,7 @@ function ctrl_c() {
 
 safe_stop(){
 	myprint "Entering safe stop..."
-	sudo pm clear com.google.android.youtube
+	#sudo pm clear com.google.android.youtube
 	sudo killall tcpdump
 	sudo input keyevent KEYCODE_HOME
 	turn_device_off
@@ -86,6 +86,7 @@ pcap_collect="false"               # flag to control pcap collection
 uid="none"                         # user ID
 single="false"                     # user initiated test (same logic as per web)
 sleep_time=5                       # time to sleep between clicks
+first_run="false"                  # first time ever youtube was run
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -146,7 +147,7 @@ fi
 
 # measure ping to youtube 
 ping -c 5 -W 2 youtube.com > notes-ping 2>&1
-avg_ping=``cat notes-ping | grep "mdev" | cut -f 2 -d "=" | cut -f 2 -d "/"``
+avg_ping=`cat notes-ping | grep "mdev" | cut -f 2 -d "=" | cut -f 2 -d "/"`
 myprint "Average ping to youtube: $avg_ping"
 
 # update UID if needed 
@@ -167,11 +168,12 @@ termux-clipboard-set "none"
 # make sure screen is ON
 turn_device_on
 
-# clean youtube state  
-myprint "Cleaning YT state"
-sudo pm clear com.google.android.youtube
+# clean youtube cache
+sudo rm -rf  /data/data/com.google.android.youtube/cache
+#myprint "Cleaning YT state"
+#sudo pm clear com.google.android.youtube
 
-# re-enable stats for nerds for the app
+# launching app and allow to settle 
 myprint "Launching YT and allow to settle..."
 sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
 
@@ -189,7 +191,7 @@ do
 	sleep 3 
 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
 done
-sleep 10 # more? 
+sleep 10
 
 # click account notification if there (guessing so far)
 if [ $single != "true" ] 
@@ -227,7 +229,7 @@ then
 	fi
 
 	# handle issue when clicking a warning which is not there (basically redo step)
-	sudo pm clear com.google.android.youtube
+	#sudo pm clear com.google.android.youtube
 	myprint "Launching YT (AGAIN) and allow to settle - should be faster now..."
 	sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
 	sleep 10 
@@ -245,40 +247,43 @@ else
 fi 
 
 # enable stats for nerds in the main account 
-myprint "Enabling stats for nerds and no autoplay (in account settings)"
-sudo input tap 665 100  # click on account 
-sleep 10
-sudo input tap 370 1180
-curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-c=0
-while [ $curr_activity != "SettingsActivity" ] 
-do 
-	sleep $sleep_time
+if [ $first_run == "true" ] 
+then
+	myprint "Enabling stats for nerds and no autoplay (in account settings)"
+	sudo input tap 665 100  # click on account 
+	sleep 10
+	sudo input tap 370 1180
 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-	let "c++"
-	if [ $c -eq 5 ]
-	then
-		myprint "Something went wrong entering settings!" 
-		msg="ERROR-ENTERING-SETTINGS"
-        send_report
-		safe_stop			
-		exit -1
+	c=0
+	while [ $curr_activity != "SettingsActivity" ] 
+	do 
+		sleep $sleep_time
+		curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+		let "c++"
+		if [ $c -eq 5 ]
+		then
+			myprint "Something went wrong entering settings!" 
+			msg="ERROR-ENTERING-SETTINGS"
+	        send_report
+			safe_stop			
+			exit -1
+		fi 
+	done
+	if [ $disable_autoplay == "true" ] 
+	then 
+		sudo input tap 370 304
+		sleep $sleep_time
+		sudo input tap 370 230 
+		sleep $sleep_time
+		sudo input keyevent KEYCODE_BACK
+		sleep $sleep_time	
 	fi 
-done
-if [ $disable_autoplay == "true" ] 
-then 
-	sudo input tap 370 304
+	sudo input tap 370 200
 	sleep $sleep_time
-	sudo input tap 370 230 
+	sudo input swipe 370 500 370 100
 	sleep $sleep_time
-	sudo input keyevent KEYCODE_BACK
-	sleep $sleep_time	
+	sudo input tap 370 1250
 fi 
-sudo input tap 370 200
-sleep $sleep_time
-sudo input swipe 370 500 370 100
-sleep $sleep_time
-sudo input tap 370 1250
 
 # start CPU monitoring
 log_cpu="${res_folder}/${curr_run_id}.cpu"
@@ -422,6 +427,7 @@ if [ $single != "true" ]
 then 
 	safe_stop
 else 
-	sudo pm clear com.google.android.youtube
+	#sudo pm clear com.google.android.youtube
 	sudo killall tcpdump
+	sudo input keyevent KEYCODE_HOME
 fi 
