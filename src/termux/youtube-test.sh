@@ -38,11 +38,10 @@ activate_stats_nerds(){
 	myprint "Activating stats for nerds!!"
 	#tap_screen 680 105  3
 	#tap_screen 680 105  3	
-	sudo input tap 680 105 && sleep 0.1 && sudo input tap 680 105
+	sudo input tap 680 105 && sleep 0.2 && sudo input tap 680 105
 	sleep 3
 	#tap_screen 370 1125 3
-	#tap_screen 370 1125 1
-	tap_screen 370 1022 1 
+	tap_screen 370 1022 3
 }
 
 # script usage
@@ -405,13 +404,6 @@ do
 	# dump clipboard 
 	termux-clipboard-get >> $log_file
 	echo "" >> $log_file
-
-	# check stats for nerds
-	cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
-	if [ $? -ne 0 ] 
-	then
-		activate_stats_nerds
-	fi 
 
 	# update on time passed 
 	sleep 1 
