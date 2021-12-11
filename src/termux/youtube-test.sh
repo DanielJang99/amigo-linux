@@ -181,25 +181,25 @@ sudo rm -rf  /data/data/com.google.android.youtube/cache
 #myprint "Cleaning YT state"
 #sudo pm clear com.google.android.youtube
 
-# # launching app and allow to settle 
-# myprint "Launching YT and allow to settle..."
-# sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
+# launching app and allow to settle 
+myprint "Launching YT and allow to settle..."
+sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
 
-# # lower all the volumes
-# myprint "Making sure volume is off"
-# sudo media volume --stream 3 --set 0  # media volume
-# sudo media volume --stream 1 --set 0	 # ring volume
-# sudo media volume --stream 4 --set 0	 # alarm volume
+# lower all the volumes
+myprint "Making sure volume is off"
+sudo media volume --stream 3 --set 0  # media volume
+sudo media volume --stream 1 --set 0	 # ring volume
+sudo media volume --stream 4 --set 0	 # alarm volume
 
-# # wait for YT 
-# myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
-# curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-# while [ $curr_activity != "WatchWhileActivity" ] 
-# do 
-# 	sleep 3 
-# 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-# done
-# sleep 10
+# wait for YT 
+myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
+curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+while [ $curr_activity != "WatchWhileActivity" ] 
+do 
+	sleep 3 
+	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+done
+sleep 10
 
 # click account notification if there (guessing so far)
 if [ $single != "true" ] 
@@ -353,7 +353,7 @@ do
 			if [ $attempt -ge 1 ] # allow just one attempt, doing more does not seem to help
 			then 
 				myprint "Something is WRONG. Clearing YT and exiting!"
-				sudo pm clear com.google.android.youtube			
+				#sudo pm clear com.google.android.youtube			
 				msg="ERROR-STATS-NERDS"
 	        	send_report
 	        	safe_stop
