@@ -378,8 +378,7 @@ if [ $? -ne 0 ]
 then
 	activate_stats_nerds
 	tap_screen 592 216 1
-	termux-clipboard-get > $log_file
-	echo "" >> $log_file
+	termux-clipboard-get > ".clipboard"
 	cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
 	if [ $? -ne 0 ] 
 	then
