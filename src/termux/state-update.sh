@@ -410,11 +410,11 @@ do
 	then 
 		if [ $firstPause == "true" ]
 		then
-			myprint "Paused by user -- WARNING: uncomment L427"
+			myprint "Paused by user!"
 			firstPause="false"
 		fi 
 		echo "true" > ".isPaused"
-		#./stop-net-testing.sh  
+		./stop-net-testing.sh  
 	else 
 		firstPause="true"
 		echo "false" > ".isPaused"	

@@ -83,7 +83,7 @@ adb_file=$script_dir"/adb-utils.sh"
 source $adb_file
 
 # default parameters
-DURATION=30                        # experiment duration
+DURATION=60                        # experiment duration
 interface="wlan0"                  # default network interface to monitor (for traffic)
 suffix=`date +%d-%m-%Y`            # folder id (one folder per day)
 curr_run_id=`date +%s`             # unique id per run

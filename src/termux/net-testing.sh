@@ -82,7 +82,7 @@ turn_device_off
 
 # current free space 
 free_space_e=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
-space_used=`echo "$free_space_s $free_space_e" | awk '{print($1-$2)}'`
+space_used=`echo "$free_space_s $free_space_e" | awk '{print($1-$2)*1000}'`
 
 #logging 
-echo "[`date`] net-testing END. FreeSpace: $free_space_e SpaceUsed: $space_used"
+echo "[`date`] net-testing END. FreeSpace: ${free_space_e}GB SpaceUsed: ${space_used}MB"
