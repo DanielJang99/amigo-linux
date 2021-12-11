@@ -20,6 +20,11 @@ fi
 # current free space 
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 
+# video testing with youtube
+touch ".locked"
+./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap
+rm ".locked"
+
 # run a speedtest 
 echo "[`date`] speedtest-cli..."
 res_folder="speedtest-cli-logs/${suffix}"
@@ -58,18 +63,11 @@ gzip "${res_folder}/speedtest-$t_s.json"
 # TODO 
 
 # test multiple webages
-turn_device_on
 touch ".locked"
 ./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap
-
-# video testing with youtube
-./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap
-
-# save battery, screen off 
-turn_device_off
 rm ".locked"
 
-################ safety cleanup ########################
+# safety cleanup 
 sudo pm clear com.android.chrome
 sudo pm clear com.google.android.youtube
 close_all
@@ -78,7 +76,7 @@ for pid in `ps aux | grep 'youtube-test\|web-test\|mtr.sh\|cdn-test.sh\|speedtes
 do
     kill -9 $pid
 done
-#########################################
+turn_device_off
 
 # current free space 
 free_space_e=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
