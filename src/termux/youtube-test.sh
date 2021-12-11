@@ -370,7 +370,7 @@ sleep 10
 # done
 
 # collect data 
-myprint "Stats-for-nerds correctly detecting. Starting data collection for $DURATION seconds..."
+#myprint "Stats-for-nerds correctly detecting. Starting data collection for $DURATION seconds..."
 t_s=`date +%s`
 t_e=`date +%s`
 let "t_p = t_s - t_e"
