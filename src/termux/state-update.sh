@@ -427,7 +427,7 @@ do
 		let "time_check = slow_freq + slow_freq/2" # cut some slack, we check more often than this
 		if [ $time_from_sel -lt $time_check ]  
 		then 
-			echo "User entered selection: $sel_id (Time: $time_sel -- $current_time)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
+			echo "User entered selection: $sel_id (TimeSinceSel:$time_from_sel)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
 			if [ $def_iface != "none" ] 
 			then
 				case $sel_id in
