@@ -15,7 +15,7 @@ safe_stop(){
 	myprint "Entering safe stop..."
 	#sudo pm clear com.google.android.youtube
 	sudo killall tcpdump
-	sudo input keyevent KEYCODE_HOME
+	close_all
 	turn_device_off
 }
 
@@ -454,12 +454,4 @@ send_report
 #fi 
 
 # clean youtube state and anything else 
-if [ $single != "true" ] 
-then 
-	safe_stop
-else 
-	#sudo pm clear com.google.android.youtube
-	sudo killall tcpdump
-	sudo input keyevent KEYCODE_HOME
-fi 
-close_all
+safe_stop
