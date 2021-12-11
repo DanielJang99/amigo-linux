@@ -387,10 +387,11 @@ do
 	
 	# check if net-testing is running
 	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`			
-		
-	# update Google account authorization status
+	
+	#######################TESTING # update Google account authorization status
 	t_last_google=`cat ".time_google_check"`
 	let "t_p = current_time - t_last_google"
+	GOOGLE_CHECK_FREQ=60
 	if [ $t_p -gt $GOOGLE_CHECK_FREQ -a $num -eq 0 ] 
 	then
 		myprint "Time to check Google account status via YT"
@@ -400,7 +401,9 @@ do
 		myprint "Google account status: $google_status"	
 	fi 
 	google_status=`cat ".google_status"`
-	
+	#######################TESTING
+
+
 	# update WiFi and mobile phone connectivity if it is time to do so (once a minute)
 	let "t_last_wifi_mobile_update =  current_time - t_wifi_mobile_update"
 	if [ $t_last_wifi_mobile_update -gt 60 ] 
@@ -420,11 +423,11 @@ do
 	then 
 		if [ $firstPause == "true" ]
 		then
-			myprint "Paused by user"
+			myprint "Paused by user -- WARNING: uncomment L427"
 			firstPause="false"
 		fi 
 		echo "true" > ".isPaused"
-		./stop-net-testing.sh  
+		#./stop-net-testing.sh  
 	else 
 		firstPause="true"
 		echo "false" > ".isPaused"	
@@ -499,6 +502,21 @@ do
 		continue
 	fi 
 		
+	# update Google account authorization status
+	t_last_google=`cat ".time_google_check"`
+	let "t_p = current_time - t_last_google"
+	GOOGLE_CHECK_FREQ=60
+	if [ $t_p -gt $GOOGLE_CHECK_FREQ -a $num -eq 0 ] 
+	then
+		myprint "Time to check Google account status via YT"
+		check_account_via_YT	  
+		t_last_google=$current_time
+		echo $current_time > ".time_google_check"
+		myprint "Google account status: $google_status"	
+	fi 
+	google_status=`cat ".google_status"`
+	
+
 	# loop rate control (slow)
 	let "t_p = (current_time - last_slow_loop_time)"
 	if [ $t_p -lt $slow_freq ] 
