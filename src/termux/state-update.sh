@@ -241,7 +241,8 @@ update_wifi_mobile(){
 slow_freq=15                           # interval for checking commands to run (slower)
 fast_freq=3                            # interval for checking the app (faster)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
-NET_INTERVAL=3600                      # interval of networking testing 
+#NET_INTERVAL=3600                      # interval of networking testing 
+NET_INTERVAL=1800                      # interval of networking testing 
 GOOGLE_CHECK_FREQ=18000                # interval of Google account check via YT (seconds)
 kenzo_pkg="com.example.sensorexample"  # our app package name 
 last_report_time="1635969639"          # last time a report was sent (init to an old time)
