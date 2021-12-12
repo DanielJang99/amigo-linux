@@ -498,15 +498,15 @@ do
 	current_time=`date +%s`
 	last_loop_time=$current_time
 
-	# if we are paused we stop here 
-	let "t_since_paused = current_time - t_start_pause"
-	if [ $t_since_paused -gt 3600 ]
-	then 
-		echo "true" > ".temp" 
-		echo "false" > ".isPaused"
-		sudo cp ".temp" $user_file
-		myprint "UNPAUSING since we have been paused for too long ($t_since_paused sec)!"
-	fi 
+	# if we are paused we stop here -- disabled protection to long pause 
+	# let "t_since_paused = current_time - t_start_pause"
+	# if [ $t_since_paused -gt 3600 ]
+	# then 
+	# 	echo "true" > ".temp" 
+	# 	echo "false" > ".isPaused"
+	# 	sudo cp ".temp" $user_file
+	# 	myprint "UNPAUSING since we have been paused for too long ($t_since_paused sec)!"
+	# fi 
 	isPaused=`cat ".isPaused"`
 	if [ $isPaused == "true" ]
 	then
