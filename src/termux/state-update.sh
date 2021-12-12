@@ -32,7 +32,6 @@ fi
 adb_file=`pwd`"/adb-utils.sh"
 source $adb_file
 
-
 # check account verification via YT
 check_account_via_YT(){
 	# make sure screen is on 
@@ -286,12 +285,25 @@ myprint "Ensuring that screen is in portrait and auto-rotation disabled"
 sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
 sudo  settings put system user_rotation 0          # put in portrait
 
-# update Google account authorization status
-check_account_via_YT
-google_status=`cat ".google_status"`
-myprint "Google account status: $google_status"
-echo `date +%s` > ".time_google_check"
 
+# update Google account authorization status
+t_last_google=0
+current_time=`date +%s`
+if [ -f ".time_google_check" ]
+then 
+	t_last_google=`cat ".time_google_check"`
+fi 
+let "t_p = current_time - t_last_google"
+if [ $t_p -gt $GOOGLE_CHECK_FREQ -a $num -eq 0 ] 
+then
+	myprint "Time to check Google account status via YT"
+	check_account_via_YT	  
+	t_last_google=$current_time
+	echo $current_time > ".time_google_check"
+	myprint "Google account status: $google_status"	
+fi 
+google_status=`cat ".google_status"`
+	
 # update code 
 myprint "Updating our code..."
 git pull
