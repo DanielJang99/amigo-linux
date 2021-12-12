@@ -420,6 +420,7 @@ do
 	# check if user wants to run a test 
 	if [ -f $sel_file ] 
 	then 
+		myprint "Selection file found..."
 		sel_id=`sudo cat $sel_file | cut -f 1`
 		time_sel=`sudo cat $sel_file | cut -f 2`
 		let "time_from_sel = current_time - time_sel"
@@ -471,7 +472,7 @@ do
 	let "t_p = fast_freq - (current_time - last_loop_time)"
 	if [ $t_p -gt 0 ] 
 	then 
-		echo "Sleeping $t_p"
+		myprint "Sleeping $t_p"
 		sleep $t_p
 	fi 
 	to_run=`cat ".status"`
