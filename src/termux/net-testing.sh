@@ -18,23 +18,14 @@ then
 fi  
 
 
-#run NYU stuff 
+#run NYU stuff (only if iface is mobile)
 echo "[`date`] starting NYU on 3G"
 server_ip="212.227.209.11"
 res_dir="zus-logs/$suffix"
 mkdir -p $res_dir
 
-#switch to 3G 
-uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
-turn_device_on
-am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
-sleep 5 
-tap_screen 370 765 5
-tap_screen 370 765 5 
-tap_screen 370 660 2
-sudo input keyevent KEYCODE_BACK  
-close_all
-turn_device_off
+
+# TEMP TESTING
 timeout 150 ./FTPClient $server_ip 8888 $uid 3G
 if [ -f zeus.csv ]
 then 
@@ -42,24 +33,41 @@ then
 	gzip "${res_dir}/${t_s}-3G.txt"
 fi 
 
-#switch back to 4G 
-echo "[`date`] starting NYU on 4G"
-turn_device_on
-am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
-sleep 5 
-tap_screen 370 765 5
-tap_screen 370 765 5
-tap_screen 370 560 2
-sudo input keyevent KEYCODE_BACK
-close_all
-turn_device_off
-timeout 150 ./FTPClient $server_ip 8888 $uid 4G
-if [ -f zeus.csv ]
-then 
-	mv zeus.csv "${res_dir}/${t_s}-4G.txt"
-	gzip "${res_dir}/${t_s}-4G.txt"
-fi 
+# #switch to 3G 
+# uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+# turn_device_on
+# am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
+# sleep 5 
+# tap_screen 370 765 5
+# tap_screen 370 765 5 
+# tap_screen 370 660 2
+# sudo input keyevent KEYCODE_BACK  
+# close_all
+# turn_device_off
+# timeout 150 ./FTPClient $server_ip 8888 $uid 3G
+# if [ -f zeus.csv ]
+# then 
+# 	mv zeus.csv "${res_dir}/${t_s}-3G.txt"
+# 	gzip "${res_dir}/${t_s}-3G.txt"
+# fi 
 
+# #switch back to 4G 
+# echo "[`date`] starting NYU on 4G"
+# turn_device_on
+# am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
+# sleep 5 
+# tap_screen 370 765 5
+# tap_screen 370 765 5
+# tap_screen 370 560 2
+# sudo input keyevent KEYCODE_BACK
+# close_all
+# turn_device_off
+# timeout 150 ./FTPClient $server_ip 8888 $uid 4G
+# if [ -f zeus.csv ]
+# then 
+# 	mv zeus.csv "${res_dir}/${t_s}-4G.txt"
+# 	gzip "${res_dir}/${t_s}-4G.txt"
+# fi 
 #############
 exit -1 
 
