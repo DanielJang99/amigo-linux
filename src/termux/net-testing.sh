@@ -3,6 +3,18 @@
 adb_file=`pwd`"/adb-utils.sh"
 source $adb_file
 
+# generate data to be POSTed to my server
+generate_post_data(){
+  cat <<EOF
+    {
+    "today":"${suffix}",
+    "timestamp":"${current_time}",
+    "uid":"${uid}",
+    "msg":"${msg}"
+    }
+EOF
+}
+
 # run NYU measurement 
 run_zus(){
 	server_ip="212.227.209.11"
@@ -21,12 +33,21 @@ run_zus(){
 	sudo input keyevent KEYCODE_BACK  
 	close_all
 	turn_device_off
-	#timeout 150 ./FTPClient $server_ip 8888 $uid 3G
+	timeout 150 ./FTPClient $server_ip 8888 $uid 3G
 	if [ -f zeus.csv ]
 	then 
+		msg=`head -n 1 zeus.csv`	
 		mv zeus.csv "${res_dir}/${t_s}-3G.txt"
 		gzip "${res_dir}/${t_s}-3G.txt"
+	else 
+		msg="ZEUS-4G-NOT-FOUND"
 	fi 
+	
+	# send report to our server
+	current_time=`date +%s`
+	myprint "Sending report to the server: "
+	echo "$(generate_post_data)" 
+	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/zeustest
 
 	#switch back to 4G 
 	myprint "NYU-stuff. Switch to 4G"	
@@ -40,13 +61,22 @@ run_zus(){
 	sudo input keyevent KEYCODE_BACK
 	close_all
 	turn_device_off
-	#timeout 150 ./FTPClient $server_ip 8888 $uid 4G
+	timeout 150 ./FTPClient $server_ip 8888 $uid 4G
 	if [ -f zeus.csv ]
 	then 
+		msg=`head -n 1 zeus.csv`
 		mv zeus.csv "${res_dir}/${t_s}-4G.txt"
 		gzip "${res_dir}/${t_s}-4G.txt"
+	else 
+		msg="ZEUS-4G-NOT-FOUND"
 	fi
-	
+
+	# send report to our server
+	current_time=`date +%s`
+	myprint "Sending report to the server: "
+	echo "$(generate_post_data)" 
+	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/zeustest
+
 	# status update 
 	let "num_runs_today++"	
 }
@@ -100,8 +130,6 @@ else
 	myprint "No mobile connection found. Skipping NYU-ZUS"
 fi 
 
-exit -1 
-######################
 
 # run multiple MTR
 ./mtr.sh $suffix $t_s
