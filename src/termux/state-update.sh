@@ -282,11 +282,11 @@ then
 fi
 
 # always make sure screen is in portrait 
+myprint "Ensuring that screen is in portrait and auto-rotation disabled"
 sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
 sudo  settings put system user_rotation 0          # put in portrait
 
 # update Google account authorization status
-#echo "authorized" > ".google_status"
 check_account_via_YT
 google_status=`cat ".google_status"`
 myprint "Google account status: $google_status"
@@ -317,6 +317,7 @@ if [ -f "uid-list.txt" ]
 then 
 	physical_id=`cat "uid-list.txt" | grep $uid | cut -f 1`
 fi 
+myprint "IMEI: $uid PhysicalID: $physical_id"
 
 # status update
 echo "true" > ".status"
