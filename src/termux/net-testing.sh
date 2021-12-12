@@ -3,6 +3,12 @@
 adb_file=`pwd`"/adb-utils.sh"
 source $adb_file
 
+# trap ctrl-c and call ctrl_c()
+trap ctrl_c INT
+function ctrl_c() {
+	./stop-net-testing.sh
+}
+
 # generate data to be POSTed to my server
 generate_post_data(){
   cat <<EOF
