@@ -17,6 +17,33 @@ then
 	iface=$3
 fi  
 
+
+#run NYU stuff 
+#switch to 3G 
+turn_device_on
+am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
+sleep 5 
+tap_screen 370 765 5
+tap_screen 370 765 5 
+tap_screen 370 660 2
+sudo input keyevent KEYCODE_BACK  
+timeout 300 ./FTPClient 23.235.205.53 8888 $uid 3G
+turn_device_off
+
+#switch back to 4G 
+turn_device_on
+am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
+sleep 5 
+tap_screen 370 765 5
+tap_screen 370 765 5
+tap_screen 370 560 2
+sudo input keyevent KEYCODE_BACK
+turn_device_off
+timeout 300 ./FTPClient 23.235.205.53 8888 $uid 4G
+
+#############
+exit -1 
+
 # current free space 
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 
@@ -38,25 +65,6 @@ gzip "${res_folder}/speedtest-$t_s.json"
 
 # run a speedtest in the browser (fast.com) -- having issue on this phone 
 #./speed-browse-test.sh $suffix $t_s
-
-# run NYU stuff 
-# TODO 
-#turn_device_on
-# switch to 3G 
-#am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
-#tap_screen 370 765 1 
-#tap_screen 370 765 1 
-#tap_screen 370 660
-#sudo input keyevent KEYCODE_BACK  
-
-# switch back to 4G 
-#am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
-#tap_screen 370 765 1 
-#tap_screen 370 765 1 
-#tap_screen 370 560
-#sudo input keyevent KEYCODE_BACK
-#turn_device_off
-
 
 # test multiple CDNs
 ./cdn-test.sh $suffix $t_s
