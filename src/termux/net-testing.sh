@@ -19,11 +19,13 @@ fi
 
 
 #run NYU stuff 
+echo "[`date`] starting NYU on 3G"
 server_ip="212.227.209.11"
 res_dir="zus-logs/$suffix"
 mkdir -p $res_dir
 
 #switch to 3G 
+uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 turn_device_on
 am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
 sleep 5 
@@ -39,6 +41,7 @@ fi
 turn_device_off
 
 #switch back to 4G 
+echo "[`date`] starting NYU on 4G"
 turn_device_on
 am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
 sleep 5 
