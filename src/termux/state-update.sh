@@ -442,7 +442,7 @@ do
 		let "time_check = slow_freq + slow_freq/2" # cut some slack, we check more often than this
 		if [ $time_from_sel -lt $time_check ]  
 		then 
-			echo "User entered selection: $sel_id (TimeSinceSel:$time_from_sel)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
+			myprint "User entered selection: $sel_id (TimeSinceSel:$time_from_sel)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
 			if [ $def_iface != "none" ] 
 			then
 				case $sel_id in
@@ -455,8 +455,8 @@ do
 						t_wifi_mobile_update=`date +%s`	
 						
 						# open a random webpage 
-						echo "Open a random webpage -- ./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single --pcap"
-						./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single --pcap
+						myprint "Open a random webpage -- ./web-test.sh  --suffix $suffix --id $time_sel-"user" --iface $def_iface --single --pcap"
+						./web-test.sh  --suffix $suffix --id $time_sel-"user" --iface $def_iface --single --pcap
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-quickly-the-page-loaded:1-star-(slow)--5-stars-(fast)"
 						#sleep 30 # allow time to enter input	
 						#continue # go back up to see if user wants to run another test 
@@ -466,8 +466,8 @@ do
 						./stop-net-testing.sh
 						update_wifi_mobile 
 						t_wifi_mobile_update=`date +%s`	
-						echo "Watch a video -- ./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface --pcap --single"						
-						./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface --pcap --single
+						myprint "Watch a video -- ./youtube-test.sh --suffix $suffix --id $time_sel-"user" --iface $def_iface --pcap --single"						
+						./youtube-test.sh --suffix $suffix --id $time_sel-"user" --iface $def_iface --pcap --single
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-the-video-played:1-star-(poor)--5-stars-(great)"
 						#sleep 30 # allow time to enter input	
 						#continue # go back up to see if user wants to run another test 
