@@ -19,6 +19,10 @@ fi
 
 
 #run NYU stuff 
+server_ip="212.227.209.11"
+res_dir="zus-logs/$suffix"
+mkdir -p $res_dir
+
 #switch to 3G 
 turn_device_on
 am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
@@ -27,7 +31,11 @@ tap_screen 370 765 5
 tap_screen 370 765 5 
 tap_screen 370 660 2
 sudo input keyevent KEYCODE_BACK  
-timeout 300 ./FTPClient 23.235.205.53 8888 $uid 3G
+timeout 300 ./FTPClient $server_ip 8888 $uid 3G
+if [ -f zeus.csv ]
+then 
+	mv zeus.csv "${res_dir}/${ts}-3G.txt"
+fi 
 turn_device_off
 
 #switch back to 4G 
@@ -39,7 +47,11 @@ tap_screen 370 765 5
 tap_screen 370 560 2
 sudo input keyevent KEYCODE_BACK
 turn_device_off
-timeout 300 ./FTPClient 23.235.205.53 8888 $uid 4G
+timeout 300 ./FTPClient $server_ip 8888 $uid 4G
+if [ -f zeus.csv ]
+then 
+	mv zeus.csv "${res_dir}/${ts}-34.txt"
+fi 
 
 #############
 exit -1 
