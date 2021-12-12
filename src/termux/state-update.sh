@@ -475,7 +475,6 @@ do
 	let "t_p = fast_freq - (current_time - last_loop_time)"
 	if [ $t_p -gt 0 ] 
 	then 
-		myprint "Sleeping $t_p"
 		sleep $t_p
 	fi 
 	to_run=`cat ".status"`
