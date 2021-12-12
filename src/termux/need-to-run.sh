@@ -58,7 +58,6 @@ ps aux | grep "state-update.sh" | grep "bash" > ".ps"
 N=`cat ".ps" | wc -l`
 if [ $N -eq 0 -a $debug == "false" ] 
 then 
-	echo "Time to run!"
 	# inform server of restart needed
 	suffix=`date +%d-%m-%Y`
 	current_time=`date +%s`
@@ -68,8 +67,24 @@ then
 	echo "$(generate_post_data)"
 	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
 
+	# update code 
+	myprint "Updating our code..."
+	git pull
+	
+	# check if something to compress 
+  ./stop-net-testing.sh  	
+	for f in `ls logs | grep 'state\|net'`
+	do  
+		echo $file | grep -w ".gz" > /dev/null
+		if [ $? -eq 1 ] 
+		then 
+			gzip "logs/${f}"
+		fi 
+	done
+		
 	# restart script 
-	mkdir -p logs
+	echo "Time to run!"	
+	mkdir -p logs	
 	./state-update.sh > "logs/log-state-update-"`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1 &
 else 
 	echo "No need to run"

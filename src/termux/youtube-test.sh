@@ -155,7 +155,6 @@ then
 	done < ".ps-$app"
 fi 
 
-
 # measure ping to youtube 
 ping -c 5 -W 2 youtube.com > notes-ping 2>&1
 avg_ping=`cat notes-ping | grep "mdev" | cut -f 2 -d "=" | cut -f 2 -d "/"`
@@ -221,7 +220,7 @@ sudo media volume --stream 3 --set 0  # media volume
 sudo media volume --stream 1 --set 0	 # ring volume
 sudo media volume --stream 4 --set 0	 # alarm volume
 
-# wait for GUI to load  -- FIXME 
+# wait for GUI to load  -- IMPROVEME! 
 sleep 10
 
 # check stats for nerds
