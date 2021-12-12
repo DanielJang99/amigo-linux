@@ -467,7 +467,7 @@ do
 		else 
 			# removing selection file, no need to check all the time
 			myprint "Cleaning old user selection file already used. (TimeSinceSel:$time_from_sel)"
-			rm $sel_file
+			sudo rm $sel_file
 		fi 
 	fi 
 
