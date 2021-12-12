@@ -34,12 +34,12 @@ tap_screen 370 765 5
 tap_screen 370 660 2
 sudo input keyevent KEYCODE_BACK  
 close_all
-timeout 300 ./FTPClient $server_ip 8888 $uid 3G
+turn_device_off
+timeout 150 ./FTPClient $server_ip 8888 $uid 3G
 if [ -f zeus.csv ]
 then 
 	mv zeus.csv "${res_dir}/${ts}-3G.txt"
 fi 
-turn_device_off
 
 #switch back to 4G 
 echo "[`date`] starting NYU on 4G"
@@ -52,7 +52,7 @@ tap_screen 370 560 2
 sudo input keyevent KEYCODE_BACK
 close_all
 turn_device_off
-timeout 300 ./FTPClient $server_ip 8888 $uid 4G
+timeout 150 ./FTPClient $server_ip 8888 $uid 4G
 if [ -f zeus.csv ]
 then 
 	mv zeus.csv "${res_dir}/${ts}-34.txt"
