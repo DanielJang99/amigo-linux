@@ -241,8 +241,7 @@ update_wifi_mobile(){
 slow_freq=15                           # interval for checking commands to run (slower)
 fast_freq=5                            # interval for checking the app (faster)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
-#NET_INTERVAL=3600                      # interval of networking testing 
-NET_INTERVAL=1800                      # interval of networking testing 
+NET_INTERVAL=3600                      # interval of networking testing 
 GOOGLE_CHECK_FREQ=18000                # interval of Google account check via YT (seconds)
 kenzo_pkg="com.example.sensorexample"  # our app package name 
 last_report_time="1635969639"          # last time a report was sent (init to an old time)
@@ -282,38 +281,36 @@ then
 fi
 
 # always make sure screen is in portrait 
-#sudo content insert --uri content://settings/system --bind name:s:accelerometer_rotation --bind value:i:0
-#sudo content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:0  # 1 => for landscape 
 sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
 sudo  settings put system user_rotation 0          # put in portrait
 
-# # update Google account authorization status
-# #echo "authorized" > ".google_status"
-# check_account_via_YT
-# google_status=`cat ".google_status"`
-# myprint "Google account status: $google_status"
-# echo `date +%s` > ".time_google_check"
+# update Google account authorization status
+#echo "authorized" > ".google_status"
+check_account_via_YT
+google_status=`cat ".google_status"`
+myprint "Google account status: $google_status"
+echo `date +%s` > ".time_google_check"
 
-# # update code 
-# myprint "Updating our code..."
-# git pull
+# update code 
+myprint "Updating our code..."
+git pull
 
-# # start CPU monitoring (background)
-# ./monitor-cpu.sh &
+# start CPU monitoring (background)
+./monitor-cpu.sh &
 
-# # ensure that BT is enabled 
-# myprint "Make sure that BT is running" 
-# bt_status=`sudo settings get global bluetooth_on`
-# if [ $bt_status -ne 1 ] 
-# then 
-# 	myprint "Activating BT" 
-# 	sudo service call bluetooth_manager 6
-# else 
-# 	myprint "BT is active: $bt_status"
-# fi 
+# ensure that BT is enabled 
+myprint "Make sure that BT is running" 
+bt_status=`sudo settings get global bluetooth_on`
+if [ $bt_status -ne 1 ] 
+then 
+	myprint "Activating BT" 
+	sudo service call bluetooth_manager 6
+else 
+	myprint "BT is active: $bt_status"
+fi 
 
-# # retrieve unique ID for this device and pass to our app
-# uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+# retrieve unique ID for this device and pass to our app
+uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 
 # status update
 echo "true" > ".status"
@@ -321,20 +318,16 @@ to_run=`cat ".status"`
 sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"
 echo "false" > ".isPaused"
 
-# #restart Kenzo - so that background service runs and info is populated 
-# turn_device_on
-# myprint "Granting Kenzo permission and restart..."
-# sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
-# sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
-# sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
-# sleep 5
-# foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
-# myprint "Confirm Kenzo is in the foregound: $foreground" 
-# sudo sh -c "echo $uid > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
-# turn_device_off
-
-#close all pending apps
-close_all
+#restart Kenzo - so that background service runs and info is populated 
+turn_device_on
+myprint "Granting Kenzo permission and restart..."
+sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
+sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
+sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
+sleep 5
+foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+myprint "Confirm Kenzo is in the foregound: $foreground" 
+sudo sh -c "echo $uid > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
 
 # derive B from GB
 let "MAX_MOBILE = MAX_MOBILE_GB * 1000000000"
@@ -368,13 +361,12 @@ fi
 # find termuxt user 
 termux_user=`whoami`
 
-# make sure we are HOME and no keyboard is showing
-myprint "Going HOME!"
-sudo input keyevent KEYCODE_HOME
+#close all and turn off screen
+close_all
 sudo input keyevent 111
+turn_device_off
 
 # external loop 
-turn_device_off
 sel_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/selection.txt"
 user_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/running.txt"	
 myprint "Script will run with a <$fast_freq, $slow_freq> frequency. To stop: <<echo \"false\" > \".status\""
@@ -421,7 +413,7 @@ do
 	# check if user wants to run a test 
 	if [ -f $sel_file ] 
 	then 
-		myprint "Selection file found..."
+		myprint "New selection file was found!"
 		sel_id=`sudo cat $sel_file | cut -f 1`
 		time_sel=`sudo cat $sel_file | cut -f 2`
 		let "time_from_sel = current_time - time_sel"
@@ -467,6 +459,7 @@ do
 			fi  
 		else 
 			# removing selection file, no need to check all the time
+			myprint "Cleaning old user selection file already used. (TimeSinceSel:$time_from_sel)"
 			rm $sel_file
 		fi 
 	fi 
@@ -486,7 +479,6 @@ do
 
 	# if we are paused we stop here 
 	isPaused=`cat ".isPaused"`
-	isPaused="true"	
 	if [ $isPaused == "true" ]
 	then
 		continue
