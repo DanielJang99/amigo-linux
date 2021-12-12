@@ -285,7 +285,6 @@ myprint "Ensuring that screen is in portrait and auto-rotation disabled"
 sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
 sudo  settings put system user_rotation 0          # put in portrait
 
-
 # update Google account authorization status
 t_last_google=0
 current_time=`date +%s`
@@ -419,16 +418,18 @@ do
 	then 
 		if [ $firstPause == "true" ]
 		then
-			myprint "Paused by user!"
 			firstPause="false"
 			./stop-net-testing.sh  	
+			t_start_pause=`date +%s`
+			myprint "Paused by user! Time: $t_start_pause"			
 		fi 
 		echo "true" > ".isPaused"
 	else 
 		firstPause="true"
+		t_start_pause=`date +%s`	
 		echo "false" > ".isPaused"	
 	fi 
-
+	
 	# check if user wants to run a test 
 	if [ -f $sel_file ] 
 	then 
@@ -496,6 +497,14 @@ do
 	last_loop_time=$current_time
 
 	# if we are paused we stop here 
+	let "t_since_paused = current_time - t_start_pause"
+	if [ $t_since_paused -gt 3600 ]
+	then 
+		echo "true" > ".temp" 
+		echo "false" > ".isPaused"
+		sudo cp ".temp" $user_file
+		myprint "UNPAUSING since we have been paused for too long ($t_since_paused sec)!"
+	fi 
 	isPaused=`cat ".isPaused"`
 	if [ $isPaused == "true" ]
 	then

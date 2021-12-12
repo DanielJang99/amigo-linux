@@ -46,7 +46,7 @@ run_zus(){
 	sudo input keyevent KEYCODE_BACK  
 	close_all
 	turn_device_off
-	#timeout 150 ./FTPClient $server_ip 8888 $uid 3G
+	timeout 150 ./FTPClient $server_ip 8888 $uid 3G
 	net="3G"
 	mServiceState=`sudo dumpsys telephony.registry | grep "mServiceState" | head -n 1`	
 	traffic_end=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
@@ -78,7 +78,7 @@ run_zus(){
 	sudo input keyevent KEYCODE_BACK
 	close_all
 	turn_device_off
-	#timeout 150 ./FTPClient $server_ip 8888 $uid 4G
+	timeout 150 ./FTPClient $server_ip 8888 $uid 4G
 	net="4G"	
 	mServiceState=`sudo dumpsys telephony.registry | grep "mServiceState" | head -n 1`		
 	traffic_end=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
@@ -118,6 +118,9 @@ fi
 # current free space 
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 
+# run multiple MTR
+./mtr.sh $suffix $t_s
+
 # run nyu stuff if mobile is available or if we really need samples 
 sudo dumpsys netstats > .data
 mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
@@ -135,28 +138,21 @@ then
 	if [ $iface == $mobile_iface -a $num_runs_today -lt $MAX_RUNS ] 
 	then
 		run_zus		
-	#elif [ $curr_hour -ge 18 ] # we are past 6pm
-	elif [ $curr_hour -ge 00 ] # we are past 6pm
-	then 
-		myprint "NYU-stuff. It is past 6pm and missing data. Resorting to disable WiFi"
-		termux-wifi-enable false
-		run_zus
-		termux-wifi-enable true
-		myprint "Enabling WiFi back"		
-	else 
-		myprint "NYU-stuff. Skipping since on WiFI and it not past 6pm"
 	fi 
+	# elif [ $curr_hour -ge 18 ] # we are past 6pm
+	# then 
+	# 	myprint "NYU-stuff. It is past 6pm and missing data. Resorting to disable WiFi"
+	# 	termux-wifi-enable false
+	# 	run_zus
+	# 	termux-wifi-enable true
+	# 	myprint "Enabling WiFi back"		
+	# else 
+	# 	myprint "NYU-stuff. Skipping since on WiFI and it not past 6pm"
+	# fi 
 	echo $num_runs_today > $status_file
 else 
 	myprint "No mobile connection found. Skipping NYU-ZUS"
 fi 
-
-##################
-exit -1 
-##################
-
-# run multiple MTR
-./mtr.sh $suffix $t_s
 
 # video testing with youtube -- SKIPPING, NOT RELIABLE
 touch ".locked"
