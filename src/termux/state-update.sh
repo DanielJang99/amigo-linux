@@ -293,6 +293,7 @@ then
 	t_last_google=`cat ".time_google_check"`
 fi 
 let "t_p = current_time - t_last_google"
+num=0
 if [ $t_p -gt $GOOGLE_CHECK_FREQ -a $num -eq 0 ] 
 then
 	myprint "Time to check Google account status via YT"
