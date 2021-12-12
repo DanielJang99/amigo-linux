@@ -33,6 +33,7 @@ tap_screen 370 765 5
 tap_screen 370 765 5 
 tap_screen 370 660 2
 sudo input keyevent KEYCODE_BACK  
+close_all
 timeout 300 ./FTPClient $server_ip 8888 $uid 3G
 if [ -f zeus.csv ]
 then 
@@ -49,6 +50,7 @@ tap_screen 370 765 5
 tap_screen 370 765 5
 tap_screen 370 560 2
 sudo input keyevent KEYCODE_BACK
+close_all
 turn_device_off
 timeout 300 ./FTPClient $server_ip 8888 $uid 4G
 if [ -f zeus.csv ]
