@@ -17,7 +17,6 @@ then
 	iface=$3
 fi  
 
-
 #run NYU stuff (only if iface is mobile)
 echo "[`date`] starting NYU on 3G"
 server_ip="212.227.209.11"
@@ -26,6 +25,7 @@ mkdir -p $res_dir
 
 
 # TEMP TESTING
+uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 timeout 150 ./FTPClient $server_ip 8888 $uid 3G
 if [ -f zeus.csv ]
 then 
