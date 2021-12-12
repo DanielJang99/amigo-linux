@@ -21,7 +21,7 @@ run_zus(){
 	sudo input keyevent KEYCODE_BACK  
 	close_all
 	turn_device_off
-	timeout 150 ./FTPClient $server_ip 8888 $uid 3G
+	#timeout 150 ./FTPClient $server_ip 8888 $uid 3G
 	if [ -f zeus.csv ]
 	then 
 		mv zeus.csv "${res_dir}/${t_s}-3G.txt"
@@ -40,7 +40,7 @@ run_zus(){
 	sudo input keyevent KEYCODE_BACK
 	close_all
 	turn_device_off
-	timeout 150 ./FTPClient $server_ip 8888 $uid 4G
+	#timeout 150 ./FTPClient $server_ip 8888 $uid 4G
 	if [ -f zeus.csv ]
 	then 
 		mv zeus.csv "${res_dir}/${t_s}-4G.txt"
