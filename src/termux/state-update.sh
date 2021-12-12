@@ -390,13 +390,13 @@ do
 	# check if net-testing is running
 	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`			
 	
-	# # update WiFi and mobile phone connectivity if it is time to do so (once a minute)
-	# let "t_last_wifi_mobile_update =  current_time - t_wifi_mobile_update"
-	# if [ $t_last_wifi_mobile_update -gt 60 ] 
-	# then 
-	# 	update_wifi_mobile 
-	# 	t_wifi_mobile_update=`date +%s`
-	# fi 
+	# update WiFi and mobile phone connectivity if it is time to do so (once a minute)
+	let "t_last_wifi_mobile_update =  current_time - t_wifi_mobile_update"
+	if [ $t_last_wifi_mobile_update -gt 60 ] 
+	then 
+		update_wifi_mobile 
+		t_wifi_mobile_update=`date +%s`
+	fi 
 	
 	# # check if user wants us to pause 
 	# user_status="true"
