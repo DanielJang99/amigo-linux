@@ -56,8 +56,8 @@ turn_device_off
 timeout 150 ./FTPClient $server_ip 8888 $uid 4G
 if [ -f zeus.csv ]
 then 
-	mv zeus.csv "${res_dir}/${t_s}-34.txt"
-	gzip "${res_dir}/${t_s}-34.txt"
+	mv zeus.csv "${res_dir}/${t_s}-4G.txt"
+	gzip "${res_dir}/${t_s}-4G.txt"
 fi 
 
 #############
