@@ -374,6 +374,7 @@ sudo input keyevent KEYCODE_HOME
 sudo input keyevent 111
 
 # external loop 
+turn_device_off
 sel_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/selection.txt"
 user_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/running.txt"	
 myprint "Script will run with a <$fast_freq, $slow_freq> frequency. To stop: <<echo \"false\" > \".status\""
