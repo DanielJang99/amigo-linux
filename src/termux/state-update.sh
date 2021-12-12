@@ -239,7 +239,7 @@ update_wifi_mobile(){
 
 # parameters
 slow_freq=15                           # interval for checking commands to run (slower)
-fast_freq=3                            # interval for checking the app (faster)
+fast_freq=5                            # interval for checking the app (faster)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
 #NET_INTERVAL=3600                      # interval of networking testing 
 NET_INTERVAL=1800                      # interval of networking testing 
