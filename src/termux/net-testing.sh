@@ -48,8 +48,7 @@ run_zus(){
 	fi
 	
 	# status update 
-	let "num_runs_today++"
-	echo $num_runs_today > $status_file
+	let "num_runs_today++"	
 }
 
 #logging 
@@ -96,6 +95,7 @@ then
 	else 
 		myprint "NYU-stuff. Skipping since on WiFI and it not past 6pm"
 	fi 
+	echo $num_runs_today > $status_file
 else 
 	myprint "No mobile connection found. Skipping NYU-ZUS"
 fi 
