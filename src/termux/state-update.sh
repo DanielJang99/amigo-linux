@@ -345,7 +345,7 @@ sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
 sleep 5
 foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
 myprint "Confirm Kenzo is in the foregound: $foreground" 
-sudo sh -c "echo $uid > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
+sudo sh -c "echo -e $uid\t$physical_id > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
 
 # derive B from GB
 let "MAX_MOBILE = MAX_MOBILE_GB * 1000000000"
