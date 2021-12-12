@@ -315,11 +315,11 @@ sudo  settings put system user_rotation 0          # put in portrait
 # # retrieve unique ID for this device and pass to our app
 # uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 
-# # status update
-# echo "true" > ".status"
-# to_run=`cat ".status"`
-# sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"
-# echo "false" > ".isPaused"
+# status update
+echo "true" > ".status"
+to_run=`cat ".status"`
+sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"
+echo "false" > ".isPaused"
 
 # #restart Kenzo - so that background service runs and info is populated 
 # turn_device_on
