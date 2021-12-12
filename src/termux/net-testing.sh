@@ -64,7 +64,7 @@ run_zus(){
 	traffic_start=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`	
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 
-	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/zeustest
+	#timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/zeustest
 
 	#switch back to 4G 
 	myprint "NYU-stuff. Switch to 4G"	
@@ -78,7 +78,7 @@ run_zus(){
 	sudo input keyevent KEYCODE_BACK
 	close_all
 	turn_device_off
-	timeout 150 ./FTPClient $server_ip 8888 $uid 4G
+	#timeout 150 ./FTPClient $server_ip 8888 $uid 4G
 	net="4G"	
 	mServiceState=`sudo dumpsys telephony.registry | grep "mServiceState" | head -n 1`		
 	traffic_end=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
