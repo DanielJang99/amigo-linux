@@ -182,7 +182,13 @@ turn_device_on
 # clean youtube cache
 #sudo rm -rf /data/data/com.google.android.youtube/files /data/data/com.google.android.youtube/app_dg_cache /data/data/com.google.android.youtube/cache /data/data/com.google.android.youtube/no_backup /data/data/com.google.android.youtube/databases
 myprint "Cleaning YT state"
-sudo rm -rf /data/data/com.google.android.youtube/app_dg_cache /data/data/com.google.android.youtube/cache
+base_folder="/data/data/com.google.android.youtube/"
+sudo rm -rf "${base_folder}/app_dg_cache"
+#/data/data/com.google.android.youtube/cache
+sudo rm -rf "${base_folder}/cronet_metadata_cache"
+sudo rm -rf "${base_folder}/image_manager_disk_cache"
+sudo rm -rf "${base_folder}/volleyCache"
+sudo rm -rf "${base_folder}/gms_cache"
 
 # start CPU monitoring
 log_cpu="${res_folder}/${curr_run_id}.cpu"
