@@ -485,6 +485,7 @@ do
 	last_loop_time=$current_time
 
 	# if we are paused we stop here 
+	isPaused="true"
 	isPaused=`cat ".isPaused"`
 	if [ $isPaused == "true" ]
 	then
