@@ -739,4 +739,5 @@ done
 
 # logging 
 echo "false" > ".cpu_monitor"
+./stop-net-testing.sh  	
 myprint "A request to interrupt $0 was received and executed. All good!"
