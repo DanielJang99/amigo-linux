@@ -11,5 +11,6 @@ rm -rf speedtest-cli-logs
 rm -rf data 
 rm -rf videoconferencing
 rm -rf youtube-results
+rm -rf zus-logs
 free_space=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 echo "[$0][`date`] Free space: $free_space"

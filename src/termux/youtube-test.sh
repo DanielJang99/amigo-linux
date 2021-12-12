@@ -40,8 +40,8 @@ send_report(){
 activate_stats_nerds(){
 	myprint "Activating stats for nerds!!"
 	sudo input tap 680 105 && sleep 0.2 && sudo input tap 680 105
-	sleep 1
-	tap_screen 370 1022 #1 #3
+	sleep 3
+	tap_screen 370 1022 3
 	#tap_screen 370 1125 1 #3
 }
 
@@ -83,7 +83,7 @@ adb_file=$script_dir"/adb-utils.sh"
 source $adb_file
 
 # default parameters
-DURATION=30                        # experiment duration
+DURATION=60                        # experiment duration
 interface="wlan0"                  # default network interface to monitor (for traffic)
 suffix=`date +%d-%m-%Y`            # folder id (one folder per day)
 curr_run_id=`date +%s`             # unique id per run
@@ -155,7 +155,6 @@ then
 	done < ".ps-$app"
 fi 
 
-
 # measure ping to youtube 
 ping -c 5 -W 2 youtube.com > notes-ping 2>&1
 avg_ping=`cat notes-ping | grep "mdev" | cut -f 2 -d "=" | cut -f 2 -d "/"`
@@ -181,121 +180,14 @@ turn_device_on
 
 # clean youtube cache
 #sudo rm -rf /data/data/com.google.android.youtube/files /data/data/com.google.android.youtube/app_dg_cache /data/data/com.google.android.youtube/cache /data/data/com.google.android.youtube/no_backup /data/data/com.google.android.youtube/databases
-sudo rm -rf /data/data/com.google.android.youtube/app_dg_cache /data/data/com.google.android.youtube/cache
 myprint "Cleaning YT state"
-#sudo pm clear com.google.android.youtube
-
-# # launching app and allow to settle 
-# myprint "Launching YT and allow to settle..."
-# sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
-
-# # lower all the volumes
-# myprint "Making sure volume is off"
-# sudo media volume --stream 3 --set 0  # media volume
-# sudo media volume --stream 1 --set 0	 # ring volume
-# sudo media volume --stream 4 --set 0	 # alarm volume
-
-# # wait for YT 
-# myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
-# curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-# while [ $curr_activity != "WatchWhileActivity" ] 
-# do 
-# 	sleep 3 
-# 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-# done
-# sleep 10
-
-# click account notification if there (guessing so far)
-if [ $single != "true" ] 
-then 
-	sudo input tap 560 725
-	sleep 10
-	sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep "MinuteMaidActivity"
-	need_to_verify=$?
-	if [ $need_to_verify -eq 0 ]
-	then
-	    myprint "Google account validation needed"
-	    sleep 10 
-	    sudo input tap 600 1200
-	    sleep 5
-	    sudo input text "Bremen2013"
-	    sleep 3
-	    sudo input keyevent KEYCODE_ENTER
-	    sleep 10
-	    sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep MinuteMaidActivity
-	    if [ $? -eq 0 ]
-	    then
-	        myprint "ERROR - notification cannot be accepted. Inform USER"
-	        echo "not-authorized" > ".google_status"
-	        msg="ERROR-GOOGLE-ACCOUNT"
-	        send_report
-	    	safe_stop
-	  		exit -1
-	    else
-	    	echo "authorized" > ".google_status"
-	        myprint "Google account is now verified"
-	    fi
-	else
-		echo "authorized" > ".google_status"
-	    myprint "Google account is already verified"
-	fi
-
-	# handle issue when clicking a warning which is not there (basically redo step)
-	#sudo pm clear com.google.android.youtube
-	myprint "Launching YT (AGAIN) and allow to settle - should be faster now..."
-	sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
-	sleep 10 
-	# myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
-	# curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-	# while [ $curr_activity != "WatchWhileActivity" ] 
-	# do 
-	# 	sleep 3 
-	# 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-	# 	echo $curr_activity
-	# done
-	# sleep 3
-else 
-	myprint "Skipping account verification"
-fi 
-
-# enable stats for nerds in the main account 
-if [ $first_run == "true" ] 
-then
-	myprint "Enabling stats for nerds and no autoplay (in account settings)"
-	sudo input tap 665 100  # click on account 
-	sleep 10
-	sudo input tap 370 1180
-	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-	c=0
-	while [ $curr_activity != "SettingsActivity" ] 
-	do 
-		sleep $sleep_time
-		curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-		let "c++"
-		if [ $c -eq 5 ]
-		then
-			myprint "Something went wrong entering settings!" 
-			msg="ERROR-ENTERING-SETTINGS"
-	        send_report
-			safe_stop			
-			exit -1
-		fi 
-	done
-	if [ $disable_autoplay == "true" ] 
-	then 
-		sudo input tap 370 304
-		sleep $sleep_time
-		sudo input tap 370 230 
-		sleep $sleep_time
-		sudo input keyevent KEYCODE_BACK
-		sleep $sleep_time	
-	fi 
-	sudo input tap 370 200
-	sleep $sleep_time
-	sudo input swipe 370 500 370 100
-	sleep $sleep_time
-	sudo input tap 370 1250
-fi 
+base_folder="/data/data/com.google.android.youtube/"
+sudo rm -rf "${base_folder}/app_dg_cache"
+#/data/data/com.google.android.youtube/cache
+sudo rm -rf "${base_folder}/cronet_metadata_cache"
+sudo rm -rf "${base_folder}/image_manager_disk_cache"
+sudo rm -rf "${base_folder}/volleyCache"
+sudo rm -rf "${base_folder}/gms_cache"
 
 # start CPU monitoring
 log_cpu="${res_folder}/${curr_run_id}.cpu"
@@ -321,59 +213,18 @@ traffic_rx_last=$traffic_rx
 
 #launch test video
 am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
-#sleep 10
-sleep 5 
-#sleep 1 
 
-# make sure stats for nerds are active
-# myprint "Make sure stats for nerds are active"
-# ready="false"
-# attempt=0
-# while [ $ready == "false" ]
-# do 
-# 	termux-clipboard-get > ".clipboard"
-# 	cat ".clipboard" | grep "cplayer"
-# 	if [ $? -ne 0 ] 
-# 	then
-# 		let "attempt++" 		
-# 		activate_stats_nerds
-# 		curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-# 		if [ $curr_activity != "WatchWhileActivity" ] 
-# 		then
-# 			myprint "Something went VERY wrong!" 
-# 			msg="ERROR-STATS-NERDS-LEFT-APP"
-#         	send_report
-# 			safe_stop			
-# 			exit -1
-# 		fi 
-# 		tap_screen 592 216 1
-# 		termux-clipboard-get > ".clipboard"
-# 		cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
-# 		if [ $? -eq 0 ] 
-# 		then
-# 			ready="true"		
-# 			myprint "Ready to start!!"
-# 			cat ".clipboard" > $log_file
-# 			echo "" >> $log_file
-# 		else 
-# 			if [ $attempt -ge 1 ] # allow just one attempt, doing more does not seem to help
-# 			then 
-# 				myprint "Something is WRONG. Clearing YT and exiting!"
-# 				#sudo pm clear com.google.android.youtube			
-# 				msg="ERROR-STATS-NERDS"
-# 	        	send_report
-# 	        	safe_stop
-# 				exit -1 
-# 			fi 
-# 		fi
-# 	else
-# 		ready="true"		
-# 		echo "Ready to start!!"
-# 	fi
-# done
+#lower all the volumes
+myprint "Making sure volume is off"
+sudo media volume --stream 3 --set 0  # media volume
+sudo media volume --stream 1 --set 0	 # ring volume
+sudo media volume --stream 4 --set 0	 # alarm volume
 
+# wait for GUI to load  -- IMPROVEME! 
+sleep 10
 
 # check stats for nerds
+msg="NONE"
 tap_screen 592 216 1
 termux-clipboard-get > ".clipboard"
 cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
@@ -386,9 +237,6 @@ then
 	if [ $? -ne 0 ] 
 	then
 		msg="ERROR-STATS-NERDS"
- 	    send_report
- 	    safe_stop
- 	    exit -1 
 	else
 		cat ".clipboard" > $log_file
 		echo "" >> $log_file
@@ -451,7 +299,10 @@ fi
 echo "false" > ".to_monitor"
 
 # log and report 
-msg="ALL-GOOD"
+if [ $msg == "NONE" ] 
+then 
+	msg="ALL-GOOD"
+fi 
 send_report
 #if [ -f $log_file ]  # FIXME 
 #then

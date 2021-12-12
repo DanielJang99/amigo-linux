@@ -17,17 +17,71 @@ then
 	iface=$3
 fi  
 
+#run NYU stuff (only if iface is mobile)
+echo "[`date`] starting NYU on 3G"
+server_ip="212.227.209.11"
+res_dir="zus-logs/$suffix"
+mkdir -p $res_dir
+
+
+# TEMP TESTING
+uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+timeout 150 ./FTPClient $server_ip 8888 $uid 3G
+if [ -f zeus.csv ]
+then 
+	mv zeus.csv "${res_dir}/${t_s}-3G.txt"
+	gzip "${res_dir}/${t_s}-3G.txt"
+fi 
+
+# #switch to 3G 
+# uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+# turn_device_on
+# am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
+# sleep 5 
+# tap_screen 370 765 5
+# tap_screen 370 765 5 
+# tap_screen 370 660 2
+# sudo input keyevent KEYCODE_BACK  
+# close_all
+# turn_device_off
+# timeout 150 ./FTPClient $server_ip 8888 $uid 3G
+# if [ -f zeus.csv ]
+# then 
+# 	mv zeus.csv "${res_dir}/${t_s}-3G.txt"
+# 	gzip "${res_dir}/${t_s}-3G.txt"
+# fi 
+
+# #switch back to 4G 
+# echo "[`date`] starting NYU on 4G"
+# turn_device_on
+# am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
+# sleep 5 
+# tap_screen 370 765 5
+# tap_screen 370 765 5
+# tap_screen 370 560 2
+# sudo input keyevent KEYCODE_BACK
+# close_all
+# turn_device_off
+# timeout 150 ./FTPClient $server_ip 8888 $uid 4G
+# if [ -f zeus.csv ]
+# then 
+# 	mv zeus.csv "${res_dir}/${t_s}-4G.txt"
+# 	gzip "${res_dir}/${t_s}-4G.txt"
+# fi 
+#############
+exit -1 
+
 # current free space 
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 
 # run multiple MTR
 ./mtr.sh $suffix $t_s
 
-# # video testing with youtube -- SKIPPING, NOT RELIABLE
-# touch ".locked"
-# ./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
-# rm ".locked"
-# turn_device_off
+# video testing with youtube -- SKIPPING, NOT RELIABLE
+touch ".locked"
+./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
+rm ".locked"
+turn_device_off
 
 # run a speedtest 
 echo "[`date`] speedtest-cli..."
@@ -38,25 +92,6 @@ gzip "${res_folder}/speedtest-$t_s.json"
 
 # run a speedtest in the browser (fast.com) -- having issue on this phone 
 #./speed-browse-test.sh $suffix $t_s
-
-# run NYU stuff 
-# TODO 
-#turn_device_on
-# switch to 3G 
-#am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
-#tap_screen 370 765 1 
-#tap_screen 370 765 1 
-#tap_screen 370 660
-#sudo input keyevent KEYCODE_BACK  
-
-# switch back to 4G 
-#am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
-#tap_screen 370 765 1 
-#tap_screen 370 765 1 
-#tap_screen 370 560
-#sudo input keyevent KEYCODE_BACK
-#turn_device_off
-
 
 # test multiple CDNs
 ./cdn-test.sh $suffix $t_s
@@ -82,7 +117,7 @@ turn_device_off
 
 # current free space 
 free_space_e=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
-space_used=`echo "$free_space_s $free_space_e" | awk '{print($1-$2)}'`
+space_used=`echo "$free_space_s $free_space_e" | awk '{print($1-$2)*1000}'`
 
 #logging 
-echo "[`date`] net-testing END. FreeSpace: $free_space_e SpaceUsed: $space_used"
+echo "[`date`] net-testing END. FreeSpace: ${free_space_e}GB SpaceUsed: ${space_used}MB"

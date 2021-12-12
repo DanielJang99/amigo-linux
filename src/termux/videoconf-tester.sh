@@ -129,7 +129,7 @@ grant_permission(){
 # helper function to join a zoom meeting
 run_zoom(){
 	# click on "join a meeting" 
-	tap_screen $x_center 1020 3
+	tap_screen $x_center 1020 5
 	 
 	# enter meeting ID
 	sudo input text "$meeting_id" 
@@ -142,7 +142,7 @@ run_zoom(){
 	else 
 		myprint "Entering Password: $password" 
 		sudo input text "$password" 
-		sleep 2 
+		sleep 3 
 		tap_screen 530 535 
 	fi 
 

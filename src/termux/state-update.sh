@@ -32,7 +32,6 @@ fi
 adb_file=`pwd`"/adb-utils.sh"
 source $adb_file
 
-
 # check account verification via YT
 check_account_via_YT(){
 	# make sure screen is on 
@@ -101,6 +100,7 @@ generate_post_data(){
     "today":"${suffix}", 
     "timestamp":"${current_time}",
     "uid":"${uid}",
+    "physical_id":"${physical_id}",
     "googleStatus":"${google_status}",
     "timeGoogleCheck":"${t_last_google}",
     "uptime":"${uptime_info}",
@@ -239,7 +239,7 @@ update_wifi_mobile(){
 
 # parameters
 slow_freq=15                           # interval for checking commands to run (slower)
-fast_freq=3                            # interval for checking the app (faster)
+fast_freq=5                            # interval for checking the app (faster)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
 NET_INTERVAL=3600                      # interval of networking testing 
 GOOGLE_CHECK_FREQ=18000                # interval of Google account check via YT (seconds)
@@ -281,18 +281,29 @@ then
 fi
 
 # always make sure screen is in portrait 
-#sudo content insert --uri content://settings/system --bind name:s:accelerometer_rotation --bind value:i:0
-#sudo content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:0  # 1 => for landscape 
+myprint "Ensuring that screen is in portrait and auto-rotation disabled"
 sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
 sudo  settings put system user_rotation 0          # put in portrait
 
-# update Google account authorization status
-#echo "authorized" > ".google_status"
-check_account_via_YT
-google_status=`cat ".google_status"`
-myprint "Google account status: $google_status"
-echo `date +%s` > ".time_google_check"
 
+# update Google account authorization status
+t_last_google=0
+current_time=`date +%s`
+if [ -f ".time_google_check" ]
+then 
+	t_last_google=`cat ".time_google_check"`
+fi 
+let "t_p = current_time - t_last_google"
+if [ $t_p -gt $GOOGLE_CHECK_FREQ -a $num -eq 0 ] 
+then
+	myprint "Time to check Google account status via YT"
+	check_account_via_YT	  
+	t_last_google=$current_time
+	echo $current_time > ".time_google_check"
+	myprint "Google account status: $google_status"	
+fi 
+google_status=`cat ".google_status"`
+	
 # update code 
 myprint "Updating our code..."
 git pull
@@ -312,7 +323,13 @@ else
 fi 
 
 # retrieve unique ID for this device and pass to our app
+physical_id="N/A"
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+if [ -f "uid-list.txt" ] 
+then 
+	physical_id=`cat "uid-list.txt" | grep $uid | cut -f 1`
+fi 
+myprint "IMEI: $uid PhysicalID: $physical_id"
 
 # status update
 echo "true" > ".status"
@@ -330,10 +347,6 @@ sleep 5
 foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
 myprint "Confirm Kenzo is in the foregound: $foreground" 
 sudo sh -c "echo $uid > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
-turn_device_off
-
-#close all pending apps
-close_all
 
 # derive B from GB
 let "MAX_MOBILE = MAX_MOBILE_GB * 1000000000"
@@ -345,10 +358,6 @@ mkdir -p "./data/mobile"
 if [ ! -f ".last_command" ] 
 then 
 	echo "testing" > ".last_command"
-fi 
-if [ ! -f ".last_command_pi" ]
-then
-	echo "testing" > ".last_command_pi"
 fi 
 if [ ! -f ".net_status" ] 
 then
@@ -371,10 +380,10 @@ fi
 # find termuxt user 
 termux_user=`whoami`
 
-# make sure we are HOME and no keyboard is showing
-myprint "Going HOME!"
-sudo input keyevent KEYCODE_HOME
+#close all and turn off screen
+close_all
 sudo input keyevent 111
+turn_device_off
 
 # external loop 
 sel_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/selection.txt"
@@ -410,11 +419,11 @@ do
 	then 
 		if [ $firstPause == "true" ]
 		then
-			myprint "Paused by user -- WARNING: uncomment L427"
+			myprint "Paused by user!"
 			firstPause="false"
+			./stop-net-testing.sh  	
 		fi 
 		echo "true" > ".isPaused"
-		#./stop-net-testing.sh  
 	else 
 		firstPause="true"
 		echo "false" > ".isPaused"	
@@ -423,6 +432,7 @@ do
 	# check if user wants to run a test 
 	if [ -f $sel_file ] 
 	then 
+		myprint "New selection file was found!"
 		sel_id=`sudo cat $sel_file | cut -f 1`
 		time_sel=`sudo cat $sel_file | cut -f 2`
 		let "time_from_sel = current_time - time_sel"
@@ -466,6 +476,10 @@ do
 			else 
 				am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-make-sure-the-device-is-on-line!"
 			fi  
+		else 
+			# removing selection file, no need to check all the time
+			myprint "Cleaning old user selection file already used. (TimeSinceSel:$time_from_sel)"
+			sudo rm $sel_file
 		fi 
 	fi 
 
