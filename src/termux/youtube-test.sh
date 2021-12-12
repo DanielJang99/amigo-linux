@@ -40,8 +40,8 @@ send_report(){
 activate_stats_nerds(){
 	myprint "Activating stats for nerds!!"
 	sudo input tap 680 105 && sleep 0.2 && sudo input tap 680 105
-	sleep 1
-	tap_screen 370 1022 #1 #3
+	sleep 3
+	tap_screen 370 1022 3
 	#tap_screen 370 1125 1 #3
 }
 
@@ -321,8 +321,8 @@ traffic_rx_last=$traffic_rx
 
 #launch test video
 am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
-#sleep 10
-sleep 5 
+sleep 10
+#sleep 5 
 #sleep 1 
 
 # make sure stats for nerds are active
