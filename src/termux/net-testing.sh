@@ -86,7 +86,8 @@ then
 	if [ $iface == $mobile_iface -a $num_runs_today -lt $MAX_RUNS ] 
 	then
 		run_zus		
-	elif [ $curr_hour == "18" ] # we are past 6pm
+	#elif [ $curr_hour -ge 18 ] # we are past 6pm
+	elif [ $curr_hour -ge 0 ]
 	then 
 		myprint "NYU-stuff. It is past 6pm and missing data. Resorting to disable WiFi"
 		termux-wifi-enable false
