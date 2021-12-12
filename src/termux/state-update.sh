@@ -418,58 +418,58 @@ do
 	# 	echo "false" > ".isPaused"	
 	# fi 
 
-	# # check if user wants to run a test 
-	# if [ -f $sel_file ] 
-	# then 
-	# 	myprint "Selection file found..."
-	# 	sel_id=`sudo cat $sel_file | cut -f 1`
-	# 	time_sel=`sudo cat $sel_file | cut -f 2`
-	# 	let "time_from_sel = current_time - time_sel"
-	# 	let "time_check = slow_freq + slow_freq/2" # cut some slack, we check more often than this
-	# 	if [ $time_from_sel -lt $time_check ]  
-	# 	then 
-	# 		echo "User entered selection: $sel_id (TimeSinceSel:$time_from_sel)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
-	# 		if [ $def_iface != "none" ] 
-	# 		then
-	# 			case $sel_id in
-	# 				"0")
-	# 					# make sure no other test is running
-	# 					./stop-net-testing.sh
+	# check if user wants to run a test 
+	if [ -f $sel_file ] 
+	then 
+		myprint "Selection file found..."
+		sel_id=`sudo cat $sel_file | cut -f 1`
+		time_sel=`sudo cat $sel_file | cut -f 2`
+		let "time_from_sel = current_time - time_sel"
+		let "time_check = slow_freq + slow_freq/2" # cut some slack, we check more often than this
+		if [ $time_from_sel -lt $time_check ]  
+		then 
+			echo "User entered selection: $sel_id (TimeSinceSel:$time_from_sel)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
+			if [ $def_iface != "none" ] 
+			then
+				case $sel_id in
+					"0")
+						# make sure no other test is running
+						./stop-net-testing.sh
 
-	# 					# update wifi/mobile info
-	# 					update_wifi_mobile 
-	# 					t_wifi_mobile_update=`date +%s`	
+						# update wifi/mobile info
+						update_wifi_mobile 
+						t_wifi_mobile_update=`date +%s`	
 						
-	# 					# open a random webpage 
-	# 					echo "Open a random webpage -- ./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single --pcap"
-	# 					./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single --pcap
-	# 					am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-quickly-the-page-loaded:1-star-(slow)--5-stars-(fast)"
-	# 					#sleep 30 # allow time to enter input	
-	# 					#continue # go back up to see if user wants to run another test 
-	# 					;;
+						# open a random webpage 
+						echo "Open a random webpage -- ./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single --pcap"
+						./web-test.sh  --suffix $suffix --id $current_time-"user" --iface $def_iface --single --pcap
+						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-quickly-the-page-loaded:1-star-(slow)--5-stars-(fast)"
+						#sleep 30 # allow time to enter input	
+						#continue # go back up to see if user wants to run another test 
+						;;
 
-	# 				"1")
-	# 					./stop-net-testing.sh
-	# 					update_wifi_mobile 
-	# 					t_wifi_mobile_update=`date +%s`	
-	# 					echo "Watch a video -- ./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface --pcap --single"						
-	# 					./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface --pcap --single
-	# 					am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-the-video-played:1-star-(poor)--5-stars-(great)"
-	# 					#sleep 30 # allow time to enter input	
-	# 					#continue # go back up to see if user wants to run another test 
-	# 					;;
-	# 				  *)
-	# 					echo "Option not supported"
-	# 					;;
-	# 			esac
-	# 		else 
-	# 			am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-make-sure-the-device-is-on-line!"
-	# 		fi  
-	# 	else 
-	# 		# removing selection file, no need to check all the time
-	# 		rm $sel_file
-	# 	fi 
-	# fi 
+					"1")
+						./stop-net-testing.sh
+						update_wifi_mobile 
+						t_wifi_mobile_update=`date +%s`	
+						echo "Watch a video -- ./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface --pcap --single"						
+						./youtube-test.sh --suffix $suffix --id $current_time-"user" --iface $def_iface --pcap --single
+						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-the-video-played:1-star-(poor)--5-stars-(great)"
+						#sleep 30 # allow time to enter input	
+						#continue # go back up to see if user wants to run another test 
+						;;
+					  *)
+						echo "Option not supported"
+						;;
+				esac
+			else 
+				am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-make-sure-the-device-is-on-line!"
+			fi  
+		else 
+			# removing selection file, no need to check all the time
+			rm $sel_file
+		fi 
+	fi 
 
 	# loop rate control (fast)
 	current_time=`date +%s`
