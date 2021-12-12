@@ -287,51 +287,51 @@ fi
 sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
 sudo  settings put system user_rotation 0          # put in portrait
 
-# update Google account authorization status
-#echo "authorized" > ".google_status"
-check_account_via_YT
-google_status=`cat ".google_status"`
-myprint "Google account status: $google_status"
-echo `date +%s` > ".time_google_check"
+# # update Google account authorization status
+# #echo "authorized" > ".google_status"
+# check_account_via_YT
+# google_status=`cat ".google_status"`
+# myprint "Google account status: $google_status"
+# echo `date +%s` > ".time_google_check"
 
-# update code 
-myprint "Updating our code..."
-git pull
+# # update code 
+# myprint "Updating our code..."
+# git pull
 
-# start CPU monitoring (background)
-./monitor-cpu.sh &
+# # start CPU monitoring (background)
+# ./monitor-cpu.sh &
 
-# ensure that BT is enabled 
-myprint "Make sure that BT is running" 
-bt_status=`sudo settings get global bluetooth_on`
-if [ $bt_status -ne 1 ] 
-then 
-	myprint "Activating BT" 
-	sudo service call bluetooth_manager 6
-else 
-	myprint "BT is active: $bt_status"
-fi 
+# # ensure that BT is enabled 
+# myprint "Make sure that BT is running" 
+# bt_status=`sudo settings get global bluetooth_on`
+# if [ $bt_status -ne 1 ] 
+# then 
+# 	myprint "Activating BT" 
+# 	sudo service call bluetooth_manager 6
+# else 
+# 	myprint "BT is active: $bt_status"
+# fi 
 
-# retrieve unique ID for this device and pass to our app
-uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+# # retrieve unique ID for this device and pass to our app
+# uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 
-# status update
-echo "true" > ".status"
-to_run=`cat ".status"`
-sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"
-echo "false" > ".isPaused"
+# # status update
+# echo "true" > ".status"
+# to_run=`cat ".status"`
+# sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"
+# echo "false" > ".isPaused"
 
-#restart Kenzo - so that background service runs and info is populated 
-turn_device_on
-myprint "Granting Kenzo permission and restart..."
-sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
-sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
-sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
-sleep 5
-foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
-myprint "Confirm Kenzo is in the foregound: $foreground" 
-sudo sh -c "echo $uid > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
-turn_device_off
+# #restart Kenzo - so that background service runs and info is populated 
+# turn_device_on
+# myprint "Granting Kenzo permission and restart..."
+# sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
+# sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
+# sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
+# sleep 5
+# foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+# myprint "Confirm Kenzo is in the foregound: $foreground" 
+# sudo sh -c "echo $uid > /storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
+# turn_device_off
 
 #close all pending apps
 close_all
@@ -346,10 +346,6 @@ mkdir -p "./data/mobile"
 if [ ! -f ".last_command" ] 
 then 
 	echo "testing" > ".last_command"
-fi 
-if [ ! -f ".last_command_pi" ]
-then
-	echo "testing" > ".last_command_pi"
 fi 
 if [ ! -f ".net_status" ] 
 then
@@ -475,6 +471,7 @@ do
 	let "t_p = fast_freq - (current_time - last_loop_time)"
 	if [ $t_p -gt 0 ] 
 	then 
+		echo "Sleeping $t_p"
 		sleep $t_p
 	fi 
 	to_run=`cat ".status"`
