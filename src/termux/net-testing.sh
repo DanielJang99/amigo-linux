@@ -122,7 +122,8 @@ then
 	if [ $iface == $mobile_iface -a $num_runs_today -lt $MAX_RUNS ] 
 	then
 		run_zus		
-	elif [ $curr_hour -ge 18 ] # we are past 6pm
+	#elif [ $curr_hour -ge 18 ] # we are past 6pm
+	elif [ $curr_hour -ge 00 ] # we are past 6pm
 	then 
 		myprint "NYU-stuff. It is past 6pm and missing data. Resorting to disable WiFi"
 		termux-wifi-enable false
@@ -135,7 +136,7 @@ then
 else 
 	myprint "No mobile connection found. Skipping NYU-ZUS"
 fi 
-
+exit -1 
 
 # run multiple MTR
 ./mtr.sh $suffix $t_s
