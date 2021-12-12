@@ -101,6 +101,7 @@ generate_post_data(){
     "today":"${suffix}", 
     "timestamp":"${current_time}",
     "uid":"${uid}",
+	"physical_id":"${physical_id}",
     "googleStatus":"${google_status}",
     "timeGoogleCheck":"${t_last_google}",
     "uptime":"${uptime_info}",
@@ -310,7 +311,12 @@ else
 fi 
 
 # retrieve unique ID for this device and pass to our app
+physical_id="N/A"
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+if [ -f "uid-list.txt" ] 
+then 
+	physical_id=`cat "uid-list.txt" | grep $uid | cut -f 1`
+fi 
 
 # status update
 echo "true" > ".status"
