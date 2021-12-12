@@ -398,25 +398,25 @@ do
 		t_wifi_mobile_update=`date +%s`
 	fi 
 	
-	# # check if user wants us to pause 
-	# user_status="true"
-	# if [ -f $user_file ] 
-	# then 
-	# 	user_status=`sudo cat $user_file`
-	# fi 
-	# if [ $user_status == "false" ] 
-	# then 
-	# 	if [ $firstPause == "true" ]
-	# 	then
-	# 		myprint "Paused by user!"
-	# 		firstPause="false"
-	# 	fi 
-	# 	echo "true" > ".isPaused"
-	# 	./stop-net-testing.sh  
-	# else 
-	# 	firstPause="true"
-	# 	echo "false" > ".isPaused"	
-	# fi 
+	# check if user wants us to pause 
+	user_status="true"
+	if [ -f $user_file ] 
+	then 
+		user_status=`sudo cat $user_file`
+	fi 
+	if [ $user_status == "false" ] 
+	then 
+		if [ $firstPause == "true" ]
+		then
+			myprint "Paused by user!"
+			firstPause="false"
+			./stop-net-testing.sh  	
+		fi 
+		echo "true" > ".isPaused"
+	else 
+		firstPause="true"
+		echo "false" > ".isPaused"	
+	fi 
 
 	# check if user wants to run a test 
 	if [ -f $sel_file ] 
