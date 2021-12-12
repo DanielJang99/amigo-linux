@@ -15,7 +15,11 @@ generate_post_data(){
     {
     "today":"${suffix}",
     "timestamp":"${current_time}",
+    "mobile_IP":"${mobile_ip}",
     "uid":"${uid}",
+    "net":"${net}",
+    "mServiceState":"${mServiceState}",
+    "data_Used":"${data_used}",        
     "msg":"${msg}"
     }
 EOF
@@ -23,11 +27,14 @@ EOF
 
 # run NYU measurement 
 run_zus(){
+	# params and folder organization
 	server_ip="212.227.209.11"
 	res_dir="zus-logs/$suffix"
 	mkdir -p $res_dir
+	mobile_ip=`ifconfig $mobile_iface | grep "\." | grep -v "packets" | awk '{print $2}'`
 	
 	#switch to 3G 
+	traffic_start=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 	myprint "NYU-stuff. Switch to 3G"	
 	uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 	turn_device_on
@@ -40,6 +47,10 @@ run_zus(){
 	close_all
 	turn_device_off
 	timeout 150 ./FTPClient $server_ip 8888 $uid 3G
+	net="3G"
+	mServiceState=`sudo dumpsys telephony.registry | grep "mServiceState" | head -n 1`	
+	traffic_end=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
+	let "data_used = traffic_end - traffic_start"
 	if [ -f zeus.csv ]
 	then 
 		msg=`head -n 1 zeus.csv`	
@@ -50,7 +61,7 @@ run_zus(){
 	fi 
 	
 	# send report to our server
-	current_time=`date +%s`
+	traffic_start=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`	
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 
 	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/zeustest
@@ -68,6 +79,10 @@ run_zus(){
 	close_all
 	turn_device_off
 	timeout 150 ./FTPClient $server_ip 8888 $uid 4G
+	net="4G"	
+	mServiceState=`sudo dumpsys telephony.registry | grep "mServiceState" | head -n 1`		
+	traffic_end=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
+	let "data_used = traffic_end - traffic_start"	
 	if [ -f zeus.csv ]
 	then 
 		msg=`head -n 1 zeus.csv`
@@ -76,9 +91,7 @@ run_zus(){
 	else 
 		msg="ZEUS-4G-NOT-FOUND"
 	fi
-
-	# send report to our server
-	current_time=`date +%s`
+	current_time=$t_s
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 
 	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/zeustest
@@ -129,6 +142,7 @@ then
 		termux-wifi-enable false
 		run_zus
 		termux-wifi-enable true
+		myprint "Enabling WiFi back"		
 	else 
 		myprint "NYU-stuff. Skipping since on WiFI and it not past 6pm"
 	fi 
@@ -136,7 +150,10 @@ then
 else 
 	myprint "No mobile connection found. Skipping NYU-ZUS"
 fi 
+
+##################
 exit -1 
+##################
 
 # run multiple MTR
 ./mtr.sh $suffix $t_s
