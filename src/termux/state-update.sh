@@ -669,6 +669,8 @@ do
 	if [ -f ".last_net" ] 
 	then 
 		last_net=`cat ".last_net"`
+	else 
+		last_net=0
 	fi 
 	net_status=`cat ".net_status"`
 	let "time_from_last_net = current_time - last_net"
