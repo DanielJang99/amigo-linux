@@ -147,25 +147,27 @@ wait_for_screen(){
 		fi 
 		echo "==> $foreground -- $screen_name"
 	done
-	status="success"
+	status="success" #FIXME -- manage unsuccess 
+	sleep 2 	
 }
 
 
 # helper function to join a zoom meeting
 run_zoom(){
 	# click on "join a meeting"
+	wait_for_screen "LauncherActivity"
 	sudo dumpsys window windows | grep -E 'mCurrentFocus' 
 	tap_screen $x_center 1020 5
 	 
 	# enter meeting ID
+	wait_for_screen "JoinConfActivity"
 	sudo dumpsys window windows | grep -E 'mCurrentFocus'
 	sudo input text "$meeting_id" 
 	tap_screen $x_center 655 5
 	
-	# wait for password box to show up 
-	wait_for_screen "ConfActivityNormal"
-
+	
 	# enter password if needed
+	wait_for_screen "ConfActivityNormal"
 	if [ -z $password ]
 	then 
 		myprint "Password not provided. Verify on screen if needed or not" 
@@ -175,8 +177,6 @@ run_zoom(){
 		sleep 3 
 		tap_screen 530 535 2
 	fi 
-	sudo dumpsys window windows | grep -E 'mCurrentFocus'
-
 
 	# sync barrier (testing )
 	if [ $sync_time != 0 ]
@@ -190,7 +190,11 @@ run_zoom(){
 		fi 
 	fi 
 	
+	# MUTE! -- FIXME 
+
+
 	# click join with video or not
+	sudo dumpsys window windows | grep -E 'mCurrentFocus'
 	if [ $use_video == "true" ] 
 	then 
 		y_coord="1040"   
@@ -198,10 +202,12 @@ run_zoom(){
 		y_coord="1180"     
 	fi 
 	tap_screen $x_center $y_coord 5
+	sudo dumpsys window windows | grep -E 'mCurrentFocus'
 
 	# click to join audio
-	tap_screen 200 1110 2 
+	tap_screen 200 1110 3
 	tap_screen 178 1110
+	sudo dumpsys window windows | grep -E 'mCurrentFocus'
 }
 
 # helper function to join a webex meeting
@@ -485,6 +491,9 @@ use_sync="true"
 clean_file ".videoconfstatus"
 clean_file ".localsync" 
 clean_file ".globalsync" 
+
+# lock this device 
+touch ".locked"
 
 # check meeting id was correctly passed
 if [ -z "$meeting_id" -a $remote == "false" ]
@@ -796,3 +805,4 @@ send_report
 # return HOME and turn off screen 
 sudo input keyevent HOME
 turn_device_off
+clean_file ".locked"

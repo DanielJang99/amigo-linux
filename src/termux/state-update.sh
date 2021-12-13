@@ -12,6 +12,7 @@ function ctrl_c() {
 	sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"	
 	echo "false" > ".cpu_monitor"
 	./stop-net-testing.sh
+	clean_file ".locked"
 	close_all
 	turn_device_off
 	exit -1 
@@ -379,6 +380,7 @@ if [ ! -f ".net_status" ]
 then
 	echo "false" > ".net_status"
 fi 
+clean_file ".locked"
 
 # make sure SELinux is permissive
 ans=`sudo getenforce`
@@ -436,18 +438,20 @@ do
 		if [ $firstPause == "true" ]
 		then
 			firstPause="false"
-			./stop-net-testing.sh  	
+			./stop-net-testing.sh
+			clean_file ".locked"
+
 			t_start_pause=`date +%s`
 			myprint "Paused by user! Time: $t_start_pause"
 
 			# send status update to the server
 			myprint "Sending data to the server: "
-			echo "$(generate_post_data_short)" 
-		
+			
 			if [ $def_iface == "none" ] 
 			then
 				myprint "Skipping report sending since not connected"
 			else 
+				echo "$(generate_post_data_short)" 		
 				msg="PAUSED-BY-USER"
 				timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:8082/status
 			fi 
@@ -475,6 +479,7 @@ do
 					"0")
 						# make sure no other test is running
 						./stop-net-testing.sh
+						clean_file ".locked"
 
 						# update wifi/mobile info
 						update_wifi_mobile 
@@ -488,6 +493,7 @@ do
 
 					"1")
 						./stop-net-testing.sh
+						clean_file ".locked"
 						update_wifi_mobile 
 						t_wifi_mobile_update=`date +%s`	
 						myprint "Watch a video -- ./youtube-test.sh --suffix $suffix --id $time_sel-"user" --iface $def_iface --pcap --single"						
@@ -763,5 +769,6 @@ done
 
 # logging 
 echo "false" > ".cpu_monitor"
-./stop-net-testing.sh  	
+./stop-net-testing.sh
+clean_file ".locked"
 myprint "A request to interrupt $0 was received and executed. All good!"
