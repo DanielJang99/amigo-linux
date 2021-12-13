@@ -36,7 +36,7 @@ run_zus(){
 	#switch to 3G 
 	traffic_start=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 	myprint "NYU-stuff. Switch to 3G"	
-	uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+	uid=`termux-telephony-deviceinfo | grep "device_id" | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 	turn_device_on
 	am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
 	sleep 5 
@@ -118,14 +118,8 @@ fi
 # current free space 
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 
-# run multiple MTR
-./mtr.sh $suffix $t_s
 
-# video testing with youtube -- SKIPPING, NOT RELIABLE
-touch ".locked"
-./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
-turn_device_off
-rm ".locked"
+############################
 
 # run nyu stuff if mobile is available or if we really need samples (FIXME)
 sudo dumpsys netstats > .data
@@ -148,23 +142,38 @@ then
 		myprint "Resting post ZEUS test..."
 		sleep 30 
 	fi 
-	# elif [ $curr_hour -ge 18 ] # we are past 6pm
-	# then 
-	# 	myprint "NYU-stuff. It is past 6pm and missing data. Resorting to disable WiFi"
-	# 	termux-wifi-enable false
-	# 	run_zus
-	# 	termux-wifi-enable true
-	# 	myprint "Enabling WiFi back"		
-	#	# allow some time to rest 
-	#	myprint "Resting post ZEUS test..."
-	#	sleep 30
-	# else 
-	# 	myprint "NYU-stuff. Skipping since on WiFI and it not past 6pm"
-	# fi 
+	elif [ $curr_hour -ge 18 ] # we are past 6pm
+	then 
+		myprint "NYU-stuff. It is past 6pm and missing data. Resorting to disable WiFi"
+		toggle_wifi "off" $iface
+		run_zus
+		toggle_wifi "on" $iface
+		myprint "Enabling WiFi back"		
+		# allow some time to rest 
+		myprint "Resting post ZEUS test..."
+		sleep 30
+	else 
+		myprint "NYU-stuff. Skipping since on WiFI and it not past 6pm"
+	fi 
 	echo $num_runs_today > $status_file
 else 
 	myprint "No mobile connection found. Skipping NYU-ZUS"
 fi 
+
+exit -1 
+############################
+
+
+# run multiple MTR
+./mtr.sh $suffix $t_s
+
+# video testing with youtube
+touch ".locked"
+./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
+turn_device_off
+rm ".locked"
+
+###############MOVE ZUS HERE 
 
 # run a speedtest 
 myprint "Running speedtest-cli..."
