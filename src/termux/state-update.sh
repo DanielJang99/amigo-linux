@@ -49,6 +49,7 @@ check_account_via_YT(){
 	sudo media volume --stream 4 --set 0	 # alarm volume
 
 	# wait for YT 
+	sleep 5 
 	myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
 	while [ $curr_activity != "WatchWhileActivity" ] 
@@ -451,8 +452,8 @@ do
 			then
 				myprint "Skipping report sending since not connected"
 			else 
+				msg="PAUSED-BY-USER"			
 				echo "$(generate_post_data_short)" 		
-				msg="PAUSED-BY-USER"
 				timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:8082/status
 			fi 
 		fi 
