@@ -145,7 +145,6 @@ wait_for_screen(){
 		then
 			break
 		fi 
-		echo "==> $foreground -- $screen_name"
 	done
 	status="success" #FIXME -- manage unsuccess 
 	sleep 2 	
@@ -190,9 +189,6 @@ run_zoom(){
 		fi 
 	fi 
 	
-	# MUTE! -- FIXME 
-
-
 	# click join with video or not
 	sudo dumpsys window windows | grep -E 'mCurrentFocus'
 	if [ $use_video == "true" ] 
@@ -208,6 +204,13 @@ run_zoom(){
 	tap_screen 200 1110 3
 	tap_screen 178 1110
 	sudo dumpsys window windows | grep -E 'mCurrentFocus'
+
+	# MUTE! -- FIXME 
+	use_mute="true"	
+	if [ $use_mute == "true" ] 
+	then 
+		sudo input tap 75 1225 && sleep 0.2 && sudo input tap 75 1225
+	fi 
 }
 
 # helper function to join a webex meeting
@@ -599,13 +602,13 @@ t_launch=`date +%s` #NOTE: use posterior time in case u want to filter launching
 myprint "Launching $app..."
 sudo monkey -p $package 1 > /dev/null 2>&1
 
-# allow time for app to launch
+# allow time for app to launch # FIXME 
 sleep 5 
 
 # needed to handle warning of zoom on rooted device 
 if [ $clear_state == "true" -a $app == "zoom" ] 
 then
-	echo "===> checking for zoom root errro"
+	wait_for_screen "LauncherActivity"	
 	sudo dumpsys window windows | grep -E 'mCurrentFocus'  
 	sudo input tap 435 832
 	sleep 5
