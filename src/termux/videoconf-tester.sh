@@ -237,7 +237,6 @@ run_webex(){
 	# add user and password on first run
 	if [ $clear_state == "true" ] 
 	then 
-		sudo dumpsys window windows | grep -E 'mCurrentFocus' 
 		tap_screen $x_center 500 2
 		sudo input text "Bravello"
 		tap_screen $x_center 620 2
@@ -252,13 +251,13 @@ run_webex(){
 	wait_for_screen "MeetingClient"
 	sleep 5 
 
-	# accept what needed
-	if [ $clear_state == "true" ] 
-	then 
-		myprint "Accept what needed..."
-		tap_screen 515 1055 2
-		tap_screen 405 1055 2
-	fi 
+	# # accept what needed # Q: not needed? 
+	# if [ $clear_state == "true" ] 
+	# then 
+	# 	myprint "Accept what needed..."
+	# 	tap_screen 515 1055 2
+	# 	tap_screen 405 1055 2
+	# fi 
 	
 	# join with video/audio or not
 	y_coord=1180
