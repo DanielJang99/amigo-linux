@@ -437,7 +437,6 @@ do
 	# check if user wants to run a test 
 	if [ -f $sel_file ] 
 	then 
-		myprint "New selection file was found!"
 		sel_id=`sudo cat $sel_file | cut -f 1`
 		time_sel=`sudo cat $sel_file | cut -f 2`
 		let "time_from_sel = current_time - time_sel"
@@ -478,12 +477,9 @@ do
 				am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-make-sure-the-device-is-on-line!"
 			fi  
 		else
-			if [ $time_from_sel -gt 1800 ]  
-			then 		 
-				# removing selection file, no need to check all the time
-				myprint "Cleaning old user selection file already used. (TimeSinceSel:$time_from_sel)"
-				sudo rm $sel_file
-			fi 
+			# removing selection file, no need to check all the time
+			myprint "Cleaning old user selection file already used. (TimeSinceSel:$time_from_sel)"
+			sudo rm $sel_file			 
 		fi 
 	fi 
 
