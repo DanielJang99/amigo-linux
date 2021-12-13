@@ -251,7 +251,7 @@ init_fast_com(){
 toggle_wifi(){
 	opt=$1
 	net_iface=$2
-	myprint "[toggle_wifi] OPT:$opt IFACE: net_iface"
+	myprint "[toggle_wifi] OPT:$opt IFACE: $net_iface"
 	wifiStatus="off"
 	ifconfig $net_iface | grep "inet" | grep "\." > /dev/null
 	if [ $? -eq 0 ] 

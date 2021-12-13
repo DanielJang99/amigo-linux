@@ -9,7 +9,7 @@ adb_file=$script_dir"/adb-utils.sh"
 source $adb_file
 
 
-sudo input keyevent KEYCODE_HOME
+close_all
 echo "[$0] Turning wifi OFF"
 toggle_wifi "off" "wlan0"
 ifconfig wlan0 | grep inet | grep "\." > ".inet-info"
