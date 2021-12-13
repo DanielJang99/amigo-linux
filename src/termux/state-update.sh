@@ -459,7 +459,6 @@ do
 						myprint "Open a random webpage -- ./web-test.sh  --suffix $suffix --id $time_sel-"user" --iface $def_iface --single --pcap"
 						./web-test.sh  --suffix $suffix --id $time_sel-"user" --iface $def_iface --single --pcap
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-quickly-the-page-loaded:1-star-(slow)--5-stars-(fast)"
-						sleep 10 # allow app to load and read status? 
 						;;
 
 					"1")
@@ -469,7 +468,6 @@ do
 						myprint "Watch a video -- ./youtube-test.sh --suffix $suffix --id $time_sel-"user" --iface $def_iface --pcap --single"						
 						./youtube-test.sh --suffix $suffix --id $time_sel-"user" --iface $def_iface --pcap --single
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-the-video-played:1-star-(poor)--5-stars-(great)"
-						sleep 10 # allow app to load and read status? 
 						;;
 					  *)
 						echo "Option not supported"
@@ -478,10 +476,13 @@ do
 			else 
 				am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-make-sure-the-device-is-on-line!"
 			fi  
-		else 
-			# removing selection file, no need to check all the time
-			myprint "Cleaning old user selection file already used. (TimeSinceSel:$time_from_sel)"
-			sudo rm $sel_file
+		else
+			if [ $time_from_sel -gt 180 ]  
+			then 		 
+				# removing selection file, no need to check all the time
+				myprint "Cleaning old user selection file already used. (TimeSinceSel:$time_from_sel)"
+				sudo rm $sel_file
+			fi 
 		fi 
 	fi 
 
