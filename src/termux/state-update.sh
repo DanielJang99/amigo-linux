@@ -259,6 +259,7 @@ fast_freq=5                            # interval for checking the app (faster)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
 NET_INTERVAL=3600                      # interval of networking testing 
 GOOGLE_CHECK_FREQ=10800                # interval of Google account check via YT (seconds)
+MAX_PAUSE=1800                         # maximum time a user can pause (600) 
 kenzo_pkg="com.example.sensorexample"  # our app package name 
 last_report_time="1635969639"          # last time a report was sent (init to an old time)
 last_net="1635969639"                  # last time a net test was done (init to an old time) 
@@ -266,10 +267,10 @@ t_wifi_mobile_update="1635969639"      # last time wifi/mobile info was checked 
 asked_to_charge="false"                # keep track if we already asked user to charge their phone
 prev_wifi_traffic=0                    # keep track of wifi traffic used today
 prev_mobile_traffic=0                  # keep track of mobile traffic used today
-MAX_MOBILE_GB=3                        # maximum mobile data usage per day
+MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="1.1"                              # code version 
+vrs="1.2"                              # code version 
 
 # check if testing
 if [ $# -eq 1 ] 
@@ -296,10 +297,10 @@ then
     done < ".ps-$app"
 fi
 
-# always make sure screen is in portrait 
-myprint "Ensuring that screen is in portrait and auto-rotation disabled"
-sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
-sudo  settings put system user_rotation 0          # put in portrait
+# # always make sure screen is in portrait -- does not carry over time 
+# myprint "Ensuring that screen is in portrait and auto-rotation disabled"
+# sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
+# sudo  settings put system user_rotation 0          # put in portrait
 
 # update Google account authorization status
 t_last_google=0
@@ -344,7 +345,7 @@ physical_id="N/A"
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 if [ -f "uid-list.txt" ] 
 then 
-	physical_id=`cat "uid-list.txt" | grep $uid | cut -f 1`
+	physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | cut -f 1`
 fi 
 myprint "IMEI: $uid PhysicalID: $physical_id"
 
@@ -444,14 +445,12 @@ do
 
 			t_start_pause=`date +%s`
 			myprint "Paused by user! Time: $t_start_pause"
-
-			# send status update to the server
-			myprint "Sending data to the server: "
 			
 			if [ $def_iface == "none" ] 
 			then
 				myprint "Skipping report sending since not connected"
 			else 
+				myprint "Data to send to the server:"			
 				msg="PAUSED-BY-USER"			
 				echo "$(generate_post_data_short)" 		
 				timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:8082/status
@@ -527,15 +526,17 @@ do
 	current_time=`date +%s`
 	last_loop_time=$current_time
 
-	# if we are paused we stop here -- disabled protection to long pause 
-	# let "t_since_paused = current_time - t_start_pause"
-	# if [ $t_since_paused -gt 3600 ]
-	# then 
-	# 	echo "true" > ".temp" 
-	# 	echo "false" > ".isPaused"
-	# 	sudo cp ".temp" $user_file
-	# 	myprint "UNPAUSING since we have been paused for too long ($t_since_paused sec)!"
-	# fi 
+	# check if phone was paused for too long
+	let "t_since_paused = current_time - t_start_pause"
+	if [ $t_since_paused -gt $MAX_PAUSE ]	
+	then 
+		echo "true" > ".temp" 
+		sudo cp ".temp" $user_file
+		echo "false" > ".isPaused"		
+		myprint "UN-PAUSING since we have been paused for too long ($t_since_paused >= $MAX_PAUSE)!"
+	fi 
+	
+	#if we are paused we stop here	
 	isPaused=`cat ".isPaused"`
 	if [ $isPaused == "true" ]
 	then
@@ -750,14 +751,12 @@ do
 		# get uptime
 		uptime_info=`uptime`
 
-		# send status update to the server
-		myprint "Sending data to the server: "
-		echo "$(generate_post_data)" 
-	
 		if [ $def_iface == "none" ] 
 		then
 			myprint "Skipping report sending since not connected"
 		else 
+			myprint "Data to send to the server:"
+			echo "$(generate_post_data)"
 			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
 		fi 
 		echo $current_time > ".last_report"

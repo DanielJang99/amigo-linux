@@ -46,8 +46,8 @@ run_zus(){
 	sudo input keyevent KEYCODE_BACK  
 	close_all
 	turn_device_off
-	myprint "./FTPClient $server_ip 8888 $uid 3G"
-	timeout 150 ./FTPClient $server_ip 8888 $uid 3G
+	myprint "./FTPClient $server_ip 8888 $uid 3G $ZEUS_DURATION"
+	timeout 150 ./FTPClient $server_ip 8888 $uid 3G $ZEUS_DURATION
 	net="3G"
 	mServiceState=`sudo dumpsys telephony.registry | grep "mServiceState" | head -n 1`	
 	traffic_end=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
@@ -79,8 +79,8 @@ run_zus(){
 	sudo input keyevent KEYCODE_BACK
 	close_all
 	turn_device_off
-	myprint "./FTPClient $server_ip 8888 $uid 4G"	
-	timeout 150 ./FTPClient $server_ip 8888 $uid 4G
+	myprint "./FTPClient $server_ip 8888 $uid 4G $ZEUS_DURATION"	
+	timeout 150 ./FTPClient $server_ip 8888 $uid 4G $ZEUS_DURATION
 	net="4G"	
 	mServiceState=`sudo dumpsys telephony.registry | grep "mServiceState" | head -n 1`		
 	traffic_end=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
@@ -106,7 +106,8 @@ run_zus(){
 echo "[`date`] net-testing START"
 
 # params
-MAX_RUNS=6
+MAX_ZEUS_RUNS=3             # maximum duration of NYU experiments
+ZEUS_DURATION=20            # duration of NYU experiments
 suffix=`date +%d-%m-%Y`
 t_s=`date +%s`
 iface="wlan0"
@@ -120,8 +121,14 @@ fi
 # current free space 
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 
+# run multiple MTR
+./mtr.sh $suffix $t_s
 
-############################
+# video testing with youtube
+touch ".locked"
+./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
+turn_device_off
+rm ".locked"
 
 # run nyu stuff if mobile is available or if we really need samples (FIXME)
 sudo dumpsys netstats > .data
@@ -136,8 +143,8 @@ then
 	then
 		num_runs_today=`cat $status_file`
 	fi 	
-	myprint "NYU-stuff. Found a mobile connection: $mobile_iface (DefaultConnection:$iface). NumRunsToday:$num_runs_today (MaxRuns: $MAX_RUNS)"
-	if [ $iface == $mobile_iface -a $num_runs_today -lt $MAX_RUNS ] 
+	myprint "NYU-stuff. Found a mobile connection: $mobile_iface (DefaultConnection:$iface). NumRunsToday:$num_runs_today (MaxRuns: $MAX_ZEUS_RUNS)"
+	if [ $iface == $mobile_iface -a $num_runs_today -lt $MAX_ZEUS_RUNS ] 
 	then
 		myprint "NYU-stuff. We can run. Sleep 30 to allow state-update to know"
 		touch ".locked"
@@ -169,20 +176,6 @@ else
 	myprint "No mobile connection found. Skipping NYU-ZUS"
 fi 
 
-exit -1 
-############################
-
-
-# run multiple MTR
-./mtr.sh $suffix $t_s
-
-# video testing with youtube
-touch ".locked"
-./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
-turn_device_off
-rm ".locked"
-
-###############MOVE ZUS HERE 
 
 # run a speedtest 
 myprint "Running speedtest-cli..."
