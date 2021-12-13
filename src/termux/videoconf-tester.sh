@@ -167,9 +167,13 @@ run_zoom(){
 	else 
 		myprint "Entering Password: $password" 
 		sudo input text "$password" 
-		sleep 1
-		tap_screen 530 535 5
+		sleep 2
+		tap_screen 530 535 1
 	fi 
+
+	# allow page to load
+	myprint "Allow next page to load. No activity name, just sleep 10 seconds"
+	sleep 10 
 
 	# sync barrier (testing )
 	if [ $sync_time != 0 ]
@@ -190,10 +194,14 @@ run_zoom(){
 	else 
 		y_coord="1180"     
 	fi 
-	tap_screen $x_center $y_coord 5
+	tap_screen $x_center $y_coord 1
+
+	# allow page to load
+	myprint "Allow next page to load. No activity name, just sleep 10 seconds"
+	sleep 10 
 	
 	# click to join audio
-	myprintn "click to join audio"
+	myprint "click to join audio"
 	tap_screen 200 1110 3
 	tap_screen 178 1110
 	
@@ -601,6 +609,7 @@ sleep 5
 if [ $clear_state == "true" -a $app == "zoom" ] 
 then
 	wait_for_screen "LauncherActivity"	
+	myprint "Accepting warning due to rooted phone..."
 	sudo input tap 435 832
 fi 
 
