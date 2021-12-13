@@ -458,7 +458,7 @@ do
 						# open a random webpage 
 						myprint "Open a random webpage -- ./web-test.sh  --suffix $suffix --id $time_sel-"user" --iface $def_iface --single --pcap"
 						./web-test.sh  --suffix $suffix --id $time_sel-"user" --iface $def_iface --single --pcap
-						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-quickly-the-page-loaded:1-star-(slow)--5-stars-(fast)"
+						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es rateid $time_sel --es accept "Please-rate-how-quickly-the-page-loaded:1-star-(slow)--5-stars-(fast)"
 						;;
 
 					"1")
@@ -467,7 +467,7 @@ do
 						t_wifi_mobile_update=`date +%s`	
 						myprint "Watch a video -- ./youtube-test.sh --suffix $suffix --id $time_sel-"user" --iface $def_iface --pcap --single"						
 						./youtube-test.sh --suffix $suffix --id $time_sel-"user" --iface $def_iface --pcap --single
-						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-the-video-played:1-star-(poor)--5-stars-(great)"
+						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es rateid $time_sel --es accept "Please-rate-how-the-video-played:1-star-(poor)--5-stars-(great)"
 						;;
 					  *)
 						echo "Option not supported"
@@ -477,7 +477,7 @@ do
 				am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-make-sure-the-device-is-on-line!"
 			fi  
 		else
-			if [ $time_from_sel -gt 180 ]  
+			if [ $time_from_sel -gt 1800 ]  
 			then 		 
 				# removing selection file, no need to check all the time
 				myprint "Cleaning old user selection file already used. (TimeSinceSel:$time_from_sel)"
