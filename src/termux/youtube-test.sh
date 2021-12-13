@@ -68,6 +68,7 @@ generate_post_data(){
     "today":"${suffix}",
     "timestamp":"${current_time}",
     "uid":"${uid}",
+    "test_id":"${curr_run_id}",
     "cpu_util_midload_perc":"${cpu_usage_middle}",
     "avg_ping":"${avg_ping}",
     "bdw_used_MB":"${traffic}",
