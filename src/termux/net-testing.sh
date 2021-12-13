@@ -46,6 +46,7 @@ run_zus(){
 	sudo input keyevent KEYCODE_BACK  
 	close_all
 	turn_device_off
+	myprint "./FTPClient $server_ip 8888 $uid 3G"
 	timeout 150 ./FTPClient $server_ip 8888 $uid 3G
 	net="3G"
 	mServiceState=`sudo dumpsys telephony.registry | grep "mServiceState" | head -n 1`	
@@ -78,6 +79,7 @@ run_zus(){
 	sudo input keyevent KEYCODE_BACK
 	close_all
 	turn_device_off
+	myprint "./FTPClient $server_ip 8888 $uid 4G"	
 	timeout 150 ./FTPClient $server_ip 8888 $uid 4G
 	net="4G"	
 	mServiceState=`sudo dumpsys telephony.registry | grep "mServiceState" | head -n 1`		

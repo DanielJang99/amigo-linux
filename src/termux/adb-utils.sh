@@ -263,6 +263,7 @@ toggle_wifi(){
 	then 
  		if [ $wifiStatus == "off" ] 
 		then
+			turn_device_on
 			am start -a android.settings.SETTINGS
 			sleep 5 
 			tap_screen 370 400 5
@@ -276,6 +277,7 @@ toggle_wifi(){
 	then
 		if [ $wifiStatus == "on" ] 
 		then 
+			turn_device_on
 			am start -a android.settings.SETTINGS
 			sleep 5 
 			tap_screen 370 400 5
