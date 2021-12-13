@@ -59,6 +59,7 @@ sync_barrier(){
 		then
 			myprint "Sleeping $t_sleep to sync up!"
 			sleep $t_sleep
+			myprint "Resuming!"			
 		else 
 			myprint "Sync time passed, consider increasing"
 		fi 
@@ -135,6 +136,8 @@ wait_for_screen(){
 	status="failed"
 	screen_name=$1
 	MAX_ATTEMPTS=10
+
+	myprint "Wait for activity: $screen_name"
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
 	#echo "==> $foreground"		
 	while [ $foreground != $screen_name ]
