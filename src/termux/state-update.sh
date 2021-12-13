@@ -259,7 +259,7 @@ fast_freq=5                            # interval for checking the app (faster)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
 NET_INTERVAL=3600                      # interval of networking testing 
 GOOGLE_CHECK_FREQ=10800                # interval of Google account check via YT (seconds)
-MAX_PAUSE=600                          # maximum time a user can pause (600) 
+MAX_PAUSE=1800                         # maximum time a user can pause (600) 
 kenzo_pkg="com.example.sensorexample"  # our app package name 
 last_report_time="1635969639"          # last time a report was sent (init to an old time)
 last_net="1635969639"                  # last time a net test was done (init to an old time) 
@@ -345,7 +345,7 @@ physical_id="N/A"
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 if [ -f "uid-list.txt" ] 
 then 
-	physical_id=`cat "uid-list.txt" | grep $uid | cut -f 1`
+	physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | cut -f 1`
 fi 
 myprint "IMEI: $uid PhysicalID: $physical_id"
 
