@@ -150,7 +150,7 @@ wait_for_screen(){
 # helper function to join a zoom meeting
 run_zoom(){
 	# click on "join a meeting"
-	wait_for_screen "LauncherActivity"
+	wait_for_screen "WelcomeActivity"
 	sudo dumpsys window windows | grep -E 'mCurrentFocus' 
 	tap_screen $x_center 1020 5
 	 
@@ -604,10 +604,8 @@ sleep 5
 # needed to handle warning of zoom on rooted device 
 if [ $clear_state == "true" -a $app == "zoom" ] 
 then
-	sudo dumpsys window windows | grep -E 'mCurrentFocus'  
+	wait_for_screen "LauncherActivity"	
 	sudo input tap 435 832
-	sleep 5
-	sudo dumpsys window windows | grep -E 'mCurrentFocus'  
 fi 
 
 # join a meeting in the app to be tested
