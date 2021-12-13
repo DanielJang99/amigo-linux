@@ -137,18 +137,25 @@ then
 	myprint "NYU-stuff. Found a mobile connection: $mobile_iface (DefaultConnection:$iface). NumRunsToday:$num_runs_today (MaxRuns: $MAX_RUNS)"
 	if [ $iface == $mobile_iface -a $num_runs_today -lt $MAX_RUNS ] 
 	then
+		myprint "NYU-stuff. We can run. Sleep 30 to allow state-update to know"
+		touch ".locked"
+		sleep 30 
 		run_zus		
+		rm ".locked"
 		# allow some time to rest 
 		myprint "Resting post ZEUS test..."
-		sleep 30 
-	fi 
+		sleep 30 	 
 	elif [ $curr_hour -ge 18 ] # we are past 6pm
 	then 
-		myprint "NYU-stuff. It is past 6pm and missing data. Resorting to disable WiFi"
+		myprint "NYU-stuff. It is past 6pm and missing data. Resorting to disable WiFi (sleep 30 to allow state-update to know)"
+		touch ".locked"
+		sleep 30 
 		toggle_wifi "off" $iface
 		run_zus
 		toggle_wifi "on" $iface
 		myprint "Enabling WiFi back"		
+		rm ".locked"
+
 		# allow some time to rest 
 		myprint "Resting post ZEUS test..."
 		sleep 30
