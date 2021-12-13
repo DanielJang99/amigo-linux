@@ -7,6 +7,9 @@
 script_dir=`pwd`
 adb_file=$script_dir"/adb-utils.sh"
 source $adb_file
+
+
+sudo input keyevent KEYCODE_HOME
 echo "[$0] Turning wifi OFF"
 termux-wifi-enable false
 ifconfig wlan0 | grep inet | grep "\." > ".inet-info"
