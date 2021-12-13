@@ -134,11 +134,13 @@ wait_for_screen(){
 	screen_name=$1
 	MAX_ATTEMPTS=10
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
+	echo "==> $foreground"		
 	while [ $foreground != $screen_name ]
 	do 
 		let "c++"
 		sleep 2 
 		foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
+		echo "==> $foreground"
 		if [ $c -eq $MAX_ATTEMPTS ]
 		then
 			myprint "Window $screen_name never loaded. Returning an error"
@@ -290,18 +292,17 @@ run_webex(){
 
 # helper function to join a google meet meeting
 run_meet(){
-	sudo dumpsys window windows | grep -E 'mCurrentFocus'
 	if [ $clear_state == "true" ] 
 	then 
+		wait_for_screen "OnboardingActivity"	
 		tap_screen $x_center 1090 5 # FIXME: maybe even more? 
 	fi 
 
-	# click on "join a meeting" 
-	sudo dumpsys window windows | grep -E 'mCurrentFocus'	
+	# click on "join a meeting"
+	wait_for_screen "HomeActivity"	
 	tap_screen 515 230 3
 	 
 	# enter meeting ID
-	sudo dumpsys window windows | grep -E 'mCurrentFocus'	
 	sudo input text "$meeting_id" #FIXME - check DVPN code (verify spaces) 
 	tap_screen 640 105 3
 	 
@@ -319,8 +320,8 @@ run_meet(){
 	#sync_barrier
 	sleep 5 
 	
-	# join with video or not
-	sudo dumpsys window windows | grep -E 'mCurrentFocus'	
+	# join with video or not	
+	wait_for_screen "GreenroomActivity"		
 	if [ $use_video == "false" ] 
 	then 
 		tap_screen 175 855 1 
@@ -331,11 +332,11 @@ run_meet(){
 	fi 
 
 	# press join
-	sudo dumpsys window windows | grep -E 'mCurrentFocus'	
 	tap_screen 485 855 5
 
 	# get full screen (comparable with zoom) ## FIXME 
-	sudo dumpsys window windows | grep -E 'mCurrentFocus'
+	wait_for_screen "SingleCallActivity"
+	myrpint "get full screen -- FIXME"
 	tap_screen $x_center $y_center
 }
 
@@ -616,6 +617,11 @@ sudo monkey -p $package 1 > /dev/null 2>&1
 
 # allow time for app to launch # FIXME 
 sleep 5 
+
+######################
+foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
+echo "==> $foreground"
+######################
 
 # needed to handle warning of zoom on rooted device 
 if [ $clear_state == "true" -a $app == "zoom" ] 
