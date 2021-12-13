@@ -121,8 +121,14 @@ fi
 # current free space 
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 
+# run multiple MTR
+./mtr.sh $suffix $t_s
 
-############################
+# video testing with youtube
+touch ".locked"
+./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
+turn_device_off
+rm ".locked"
 
 # run nyu stuff if mobile is available or if we really need samples (FIXME)
 sudo dumpsys netstats > .data
@@ -170,20 +176,6 @@ else
 	myprint "No mobile connection found. Skipping NYU-ZUS"
 fi 
 
-exit -1 
-############################
-
-
-# run multiple MTR
-./mtr.sh $suffix $t_s
-
-# video testing with youtube
-touch ".locked"
-./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
-turn_device_off
-rm ".locked"
-
-###############MOVE ZUS HERE 
 
 # run a speedtest 
 myprint "Running speedtest-cli..."

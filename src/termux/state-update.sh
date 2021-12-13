@@ -259,6 +259,7 @@ fast_freq=5                            # interval for checking the app (faster)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
 NET_INTERVAL=3600                      # interval of networking testing 
 GOOGLE_CHECK_FREQ=10800                # interval of Google account check via YT (seconds)
+MAX_PAUSE=60                           # maximum time a user can pause (600) 
 kenzo_pkg="com.example.sensorexample"  # our app package name 
 last_report_time="1635969639"          # last time a report was sent (init to an old time)
 last_net="1635969639"                  # last time a net test was done (init to an old time) 
@@ -444,14 +445,12 @@ do
 
 			t_start_pause=`date +%s`
 			myprint "Paused by user! Time: $t_start_pause"
-
-			# send status update to the server
-			myprint "Sending data to the server: "
 			
 			if [ $def_iface == "none" ] 
 			then
 				myprint "Skipping report sending since not connected"
 			else 
+				myprint "Data to send to the server:"			
 				msg="PAUSED-BY-USER"			
 				echo "$(generate_post_data_short)" 		
 				timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:8082/status
@@ -527,15 +526,17 @@ do
 	current_time=`date +%s`
 	last_loop_time=$current_time
 
-	# if we are paused we stop here -- disabled protection to long pause 
-	# let "t_since_paused = current_time - t_start_pause"
-	# if [ $t_since_paused -gt 3600 ]
-	# then 
-	# 	echo "true" > ".temp" 
-	# 	echo "false" > ".isPaused"
-	# 	sudo cp ".temp" $user_file
-	# 	myprint "UNPAUSING since we have been paused for too long ($t_since_paused sec)!"
-	# fi 
+	# check if phone was paused for too long
+	let "t_since_paused = current_time - t_start_pause"
+	if [ $t_since_paused -gt $MAX_PAUSE ]	
+	then 
+		echo "true" > ".temp" 
+		sudo cp ".temp" $user_file
+		echo "false" > ".isPaused"		
+		myprint "UN-PAUSING since we have been paused for too long ($t_since_paused >= $MAX_PAUSE)!"
+	fi 
+	
+	#if we are paused we stop here	
 	isPaused=`cat ".isPaused"`
 	if [ $isPaused == "true" ]
 	then
@@ -750,14 +751,12 @@ do
 		# get uptime
 		uptime_info=`uptime`
 
-		# send status update to the server
-		myprint "Sending data to the server: "
-		echo "$(generate_post_data)" 
-	
 		if [ $def_iface == "none" ] 
 		then
 			myprint "Skipping report sending since not connected"
 		else 
+			myprint "Data to send to the server:"
+			echo "$(generate_post_data)"
 			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
 		fi 
 		echo $current_time > ".last_report"
