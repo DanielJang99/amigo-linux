@@ -11,14 +11,14 @@ source $adb_file
 
 sudo input keyevent KEYCODE_HOME
 echo "[$0] Turning wifi OFF"
-termux-wifi-enable false
+toggle_wifi "off" "wlan0"
 ifconfig wlan0 | grep inet | grep "\." > ".inet-info"
 res=$?
 echo "[$0] WLAN0 status: $res -- Detailed info:"
 cat ".inet-info"
 sleep 5 
 echo "[$0] Turning wifi ON"
-turn_wifi_on "wlan0"
+toggle_wifi "on" "wlan0"
 ifconfig wlan0 | grep inet | grep "\." > ".inet-info"
 res=$?
 echo "[$0] WLAN0 status: $res -- Detailed info:"

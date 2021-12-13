@@ -247,28 +247,6 @@ init_fast_com(){
 }
 
 	
-# helper to turn wifi back ON
-turn_wifi_on(){
-	net_iface=$1
-	ifconfig $net_iface | grep "inet" | grep "\." > /dev/null
-	wifiStatus="off"	
-	if [ $? -eq 0 ] 
-	then 
-		wifiStatus="on"
-	fi 
-	if [ $wifiStatus == "off" ]
-	then 
-		am start -n com.android.settings/com.android.settings.Settings$NetworkDashboardActivity	
-		tap_screen 370 400 5
-		tap_screen 645 230 2
-		sudo input keyevent KEYCODE_BACK
-		close_all
-	else 
-		myprint "WiFi is already off. Nothing to do"
-	fi 
-}
-
-
 # turn wifi on or off
 toggle_wifi(){
 	opt=$1
@@ -284,14 +262,12 @@ toggle_wifi(){
 	if [ $opt == "on" ] 
 	then 
  		if [ $wifiStatus == "off" ] 
-		then 
-			myprint "[toggle_wifi] swipe down"
-			sudo input swipe 370 0 370 500
-			sleep 5
-			myprint "[toggle_wifi] press"
-			tap_screen 300 100 2
- 			myprint "[toggle_wifi] swipe up"
-			sudo input swipe 370 500 370 0
+		then
+			am start -n com.android.settings/com.android.settings.Settings$NetworkDashboardActivity	
+			tap_screen 370 400 5
+			tap_screen 645 230 2
+			sudo input keyevent KEYCODE_BACK
+			close_all 			
 		else 
 			myprint "Requested wifi ON and it is already ON"
 		fi 
@@ -299,13 +275,11 @@ toggle_wifi(){
 	then
 		if [ $wifiStatus == "on" ] 
 		then 
-			myprint "[toggle_wifi] swipe down"
-			sudo input swipe 370 0 370 500
-			sleep 5 
-			myprint "[toggle_wifi] press"
-			tap_screen 300 100 2
- 			myprint "[toggle_wifi] swipe up"
-			sudo input swipe 370 500 370 0
+			am start -n com.android.settings/com.android.settings.Settings$NetworkDashboardActivity	
+			tap_screen 370 400 5
+			tap_screen 645 230 2
+			sudo input keyevent KEYCODE_BACK
+			close_all
 		else 
 			myprint "Requested wifi OFF and it is already OFF"
 		fi 
