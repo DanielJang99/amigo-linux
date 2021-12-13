@@ -290,15 +290,18 @@ run_webex(){
 
 # helper function to join a google meet meeting
 run_meet(){
+	sudo dumpsys window windows | grep -E 'mCurrentFocus'
 	if [ $clear_state == "true" ] 
 	then 
 		tap_screen $x_center 1090 5 # FIXME: maybe even more? 
 	fi 
 
 	# click on "join a meeting" 
+	sudo dumpsys window windows | grep -E 'mCurrentFocus'	
 	tap_screen 515 230 3
 	 
 	# enter meeting ID
+	sudo dumpsys window windows | grep -E 'mCurrentFocus'	
 	sudo input text "$meeting_id" #FIXME - check DVPN code (verify spaces) 
 	tap_screen 640 105 3
 	 
@@ -317,6 +320,7 @@ run_meet(){
 	sleep 5 
 	
 	# join with video or not
+	sudo dumpsys window windows | grep -E 'mCurrentFocus'	
 	if [ $use_video == "false" ] 
 	then 
 		tap_screen 175 855 1 
@@ -327,9 +331,11 @@ run_meet(){
 	fi 
 
 	# press join
+	sudo dumpsys window windows | grep -E 'mCurrentFocus'	
 	tap_screen 485 855 5
 
-	# get full screen (comparable with zoom)
+	# get full screen (comparable with zoom) ## FIXME 
+	sudo dumpsys window windows | grep -E 'mCurrentFocus'
 	tap_screen $x_center $y_center
 }
 
@@ -673,6 +679,7 @@ then
         tap_screen $x_center $y_center
     fi
 fi 
+### FIXME -- is meet now multi view too? 
 
 # turn off the screen 
 if [ $turn_off == "true" ] 
