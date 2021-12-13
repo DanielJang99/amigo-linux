@@ -135,12 +135,12 @@ grant_permission(){
 wait_for_screen(){
 	status="failed"
 	screen_name=$1
-	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
 	while [ $foreground != $screen_name ]
 	do 
 		let "c++"
 		sleep 2 
-		foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+		foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
 		if [ $c -eq $MAX_ATTEMPTS ]
 		then
 			break
@@ -595,7 +595,9 @@ sleep 5
 
 # needed to handle warning of zoom on rooted device 
 if [ $clear_state == "true" -a $app == "zoom" ] 
-then 
+then
+	echo "===> checking for zoom root errro"
+	sudo dumpsys window windows | grep -E 'mCurrentFocus'  
 	sudo input tap 435 832
 	sleep 5
 fi 
