@@ -242,7 +242,7 @@ slow_freq=15                           # interval for checking commands to run (
 fast_freq=5                            # interval for checking the app (faster)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
 NET_INTERVAL=3600                      # interval of networking testing 
-GOOGLE_CHECK_FREQ=18000                # interval of Google account check via YT (seconds)
+GOOGLE_CHECK_FREQ=10800                # interval of Google account check via YT (seconds)
 kenzo_pkg="com.example.sensorexample"  # our app package name 
 last_report_time="1635969639"          # last time a report was sent (init to an old time)
 last_net="1635969639"                  # last time a net test was done (init to an old time) 
@@ -293,14 +293,15 @@ then
 	t_last_google=`cat ".time_google_check"`
 fi 
 let "t_p = current_time - t_last_google"
-num=0
-if [ $t_p -gt $GOOGLE_CHECK_FREQ -a $num -eq 0 ] 
+if [ $t_p -gt $GOOGLE_CHECK_FREQ ]
 then
 	myprint "Time to check Google account status via YT"
 	check_account_via_YT	  
 	t_last_google=$current_time
 	echo $current_time > ".time_google_check"
 	myprint "Google account status: $google_status"	
+else
+	myprint "Skipping Google account check - was done $t_p seconds ago!"
 fi 
 google_status=`cat ".google_status"`
 	
