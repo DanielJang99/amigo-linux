@@ -134,7 +134,7 @@ wait_for_screen(){
 	screen_name=$1
 	MAX_ATTEMPTS=10
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
-	#echo "==> $foreground"		
+	echo "==> $foreground"		
 	while [ $foreground != $screen_name ]
 	do 
 		let "c++"
@@ -224,13 +224,13 @@ run_zoom(){
 run_webex(){
 	if [ $clear_state == "true" ] 
 	then
-		sudo dumpsys window windows | grep -E 'mCurrentFocus' 
+		wait_for_screen "TermsofUseActivity"
 		tap_screen 560 785 2 
 		tap_screen 594 922 2
 	fi 
 
 	# enter meeting ID
-	sudo dumpsys window windows | grep -E 'mCurrentFocus' 
+	wait_for_screen "WelcomeActivity"
 	tap_screen $x_center 935 3
 	sudo input text "$meeting_id"
 	 
@@ -249,6 +249,9 @@ run_webex(){
 	sudo dumpsys window windows | grep -E 'mCurrentFocus' 
 	tap_screen 645 105 5
 
+	# wait for client to be ready 
+	wait_for_screen "MeetingClient"
+	
 	# accept what needed
 	if [ $clear_state == "true" ] 
 	then 
