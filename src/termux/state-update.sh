@@ -92,6 +92,19 @@ check_account_via_YT(){
 	turn_device_off
 }
 
+# generate data to be POSTed to my server
+generate_post_data_short(){
+  cat <<EOF
+    {
+    "vrs_num":"${vrs}",      
+    "today":"${suffix}",
+    "timestamp":"${current_time}",
+    "uid":"${uid}",
+    "msg":"${msg}"
+    }
+EOF
+}
+
 # generate data to be POSTed to my server 
 generate_post_data(){
   cat <<EOF
@@ -104,6 +117,7 @@ generate_post_data(){
     "googleStatus":"${google_status}",
     "timeGoogleCheck":"${t_last_google}",
     "uptime":"${uptime_info}",
+    "isPaused":"${isPaused}",
     "num_kenzo":"${N_kenzo}",
     "free_space_GB":"${free_space}",
     "cpu_util_perc":"${cpu_util}",
@@ -253,7 +267,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=3                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="1.0"                              # code version 
+vrs="1.1"                              # code version 
 
 # check if testing
 if [ $# -eq 1 ] 
@@ -336,7 +350,6 @@ myprint "IMEI: $uid PhysicalID: $physical_id"
 echo "true" > ".status"
 to_run=`cat ".status"`
 sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"
-echo "false" > ".isPaused"
 
 #restart Kenzo - so that background service runs and info is populated 
 turn_device_on
@@ -425,7 +438,19 @@ do
 			firstPause="false"
 			./stop-net-testing.sh  	
 			t_start_pause=`date +%s`
-			myprint "Paused by user! Time: $t_start_pause"			
+			myprint "Paused by user! Time: $t_start_pause"
+
+			# send status update to the server
+			myprint "Sending data to the server: "
+			echo "$(generate_post_data_short)" 
+		
+			if [ $def_iface == "none" ] 
+			then
+				myprint "Skipping report sending since not connected"
+			else 
+				msg="PAUSED-BY-USER"
+				timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:8082/status
+			fi 
 		fi 
 		echo "true" > ".isPaused"
 	else 
