@@ -12,9 +12,10 @@ function ctrl_c() {
 }
 
 safe_stop(){
-	sudo pm clear $package
 	echo "done" > ".videoconfstatus"
 	echo "false" > ".to_monitor"
+	clean_file ".locked"
+	sudo pm clear $package	
 	sudo killall tcpdump
 }
 
@@ -25,6 +26,7 @@ generate_post_data(){
     "today":"${suffix}",
     "timestamp":"${current_time}",
     "uid":"${uid}",
+    "test_id":"${test_id}",
     "cpu_util_midload_perc":"${cpu_usage_middle}",
     "bdw_used_MB":"${traffic}",
     "tshark_traffic_MB":"${tshark_size}", 
@@ -36,7 +38,7 @@ EOF
 # send report to our server 
 send_report(){
 	current_time=`date +%s`
-	msg="ALL-GOOD"
+	msg=$1
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 
 	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/videoconftest
@@ -139,6 +141,9 @@ wait_for_screen(){
 		foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
 		if [ $c -eq $MAX_ATTEMPTS ]
 		then
+			myprint "Window $screen_name never loaded. Returning an error"
+			safe_stop 
+			send_report "WINDOW-NO-LOAD-$screen_name"
 			break
 		fi 
 	done
@@ -398,6 +403,7 @@ big_packet="false"                       # keep track if big packet size was pas
 use_mute="false"                         # FIXME 
 uid="none"                               # user ID
 sync_time=0                              # future sync time 
+cpu_usage_middle="N/A"                   # CPU measured in the middle of a test 
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -578,15 +584,15 @@ fi
 
 # start background procees to monitor CPU on the device
 log_cpu=$res_folder"/"$test_id".cpu"
-log_cpu_top=$res_folder"/"$test_id".cpu_top"
+#log_cpu_top=$res_folder"/"$test_id".cpu_top"
 clean_file $log_cpu
-clean_file $log_cpu_top
+#clean_file $log_cpu_top
 low_cpu="false"
 myprint "Starting cpu monitor. Log: $log_cpu LowCpu: $low_cpu"
 echo "true" > ".to_monitor"
 clean_file ".ready_to_start"
 cpu_monitor $log_cpu &
-cpu_monitor_top $log_cpu_top &
+#cpu_monitor_top $log_cpu_top &
 
 # get initial network data information
 interface=$iface
@@ -715,9 +721,13 @@ then
     sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
 fi
 
-# sleep up to mid experiment then take a screenshot 
+# sleep up to mid experiment then take a screenshot and record mid CPU usage 
 let "half_duration = duration/2 - 5"
 sleep $half_duration 
+if [ -f ".cpu-usage" ]
+then 
+	cpu_usage_middle=`cat .cpu-usage`
+fi
 sudo screencap -p $res_folder"/"$test_id".png" 
 sudo chown $USER:$USER $res_folder"/"$test_id".png"
 
@@ -802,7 +812,7 @@ log_traffic=$res_folder"/"$test_id".traffic"
 echo -e "$app_traffic\t$pi_traffic" > $log_traffic
 
 # send report to the server
-send_report
+send_report "ALL-GOOD"
 
 # return HOME and turn off screen 
 sudo input keyevent HOME
