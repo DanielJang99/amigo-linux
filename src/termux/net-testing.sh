@@ -121,7 +121,13 @@ free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 # run multiple MTR
 ./mtr.sh $suffix $t_s
 
-# run nyu stuff if mobile is available or if we really need samples 
+# video testing with youtube -- SKIPPING, NOT RELIABLE
+touch ".locked"
+./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
+turn_device_off
+rm ".locked"
+
+# run nyu stuff if mobile is available or if we really need samples (FIXME)
 sudo dumpsys netstats > .data
 mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
 if [ ! -z $mobile_iface ]
@@ -138,6 +144,9 @@ then
 	if [ $iface == $mobile_iface -a $num_runs_today -lt $MAX_RUNS ] 
 	then
 		run_zus		
+		# allow some time to rest 
+		myprint "Resting post ZEUS test..."
+		sleep 30 
 	fi 
 	# elif [ $curr_hour -ge 18 ] # we are past 6pm
 	# then 
@@ -146,6 +155,9 @@ then
 	# 	run_zus
 	# 	termux-wifi-enable true
 	# 	myprint "Enabling WiFi back"		
+	#	# allow some time to rest 
+	#	myprint "Resting post ZEUS test..."
+	#	sleep 30
 	# else 
 	# 	myprint "NYU-stuff. Skipping since on WiFI and it not past 6pm"
 	# fi 
@@ -154,19 +166,12 @@ else
 	myprint "No mobile connection found. Skipping NYU-ZUS"
 fi 
 
-# video testing with youtube -- SKIPPING, NOT RELIABLE
-touch ".locked"
-./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
-rm ".locked"
-turn_device_off
-
 # run a speedtest 
 myprint "Running speedtest-cli..."
 res_folder="speedtest-cli-logs/${suffix}"
 mkdir -p $res_folder
 speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
 gzip "${res_folder}/speedtest-$t_s.json"
-
 
 # allow some time to rest 
 myprint "Resting post speedtest..."
