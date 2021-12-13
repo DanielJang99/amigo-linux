@@ -126,6 +126,31 @@ grant_permission(){
     fi 
 }
 
+
+  #mCurrentFocus=Window{b7d5679 u0 us.zoom.videomeetings/com.zipow.videobox.WelcomeActivity}
+  #mCurrentFocus=Window{45b72b3 u0 us.zoom.videomeetings/com.zipow.videobox.JoinConfActivity}
+  #mCurrentFocus=Window{12cd4eb u0 us.zoom.videomeetings/com.zipow.videobox.ConfActivityNormal}
+  #mCurrentFocus=Window{12cd4eb u0 us.zoom.videomeetings/com.zipow.videobox.ConfActivityNormal}
+  
+wait_for_screen(){
+	status="failed"
+	screen_name=$1
+	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+	while [ $foreground != $screen_name ]
+	do 
+		let "c++"
+		sleep 2 
+		foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+		if [ $c -eq $MAX_ATTEMPTS ]
+		then
+			break
+		fi 
+		echo "==> $foreground -- $screen_name"
+	done
+	status="success"
+}
+
+
 # helper function to join a zoom meeting
 run_zoom(){
 	# click on "join a meeting"
@@ -137,20 +162,8 @@ run_zoom(){
 	sudo input text "$meeting_id" 
 	tap_screen $x_center 655 5
 	
-	# sync barrier (testing )
-	if [ $sync_time == 0 ]
-	then 
-		sleep 10
-	else 
-		t_now=`date +%s`
-		let "t_sleep = sync_time - t_now"
-		if [ $t_sleep -gt 0 ]
-		then
-			myprint "Sleeping $t_sleep to sync up!"
-			sleep $t_sleep
-		fi 
-	fi 
-	sudo dumpsys window windows | grep -E 'mCurrentFocus'
+	# wait for password box to show up 
+	wait_for_screen "ConfActivityNormal"
 
 	# enter password if needed
 	if [ -z $password ]
@@ -163,6 +176,19 @@ run_zoom(){
 		tap_screen 530 535 2
 	fi 
 	sudo dumpsys window windows | grep -E 'mCurrentFocus'
+
+
+	# sync barrier (testing )
+	if [ $sync_time != 0 ]
+	then 
+		t_now=`date +%s`
+		let "t_sleep = sync_time - t_now"
+		if [ $t_sleep -gt 0 ]
+		then
+			myprint "Sleeping $t_sleep to sync up!"
+			sleep $t_sleep
+		fi 
+	fi 
 	
 	# click join with video or not
 	if [ $use_video == "true" ] 
