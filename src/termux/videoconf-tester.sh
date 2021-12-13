@@ -246,23 +246,21 @@ run_webex(){
 	fi 
 
 	# click "JOIN"
-	sudo dumpsys window windows | grep -E 'mCurrentFocus' 
 	tap_screen 645 105 5
 
 	# wait for client to be ready 
 	wait_for_screen "MeetingClient"
-	
+	sleep 5 
+
 	# accept what needed
 	if [ $clear_state == "true" ] 
 	then 
 		myprint "Accept what needed..."
-		sudo dumpsys window windows | grep -E 'mCurrentFocus'
 		tap_screen 515 1055 2
 		tap_screen 405 1055 2
 	fi 
 	
 	# join with video/audio or not
-	sudo dumpsys window windows | grep -E 'mCurrentFocus' 
 	y_coord=1180
 	if [ $use_video == "true" ] 
 	then 
@@ -281,10 +279,17 @@ run_webex(){
 	  sleep 5 
 	fi 
 
-	# sync barrier 
-	myprint "Skipping sinc barrier"
-	#sync_barrier
-	sleep 5 	
+	# sync barrier (testing )
+	if [ $sync_time != 0 ]
+	then 
+		t_now=`date +%s`
+		let "t_sleep = sync_time - t_now"
+		if [ $t_sleep -gt 0 ]
+		then
+			myprint "Sleeping $t_sleep to sync up!"
+			sleep $t_sleep
+		fi 
+	fi
 
 	# press join
 	sudo dumpsys window windows | grep -E 'mCurrentFocus' 
@@ -327,11 +332,17 @@ run_meet(){
 		tap_screen 530 780 1
 	fi 
 
-	# sync barrier 
-	myprint "Skipping sync barrier"
-	#sync_barrier
-	sleep 5 
-	
+	# sync barrier (testing )
+	if [ $sync_time != 0 ]
+	then 
+		t_now=`date +%s`
+		let "t_sleep = sync_time - t_now"
+		if [ $t_sleep -gt 0 ]
+		then
+			myprint "Sleeping $t_sleep to sync up!"
+			sleep $t_sleep
+		fi 
+	fi
 	# join with video or not	
 	wait_for_screen "GreenroomActivity"		
 	if [ $use_video == "false" ] 
