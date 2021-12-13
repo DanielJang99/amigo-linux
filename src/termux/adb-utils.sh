@@ -263,7 +263,7 @@ toggle_wifi(){
 	then 
  		if [ $wifiStatus == "off" ] 
 		then
-			adb shell am start -a android.settings.SETTINGS
+			am start -a android.settings.SETTINGS
 			sleep 5 
 			tap_screen 370 400 5
 			tap_screen 645 230 2
@@ -276,7 +276,7 @@ toggle_wifi(){
 	then
 		if [ $wifiStatus == "on" ] 
 		then 
-			adb shell am start -a android.settings.SETTINGS
+			am start -a android.settings.SETTINGS
 			sleep 5 
 			tap_screen 370 400 5
 			tap_screen 645 230 2
