@@ -24,6 +24,14 @@ safe_stop(){
 
 send_report(){
 	current_time=`date +%s`
+	avg_ping="N/A"
+	if [ -f "notes-ping" ] 
+	then 
+		cat notes-ping | grep "mdev" | cut -f 2 -d "=" | cut -f 2 -d "/"`
+		myprint "Average ping to youtube: $avg_ping"
+		rm ping
+	fi 
+
 	if [ $cpu_usage_middle == "N/A" ]
 	then
 		if [ -f ".cpu-usage" ] 
@@ -81,8 +89,6 @@ EOF
 # helper to ping youtube 
 ping_youtube(){
 	ping -c 5 -W 2 youtube.com > notes-ping 2>&1
-	avg_ping=`cat notes-ping | grep "mdev" | cut -f 2 -d "=" | cut -f 2 -d "/"`
-	myprint "Average ping to youtube: $avg_ping"
 }
 
 # import utilities files needed
@@ -164,7 +170,7 @@ then
 fi 
 
 # measure ping to youtube 
-ping_youtube & 
+ping_youtube
 
 # update UID if needed 
 if [ $uid == "none" ]
