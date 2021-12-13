@@ -459,8 +459,7 @@ do
 						myprint "Open a random webpage -- ./web-test.sh  --suffix $suffix --id $time_sel-"user" --iface $def_iface --single --pcap"
 						./web-test.sh  --suffix $suffix --id $time_sel-"user" --iface $def_iface --single --pcap
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-quickly-the-page-loaded:1-star-(slow)--5-stars-(fast)"
-						#sleep 30 # allow time to enter input	
-						#continue # go back up to see if user wants to run another test 
+						sleep 10 # allow app to load and read status? 
 						;;
 
 					"1")
@@ -470,8 +469,7 @@ do
 						myprint "Watch a video -- ./youtube-test.sh --suffix $suffix --id $time_sel-"user" --iface $def_iface --pcap --single"						
 						./youtube-test.sh --suffix $suffix --id $time_sel-"user" --iface $def_iface --pcap --single
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Please-rate-how-the-video-played:1-star-(poor)--5-stars-(great)"
-						#sleep 30 # allow time to enter input	
-						#continue # go back up to see if user wants to run another test 
+						sleep 10 # allow app to load and read status? 
 						;;
 					  *)
 						echo "Option not supported"
