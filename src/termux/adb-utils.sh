@@ -246,13 +246,36 @@ init_fast_com(){
 	#tap_screen 370 830 1
 }
 
+	
+# helper to turn wifi back ON
+turn_wifi_on(){
+	net_iface=$1
+	ifconfig $net_iface | grep "inet" | grep "\." > /dev/null
+	wifiStatus="off"	
+	if [ $? -eq 0 ] 
+	then 
+		wifiStatus="on"
+	fi 
+	if [ $wifiStatus == "off" ]
+	then 
+		am start -n com.android.settings/com.android.settings.Settings$NetworkDashboardActivity	
+		tap_screen 370 400 5
+		tap_screen 645 230 2
+		sudo input keyevent KEYCODE_BACK
+		close_all
+	else 
+		myprint "WiFi is already off. Nothing to do"
+	fi 
+}
+
+
 # turn wifi on or off
 toggle_wifi(){
 	opt=$1
-	myprint "[toggle_wifi] Requested: $opt"
-	sudo input keyevent KEYCODE_HOME
+	net_iface=$2
+	myprint "[toggle_wifi] OPT:$opt IFACE: net_iface"
 	wifiStatus="off"
-	/usr/bin/ifconfig wlan0 | grep "inet" | grep "\." > /dev/null
+	ifconfig $net_iface | grep "inet" | grep "\." > /dev/null
 	if [ $? -eq 0 ] 
 	then 
 		wifiStatus="on"

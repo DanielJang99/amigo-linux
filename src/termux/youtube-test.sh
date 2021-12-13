@@ -102,7 +102,7 @@ uid="none"                         # user ID
 single="false"                     # user initiated test (same logic as per web)
 sleep_time=5                       # time to sleep between clicks
 first_run="false"                  # first time ever youtube was run
-cpu_usage_middle="N/A"
+cpu_usage_middle="N/A"             # CPU measured in the middle of a test 
 
 # read input parameters
 while [ "$#" -gt 0 ]
