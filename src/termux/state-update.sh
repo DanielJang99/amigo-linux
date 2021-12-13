@@ -259,7 +259,7 @@ fast_freq=5                            # interval for checking the app (faster)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
 NET_INTERVAL=3600                      # interval of networking testing 
 GOOGLE_CHECK_FREQ=10800                # interval of Google account check via YT (seconds)
-MAX_PAUSE=60                           # maximum time a user can pause (600) 
+MAX_PAUSE=600                          # maximum time a user can pause (600) 
 kenzo_pkg="com.example.sensorexample"  # our app package name 
 last_report_time="1635969639"          # last time a report was sent (init to an old time)
 last_net="1635969639"                  # last time a net test was done (init to an old time) 
@@ -270,7 +270,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="1.1"                              # code version 
+vrs="1.2"                              # code version 
 
 # check if testing
 if [ $# -eq 1 ] 
@@ -297,10 +297,10 @@ then
     done < ".ps-$app"
 fi
 
-# always make sure screen is in portrait 
-myprint "Ensuring that screen is in portrait and auto-rotation disabled"
-sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
-sudo  settings put system user_rotation 0          # put in portrait
+# # always make sure screen is in portrait -- does not carry over time 
+# myprint "Ensuring that screen is in portrait and auto-rotation disabled"
+# sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
+# sudo  settings put system user_rotation 0          # put in portrait
 
 # update Google account authorization status
 t_last_google=0
