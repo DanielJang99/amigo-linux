@@ -144,8 +144,7 @@ then
 		rm ".locked"
 		# allow some time to rest 
 		myprint "Resting post ZEUS test..."
-		sleep 30 	 
-	fi 
+		sleep 30 	 	 
 	# elif [ $curr_hour -ge 18 ] # we are past 6pm
 	# then 
 	# 	myprint "NYU-stuff. It is past 6pm and missing data. Resorting to disable WiFi (sleep 30 to allow state-update to know)"
