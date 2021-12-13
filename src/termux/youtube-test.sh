@@ -77,6 +77,13 @@ generate_post_data(){
 EOF
 }
 
+# helper to ping youtube 
+ping_youtube(){
+	ping -c 5 -W 2 youtube.com > notes-ping 2>&1
+	avg_ping=`cat notes-ping | grep "mdev" | cut -f 2 -d "=" | cut -f 2 -d "/"`
+	myprint "Average ping to youtube: $avg_ping"
+}
+
 # import utilities files needed
 script_dir=`pwd`
 adb_file=$script_dir"/adb-utils.sh"
@@ -156,9 +163,7 @@ then
 fi 
 
 # measure ping to youtube 
-ping -c 5 -W 2 youtube.com > notes-ping 2>&1
-avg_ping=`cat notes-ping | grep "mdev" | cut -f 2 -d "=" | cut -f 2 -d "/"`
-myprint "Average ping to youtube: $avg_ping"
+ping_youtube & 
 
 # update UID if needed 
 if [ $uid == "none" ]
