@@ -126,15 +126,11 @@ grant_permission(){
     fi 
 }
 
-
-  #mCurrentFocus=Window{b7d5679 u0 us.zoom.videomeetings/com.zipow.videobox.WelcomeActivity}
-  #mCurrentFocus=Window{45b72b3 u0 us.zoom.videomeetings/com.zipow.videobox.JoinConfActivity}
-  #mCurrentFocus=Window{12cd4eb u0 us.zoom.videomeetings/com.zipow.videobox.ConfActivityNormal}
-  #mCurrentFocus=Window{12cd4eb u0 us.zoom.videomeetings/com.zipow.videobox.ConfActivityNormal}
-  
+# wait for a specific screen id (only zoom for now)  
 wait_for_screen(){
 	status="failed"
 	screen_name=$1
+	MAX_ATTEMPTS=10
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
 	while [ $foreground != $screen_name ]
 	do 
@@ -608,10 +604,10 @@ sleep 5
 # needed to handle warning of zoom on rooted device 
 if [ $clear_state == "true" -a $app == "zoom" ] 
 then
-	wait_for_screen "LauncherActivity"	
 	sudo dumpsys window windows | grep -E 'mCurrentFocus'  
 	sudo input tap 435 832
 	sleep 5
+	sudo dumpsys window windows | grep -E 'mCurrentFocus'  
 fi 
 
 # join a meeting in the app to be tested
