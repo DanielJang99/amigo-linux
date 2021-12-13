@@ -264,6 +264,7 @@ toggle_wifi(){
  		if [ $wifiStatus == "off" ] 
 		then
 			adb shell am start -a android.settings.SETTINGS
+			sleep 5 
 			tap_screen 370 400 5
 			tap_screen 645 230 2
 			sudo input keyevent KEYCODE_BACK
@@ -276,6 +277,7 @@ toggle_wifi(){
 		if [ $wifiStatus == "on" ] 
 		then 
 			adb shell am start -a android.settings.SETTINGS
+			sleep 5 
 			tap_screen 370 400 5
 			tap_screen 645 230 2
 			sudo input keyevent KEYCODE_BACK
