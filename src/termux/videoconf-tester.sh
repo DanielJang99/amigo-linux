@@ -128,13 +128,30 @@ grant_permission(){
 
 # helper function to join a zoom meeting
 run_zoom(){
-	# click on "join a meeting" 
+	# click on "join a meeting"
+	sudo dumpsys window windows | grep -E 'mCurrentFocus' 
 	tap_screen $x_center 1020 5
 	 
 	# enter meeting ID
+	sudo dumpsys window windows | grep -E 'mCurrentFocus'
 	sudo input text "$meeting_id" 
 	tap_screen $x_center 655 5
-	 
+	
+	# sync barrier (testing )
+	if [ $sync_time == 0 ]
+	then 
+		sleep 10
+	else 
+		t_now=`date +%s`
+		let "t_sleep = sync_time - t_now"
+		if [ $t_sleep -gt 0 ]
+		then
+			myprint "Sleeping $t_sleep to sync up!"
+			sleep $t_sleep
+		fi 
+	fi 
+	sudo dumpsys window windows | grep -E 'mCurrentFocus'
+
 	# enter password if needed
 	if [ -z $password ]
 	then 
@@ -143,13 +160,9 @@ run_zoom(){
 		myprint "Entering Password: $password" 
 		sudo input text "$password" 
 		sleep 3 
-		tap_screen 530 535 
+		tap_screen 530 535 2
 	fi 
-
-	# sync barrier 
-	myprint "WARNING -- skipping sync barrier...might be to hard to manage" 
-	sleep 10
-	#sync_barrier
+	sudo dumpsys window windows | grep -E 'mCurrentFocus'
 	
 	# click join with video or not
 	if [ $use_video == "true" ] 
@@ -309,7 +322,7 @@ leave_meet(){
 # script usage
 usage(){
     echo "====================================================================================================================================================================="
-    echo "USAGE: $0 -a/--app, -p/--pass, -m/--meet, -v/--video, -D/--dur, -c/--clear, -i/--id, --pcap, --iface, --remote, --vpn, --view,  --uid"
+    echo "USAGE: $0 -a/--app, -p/--pass, -m/--meet, -v/--video, -D/--dur, -c/--clear, -i/--id, --pcap, --iface, --remote, --vpn, --view,  --uid, --sync"
     echo "====================================================================================================================================================================="
     echo "-a/--app        videoconf app to use: zoom, meet, webex" 
     echo "-p/--pass       zoom meeting password" 
@@ -325,6 +338,7 @@ usage(){
     echo "--rec           record video of the screen"
     echo "--view          change from default view"
     echo "--uid           IMEI of the device"
+    echo "--sync          future time to sync"
     echo "====================================================================================================================================================================="
     exit -1
 }
@@ -348,6 +362,7 @@ turn_off="false"                         # turn off the screen
 big_packet="false"                       # keep track if big packet size was passed 
 use_mute="false"                         # FIXME 
 uid="none"                               # user ID
+sync_time=0                              # future sync time 
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -403,6 +418,9 @@ do
             ;;      
         --uid)
         	shift; uid="$1"; shift;
+            ;;
+        --sync)
+        	shift; sync_time="$1"; shift;
             ;;
         -*)
             echo "ERROR: Unknown option $1"
