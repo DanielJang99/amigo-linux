@@ -51,18 +51,20 @@ source $adb_file
 
 # sync barrier between devices 
 sync_barrier(){
-    myprint "Time for sync barrier..."
-	echo "ready" > ".localsync" 
-	isSync=0
-	while [ $use_sync == "true" -a $isSync -eq 0 ] 
-	do 
-		if [ -f ".globalsync" ] 
+	if [ $sync_time != 0 ]
+	then 
+		t_now=`date +%s`
+		let "t_sleep = sync_time - t_now"
+		if [ $t_sleep -gt 0 ]
 		then
-			isSync=1
+			myprint "Sleeping $t_sleep to sync up!"
+			sleep $t_sleep
+		else 
+			myprint "Sync time passed, consider increasing"
 		fi 
-		sleep 0.5
-	done
-    myprint "We are sync!" 
+	else 
+		myprint "no sync requested"
+	fi 
 }
 
 # make sure a device is unlocked 
@@ -134,7 +136,7 @@ wait_for_screen(){
 	screen_name=$1
 	MAX_ATTEMPTS=10
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
-	echo "==> $foreground"		
+	#echo "==> $foreground"		
 	while [ $foreground != $screen_name ]
 	do 
 		let "c++"
@@ -182,18 +184,9 @@ run_zoom(){
 	myprint "Allow next page to load. No activity name, just sleep 10 seconds"
 	sleep 10 
 
-	# sync barrier (testing )
-	if [ $sync_time != 0 ]
-	then 
-		t_now=`date +%s`
-		let "t_sleep = sync_time - t_now"
-		if [ $t_sleep -gt 0 ]
-		then
-			myprint "Sleeping $t_sleep to sync up!"
-			sleep $t_sleep
-		fi 
-	fi 
-	
+	# sync barrier 
+	sync_barrier
+
 	# click join with video or not
 	if [ $use_video == "true" ] 
 	then 
@@ -278,28 +271,16 @@ run_webex(){
 	  sleep 5 
 	fi 
 
-	# sync barrier (testing )
-	if [ $sync_time != 0 ]
-	then 
-		t_now=`date +%s`
-		let "t_sleep = sync_time - t_now"
-		if [ $t_sleep -gt 0 ]
-		then
-			myprint "Sleeping $t_sleep to sync up!"
-			sleep $t_sleep
-		fi 
-	fi
-
-	# press join
-	sudo dumpsys window windows | grep -E 'mCurrentFocus' 
-	tap_screen 485 $y_coord 8
-	sudo dumpsys window windows | grep -E 'mCurrentFocus' 
+	# sync barrier
+	sync_barrier
 	
-	# accept warning -- unused? 
+	# press join
+	tap_screen 485 $y_coord 8
+	
+	# accept warning Q: not needed
 	#tap_screen 375 1075 3
 
 	# go full screen (which is comparable with zoom default)
-	sudo dumpsys window windows | grep -E 'mCurrentFocus' 
 	if [ $change_view == "false" ]
 	then 
 		sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
@@ -331,17 +312,9 @@ run_meet(){
 		tap_screen 530 780 1
 	fi 
 
-	# sync barrier (testing )
-	if [ $sync_time != 0 ]
-	then 
-		t_now=`date +%s`
-		let "t_sleep = sync_time - t_now"
-		if [ $t_sleep -gt 0 ]
-		then
-			myprint "Sleeping $t_sleep to sync up!"
-			sleep $t_sleep
-		fi 
-	fi
+	# sync barrier 
+	sync_barrier
+	
 	# join with video or not	
 	wait_for_screen "GreenroomActivity"		
 	if [ $use_video == "false" ] 
