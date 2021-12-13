@@ -151,26 +151,24 @@ wait_for_screen(){
 run_zoom(){
 	# click on "join a meeting"
 	wait_for_screen "WelcomeActivity"
-	sudo dumpsys window windows | grep -E 'mCurrentFocus' 
 	tap_screen $x_center 1020 5
 	 
 	# enter meeting ID
 	wait_for_screen "JoinConfActivity"
-	sudo dumpsys window windows | grep -E 'mCurrentFocus'
 	sudo input text "$meeting_id" 
 	tap_screen $x_center 655 5
 	
-	
 	# enter password if needed
 	wait_for_screen "ConfActivityNormal"
+	sleep 5 
 	if [ -z $password ]
 	then 
 		myprint "Password not provided. Verify on screen if needed or not" 
 	else 
 		myprint "Entering Password: $password" 
 		sudo input text "$password" 
-		sleep 3 
-		tap_screen 530 535 2
+		sleep 1
+		tap_screen 530 535 5
 	fi 
 
 	# sync barrier (testing )
@@ -186,7 +184,6 @@ run_zoom(){
 	fi 
 	
 	# click join with video or not
-	sudo dumpsys window windows | grep -E 'mCurrentFocus'
 	if [ $use_video == "true" ] 
 	then 
 		y_coord="1040"   
@@ -194,19 +191,18 @@ run_zoom(){
 		y_coord="1180"     
 	fi 
 	tap_screen $x_center $y_coord 5
-	sudo dumpsys window windows | grep -E 'mCurrentFocus'
-
+	
 	# click to join audio
+	myprintn "click to join audio"
 	tap_screen 200 1110 3
 	tap_screen 178 1110
-	sudo dumpsys window windows | grep -E 'mCurrentFocus'
-
-	# MUTE! -- FIXME 
-	use_mute="true"	
-	if [ $use_mute == "true" ] 
-	then 
-		sudo input tap 75 1225 && sleep 0.2 && sudo input tap 75 1225
-	fi 
+	
+	# # MUTE! -- FIXME 
+	# use_mute="true"	
+	# if [ $use_mute == "true" ] 
+	# then 
+	# 	sudo input tap 75 1225 && sleep 0.2 && sudo input tap 75 1225
+	# fi 
 }
 
 # helper function to join a webex meeting
