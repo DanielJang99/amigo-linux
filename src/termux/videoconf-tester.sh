@@ -134,7 +134,7 @@ wait_for_screen(){
 	screen_name=$1
 	MAX_ATTEMPTS=10
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
-	echo "==> $foreground"		
+	#echo "==> $foreground"		
 	while [ $foreground != $screen_name ]
 	do 
 		let "c++"
@@ -223,18 +223,21 @@ run_zoom(){
 # helper function to join a webex meeting
 run_webex(){
 	if [ $clear_state == "true" ] 
-	then 
+	then
+		sudo dumpsys window windows | grep -E 'mCurrentFocus' 
 		tap_screen 560 785 2 
 		tap_screen 594 922 2
 	fi 
 
 	# enter meeting ID
+	sudo dumpsys window windows | grep -E 'mCurrentFocus' 
 	tap_screen $x_center 935 3
 	sudo input text "$meeting_id"
 	 
 	# add user and password on first run
 	if [ $clear_state == "true" ] 
 	then 
+		sudo dumpsys window windows | grep -E 'mCurrentFocus' 
 		tap_screen $x_center 500 2
 		sudo input text "Bravello"
 		tap_screen $x_center 620 2
@@ -243,17 +246,20 @@ run_webex(){
 	fi 
 
 	# click "JOIN"
+	sudo dumpsys window windows | grep -E 'mCurrentFocus' 
 	tap_screen 645 105 5
 
 	# accept what needed
 	if [ $clear_state == "true" ] 
 	then 
 		myprint "Accept what needed..."
+		sudo dumpsys window windows | grep -E 'mCurrentFocus'
 		tap_screen 515 1055 2
 		tap_screen 405 1055 2
 	fi 
 	
 	# join with video/audio or not
+	sudo dumpsys window windows | grep -E 'mCurrentFocus' 
 	y_coord=1180
 	if [ $use_video == "true" ] 
 	then 
@@ -278,12 +284,15 @@ run_webex(){
 	sleep 5 	
 
 	# press join
+	sudo dumpsys window windows | grep -E 'mCurrentFocus' 
 	tap_screen 485 $y_coord 8
+	sudo dumpsys window windows | grep -E 'mCurrentFocus' 
 	
 	# accept warning -- unused? 
 	#tap_screen 375 1075 3
 
 	# go full screen (which is comparable with zoom default)
+	sudo dumpsys window windows | grep -E 'mCurrentFocus' 
 	if [ $change_view == "false" ]
 	then 
 		sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
@@ -336,7 +345,7 @@ run_meet(){
 
 	# get full screen (comparable with zoom) ## FIXME 
 	wait_for_screen "SingleCallActivity"
-	myrpint "get full screen -- FIXME"
+	myprint "get full screen -- FIXME"
 	tap_screen $x_center $y_center
 }
 
@@ -617,11 +626,6 @@ sudo monkey -p $package 1 > /dev/null 2>&1
 
 # allow time for app to launch # FIXME 
 sleep 5 
-
-######################
-foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
-echo "==> $foreground"
-######################
 
 # needed to handle warning of zoom on rooted device 
 if [ $clear_state == "true" -a $app == "zoom" ] 
