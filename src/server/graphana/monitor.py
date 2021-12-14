@@ -42,9 +42,9 @@ def insert_stats_pool(current_time, perc_cpu, perc_mem, traffic_rx, num_proc, cr
 			ps_cursor = ps_connection.cursor()
 			insert_sql = "insert into stats(timestamp, cpu_perc, mem_perc, traffix_rx, num_proc, when_created) values(%s, %s, %s, %s, %s, %s);"
 			print(insert_sql)
-			#data = (current_time, perc_cpu, perc_mem, traffic_rx, num_proc, created)
-			#ps_cursor.execute(insert_sql, data)
-			#ps_connection.commit()   # make database changes persistent 	
+			data = (current_time, perc_cpu, perc_mem, traffic_rx, num_proc, created)
+			ps_cursor.execute(insert_sql, data)
+			ps_connection.commit()   # make database changes persistent 	
 			ps_cursor.close()
 
 			# Use this method to release the connection object and send back to connection pool
