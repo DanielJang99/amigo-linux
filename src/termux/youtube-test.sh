@@ -249,14 +249,17 @@ then
 	if [ $? -ne 0 ] 
 	then
 		msg="ERROR-STATS-NERDS"
+		myprint "Stats-for-nerds issue"
 	else
 		cat ".clipboard" > $log_file
 		echo "" >> $log_file
-		myprint "Stats-for-nerds correctly detecting. Starting data collection for $DURATION seconds..."
+		myprint "Stats-for-nerds correctly detecting"
 	fi 
 fi 
 
 # collect data 
+myprint "Starting data collection for $DURATION seconds..."
+
 t_s=`date +%s`
 t_e=`date +%s`
 let "t_p = t_s - t_e"

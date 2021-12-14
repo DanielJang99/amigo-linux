@@ -30,6 +30,7 @@ GRANT ALL PRIVILEGES ON DATABASE mobile_testbed to nyu;
 psql nyu -h 127.0.0.1 -d mobile_testbed
 
 # create tables 
+create table stats(timestamp bigint, cpu_perc float, mem_perc float, traffic_rx bigint, num_proc int, when_created text );
 create table status_update(tester_id text, type text, timestamp bigint, data jsonb);
 create table action_update(command_id text, tester_id text, timestamp bigint, status text, action text);
 create table commands(command_id text, tester_id text, command text, duration int, background text, timestamp bigint, status text[]);
