@@ -49,6 +49,13 @@ install_simple(){
 			echo "Re-installing our app  since it is an old vesion: $vrs (last_vrs:$kenzo_vrs)"
 			ssh -oStrictHostKeyChecking=no -i ../id_rsa_mobile -p 8022 $wifi_ip "sudo pm uninstall $pkg"
 			./install-app-wifi.sh $wifi_ip $apk
+			
+			# grant permissions to our app
+			echo "grant permissions to our app"
+			todo="sudo pm grant com.example.sensorexample android.permission.ACCESS_FINE_LOCATION"
+			ssh -oStrictHostKeyChecking=no -i ../id_rsa_mobile -p 8022 $wifi_ip "$todo"
+			todo="sudo pm grant com.example.sensorexample android.permission.READ_PHONE_STATE"
+			ssh -oStrictHostKeyChecking=no -i ../id_rsa_mobile -p 8022 $wifi_ip "$todo"
 		fi 
 	fi 
 }
@@ -61,7 +68,7 @@ termux_pack="com.termux"          # termux package
 termux_boot="com.termux.boot"     # termux boot package 
 termux_api="com.termux.api"       # termux API package 
 production="false"                # default we are debugging 
-kenzo_vrs="1.4"                   # last version of our app
+kenzo_vrs="1.5"                   # last version of our app
 
 # check if we want to switch to production
 if [ $# -eq 2 ] 
@@ -70,19 +77,20 @@ then
 	production="true"
 fi 
 
+#echo "forcing uninstall of the app" 
+#ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo pm uninstall com.example.sensorexample"
+
+# list installed packages 
+mkdir -p "installed-pkg"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo pm list packages -f" > "installed-pkg/$wifi_ip"
+
 # make sure app was launched once and status is paused by default
 cd APKs
 package="com.example.sensorexample"
 apk="app-debug.apk"
+#./install-app-wifi.sh $wifi_ip $apk
 install_simple $package $apk
 cd - > /dev/null 2>&1
-
-# grant permissions to our app
-echo "grant permissions to our app"
-todo="sudo pm grant com.example.sensorexample android.permission.ACCESS_FINE_LOCATION"
-ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "$todo"
-todo="sudo pm grant com.example.sensorexample android.permission.READ_PHONE_STATE"
-ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "$todo"
 
 # ensure all state is correct
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo input keyevent KEYCODE_HOME"	
@@ -90,16 +98,53 @@ echo "Make sure last version of the app is launched once at least and status is 
 kenzo_pkg="com.example.sensorexample"
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1"
 sleep 5 
-ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/setup/ && git pull && sudo cp running.txt /storage/emulated/0/Android/data/com.example.sensorexample/files/running.txt"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "rm mobile-testbed/src/termux/FTPClient"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src && git pull"
 echo "Switching to production, YAY!"
-ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && echo \"false\" > \".isDebug\""
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/setup  && sudo cp running.txt /storage/emulated/0/Android/data/com.example.sensorexample/files/running.txt"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux && echo \"false\" > \".isDebug\" && echo \"true\" > \".net_status\""
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "crontab -l"
 
 # remove facebook
 echo "Removing facebook lite"
-ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo pm uninstall com.facebook.lite"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo pm uninstall com.facebook.lite" > /dev/null 2>&1
 
-echo "TEMP EXIT"
-exit -1
+# disable selinux
+echo "disabling selinux"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo setenforce 0 && sudo getenforce"
+
+# clean the phone 
+#echo "cleaning space"
+#ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && ./clean.sh"
+
+# make sure crontab is enabled
+echo "PID of CROND:"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pidof crond"
+
+# verify packages 
+echo "verify packages"
+cat  "installed-pkg/$wifi_ip" | grep -w "com.google.android.youtube"
+cat  "installed-pkg/$wifi_ip" | grep -w "com.google.android.apps.meetings"
+cat  "installed-pkg/$wifi_ip" | grep -w "com.cisco.webex.meetings"
+cat  "installed-pkg/$wifi_ip" | grep -w "us.zoom.videomeetings"
+cat  "installed-pkg/$wifi_ip" | grep -w "com.google.android.apps.maps"
+
+# verify production 
+echo "verify production: <false, true>"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cat mobile-testbed/src/termux/.isDebug"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cat mobile-testbed/src/termux/.net_status"
+
+# check if a quick setup is needed
+quick="true"
+if [ $quick == "true" ] 
+then
+	echo "Stopping here, just a quick setup" 
+	exit -1
+fi 
+
+# rebooting each phone
+#echo "rebooting" 
+#timeout 20 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo reboot"
 
 # make sure nmap is installed 
 hash nmap

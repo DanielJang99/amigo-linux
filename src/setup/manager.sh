@@ -22,8 +22,8 @@ ssh_key="id_rsa_mobile"
 command_dur=10 
 
 # check if passed a list or IP
-echo $ip_file | grep "192.168" > /dev/null
 num_devices=1
+echo $ip_file | grep "192.168" > /dev/null
 if [ $? -eq 0 ] 
 then 
 	ip_list[$num_devices]=$ip_file
@@ -53,6 +53,11 @@ do
 		echo "Rebooting phone at $wifi_ip:8022"
 		timeout $command_dur  ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo reboot" & 
 		sleep 1 
+	elif [ $opt == "shutdown" ] 
+	then 
+		echo "Turning off phone at $wifi_ip:8022"
+		timeout $command_dur  ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "sudo svc power shutdown" & 
+		sleep 1 
 	elif [ $opt == "wake" ] 
 	then 
 		echo "Waking phone at $wifi_ip:8022"
@@ -64,7 +69,8 @@ do
 		echo -e "$i\t$wifi_ip\t$ans"
 	elif [ $opt == "update" ] 
 	then 
-		ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && git pull" > update-logs/log-$wifi_ip 2>&1 &
+		#ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && git pull" > update-logs/log-$wifi_ip 2>&1 &
+		ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && git pull"
 		sleep 0.5
 	elif [ $opt == "volume" ] 
 	then 
@@ -72,13 +78,20 @@ do
 		sleep 0.5 
 	elif [ $opt == "start" ] 
 	then 
-		echo "Starting ./state-update.sh at $wifi_ip:8022"
-		ssh -T -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip 'sh -c "cd mobile-testbed/src/termux/ && ./state-update.sh > log-state-update 2>&1 &"'
-		#ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && ./state-update.sh > \"logs/log-state-update-\"\`date +\%m-\\%d-\%y_\%H:\%M\`\".txt &"
+		echo "Starting ./state-update.sh and need-to-run at $wifi_ip:8022"
+		ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && git pull && echo \"false\" > \".isDebug\" && echo \"0\" > \".last_net\" && echo \"true\" > \".net_status\""
+	elif [ $opt == "restart" ] 
+	then 
+		echo "Updating and retarting ./state-update.sh $wifi_ip:8022"
+		ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && git pull && echo \"0\" > \".last_net\" && echo \"false\" > \".status\""
 	elif [ $opt == "stop" ] 
 	then 
 		echo "Stopping ./state-update.sh and need-to-run at $wifi_ip:8022"
-		ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && echo \"true\" > \".isDebug\" && echo \"false\" > \".status\""
+		timeout 5 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && echo \"true\" > \".isDebug\" && echo \"false\" > \".status\""
+	elif [ $opt == "clean" ] 
+	then 
+		echo "Cleaning $wifi_ip:8022"
+		ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && ./clean.sh" & 
 	elif [ $opt == "kill" ] 
 	then 
 		if [ $# -ne 3 ]
@@ -156,6 +169,10 @@ do
 	then
 		echo "Activating phone $wifi_ip:8022" 
 		ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && echo \"false\" > \".isDebug\""
+	elif [ $opt == "wifi" ]
+	then
+		echo "Running a wifi-test at $wifi_ip:8022" #-- test-logs/log-$wifi_ip"
+		ssh -T -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip 'sh -c "cd mobile-testbed/src/termux/ && ./test-wifi.sh > loggamelo 2>&1&"'
 	elif [ $opt == "test" ]
 	then
 		echo "Running a test at $wifi_ip:8022" #-- test-logs/log-$wifi_ip"
@@ -183,9 +200,10 @@ do
 		ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/termux/ && ./check-visual.sh" > visual/log-$wifi_ip 2>&1 &
 	elif [ $opt == "prep" ] 
 	then
-		echo "Prepping phone: $wifi_ip:8022"
+		mkdir -p prepping
+		echo "Prepping phone: $wifi_ip:8022 -- prepping/log-prepping-$wifi_ip"
 		#echo "./check-update.sh $wifi_ip > logs/log-prepping-$wifi_ip 2>&1 &"
-		./check-update.sh $wifi_ip > logs/log-prepping-$wifi_ip 2>&1 &
+		./check-update.sh $wifi_ip > prepping/log-prepping-$wifi_ip 2>&1 &
 	else 
 		echo "Command $opt not supported yet!"
 	fi 

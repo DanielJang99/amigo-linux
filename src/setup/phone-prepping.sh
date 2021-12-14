@@ -75,10 +75,14 @@ else
  	echo "BT is active: $bt_status"
 fi 
 
+# logging
+echo "All DONE!"
+
+
 # run one test 
-cd ../../termux
-mkdir -p logs 
-./state-update.sh test > logs/log-testing-`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1
+#cd ../../termux
+#mkdir -p logs 
+#./state-update.sh test > logs/log-testing-`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1
 
 ############################ TESTING, TO BE DECIDED 
 # aioquic 
