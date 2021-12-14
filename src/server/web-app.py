@@ -108,6 +108,7 @@ def web_app():
     cherrypy.tree.mount(StringGeneratorWebService(), '/youtubetest', conf)   # report youtube results 
     cherrypy.tree.mount(StringGeneratorWebService(), '/videoconftest', conf) # report videoconf  results 
     cherrypy.tree.mount(StringGeneratorWebService(), '/benchmarking', conf)  # benchmarking
+    cherrypy.tree.mount(StringGeneratorWebService(), '/zeustest', conf)      # report zeus stats
 
     # start cherrypy engine 
     cherrypy.engine.start()
@@ -254,7 +255,7 @@ class StringGeneratorWebService(object):
 
 		# status update reporting 
 		url = cherrypy.url()
-		if 'status' in url or 'appstatus' in url or 'ratings' in url or 'tags' in url or 'webtest' in url or 'youtubetest' in url or 'videoconftest' in url or 'benchmarking' in url:
+		if 'status' in url or 'appstatus' in url or 'ratings' in url or 'tags' in url or 'webtest' in url or 'youtubetest' in url or 'videoconftest' in url or 'benchmarking' in url or 'zeustest' in url:
 			data_json = read_json(cherrypy.request)
 			#print(data_json)
 			user_id = data_json['uid']
@@ -280,6 +281,8 @@ class StringGeneratorWebService(object):
 				post_type = "youtubetest"
 			elif 'videoconftest' in cherrypy.url():
 				post_type = "videoconftest"
+			elif 'zeustest' in cherrypy.url():
+				post_type = "zeustest"
 			timestamp = data_json['timestamp']			
 			msg = ''
 			if 'appstatus' in cherrypy.url():
