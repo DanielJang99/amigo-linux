@@ -29,7 +29,7 @@ send_report(){
 	then 
 		avg_ping=`cat notes-ping | grep "mdev" | cut -f 2 -d "=" | cut -f 2 -d "/"`
 		myprint "Average ping to youtube: $avg_ping"
-		rm ping
+		rm notes-ping 
 	fi 
 
 	if [ $cpu_usage_middle == "N/A" ]
