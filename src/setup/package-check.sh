@@ -20,8 +20,7 @@ python -m pip install --upgrade pip
 pip install speedtest-cli
 pip install wheel
 pip install pillow
-cd ../termux 
-./check-visual.sh 
+/data/data/com.termux/files/home/termux/check-visual.sh 
 
 # main code 
 uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
