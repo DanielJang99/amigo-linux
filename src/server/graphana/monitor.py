@@ -61,6 +61,32 @@ def insert_stats_pool(current_time, perc_cpu, perc_mem, traffic_rx, num_proc, cr
 	# all done 
 	return msg
 
+# run a generic query on the database
+def run_query(query):
+	info = None
+	msg = ''
+
+	# Use getconn() to Get Connection from connection pool
+	ps_connection = postgreSQL_pool.getconn()
+
+	if (ps_connection):
+		try:
+			print("successfully received connection from connection pool ")
+			ps_cursor = ps_connection.cursor()
+			ps_cursor.execute(query)
+			msg = 'OK'
+			info = ps_cursor.fetchall()
+			ps_cursor.close()
+			msg = 'OK'
+
+		# handle exception 
+		except Exception as e:
+			msg = 'Exception: %s' % e    
+	
+	# all good 
+	return info, msg 
+
+
 # parameters 
 processName = "web-app.py" # make sure our process is running 
 frequency = 300            # check stats each 5 minutes
@@ -108,6 +134,7 @@ if __name__ == '__main__':
         query = "select now() as time, count(distinct tester_id)::int as num_users from status_update where to_timestamp(timestamp) > now() - interval '15 minutes';"
         info, msg  = run_query(query)
         print(info, msg)
+        break 
 
 		# logging
 		created = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(create_time))		
