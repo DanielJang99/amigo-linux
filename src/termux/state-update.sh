@@ -653,8 +653,8 @@ do
 	sudo dumpsys battery > ".dump"
 	phone_battery=`cat ".dump" | grep "level"  | cut -f 2 -d ":"`
 	charging=`cat ".dump" | grep "AC powered"  | cut -f 2 -d ":"`
-	if [ $phone_battery -lt 50 -a $charging == "false" ] 
-	#if [ $phone_battery -lt 10 -a $charging == "false" ] 
+	#if [ $phone_battery -lt 50 -a $charging == "false" ] 
+	if [ $phone_battery -lt 10 -a $charging == "false" ] 
 	then 
  		if [ $asked_to_charge == "false" ] 
 		then 
