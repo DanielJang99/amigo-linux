@@ -29,7 +29,7 @@ def connect_to_database_pool():
 	return status, postgreSQL_pool
 
 # insert stats for graphana plotting
-def insert_stats_pool(current_time, perc_cpu, perc_mem, traffic_rx, num_proc, created):
+def insert_stats_pool(current_time, perc_cpu, perc_mem, traffic_rx, num_proc, created, num_users):
 	# local parameters 
 	msg = '' 
 
@@ -40,9 +40,9 @@ def insert_stats_pool(current_time, perc_cpu, perc_mem, traffic_rx, num_proc, cr
 		try:
 			print("successfully received connection from connection pool ")
 			ps_cursor = ps_connection.cursor()
-			insert_sql = "insert into stats(timestamp, cpu_perc, mem_perc, traffic_rx, num_proc, when_created) values(%s, %s, %s, %s, %s, %s);"
+			insert_sql = "insert into stats(timestamp, cpu_perc, mem_perc, traffic_rx, num_proc, when_created, num_users) values(%s, %s, %s, %s, %s, %s, %s);"
 			print(insert_sql)
-			data = (current_time, perc_cpu, perc_mem, traffic_rx, num_proc, created)
+			data = (current_time, perc_cpu, perc_mem, traffic_rx, num_proc, created, num_users)
 			ps_cursor.execute(insert_sql, data)
 			ps_connection.commit()   # make database changes persistent 	
 			ps_cursor.close()
@@ -78,7 +78,7 @@ def run_query(query):
 			info = ps_cursor.fetchall()
 			ps_cursor.close()
 			msg = 'OK'
-
+			postgreSQL_pool.putconn(ps_connection)
 		# handle exception 
 		except Exception as e:
 			msg = 'Exception: %s' % e    
@@ -102,7 +102,7 @@ if __name__ == '__main__':
 	# iterate on data 
 	while True:
 		current_time = time.time()
-		perc_cpu = psutil.cpu_percent(1)
+		perc_cpu = psutil.cpu_percent(30)
 
 		# gives an object with many fields
 		#psutil.virtual_memory()
@@ -131,10 +131,9 @@ if __name__ == '__main__':
 		## TODO 
 
 		# find how many users are currently on
-		query = "select now() as time, count(distinct tester_id)::int as num_users from status_update where to_timestamp(timestamp) > now() - interval '15 minutes';"
+		query = "select count(distinct tester_id)::int as num_users from status_update where to_timestamp(timestamp) > now() - interval '15 minutes';"
 		info, msg  = run_query(query)
-		print(info, msg)
-		break 
+		num_users = int(info[0][0])
 
 		# logging
 		created = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(create_time))		
@@ -143,9 +142,7 @@ if __name__ == '__main__':
 		traffic_rx = 0 
 
 		# add to database for plotting
-		msg = insert_stats_pool(current_time, perc_cpu, perc_mem, traffic_rx, num_proc, created)	
+		msg = insert_stats_pool(current_time, perc_cpu, perc_mem, traffic_rx, num_proc, created, num_users)	
 		print(msg)
 
 		time.sleep(frequency)
-
-
