@@ -40,8 +40,8 @@ then
 fi 
 
 # add reboot jobs if missing
-crontab -l | grep reboot
 msg=""
+crontab -l | grep reboot
 if [ $? -eq 1 ]
 then 
 	echo "Detected need to add a new job"
