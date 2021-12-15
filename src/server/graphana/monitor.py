@@ -40,7 +40,7 @@ def insert_stats_pool(current_time, perc_cpu, perc_mem, traffic_rx, num_proc, cr
 		try:
 			print("successfully received connection from connection pool ")
 			ps_cursor = ps_connection.cursor()
-			insert_sql = "insert into stats(timestamp, cpu_perc, mem_perc, traffix_rx, num_proc, when_created) values(%s, %s, %s, %s, %s, %s);"
+			insert_sql = "insert into stats(timestamp, cpu_perc, mem_perc, traffic_rx, num_proc, when_created) values(%s, %s, %s, %s, %s, %s);"
 			print(insert_sql)
 			data = (current_time, perc_cpu, perc_mem, traffic_rx, num_proc, created)
 			ps_cursor.execute(insert_sql, data)
@@ -63,7 +63,7 @@ def insert_stats_pool(current_time, perc_cpu, perc_mem, traffic_rx, num_proc, cr
 
 # parameters 
 processName = "web-app.py" # make sure our process is running 
-frequency = 300            # check stats each 5 minutes (avoid heavy query to DB)
+frequency = 300            # check stats each 5 minutes
 
 # main goes here 
 if __name__ == '__main__':
