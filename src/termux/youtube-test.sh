@@ -169,6 +169,11 @@ then
 	done < ".ps-$app"
 fi 
 
+# make sure screen is in portrait 
+myprint "Ensuring that screen is in portrait and auto-rotation disabled"
+sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
+sudo  settings put system user_rotation 0          # put in portrait
+
 # measure ping to youtube 
 ping_youtube
 

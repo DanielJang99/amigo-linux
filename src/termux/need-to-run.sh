@@ -39,6 +39,17 @@ then
 	debug=`cat .isDebug`
 fi 
 
+# add reboot jobs if missing
+msg=""
+crontab -l | grep reboot
+if [ $? -eq 1 ]
+then 
+	echo "Detected need to add a new job"
+	(crontab -l 2>/dev/null; echo "0 2 * * * sudo reboot") | crontab -
+	#(crontab -l 2>/dev/null; echo "0 0 * * * sudo reboot") | crontab -
+	msg="added-reboot-"
+fi 
+
 # inform server of reboot detected 
 uptime_sec=`sudo cat /proc/uptime | awk '{print $1}' | cut -f 1 -d "."`
 echo "Uptime: $uptime_sec sec"
@@ -48,7 +59,7 @@ then
 	current_time=`date +%s`
 	uid=`termux-telephony-deviceinfo | grep "device_id" | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 	uptime_info=`uptime`
-	msg="reboot"
+	msg=$msg"reboot"
 	echo "$(generate_post_data)"
 	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
 fi 

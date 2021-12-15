@@ -270,7 +270,8 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="1.2"                              # code version 
+vrs="1.3"                              # code version 
+max_screen_timeout="2147483647"        # do not turn off screen 
 
 # check if testing
 if [ $# -eq 1 ] 
@@ -544,18 +545,21 @@ do
 	fi 
 		
 	# update Google account authorization status
-	t_last_google=`cat ".time_google_check"`
-	let "t_p = current_time - t_last_google"
-	if [ $t_p -gt $GOOGLE_CHECK_FREQ -a $num -eq 0 ] 
-	then
-		myprint "Time to check Google account status via YT"
-		check_account_via_YT	  
-		t_last_google=$current_time
-		echo $current_time > ".time_google_check"
-		myprint "Google account status: $google_status"	
-	fi 
-	google_status=`cat ".google_status"`
-	
+	if [ $asked_to_charge == "false" ] 
+	then	
+		t_last_google=`cat ".time_google_check"`
+		let "t_p = current_time - t_last_google"
+		if [ $t_p -gt $GOOGLE_CHECK_FREQ -a $num -eq 0 ] 
+		then
+			myprint "Time to check Google account status via YT"
+			check_account_via_YT	  
+			t_last_google=$current_time
+			echo $current_time > ".time_google_check"
+			myprint "Google account status: $google_status"	
+		fi 
+		google_status=`cat ".google_status"`
+	fi
+
 	# loop rate control (slow)
 	let "t_p = (current_time - last_slow_loop_time)"
 	if [ $t_p -lt $slow_freq ] 
@@ -649,19 +653,37 @@ do
 	sudo dumpsys battery > ".dump"
 	phone_battery=`cat ".dump" | grep "level"  | cut -f 2 -d ":"`
 	charging=`cat ".dump" | grep "AC powered"  | cut -f 2 -d ":"`
-	if [ $phone_battery -lt 20 -a $charging == "false" ] 
+	#if [ $phone_battery -lt 50 -a $charging == "false" ] 
+	if [ $phone_battery -lt 10 -a $charging == "false" ] 
 	then 
  		if [ $asked_to_charge == "false" ] 
 		then 
 			myprint "Phone battery is low. Asking to recharge!"
-			termux-notification -c "Please charge your phone!" -t "recharge" --icon warning --prio high --vibrate pattern 500,500
-			#am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Phone-battery-is-low.-Consider-charging!"
+			#termux-notification -c "Please charge your phone!" -t "recharge" --icon warning --prio high --vibrate pattern 500,500
+			./stop-net-testing.sh
+			sleep 5 
+			turn_device_on
+			am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Phone-battery-is-low.-Consider-charging!"
 			asked_to_charge="true"
+			msg="ASKED-TO-CHARGE"
+			echo "$(generate_post_data_short)" 		
+			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:8082/status
+			sudo settings put system screen_off_timeout $max_screen_timeout
 		fi 
+		# block everything
+		myprint "Testing skipping the rest since paused..."
+		continue
 	else 
+ 		if [ $asked_to_charge == "true" ] 
+		then
+			msg="IN-CHARGE"
+			echo "$(generate_post_data_short)" 		
+			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:8082/status
+		fi 
+		sudo settings put system screen_off_timeout 60000
 		asked_to_charge="false"
 	fi 
-	
+
 	# current app in the foreground
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
 
