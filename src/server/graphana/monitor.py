@@ -130,11 +130,11 @@ if __name__ == '__main__':
 		# restart process if needed 
 		## TODO 
 
-        # find how many users are currently on
-        query = "select now() as time, count(distinct tester_id)::int as num_users from status_update where to_timestamp(timestamp) > now() - interval '15 minutes';"
-        info, msg  = run_query(query)
-        print(info, msg)
-        break 
+		# find how many users are currently on
+		query = "select now() as time, count(distinct tester_id)::int as num_users from status_update where to_timestamp(timestamp) > now() - interval '15 minutes';"
+		info, msg  = run_query(query)
+		print(info, msg)
+		break 
 
 		# logging
 		created = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(create_time))		
