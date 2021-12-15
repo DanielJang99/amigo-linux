@@ -259,6 +259,10 @@ then
     done < ".ps-$app"
 fi
 
+myprint "Ensuring that screen is in portrait and auto-rotation disabled"
+sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
+sudo  settings put system user_rotation 0          # put in portrait
+
 # update UID if needed 
 if [ $uid == "none" ]
 then 
