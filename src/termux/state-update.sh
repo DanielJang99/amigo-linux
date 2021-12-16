@@ -264,9 +264,9 @@ GOOGLE_CHECK_FREQ=10800                # interval of Google account check via YT
 MAX_ZEUS_RUNS=6                        # maximum number of zeus per day 
 MAX_PAUSE=1800                         # maximum time a user can pause (600) 
 kenzo_pkg="com.example.sensorexample"  # our app package name 
-last_report_time="1635969639"          # last time a report was sent (init to an old time)
-last_net="1635969639"                  # last time a net test was done (init to an old time) 
-t_wifi_mobile_update="1635969639"      # last time wifi/mobile info was checked (init to an old time)
+last_report_time=0                     # last time a report was sent 
+last_net=0                             # last time a net test was done  
+t_wifi_mobile_update=0                 # last time wifi/mobile info was checked 
 asked_to_charge="false"                # keep track if we already asked user to charge their phone
 prev_wifi_traffic=0                    # keep track of wifi traffic used today
 prev_mobile_traffic=0                  # keep track of mobile traffic used today
@@ -586,7 +586,6 @@ do
 		then
 			myprint "No command found"
 		elif [ $$ret_code -ne 0 ]
-		then
 			myprint "WARNING CURL return code: $ret_code (124:TIMEOUT)"
 		else 	
 			command=`echo $ans  | cut -f 1 -d ";"`
