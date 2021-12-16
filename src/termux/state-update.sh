@@ -315,7 +315,7 @@ fi
 let "t_p = current_time - t_last_google"
 if [ $t_p -gt $GOOGLE_CHECK_FREQ ]
 then
-	myprint "Time to check Google account status via YT"
+	myprint "Time to check Google account status via YT ($t_p > $GOOGLE_CHECK_FREQ)"
 	check_account_via_YT	  
 	t_last_google=$current_time
 	echo $current_time > ".time_google_check"
@@ -740,7 +740,7 @@ do
 	net_status=`cat ".net_status"`
 	let "time_from_last_net = current_time - last_net"
 	let "time_from_last_net_short = current_time - last_net_short"	
-	myprint "Time from last net:$time_from_last_net sec ShouldRunIfTime:$net_status RunningNetProc:$num"
+	myprint "TimeFromLastNetLong:$time_from_last_net sec TimeFromLastNetShort:$time_from_last_net_short sec ShouldRunIfTime:$net_status RunningNetProc:$num"
 	#################################TESTING#################################
 	# 1) flag set, 2) no previous running, 3) connected
 	if [ $net_status == "true" -a $num -eq 0 -a  $def_iface != "none" ]  
