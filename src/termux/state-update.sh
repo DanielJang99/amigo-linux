@@ -798,7 +798,7 @@ do
 			fi
 			if [ $skipping == "false" ]
 			then
-				myprint "./net-testing.sh $suffix $current_time $def_iface > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+				myprint "./net-testing.sh $suffix $current_time $def_iface \"short\" > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt"
 				(./net-testing.sh $suffix $current_time $def_iface "short" > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
 				num=1
 				echo $current_time > ".last_net_short"
