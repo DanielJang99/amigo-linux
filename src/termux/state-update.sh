@@ -254,7 +254,8 @@ update_wifi_mobile(){
 }
 
 # parameters
-slow_freq=15                           # interval for checking commands to run (slower)
+#slow_freq=15                          # interval for checking commands to run (slower)
+slow_freq=30                           # interval for checking commands to run (slower)
 fast_freq=5                            # interval for checking the app (faster)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
 NET_INTERVAL=3600                      # interval of networking testing 
@@ -645,9 +646,10 @@ do
 		close_all
 	fi 
 
-	# check simple stats
+	# get simple stats
 	free_space=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 	mem_info=`free -m | grep "Mem" | awk '{print "Total:"$2";Used:"$3";Free:"$4";Available:"$NF}'`
+	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
 
 	# get phone battery level and ask to charge if needed # TBD
 	sudo dumpsys battery > ".dump"
@@ -668,10 +670,41 @@ do
 			msg="ASKED-TO-CHARGE"
 			echo "$(generate_post_data_short)" 		
 			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:8082/status
-			sudo settings put system screen_off_timeout $max_screen_timeout
+			sudo settings put system screen_off_timeout $max_screen_timeout		
+			myprint "Testing skipping the rest since paused..."		
 		fi 
+		
+		# check if it is time to status report
+		if [ -f ".last_report" ] 
+		then 
+			last_report_time=`cat ".last_report"`
+		fi 
+		let "time_from_last_report = current_time - last_report_time"
+		myprint "Time from last report: $time_from_last_report sec"			 
+		if [ $time_from_last_report -gt $REPORT_INTERVAL ] 
+		then
+			# make sure we have fresh wifi/mobile info		 
+			update_wifi_mobile 
+			t_wifi_mobile_update=`date +%s`	
+							
+			# dump location information without running googlemaps
+			sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
+			loc_str=`cat $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
+
+			# get uptime
+			uptime_info=`uptime`
+
+			if [ $def_iface == "none" ] 
+			then
+				myprint "Skipping report sending since not connected"
+			else 
+				myprint "Data to send to the server:"
+				echo "$(generate_post_data)"
+				timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
+			fi 
+			echo $current_time > ".last_report"
+
 		# block everything
-		myprint "Testing skipping the rest since paused..."
 		continue
 	else 
  		if [ $asked_to_charge == "true" ] 
@@ -684,10 +717,8 @@ do
 		asked_to_charge="false"
 	fi 
 
-	# current app in the foreground
-	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
-
-	# check if it is time to run net experimets 
+	
+	# check if it is time to run net experiments 
 	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`
 	if [ -f ".last_net" ] 
 	then 
