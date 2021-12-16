@@ -197,10 +197,10 @@ sleep 30
 # QUIC test? 
 # TODO 
 
-# test multiple webages
-touch ".locked"
-./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap
-rm ".locked"
+# test multiple webages -- TEMPORARILY DISABLED 
+#touch ".locked"
+#./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap
+#rm ".locked"
 
 # safety cleanup 
 sudo pm clear com.android.chrome
