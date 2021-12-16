@@ -258,9 +258,10 @@ slow_freq=25                           # interval for checking commands to run (
 fast_freq=5                            # interval for checking the app (faster)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
 NET_INTERVAL=3600                      # interval of networking testing 
-#NET_INTERVAL_SHORT=1800                # short interval of net testing		
+#NET_INTERVAL_SHORT=1800               # short interval of net testing		
 NET_INTERVAL_SHORT=600                 # short interval of net testing		
 GOOGLE_CHECK_FREQ=10800                # interval of Google account check via YT (seconds)
+MAX_ZEUS_RUNS=6                        # maximum number of zeus per day 
 MAX_PAUSE=1800                         # maximum time a user can pause (600) 
 kenzo_pkg="com.example.sensorexample"  # our app package name 
 last_report_time="1635969639"          # last time a report was sent (init to an old time)
@@ -580,10 +581,12 @@ do
 		fi 
 		ans=`timeout 15 curl -s "https://mobile.batterylab.dev:8082/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`
 		ret_code=$?
-		myprint "Checking if there is a command to execute. $ans -- $ret_code"		
+		myprint "Checking if there is a command to execute. ANS:$ans - RetCode: $ret_code"		
 		if [[ "$ans" == *"No command matching"* ]]
 		then
 			myprint "No command found"
+		elif [ $$ret_code -ne 0 ]
+			myprint "WARNING CURL return code: $ret_code (124:TIMEOUT)"
 		else 	
 			command=`echo $ans  | cut -f 1 -d ";"`
 			comm_id=`echo $ans  | cut -f 3 -d ";"`
@@ -624,12 +627,12 @@ do
 				let "strike++"
 				if [ $strike -eq 6 ] 
 				then 
-					myprint "Detected high CPU (>85%) in the last 90 seconds. Rebooting"
+					#myprint "Detected high CPU (>85%) in the last 90 seconds. Rebooting"
 					myprint "Detected high CPU (>85%) in the last 90 seconds.  -- Temporarily disabling rebooting"
 					#sudo reboot 
 				fi 
 			else 
-				myprint "Detected high CPU (>85%). Ignoring since we are net-testing"
+				myprint "Detected high CPU ($cpu_util>85%). Ignoring since we are net-testing"
 			fi 
 		else 
 			strike=0
@@ -794,8 +797,8 @@ do
 			fi
 			if [ $skipping == "false" ]
 			then
-				myprint "./net-testing.sh $suffix $current_time $def_iface > logs/net-testing-short`date +\%m-\%d-\%y_\%H:\%M`.txt"
-				(./net-testing.sh $suffix $current_time $def_iface "short" > logs/net-testing-short`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+				myprint "./net-testing.sh $suffix $current_time $def_iface > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+				(./net-testing.sh $suffix $current_time $def_iface "short" > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
 				num=1
 				echo $current_time > ".last_net_short"
 			fi

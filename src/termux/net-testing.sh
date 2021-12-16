@@ -112,7 +112,7 @@ suffix=`date +%d-%m-%Y`
 t_s=`date +%s`
 iface="wlan0"
 opt="long"
-if [ $# -eq 3 ] 
+if [ $# -eq 4 ] 
 then
 	suffix=$1
 	t_s=$2
@@ -208,16 +208,15 @@ sleep 30
 # TODO 
 
 # test multiple webages -- TEMPORARILY DISABLED 
-myprint "WARNING: webtest temporarily disabled"
-# if [ $opt == "long" ] 
-# then 
-# 	touch ".locked"
-# 	./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap
-# 	rm ".locked"
-# 	sleep 30 
-# else 
-# 	myprint "Skipping WebTest test sing option:$opt"
-# fi 
+if [ $opt == "long" ] 
+then 
+	touch ".locked"
+	./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap --single # reduced number of webpage tests
+	rm ".locked"
+	sleep 30 
+else 
+	myprint "Skipping WebTest test sing option:$opt"
+fi 
 
 # safety cleanup 
 sudo pm clear com.android.chrome
