@@ -759,7 +759,7 @@ do
 			myprint "Time to run LONG net-test: $time_from_last_net > $NET_INTERVAL"			
 			skipping="false"
 			update_wifi_mobile 
-			t_wifi_mobile_update=`date +%`			
+			t_wifi_mobile_update=`date +%s`
 			if [ ! -z $mobile_iface ]
 			then
 	 	  	    # if enough mobile data is available 
@@ -783,7 +783,7 @@ do
 			myprint "Time to run SHORT test: $time_from_last_net > $NET_INTERVAL_SHORT"
 			skipping="false"
 			update_wifi_mobile 
-			t_wifi_mobile_update=`date +%`			
+			t_wifi_mobile_update=`date +%s`			
 			if [ ! -z $mobile_iface ] 
 			then 
 				if [ $def_iface != $mobile_iface -o $num_runs_today -ge $MAX_ZEUS_RUNS  -o $mobile_data -gt $MAX_MOBILE ] 
