@@ -185,6 +185,21 @@ else
 	myprint "No mobile connection found. Skipping NYU-ZUS"
 fi 
 
+#### testing launching googlemaps
+turn_device_on
+myprint "Launching googlemaps to improve location accuracy"
+sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
+sleep 15
+close_all
+turn_device_off
+res_dir="locationlogs/${suffix}"
+mkdir -p $res_dir		
+sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
+loc_str=`cat $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
+myprint "Location info from inside net-testing: $loc_str"
+sleep 15 
+#### testing launching googlemaps
+
 # run a speedtest 
 myprint "Running speedtest-cli..."
 res_folder="speedtest-cli-logs/${suffix}"

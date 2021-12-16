@@ -828,8 +828,6 @@ do
 		t_wifi_mobile_update=`date +%s`	
 						
 		# dump location information (only start googlemaps if not net-testing to avoid collusion)
-		res_dir="locationlogs/${suffix}"
-		mkdir -p $res_dir
 		if [ ! -f ".locked" ]  # NOTE: this means that another app (browser, youtube, videoconf)  is running already!
 		then 
 			turn_device_on
@@ -839,11 +837,13 @@ do
 			foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
 			myprint "Confirm Maps is in the foregound: $foreground" 
 			# needed in case maps ask for storage...
-			sudo input tap 108 1220		
+			sudo input tap 108 1220
 			sleep 10
-			close_all				
+			close_all
 			turn_device_off
 		fi 
+		res_dir="locationlogs/${suffix}"
+		mkdir -p $res_dir		
 		sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
 		loc_str=`cat $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
 
