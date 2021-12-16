@@ -120,6 +120,9 @@ then
 	opt=$4
 fi  
 
+# testing lock out google maps
+touch ".locked" 
+
 # current free space 
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 
@@ -129,10 +132,8 @@ free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 # video testing with youtube
 if [ $opt == "long" ] 
 then 
-	touch ".locked"
 	./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
 	turn_device_off
-	rm ".locked"
 	myprint "Sleep 30 to lower CPU load..."
 	sleep 30  		 
 else 
@@ -159,10 +160,8 @@ then
 	if [ $iface == $mobile_iface -a $num_runs_today -lt $MAX_ZEUS_RUNS ] 
 	then
 		myprint "NYU-stuff. We can run. Sleep 30 to allow state-update to know"
-		touch ".locked"
 		sleep 30  #FIXME
 		run_zus		
-		rm ".locked"
 		myprint "Sleep 30 to lower CPU load..."
 		sleep 30  		 
 	# elif [ $curr_hour -ge 18 ] # we are past 6pm
@@ -174,8 +173,7 @@ then
 	# 	run_zus
 	# 	toggle_wifi "on" $iface
 	# 	myprint "Enabling WiFi back"		
-	# 	rm ".locked"
-
+	
 	# 	# allow some time to rest 
 	# 	myprint "Resting post ZEUS test..."
 	# 	sleep 30
@@ -210,9 +208,7 @@ sleep 30
 # test multiple webages -- TEMPORARILY DISABLED 
 if [ $opt == "long" ] 
 then 
-	touch ".locked"
 	./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap --single # reduced number of webpage tests
-	rm ".locked"
 	sleep 30 
 else 
 	myprint "Skipping WebTest test sing option:$opt"
@@ -227,6 +223,7 @@ for pid in `ps aux | grep 'youtube-test\|web-test\|mtr.sh\|cdn-test.sh\|speedtes
 do
     kill -9 $pid
 done
+rm ".locked"
 turn_device_off
 
 # current free space 
