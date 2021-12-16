@@ -688,6 +688,7 @@ do
 			t_wifi_mobile_update=`date +%s`	
 							
 			# dump location information without running googlemaps
+			res_dir="locationlogs/${suffix}"		
 			sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
 			loc_str=`cat $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
 
@@ -704,7 +705,7 @@ do
 			fi 
 			echo $current_time > ".last_report"
 		fi 
-		
+
 		# block everything
 		continue
 	else 
