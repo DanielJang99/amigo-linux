@@ -111,11 +111,13 @@ ZEUS_DURATION=20            # duration of NYU experiments
 suffix=`date +%d-%m-%Y`
 t_s=`date +%s`
 iface="wlan0"
+opt="long"
 if [ $# -eq 3 ] 
 then
 	suffix=$1
 	t_s=$2
 	iface=$3
+	opt=$4
 fi  
 
 # current free space 
@@ -125,13 +127,23 @@ free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 ./mtr.sh $suffix $t_s
 
 # video testing with youtube
-touch ".locked"
-./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
-turn_device_off
-rm ".locked"
+if [ $opt == "long" ] 
+then 
+	touch ".locked"
+	./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
+	turn_device_off
+	rm ".locked"
+	myprint "Sleep 30 to lower CPU load..."
+	sleep 30  		 
+else 
+	myprint "Skipping YouTube test sing option:$opt"
+fi 
 
-# run nyu stuff if mobile is available or if we really need samples (FIXME)
-sudo dumpsys netstats > .data
+# run nyu stuff -- only if MOBILE
+if [ ! -f ".data" ] 
+then
+	sudo dumpsys netstats > .data
+fi 
 mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
 if [ ! -z $mobile_iface ]
 then 
@@ -148,12 +160,11 @@ then
 	then
 		myprint "NYU-stuff. We can run. Sleep 30 to allow state-update to know"
 		touch ".locked"
-		sleep 30 
+		sleep 30  #FIXME
 		run_zus		
 		rm ".locked"
-		# allow some time to rest 
-		myprint "Resting post ZEUS test..."
-		sleep 30 	 	 
+		myprint "Sleep 30 to lower CPU load..."
+		sleep 30  		 
 	# elif [ $curr_hour -ge 18 ] # we are past 6pm
 	# then 
 	# 	myprint "NYU-stuff. It is past 6pm and missing data. Resorting to disable WiFi (sleep 30 to allow state-update to know)"
@@ -176,31 +187,37 @@ else
 	myprint "No mobile connection found. Skipping NYU-ZUS"
 fi 
 
-
 # run a speedtest 
 myprint "Running speedtest-cli..."
 res_folder="speedtest-cli-logs/${suffix}"
 mkdir -p $res_folder
 speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
 gzip "${res_folder}/speedtest-$t_s.json"
+myprint "Sleep 30 to lower CPU load..."
+sleep 30  		 
 
-# allow some time to rest 
-myprint "Resting post speedtest..."
-sleep 30 
 
 # run a speedtest in the browser (fast.com) -- having issue on this phone 
 #./speed-browse-test.sh $suffix $t_s
 
 # test multiple CDNs
 ./cdn-test.sh $suffix $t_s
+sleep 30 
 
 # QUIC test? 
 # TODO 
 
 # test multiple webages -- TEMPORARILY DISABLED 
-#touch ".locked"
-#./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap
-#rm ".locked"
+myprint "WARNING: webtest temporarily disabled"
+# if [ $opt == "long" ] 
+# then 
+# 	touch ".locked"
+# 	./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap
+# 	rm ".locked"
+# 	sleep 30 
+# else 
+# 	myprint "Skipping WebTest test sing option:$opt"
+# fi 
 
 # safety cleanup 
 sudo pm clear com.android.chrome

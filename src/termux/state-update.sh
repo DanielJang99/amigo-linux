@@ -258,6 +258,8 @@ slow_freq=25                           # interval for checking commands to run (
 fast_freq=5                            # interval for checking the app (faster)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
 NET_INTERVAL=3600                      # interval of networking testing 
+#NET_INTERVAL_SHORT=1800                # short interval of net testing		
+NET_INTERVAL_SHORT=600                 # short interval of net testing		
 GOOGLE_CHECK_FREQ=10800                # interval of Google account check via YT (seconds)
 MAX_PAUSE=1800                         # maximum time a user can pause (600) 
 kenzo_pkg="com.example.sensorexample"  # our app package name 
@@ -725,43 +727,82 @@ do
 		last_net=`cat ".last_net"`
 	else 
 		last_net=0
+	fi
+	if [ -f ".last_net_short" ] 
+	then 
+		last_net_short=`cat ".last_net_short"`
+	else 
+		last_net_short=0
 	fi 
 	net_status=`cat ".net_status"`
 	let "time_from_last_net = current_time - last_net"
-	myprint "Time from last net:$time_from_last_net sec ShouldRunIfTime:$net_status Running:$num"
-	if [ $time_from_last_net -gt $NET_INTERVAL -a $net_status == "true" ] # if it is time and we should run
-	then 
-		if [ $num -eq 0 ]                       # if previous test is not still running 
-		then 	
-			if [ $def_iface != "none" ]         # if a connectivity is found
+	let "time_from_last_net_short = current_time - last_net_short"	
+	myprint "Time from last net:$time_from_last_net sec ShouldRunIfTime:$net_status RunningNetProc:$num"
+	#################################TESTING#################################
+	# 1) flag set, 2) no previous running, 3) connected
+	if [ $net_status == "true" -a $num -eq 0 -a  $def_iface != "none" ]  
+	then
+		# update counter of how many runs today 
+		curr_hour=`date +%H`
+		num_runs_today=0
+		if [ -f ".zus-${suffix}" ]
+		then
+			num_runs_today=`cat ".zus-${suffix}"`
+		fi 	
+	
+		# condition-1: it is time!
+		if [ $time_from_last_net -gt $NET_INTERVAL ] 
+		then 
+			echo "===>here $time_from_last_net > $NET_INTERVAL" 		
+			skipping="false"
+			update_wifi_mobile 
+			t_wifi_mobile_update=`date +%`			
+			if [ ! -z $mobile_iface ]
 			then
-				# make sure we have fresh wifi/mobile info
-				skipping="false"
-				update_wifi_mobile 
-				t_wifi_mobile_update=`date +%`					
-				if [ ! -z $mobile_iface ]
-				then
-  	 	  		    # if enough mobile data is available 
-					if [ $def_iface == $mobile_iface -a $mobile_data -gt $MAX_MOBILE ]   
-					then 
-						myprint "Skipping net-testing since we are on mobile and data limit passed ($mobile_data -> $MAX_MOBILE)"
-						skipping="true"
-					fi 
-				fi  
-				if [ $skipping == "false" ]
-				then
-					myprint "./net-testing.sh $suffix $current_time $def_iface > logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt"
-					(./net-testing.sh $suffix $current_time $def_iface > logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
-					num=1
-					echo $current_time > ".last_net"
+	 	  	    # if enough mobile data is available 
+				if [ $def_iface == $mobile_iface -a $mobile_data -gt $MAX_MOBILE ]   
+				then 
+					myprint "Skipping net-testing since we are on mobile and data limit was passed ($mobile_data -> $MAX_MOBILE)"
+					skipping="true"
 				fi 
-			else 
-				myprint "Skipping net-testing since no connection was found" 
-			fi 
-		else 
-			myprint "Postponing net-testing since still running (numProc: $num)"
-		fi 
+			fi  
+			if [ $skipping == "false" ]
+			then
+				myprint "./net-testing.sh $suffix $current_time $def_iface \"long\" > logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+				(./net-testing.sh $suffix $current_time $def_iface "long"> logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+				num=1
+				echo $current_time > ".last_net"
+				echo $current_time > ".last_net_short"			
+			fi
+		# condition-2: we are on mobile only and did not do more than N test yet today # FIXME 
+		elif [ $time_from_last_net -gt $NET_INTERVAL_SHORT ] 
+		then
+			echo "===>here $time_from_last_net > $NET_INTERVAL_SHORT -- WARNING. SUPER SHORT FOR TESTING"
+			skipping="false"
+			update_wifi_mobile 
+			t_wifi_mobile_update=`date +%`			
+			if [ ! -z $mobile_iface ] 
+			then 
+				if [ $def_iface != $mobile_iface -o $num_runs_today -ge $MAX_ZEUS_RUNS  -o $mobile_data -gt $MAX_MOBILE ] 
+				then 
+					myprint "Skipping net-testing-short. DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$MAX_MOBILE"
+					skipping="true"
+				fi 
+			else
+				myprint "Skipping net-testing-short since not on mobile at all"				 
+				skipping="true"
+			fi
+			if [ $skipping == "false" ]
+			then
+				myprint "./net-testing.sh $suffix $current_time $def_iface > logs/net-testing-short`date +\%m-\%d-\%y_\%H:\%M`.txt"
+				(./net-testing.sh $suffix $current_time $def_iface "short" > logs/net-testing-short`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+				num=1
+				echo $current_time > ".last_net_short"
+			fi
+	else
+		myprint "Skipping net-testing. NetStatus:$net_status NumNetProc:$num DefIface:$def_iface"
 	fi 
+	#################################TESTING#################################
 
 	# check if it is time to status report
 	if [ -f ".last_report" ] 
