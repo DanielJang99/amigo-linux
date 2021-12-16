@@ -586,6 +586,7 @@ do
 		then
 			myprint "No command found"
 		elif [ $$ret_code -ne 0 ]
+		then 
 			myprint "WARNING CURL return code: $ret_code (124:TIMEOUT)"
 		else 	
 			command=`echo $ans  | cut -f 1 -d ";"`
