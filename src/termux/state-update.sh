@@ -257,9 +257,8 @@ update_wifi_mobile(){
 slow_freq=25                           # interval for checking commands to run (slower)
 fast_freq=5                            # interval for checking the app (faster)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
-NET_INTERVAL=3600                      # interval of networking testing 
-#NET_INTERVAL_SHORT=1800               # short interval of net testing		
-NET_INTERVAL_SHORT=600                 # short interval of net testing		
+NET_INTERVAL=5400                      # interval of networking testing 
+NET_INTERVAL_SHORT=2700                # short interval of net testing (just on mobile)
 GOOGLE_CHECK_FREQ=10800                # interval of Google account check via YT (seconds)
 MAX_ZEUS_RUNS=6                        # maximum number of zeus per day 
 MAX_PAUSE=1800                         # maximum time a user can pause (600) 

@@ -120,8 +120,9 @@ then
 	opt=$4
 fi  
 
-# testing lock out google maps
+# lock out google maps to avoid any interference
 touch ".locked" 
+sleep 30 
 
 # current free space 
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
@@ -185,7 +186,7 @@ else
 	myprint "No mobile connection found. Skipping NYU-ZUS"
 fi 
 
-#### testing launching googlemaps
+# launching googlemaps which is now locked out on other process
 turn_device_on
 myprint "Launching googlemaps to improve location accuracy"
 sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
@@ -198,7 +199,6 @@ sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
 loc_str=`cat $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
 myprint "Location info from inside net-testing: $loc_str"
 sleep 15 
-#### testing launching googlemaps
 
 # run a speedtest 
 myprint "Running speedtest-cli..."
