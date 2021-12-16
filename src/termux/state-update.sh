@@ -254,8 +254,7 @@ update_wifi_mobile(){
 }
 
 # parameters
-#slow_freq=15                          # interval for checking commands to run (slower)
-slow_freq=30                           # interval for checking commands to run (slower)
+slow_freq=25                           # interval for checking commands to run (slower)
 fast_freq=5                            # interval for checking the app (faster)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
 NET_INTERVAL=3600                      # interval of networking testing 
@@ -655,8 +654,7 @@ do
 	sudo dumpsys battery > ".dump"
 	phone_battery=`cat ".dump" | grep "level"  | cut -f 2 -d ":"`
 	charging=`cat ".dump" | grep "AC powered"  | cut -f 2 -d ":"`
-	#if [ $phone_battery -lt 50 -a $charging == "false" ] 
-	if [ $phone_battery -lt 10 -a $charging == "false" ] 
+	if [ $phone_battery -lt 15 -a $charging == "false" ] 
 	then 
  		if [ $asked_to_charge == "false" ] 
 		then 
