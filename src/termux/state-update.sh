@@ -703,7 +703,8 @@ do
 				timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
 			fi 
 			echo $current_time > ".last_report"
-
+		fi 
+		
 		# block everything
 		continue
 	else 
