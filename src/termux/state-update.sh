@@ -756,7 +756,7 @@ do
 		# condition-1: it is time!
 		if [ $time_from_last_net -gt $NET_INTERVAL ] 
 		then 
-			echo "===>here $time_from_last_net > $NET_INTERVAL" 		
+			myprint "Time to run LONG net-test: $time_from_last_net > $NET_INTERVAL"			
 			skipping="false"
 			update_wifi_mobile 
 			t_wifi_mobile_update=`date +%`			
@@ -778,9 +778,9 @@ do
 				echo $current_time > ".last_net_short"			
 			fi
 		# condition-2: we are on mobile only and did not do more than N test yet today # FIXME 
-		elif [ $time_from_last_net -gt $NET_INTERVAL_SHORT ] 
+		elif [ $time_from_last_net_short -gt $NET_INTERVAL_SHORT ] 
 		then
-			echo "===>here $time_from_last_net > $NET_INTERVAL_SHORT -- WARNING. SUPER SHORT FOR TESTING"
+			myprint "Time to run SHORT test: $time_from_last_net > $NET_INTERVAL_SHORT"
 			skipping="false"
 			update_wifi_mobile 
 			t_wifi_mobile_update=`date +%`			
