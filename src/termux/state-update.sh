@@ -799,6 +799,7 @@ do
 				num=1
 				echo $current_time > ".last_net_short"
 			fi
+		fi 
 	else
 		myprint "Skipping net-testing. NetStatus:$net_status NumNetProc:$num DefIface:$def_iface"
 	fi 
