@@ -44,9 +44,9 @@ check_account_via_YT(){
 
 	# lower all the volumes
 	myprint "Making sure volume is off"
-	sudo media volume --stream 3 --set 0  # media volume
-	sudo media volume --stream 1 --set 0	 # ring volume
-	sudo media volume --stream 4 --set 0	 # alarm volume
+	sudo media volume --stream 3 --set 0    # media volume
+	sudo media volume --stream 1 --set 0	# ring volume
+	sudo media volume --stream 4 --set 0	# alarm volume
 
 	# wait for YT 
 	youtube_error="false"
@@ -68,37 +68,41 @@ check_account_via_YT(){
 	done
 
 	# click account notification if there (guessing so far)
-	sudo input tap 560 725
-	sleep 10
-	sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep "MinuteMaidActivity"
-	need_to_verify=$?
-	if [ $need_to_verify -eq 0 ]
+	if [ $youtube_error == "false" ]
 	then
-	    myprint "Google account validation needed"
-	    sleep 10 
-	    sudo input tap 600 1200
-	    sleep 5
-	    sudo input text "Bremen2013"
-	    sleep 3
-	    sudo input keyevent KEYCODE_ENTER
-	    sleep 10
-	    sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep MinuteMaidActivity
-	    if [ $? -eq 0 ]
-	    then
-	        myprint "ERROR - notification cannot be accepted. Inform USER"
-	        echo "not-authorized" > ".google_status"
-	    	safe_stop
-	    else
-	    	echo "authorized" > ".google_status"
-	        myprint "Google account is now verified"
-	    fi
-	else
-		echo "authorized" > ".google_status"
-	    myprint "Google account is already verified"
-	fi
+		sleep 3
+		sudo input tap 560 725
+		sleep 10
+		sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep "MinuteMaidActivity"
+		need_to_verify=$?
+		if [ $need_to_verify -eq 0 ]
+		then
+		    myprint "Google account validation needed"
+		    sleep 10 
+		    sudo input tap 600 1200
+		    sleep 5
+		    sudo input text "Bremen2013"
+		    sleep 3
+		    sudo input keyevent KEYCODE_ENTER
+		    sleep 10
+		    sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep MinuteMaidActivity
+		    if [ $? -eq 0 ]
+		    then
+		        myprint "ERROR - notification cannot be accepted. Inform USER"
+		        echo "not-authorized" > ".google_status"
+		    	safe_stop
+		    else
+		    	echo "authorized" > ".google_status"
+		        myprint "Google account is now verified"
+		    fi
+		else
+			echo "authorized" > ".google_status"
+		    myprint "Google account is already verified"
+		fi
+	fi 
 
-	# make sure screen is off
-	close_all # resume YT state 
+	# make sure screen is off and nothing running
+	close_all 
 	turn_device_off
 }
 
@@ -280,7 +284,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="1.3"                              # code version 
+vrs="1.4"                              # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
 
 # check if testing
@@ -325,9 +329,16 @@ if [ $t_p -gt $GOOGLE_CHECK_FREQ ]
 then
 	myprint "Time to check Google account status via YT ($t_p > $GOOGLE_CHECK_FREQ)"
 	check_account_via_YT	  
-	t_last_google=$current_time
-	echo $current_time > ".time_google_check"
-	myprint "Google account status: $google_status"	
+	t_last_google=$current_time		
+	if [ $youtube_error == "false" ]
+	then
+		echo $current_time > ".time_google_check"
+		myprint "Google account status: $google_status"	
+	else 
+		let "t_new = current_time - GOOGLE_CHECK_FREQ + 3600"
+		myprint "Issued verifying account via YouTube. Will retry in one hour ($current_time => $t_new)" 		
+		echo $current_time > ".time_google_check"		
+	fi 
 else
 	myprint "Skipping Google account check - was done $t_p seconds ago!"
 fi 
