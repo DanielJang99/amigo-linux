@@ -70,8 +70,8 @@ if __name__ == '__main__':
 		
 	# iterate on data 
 	with open("device-info.txt") as file:
-    	for line in file:
-	        fields = line.split('\t')
+		for line in file:
+			fields = line.split('\t')
 			physical_id = fields[0]
 			uid = fields[1]
 			email = fields[2]
