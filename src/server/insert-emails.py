@@ -69,7 +69,7 @@ if __name__ == '__main__':
 		print("Issue creating the connection pool")
 		
 	# iterate on data 
-	with open(""filename"") as file:
+	with open("device-info.txt") as file:
     	for line in file:
 	        fields = line.split('\t')
 			physical_id = fields[0]
