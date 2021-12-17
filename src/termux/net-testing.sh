@@ -141,7 +141,8 @@ else
 	myprint "Skipping YouTube test sing option:$opt"
 fi 
 
-# run nyu stuff -- only if MOBILE
+# run nyu stuff -- only if MOBILE and not done too many already 
+num_runs_today=0
 if [ ! -f ".data" ] 
 then
 	sudo dumpsys netstats > .data
@@ -152,7 +153,6 @@ then
 	#  status update 
 	curr_hour=`date +%H`
 	status_file=".zus-${suffix}"
-	num_runs_today=0
 	if [ -f $status_file ]
 	then
 		num_runs_today=`cat $status_file`
@@ -160,28 +160,15 @@ then
 	myprint "NYU-stuff. Found a mobile connection: $mobile_iface (DefaultConnection:$iface). NumRunsToday:$num_runs_today (MaxRuns: $MAX_ZEUS_RUNS)"
 	if [ $iface == $mobile_iface -a $num_runs_today -lt $MAX_ZEUS_RUNS ] 
 	then
-		myprint "NYU-stuff. We can run. Sleep 30 to allow state-update to know"
-		sleep 30  #FIXME
 		run_zus		
-		myprint "Sleep 30 to lower CPU load..."
+		let "num_runs_today++"
+		myprint "Done with zus. New count for the day: $num_runs_today"
+		echo $num_runs_today > $status_file
+		myprint "Sleep 30 to lower CPU load..."		
 		sleep 30  		 
-	# elif [ $curr_hour -ge 18 ] # we are past 6pm
-	# then 
-	# 	myprint "NYU-stuff. It is past 6pm and missing data. Resorting to disable WiFi (sleep 30 to allow state-update to know)"
-	# 	touch ".locked"
-	# 	sleep 30 
-	# 	toggle_wifi "off" $iface
-	# 	run_zus
-	# 	toggle_wifi "on" $iface
-	# 	myprint "Enabling WiFi back"		
-	
-	# 	# allow some time to rest 
-	# 	myprint "Resting post ZEUS test..."
-	# 	sleep 30
 	else 
-		myprint "NYU-stuff. Skipping since on WiFI and it not past 6pm"
+		myprint "NYU-stuff. Skipping since on WiFI!"
 	fi 
-	echo $num_runs_today > $status_file
 else 
 	myprint "No mobile connection found. Skipping NYU-ZUS"
 fi 
@@ -247,3 +234,21 @@ space_used=`echo "$free_space_s $free_space_e" | awk '{print($1-$2)*1000}'`
 
 #logging 
 echo "[`date`] net-testing END. FreeSpace: ${free_space_e}GB SpaceUsed: ${space_used}MB"
+
+
+
+######################### disable wifi for zeus testing after 6pm
+# elif [ $curr_hour -ge 18 ] # we are past 6pm
+	# then 
+	# 	myprint "NYU-stuff. It is past 6pm and missing data. Resorting to disable WiFi (sleep 30 to allow state-update to know)"
+	# 	touch ".locked"
+	# 	sleep 30 
+	# 	toggle_wifi "off" $iface
+	# 	run_zus
+	# 	toggle_wifi "on" $iface
+	# 	myprint "Enabling WiFi back"		
+	
+	# 	# allow some time to rest 
+	# 	myprint "Resting post ZEUS test..."
+	# 	sleep 30
+

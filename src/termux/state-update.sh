@@ -44,9 +44,9 @@ check_account_via_YT(){
 
 	# lower all the volumes
 	myprint "Making sure volume is off"
-	sudo media volume --stream 3 --set 0  # media volume
-	sudo media volume --stream 1 --set 0	 # ring volume
-	sudo media volume --stream 4 --set 0	 # alarm volume
+	sudo media volume --stream 3 --set 0    # media volume
+	sudo media volume --stream 1 --set 0	# ring volume
+	sudo media volume --stream 4 --set 0	# alarm volume
 
 	# wait for YT 
 	youtube_error="false"
@@ -68,37 +68,41 @@ check_account_via_YT(){
 	done
 
 	# click account notification if there (guessing so far)
-	sudo input tap 560 725
-	sleep 10
-	sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep "MinuteMaidActivity"
-	need_to_verify=$?
-	if [ $need_to_verify -eq 0 ]
+	if [ $youtube_error == "false" ]
 	then
-	    myprint "Google account validation needed"
-	    sleep 10 
-	    sudo input tap 600 1200
-	    sleep 5
-	    sudo input text "Bremen2013"
-	    sleep 3
-	    sudo input keyevent KEYCODE_ENTER
-	    sleep 10
-	    sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep MinuteMaidActivity
-	    if [ $? -eq 0 ]
-	    then
-	        myprint "ERROR - notification cannot be accepted. Inform USER"
-	        echo "not-authorized" > ".google_status"
-	    	safe_stop
-	    else
-	    	echo "authorized" > ".google_status"
-	        myprint "Google account is now verified"
-	    fi
-	else
-		echo "authorized" > ".google_status"
-	    myprint "Google account is already verified"
-	fi
+		sleep 3
+		sudo input tap 560 725
+		sleep 10
+		sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep "MinuteMaidActivity"
+		need_to_verify=$?
+		if [ $need_to_verify -eq 0 ]
+		then
+		    myprint "Google account validation needed"
+		    sleep 10 
+		    sudo input tap 600 1200
+		    sleep 5
+		    sudo input text "Bremen2013"
+		    sleep 3
+		    sudo input keyevent KEYCODE_ENTER
+		    sleep 10
+		    sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep MinuteMaidActivity
+		    if [ $? -eq 0 ]
+		    then
+		        myprint "ERROR - notification cannot be accepted. Inform USER"
+		        echo "not-authorized" > ".google_status"
+		    	safe_stop
+		    else
+		    	echo "authorized" > ".google_status"
+		        myprint "Google account is now verified"
+		    fi
+		else
+			echo "authorized" > ".google_status"
+		    myprint "Google account is already verified"
+		fi
+	fi 
 
-	# make sure screen is off
-	close_all # resume YT state 
+	# make sure screen is off and nothing running
+	close_all 
 	turn_device_off
 }
 
@@ -280,7 +284,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="1.3"                              # code version 
+vrs="1.4"                              # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
 
 # check if testing
@@ -325,9 +329,16 @@ if [ $t_p -gt $GOOGLE_CHECK_FREQ ]
 then
 	myprint "Time to check Google account status via YT ($t_p > $GOOGLE_CHECK_FREQ)"
 	check_account_via_YT	  
-	t_last_google=$current_time
-	echo $current_time > ".time_google_check"
-	myprint "Google account status: $google_status"	
+	t_last_google=$current_time		
+	if [ $youtube_error == "false" ]
+	then
+		echo $current_time > ".time_google_check"
+		myprint "Google account status: $google_status"	
+	else 
+		let "t_new = current_time - GOOGLE_CHECK_FREQ + 3600"
+		myprint "Issued verifying account via YouTube. Will retry in one hour ($current_time => $t_new)" 		
+		echo $current_time > ".time_google_check"		
+	fi 
 else
 	myprint "Skipping Google account check - was done $t_p seconds ago!"
 fi 
@@ -586,38 +597,40 @@ do
 		ans=`timeout 15 curl -s "https://mobile.batterylab.dev:8082/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`
 		ret_code=$?
 		myprint "Checking if there is a command to execute. ANS:$ans - RetCode: $ret_code"		
-		if [[ "$ans" == *"No command matching"* ]]
-		then
-			myprint "No command found"
-		elif [ $$ret_code -ne 0 ]
-		then 
-			myprint "WARNING CURL return code: $ret_code (124:TIMEOUT)"
-		else 	
-			command=`echo $ans  | cut -f 1 -d ";"`
-			comm_id=`echo $ans  | cut -f 3 -d ";"`
-			duration=`echo $ans  | cut -f 4 -d ";" | sed 's/ //g'`	
-			background=`echo $ans  | cut -f 5 -d ";"`
-			myprint "Command:$command- ID:$comm_id - MaxDuration:$duration - IsBackground:$background - PrevCommand:$prev_command"
-
-			# verify command was not just run
-			if [ $prev_command == $comm_id ] 
+		if [[ "$ans" != *"No command matching"* ]]
+		then		 	
+			if [ $ret_code -eq 0 ]
 			then 
-				myprint "Command not allowed since it matches last command run!!"
-			else 
-				if [ $background == "true" ] 
+				command=`echo $ans  | cut -f 1 -d ";"`
+				comm_id=`echo $ans  | cut -f 3 -d ";"`
+				duration=`echo $ans  | cut -f 4 -d ";" | sed 's/ //g'`	
+				background=`echo $ans  | cut -f 5 -d ";"`
+				myprint "Command:$command- ID:$comm_id - MaxDuration:$duration - IsBackground:$background - PrevCommand:$prev_command"
+
+				# verify command was not just run
+				if [ $prev_command == $comm_id ] 
 				then 
-					eval timeout $duration $command & 
-					comm_status=$?
-					myprint "Command started in background. Status: $comm_status"
+					myprint "Command not allowed since it matches last command run!!"
 				else 
-					eval timeout $duration $command
-					comm_status=$?
-					myprint "Command executed. Status: $comm_status"
-				fi
-				ans=`timeout 15 curl -s "https://mobile.batterylab.dev:8082/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${termux_user}"`
-				myprint "Informed server about last command run. ANS: $ans"
+					if [ $background == "true" ] 
+					then 
+						eval timeout $duration $command & 
+						comm_status=$?
+						myprint "Command started in background. Status: $comm_status"
+					else 
+						eval timeout $duration $command
+						comm_status=$?
+						myprint "Command executed. Status: $comm_status"
+					fi
+					ans=`timeout 15 curl -s "https://mobile.batterylab.dev:8082/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${termux_user}"`
+					myprint "Informed server about last command run. ANS: $ans"
+				fi 
+				echo $comm_id > ".prev_command"
+			else 
+				myprint "CURL error ($ret_code (124:TIMEOUT))"
 			fi 
-			echo $comm_id > ".prev_command"
+		else 
+			myprint "Command not found ($ans)"
 		fi 
 	fi 
 
@@ -784,7 +797,7 @@ do
 		# condition-2: we are on mobile only and did not do more than N test yet today # FIXME 
 		elif [ $time_from_last_net_short -gt $NET_INTERVAL_SHORT ] 
 		then
-			myprint "Time to run SHORT test: $time_from_last_net > $NET_INTERVAL_SHORT"
+			myprint "Time to run SHORT test: $time_from_last_net > $NET_INTERVAL_SHORT -- DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$MAX_MOBILE"
 			skipping="false"
 			update_wifi_mobile 
 			t_wifi_mobile_update=`date +%s`			

@@ -36,6 +36,7 @@ create table action_update(command_id text, tester_id text, timestamp bigint, st
 create table commands(command_id text, tester_id text, command text, duration int, background text, timestamp bigint, status text[]);
 ALTER TABLE action_update ADD CONSTRAINT constraintname UNIQUE(command_id); #FIXME: this can be done in one shot
 ALTER TABLE commands ADD CONSTRAINT constraintname UNIQUE(command_id); #FIXME: this can be done in one shot
+create table userinfo(tester_id text, physical_id text, email text, location text, status text);
 
 ################### [client]
 # aioquic support (H3 client)
