@@ -284,7 +284,8 @@ testing="false"                        # keep track if we are testing or not
 strike=0                               # keep time of how many times in a row high CPU was detected 
 vrs="1.4"                              # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
-
+isPaused="N/A"                         # hold info on whether a phone is paued or not
+	
 # check if testing
 if [ $# -eq 1 ] 
 then 
