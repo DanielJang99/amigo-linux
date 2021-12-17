@@ -131,7 +131,7 @@ if __name__ == '__main__':
 		## TODO 
 
 		# find how many users are currently on
-		query = "select count(distinct tester_id)::int as num_users from status_update where to_timestamp(timestamp) > now() - interval '15 minutes';"
+		query = "select count(distinct tester_id)::int as num_users from status_update where type = 'status' and to_timestamp(timestamp) > now() - interval '15 minutes';"
 		info, msg  = run_query(query)
 		num_users = int(info[0][0])
 
