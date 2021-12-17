@@ -111,12 +111,18 @@ ZEUS_DURATION=20            # duration of NYU experiments
 suffix=`date +%d-%m-%Y`
 t_s=`date +%s`
 iface="wlan0"
-if [ $# -eq 3 ] 
+opt="long"
+if [ $# -eq 4 ] 
 then
 	suffix=$1
 	t_s=$2
 	iface=$3
+	opt=$4
 fi  
+
+# lock out google maps to avoid any interference
+touch ".locked" 
+sleep 30 
 
 # current free space 
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
@@ -125,13 +131,21 @@ free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 ./mtr.sh $suffix $t_s
 
 # video testing with youtube
-touch ".locked"
-./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
-turn_device_off
-rm ".locked"
+if [ $opt == "long" ] 
+then 
+	./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
+	turn_device_off
+	myprint "Sleep 30 to lower CPU load..."
+	sleep 30  		 
+else 
+	myprint "Skipping YouTube test sing option:$opt"
+fi 
 
-# run nyu stuff if mobile is available or if we really need samples (FIXME)
-sudo dumpsys netstats > .data
+# run nyu stuff -- only if MOBILE
+if [ ! -f ".data" ] 
+then
+	sudo dumpsys netstats > .data
+fi 
 mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
 if [ ! -z $mobile_iface ]
 then 
@@ -147,13 +161,10 @@ then
 	if [ $iface == $mobile_iface -a $num_runs_today -lt $MAX_ZEUS_RUNS ] 
 	then
 		myprint "NYU-stuff. We can run. Sleep 30 to allow state-update to know"
-		touch ".locked"
-		sleep 30 
+		sleep 30  #FIXME
 		run_zus		
-		rm ".locked"
-		# allow some time to rest 
-		myprint "Resting post ZEUS test..."
-		sleep 30 	 	 
+		myprint "Sleep 30 to lower CPU load..."
+		sleep 30  		 
 	# elif [ $curr_hour -ge 18 ] # we are past 6pm
 	# then 
 	# 	myprint "NYU-stuff. It is past 6pm and missing data. Resorting to disable WiFi (sleep 30 to allow state-update to know)"
@@ -163,8 +174,7 @@ then
 	# 	run_zus
 	# 	toggle_wifi "on" $iface
 	# 	myprint "Enabling WiFi back"		
-	# 	rm ".locked"
-
+	
 	# 	# allow some time to rest 
 	# 	myprint "Resting post ZEUS test..."
 	# 	sleep 30
@@ -176,6 +186,19 @@ else
 	myprint "No mobile connection found. Skipping NYU-ZUS"
 fi 
 
+# launching googlemaps which is now locked out on other process
+turn_device_on
+myprint "Launching googlemaps to improve location accuracy"
+sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
+sleep 15
+close_all
+turn_device_off
+res_dir="locationlogs/${suffix}"
+mkdir -p $res_dir		
+sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
+loc_str=`cat $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
+myprint "Location info from inside net-testing: $loc_str"
+sleep 15 
 
 # run a speedtest 
 myprint "Running speedtest-cli..."
@@ -183,24 +206,28 @@ res_folder="speedtest-cli-logs/${suffix}"
 mkdir -p $res_folder
 speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
 gzip "${res_folder}/speedtest-$t_s.json"
+myprint "Sleep 30 to lower CPU load..."
+sleep 30  		 
 
-# allow some time to rest 
-myprint "Resting post speedtest..."
-sleep 30 
 
 # run a speedtest in the browser (fast.com) -- having issue on this phone 
 #./speed-browse-test.sh $suffix $t_s
 
 # test multiple CDNs
 ./cdn-test.sh $suffix $t_s
+sleep 30 
 
 # QUIC test? 
 # TODO 
 
 # test multiple webages -- TEMPORARILY DISABLED 
-#touch ".locked"
-#./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap
-#rm ".locked"
+if [ $opt == "long" ] 
+then 
+	./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap --single # reduced number of webpage tests
+	sleep 30 
+else 
+	myprint "Skipping WebTest test sing option:$opt"
+fi 
 
 # safety cleanup 
 sudo pm clear com.android.chrome
@@ -211,6 +238,7 @@ for pid in `ps aux | grep 'youtube-test\|web-test\|mtr.sh\|cdn-test.sh\|speedtes
 do
     kill -9 $pid
 done
+rm ".locked"
 turn_device_off
 
 # current free space 

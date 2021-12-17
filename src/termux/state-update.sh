@@ -66,7 +66,7 @@ check_account_via_YT(){
 			break
 		fi 
 	done
-	
+
 	# click account notification if there (guessing so far)
 	if [ $youtube_error == "false" ]
 	then
@@ -269,13 +269,15 @@ update_wifi_mobile(){
 slow_freq=25                           # interval for checking commands to run (slower)
 fast_freq=5                            # interval for checking the app (faster)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
-NET_INTERVAL=3600                      # interval of networking testing 
+NET_INTERVAL=5400                      # interval of networking testing 
+NET_INTERVAL_SHORT=2700                # short interval of net testing (just on mobile)
 GOOGLE_CHECK_FREQ=10800                # interval of Google account check via YT (seconds)
+MAX_ZEUS_RUNS=6                        # maximum number of zeus per day 
 MAX_PAUSE=1800                         # maximum time a user can pause (600) 
 kenzo_pkg="com.example.sensorexample"  # our app package name 
-last_report_time="1635969639"          # last time a report was sent (init to an old time)
-last_net="1635969639"                  # last time a net test was done (init to an old time) 
-t_wifi_mobile_update="1635969639"      # last time wifi/mobile info was checked (init to an old time)
+last_report_time=0                     # last time a report was sent 
+last_net=0                             # last time a net test was done  
+t_wifi_mobile_update=0                 # last time wifi/mobile info was checked 
 asked_to_charge="false"                # keep track if we already asked user to charge their phone
 prev_wifi_traffic=0                    # keep track of wifi traffic used today
 prev_mobile_traffic=0                  # keep track of mobile traffic used today
@@ -326,7 +328,7 @@ fi
 let "t_p = current_time - t_last_google"
 if [ $t_p -gt $GOOGLE_CHECK_FREQ ]
 then
-	myprint "Time to check Google account status via YT"
+	myprint "Time to check Google account status via YT ($t_p > $GOOGLE_CHECK_FREQ)"
 	check_account_via_YT	  
 	t_last_google=$current_time		
 	if [ $youtube_error == "false" ]
@@ -575,8 +577,8 @@ do
 		t_last_google=$current_time
 		echo $current_time > ".time_google_check"
 		myprint "Google account status: $google_status"	
-	fi
-
+	fi 
+	
 	# loop rate control (slow)
 	let "t_p = (current_time - last_slow_loop_time)"
 	if [ $t_p -lt $slow_freq ] 
@@ -595,10 +597,13 @@ do
 		fi 
 		ans=`timeout 15 curl -s "https://mobile.batterylab.dev:8082/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`
 		ret_code=$?
-		myprint "Checking if there is a command to execute. $ans -- $ret_code"		
+		myprint "Checking if there is a command to execute. ANS:$ans - RetCode: $ret_code"		
 		if [[ "$ans" == *"No command matching"* ]]
 		then
 			myprint "No command found"
+		elif [ $$ret_code -ne 0 ]
+		then 
+			myprint "WARNING CURL return code: $ret_code (124:TIMEOUT)"
 		else 	
 			command=`echo $ans  | cut -f 1 -d ";"`
 			comm_id=`echo $ans  | cut -f 3 -d ";"`
@@ -639,12 +644,12 @@ do
 				let "strike++"
 				if [ $strike -eq 6 ] 
 				then 
-					myprint "Detected high CPU (>85%) in the last 90 seconds. Rebooting"
+					#myprint "Detected high CPU (>85%) in the last 90 seconds. Rebooting"
 					myprint "Detected high CPU (>85%) in the last 90 seconds.  -- Temporarily disabling rebooting"
 					#sudo reboot 
 				fi 
 			else 
-				myprint "Detected high CPU (>85%). Ignoring since we are net-testing"
+				myprint "Detected high CPU ($cpu_util>85%). Ignoring since we are net-testing"
 			fi 
 		else 
 			strike=0
@@ -734,7 +739,6 @@ do
 		asked_to_charge="false"
 	fi 
 
-	
 	# check if it is time to run net experiments 
 	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`
 	if [ -f ".last_net" ] 
@@ -742,43 +746,83 @@ do
 		last_net=`cat ".last_net"`
 	else 
 		last_net=0
+	fi
+	if [ -f ".last_net_short" ] 
+	then 
+		last_net_short=`cat ".last_net_short"`
+	else 
+		last_net_short=0
 	fi 
 	net_status=`cat ".net_status"`
 	let "time_from_last_net = current_time - last_net"
-	myprint "Time from last net:$time_from_last_net sec ShouldRunIfTime:$net_status Running:$num"
-	if [ $time_from_last_net -gt $NET_INTERVAL -a $net_status == "true" ] # if it is time and we should run
-	then 
-		if [ $num -eq 0 ]                       # if previous test is not still running 
-		then 	
-			if [ $def_iface != "none" ]         # if a connectivity is found
+	let "time_from_last_net_short = current_time - last_net_short"	
+	myprint "TimeFromLastNetLong:$time_from_last_net sec TimeFromLastNetShort:$time_from_last_net_short sec ShouldRunIfTime:$net_status RunningNetProc:$num"
+	#################################TESTING#################################
+	# 1) flag set, 2) no previous running, 3) connected
+	if [ $net_status == "true" -a $num -eq 0 -a  $def_iface != "none" ]  
+	then
+		# update counter of how many runs today 
+		curr_hour=`date +%H`
+		num_runs_today=0
+		if [ -f ".zus-${suffix}" ]
+		then
+			num_runs_today=`cat ".zus-${suffix}"`
+		fi 	
+	
+		# condition-1: it is time!
+		if [ $time_from_last_net -gt $NET_INTERVAL ] 
+		then 
+			myprint "Time to run LONG net-test: $time_from_last_net > $NET_INTERVAL"			
+			skipping="false"
+			update_wifi_mobile 
+			t_wifi_mobile_update=`date +%s`
+			if [ ! -z $mobile_iface ]
 			then
-				# make sure we have fresh wifi/mobile info
-				skipping="false"
-				update_wifi_mobile 
-				t_wifi_mobile_update=`date +%`					
-				if [ ! -z $mobile_iface ]
-				then
-  	 	  		    # if enough mobile data is available 
-					if [ $def_iface == $mobile_iface -a $mobile_data -gt $MAX_MOBILE ]   
-					then 
-						myprint "Skipping net-testing since we are on mobile and data limit passed ($mobile_data -> $MAX_MOBILE)"
-						skipping="true"
-					fi 
-				fi  
-				if [ $skipping == "false" ]
-				then
-					myprint "./net-testing.sh $suffix $current_time $def_iface > logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt"
-					(./net-testing.sh $suffix $current_time $def_iface > logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
-					num=1
-					echo $current_time > ".last_net"
+	 	  	    # if enough mobile data is available 
+				if [ $def_iface == $mobile_iface -a $mobile_data -gt $MAX_MOBILE ]   
+				then 
+					myprint "Skipping net-testing since we are on mobile and data limit was passed ($mobile_data -> $MAX_MOBILE)"
+					skipping="true"
 				fi 
-			else 
-				myprint "Skipping net-testing since no connection was found" 
-			fi 
-		else 
-			myprint "Postponing net-testing since still running (numProc: $num)"
+			fi  
+			if [ $skipping == "false" ]
+			then
+				myprint "./net-testing.sh $suffix $current_time $def_iface \"long\" > logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+				(./net-testing.sh $suffix $current_time $def_iface "long"> logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+				num=1
+				echo $current_time > ".last_net"
+				echo $current_time > ".last_net_short"			
+			fi
+		# condition-2: we are on mobile only and did not do more than N test yet today # FIXME 
+		elif [ $time_from_last_net_short -gt $NET_INTERVAL_SHORT ] 
+		then
+			myprint "Time to run SHORT test: $time_from_last_net > $NET_INTERVAL_SHORT"
+			skipping="false"
+			update_wifi_mobile 
+			t_wifi_mobile_update=`date +%s`			
+			if [ ! -z $mobile_iface ] 
+			then 
+				if [ $def_iface != $mobile_iface -o $num_runs_today -ge $MAX_ZEUS_RUNS  -o $mobile_data -gt $MAX_MOBILE ] 
+				then 
+					myprint "Skipping net-testing-short. DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$MAX_MOBILE"
+					skipping="true"
+				fi 
+			else
+				myprint "Skipping net-testing-short since not on mobile at all"				 
+				skipping="true"
+			fi
+			if [ $skipping == "false" ]
+			then
+				myprint "./net-testing.sh $suffix $current_time $def_iface \"short\" > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+				(./net-testing.sh $suffix $current_time $def_iface "short" > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+				num=1
+				echo $current_time > ".last_net_short"
+			fi
 		fi 
+	else
+		myprint "Skipping net-testing. NetStatus:$net_status NumNetProc:$num DefIface:$def_iface"
 	fi 
+	#################################TESTING#################################
 
 	# check if it is time to status report
 	if [ -f ".last_report" ] 
@@ -799,8 +843,6 @@ do
 		t_wifi_mobile_update=`date +%s`	
 						
 		# dump location information (only start googlemaps if not net-testing to avoid collusion)
-		res_dir="locationlogs/${suffix}"
-		mkdir -p $res_dir
 		if [ ! -f ".locked" ]  # NOTE: this means that another app (browser, youtube, videoconf)  is running already!
 		then 
 			turn_device_on
@@ -810,11 +852,13 @@ do
 			foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
 			myprint "Confirm Maps is in the foregound: $foreground" 
 			# needed in case maps ask for storage...
-			sudo input tap 108 1220		
+			sudo input tap 108 1220
 			sleep 10
-			close_all				
+			close_all
 			turn_device_off
 		fi 
+		res_dir="locationlogs/${suffix}"
+		mkdir -p $res_dir		
 		sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
 		loc_str=`cat $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
 
