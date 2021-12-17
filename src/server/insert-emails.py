@@ -39,7 +39,7 @@ def insert_emails(tester_id, physical_id, email, location, status):
 		try:
 			print("successfully received connection from connection pool ")
 			ps_cursor = ps_connection.cursor()
-			insert_sql = "insert into userinfo(tester_id, physical_id, email, location, status) values(%s, %s, %s, %s);"
+			insert_sql = "insert into userinfo(tester_id, physical_id, email, location, status) values(%s, %s, %s, %s, %s);"
 			print(insert_sql)
 			data = (tester_id, physical_id, email, location, status)
 			ps_cursor.execute(insert_sql, data)
@@ -78,5 +78,6 @@ if __name__ == '__main__':
 			location = fields[3]
 			status = fields[4].strip()
 			#print("insert_emails(" + physical_id + "," + uid + "," + email + "," + location + "," + status + ")")
-			insert_emails(physical_id, uid, email, location, status)
+			msg = insert_emails(physical_id, uid, email, location, status)
+			print(msg)
 			break
