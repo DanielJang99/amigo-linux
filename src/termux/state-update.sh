@@ -792,7 +792,7 @@ do
 		# condition-2: we are on mobile only and did not do more than N test yet today # FIXME 
 		elif [ $time_from_last_net_short -gt $NET_INTERVAL_SHORT ] 
 		then
-			myprint "Time to run SHORT test: $time_from_last_net > $NET_INTERVAL_SHORT"
+			myprint "Time to run SHORT test: $time_from_last_net > $NET_INTERVAL_SHORT -- DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$MAX_MOBILE"
 			skipping="false"
 			update_wifi_mobile 
 			t_wifi_mobile_update=`date +%s`			
