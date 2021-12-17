@@ -135,6 +135,16 @@ if __name__ == '__main__':
 		info, msg  = run_query(query)
 		num_users = int(info[0][0])
 
+		
+		# #find IPs currently connected 
+		# query = "select data->>'wifi_ip' as "IP-List" from status_update where type = 'status' and to_timestamp(timestamp) > now() - interval '5 minutes';"
+		# info, msg  = run_query(query)
+		# print(infor)
+
+		# geolocate IPs 
+
+
+
 		# logging
 		created = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(create_time))		
 		print("Time:%d\tCPU:%f\tNUM_PROC:%d\tCREATED:%s" %(current_time, perc_cpu, num_proc, created))
