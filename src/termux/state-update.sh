@@ -597,35 +597,40 @@ do
 		ans=`timeout 15 curl -s "https://mobile.batterylab.dev:8082/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`
 		ret_code=$?
 		myprint "Checking if there is a command to execute. ANS:$ans - RetCode: $ret_code"		
-		if [[ "$ans" != *"No command matching"* -a $ret_code -eq 0 ]]
+		if [[ "$ans" != *"No command matching"* ]]
 		then		 	
-			command=`echo $ans  | cut -f 1 -d ";"`
-			comm_id=`echo $ans  | cut -f 3 -d ";"`
-			duration=`echo $ans  | cut -f 4 -d ";" | sed 's/ //g'`	
-			background=`echo $ans  | cut -f 5 -d ";"`
-			myprint "Command:$command- ID:$comm_id - MaxDuration:$duration - IsBackground:$background - PrevCommand:$prev_command"
-
-			# verify command was not just run
-			if [ $prev_command == $comm_id ] 
+			if [ $ret_code -eq 0 ]
 			then 
-				myprint "Command not allowed since it matches last command run!!"
-			else 
-				if [ $background == "true" ] 
+				command=`echo $ans  | cut -f 1 -d ";"`
+				comm_id=`echo $ans  | cut -f 3 -d ";"`
+				duration=`echo $ans  | cut -f 4 -d ";" | sed 's/ //g'`	
+				background=`echo $ans  | cut -f 5 -d ";"`
+				myprint "Command:$command- ID:$comm_id - MaxDuration:$duration - IsBackground:$background - PrevCommand:$prev_command"
+
+				# verify command was not just run
+				if [ $prev_command == $comm_id ] 
 				then 
-					eval timeout $duration $command & 
-					comm_status=$?
-					myprint "Command started in background. Status: $comm_status"
+					myprint "Command not allowed since it matches last command run!!"
 				else 
-					eval timeout $duration $command
-					comm_status=$?
-					myprint "Command executed. Status: $comm_status"
-				fi
-				ans=`timeout 15 curl -s "https://mobile.batterylab.dev:8082/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${termux_user}"`
-				myprint "Informed server about last command run. ANS: $ans"
+					if [ $background == "true" ] 
+					then 
+						eval timeout $duration $command & 
+						comm_status=$?
+						myprint "Command started in background. Status: $comm_status"
+					else 
+						eval timeout $duration $command
+						comm_status=$?
+						myprint "Command executed. Status: $comm_status"
+					fi
+					ans=`timeout 15 curl -s "https://mobile.batterylab.dev:8082/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${termux_user}"`
+					myprint "Informed server about last command run. ANS: $ans"
+				fi 
+				echo $comm_id > ".prev_command"
+			else 
+				myprint "CURL error ($ret_code (124:TIMEOUT))"
 			fi 
-			echo $comm_id > ".prev_command"
 		else 
-			myprint "Either no command found ($ans) or CURL error ($ret_code (124:TIMEOUT))"
+			myprint "Command not found ($ans)"
 		fi 
 	fi 
 
