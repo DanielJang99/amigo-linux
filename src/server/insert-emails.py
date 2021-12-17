@@ -28,7 +28,7 @@ def connect_to_database_pool():
 	return status, postgreSQL_pool
 
 # insert stats for graphana plotting
-def insert_emails(physical_id, uid, email, location):
+def insert_emails(tester_id, physical_id, email, location, status):
 	# local parameters 
 	msg = '' 
 
@@ -39,9 +39,9 @@ def insert_emails(physical_id, uid, email, location):
 		try:
 			print("successfully received connection from connection pool ")
 			ps_cursor = ps_connection.cursor()
-			insert_sql = "insert into userinfo(physical_id, tester_id, email, location) values(%s, %s, %s, %s);"
+			insert_sql = "insert into userinfo(tester_id, physical_id, email, location, status) values(%s, %s, %s, %s);"
 			print(insert_sql)
-			data = (physical_id, uid, email, location)
+			data = (tester_id, physical_id, email, location, status)
 			ps_cursor.execute(insert_sql, data)
 			ps_connection.commit()   # make database changes persistent 	
 			ps_cursor.close()
@@ -76,4 +76,5 @@ if __name__ == '__main__':
 			uid = fields[1]
 			email = fields[2]
 			location = fields[3]
-			print("insert_emails(" + physical_id +"," + uid +"," +email+"," + location+")")
+			status = fields[4]
+			print("insert_emails(" + physical_id + "," + uid + "," + email + "," + location + "," + status + ")")
