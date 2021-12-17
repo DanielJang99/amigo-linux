@@ -49,15 +49,23 @@ check_account_via_YT(){
 	sudo media volume --stream 4 --set 0	 # alarm volume
 
 	# wait for YT 
+	youtube_error="false"
 	sleep 5 
 	myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+	c=0
 	while [ $curr_activity != "WatchWhileActivity" ] 
 	do 
 		sleep 3 
 		curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+		let "c++"
+		if [ $c -ge 10 ]
+		then 
+			myprint "Something went wrong loading YouTube"
+			youtube_error="true"
+			break
+		fi 
 	done
-	sleep 3
 
 	# click account notification if there (guessing so far)
 	sudo input tap 560 725
@@ -547,21 +555,18 @@ do
 	fi 
 		
 	# update Google account authorization status
-	if [ $asked_to_charge == "false" ] 
-	then	
-		t_last_google=`cat ".time_google_check"`
-		let "t_p = current_time - t_last_google"
-		if [ $t_p -gt $GOOGLE_CHECK_FREQ -a $num -eq 0 ] 
-		then
-			myprint "Time to check Google account status via YT"
-			check_account_via_YT	  
-			t_last_google=$current_time
-			echo $current_time > ".time_google_check"
-			myprint "Google account status: $google_status"	
-		fi 
-		google_status=`cat ".google_status"`
-	fi
-
+	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`	
+	t_last_google=`cat ".time_google_check"`
+	let "t_p = current_time - t_last_google"
+	if [ $t_p -gt $GOOGLE_CHECK_FREQ -a $num -eq 0 -a $asked_to_charge == "false" ] 
+	then
+		myprint "Time to check Google account status via YT ($t_p > $GOOGLE_CHECK_FREQ)"	
+		check_account_via_YT	  
+		t_last_google=$current_time
+		echo $current_time > ".time_google_check"
+		myprint "Google account status: $google_status"	
+	fi 
+	
 	# loop rate control (slow)
 	let "t_p = (current_time - last_slow_loop_time)"
 	if [ $t_p -lt $slow_freq ] 
@@ -722,7 +727,6 @@ do
 		asked_to_charge="false"
 	fi 
 
-	
 	# check if it is time to run net experiments 
 	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`
 	if [ -f ".last_net" ] 
