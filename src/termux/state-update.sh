@@ -586,13 +586,8 @@ do
 		ans=`timeout 15 curl -s "https://mobile.batterylab.dev:8082/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`
 		ret_code=$?
 		myprint "Checking if there is a command to execute. ANS:$ans - RetCode: $ret_code"		
-		if [[ "$ans" == *"No command matching"* ]]
-		then
-			myprint "No command found"
-		elif [ $$ret_code -ne 0 ]
-		then 
-			myprint "WARNING CURL return code: $ret_code (124:TIMEOUT)"
-		else 	
+		if [[ "$ans" != *"No command matching"* -a $ret_code -eq 0 ]]
+		then		 	
 			command=`echo $ans  | cut -f 1 -d ";"`
 			comm_id=`echo $ans  | cut -f 3 -d ";"`
 			duration=`echo $ans  | cut -f 4 -d ";" | sed 's/ //g'`	
@@ -618,6 +613,8 @@ do
 				myprint "Informed server about last command run. ANS: $ans"
 			fi 
 			echo $comm_id > ".prev_command"
+		else 
+			myprint "Either no command found ($ans) or CURL error ($ret_code (124:TIMEOUT))"
 		fi 
 	fi 
 
