@@ -4,6 +4,9 @@ import time
 import psycopg2
 from psycopg2 import pool
 
+### QUERY 
+#select tester_id as "ID", email as "EMAIL", physical_id as "PhoneID" from userinfo U where status = 'OK' and U.tester_id  NOT IN (SELECT distinct (trim(tester_id)) from status_update WHERE to_timestamp(timestamp) > now() - interval '24 hrs');
+
 # connect to databse (with a pool)
 def connect_to_database_pool(): 
 	postgreSQL_pool = None
