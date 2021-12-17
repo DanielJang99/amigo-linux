@@ -203,10 +203,10 @@ run_zoom(){
 	myprint "Allow next page to load. No activity name, just sleep 10 seconds"
 	sleep 10 
 	
-	# click to join audio
-	myprint "click to join audio"
-	tap_screen 200 1110 3
-	tap_screen 178 1110
+	# click to join audio #FIXME 
+	# myprint "click to join audio"
+	# tap_screen 200 1110 3
+	# tap_screen 178 1110
 	
 	# # MUTE! -- FIXME 
 	# use_mute="true"	
@@ -497,6 +497,12 @@ fi
 myprint "Ensuring that screen is in portrait and auto-rotation disabled"
 sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
 sudo  settings put system user_rotation 0          # put in portrait
+
+#lower all the volumes
+myprint "Making sure volume is off"
+sudo media volume --stream 3 --set 0     # media volume
+sudo media volume --stream 1 --set 0	 # ring volume
+sudo media volume --stream 4 --set 0	 # alarm volume
 
 # update UID if needed 
 if [ $uid == "none" ]
