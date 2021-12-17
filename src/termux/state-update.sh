@@ -564,19 +564,16 @@ do
 	fi 
 		
 	# update Google account authorization status
-	if [ $asked_to_charge == "false" ] 
-	then	
-		t_last_google=`cat ".time_google_check"`
-		let "t_p = current_time - t_last_google"
-		if [ $t_p -gt $GOOGLE_CHECK_FREQ -a $num -eq 0 ] 
-		then
-			myprint "Time to check Google account status via YT"
-			check_account_via_YT	  
-			t_last_google=$current_time
-			echo $current_time > ".time_google_check"
-			myprint "Google account status: $google_status"	
-		fi 
-		google_status=`cat ".google_status"`
+	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`	
+	t_last_google=`cat ".time_google_check"`
+	let "t_p = current_time - t_last_google"
+	if [ $t_p -gt $GOOGLE_CHECK_FREQ -a $num -eq 0 -a $asked_to_charge == "false" ] 
+	then
+		myprint "Time to check Google account status via YT ($t_p > $GOOGLE_CHECK_FREQ)"	
+		check_account_via_YT	  
+		t_last_google=$current_time
+		echo $current_time > ".time_google_check"
+		myprint "Google account status: $google_status"	
 	fi
 
 	# loop rate control (slow)
