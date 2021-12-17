@@ -51,8 +51,9 @@ then
 fi 
 
 # inform server of reboot detected 
+curr_time=`date +%s`
 uptime_sec=`sudo cat /proc/uptime | awk '{print $1}' | cut -f 1 -d "."`
-echo "Uptime: $uptime_sec sec"
+echo "CurrentTime: $curr_time Uptime-sec:$uptime_sec"
 if [ $uptime_sec -le 180 ] 
 then
 	suffix=`date +%d-%m-%Y`
