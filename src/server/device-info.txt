@@ -1,0 +1,66 @@
+1	861272047248839	None	Home	STAY
+2	861272047222172	map9999@nyu.edu	France, Nantes and Paris	OK
+3	869883040130873	ac9431@nyu.edu	USA, Rhode Island	OK
+4	861272047232536	ass690@nyu.edu	Turkey, Istanbul	OK
+5	868609048474034	mad865@nyu.edu	Poland	OK
+6	868609048169931	mfr7859@nyu.edu	Canada, Toronoto	OK
+7	861272047222511	ab8614@nyu.edu	Kazakhstan, Almaty	OK
+8	861272047252815	dlf360@nyu.edu	Spain, Barcelona	OK
+9	868609048447618	tp53@nyu.edu	Germany, Bremen	OK
+10	868609048170897	sg6940@nyu.edu	Colombia, Cajica	OK
+11	861272047226199	jp4939@nyu.edu	Slovakia, Bratislava	OK
+12	861272047218576	acs1018@nyu.edu	Bolivia, La Paz	OK
+13	868515047513773	am11340@nyu.edu	Greece, Athens	OK
+14	868609048472491	moa2020@nyu.edu	Nigeria, Lagos	OK
+15	868609048452311	kp2681@nyu.edu	Sri Lanka	OK
+16	868609048463599	ag6503@nyu.edu	Bosnia, Brcko	OK
+17	861272047238574	es5531@nyu.edu	Albania, Tirana	OK
+18	861272047254530	sac7720@nyu.edu	Jamaica	OK
+19	861272047237931	az2177@nyu.edu	Kyrgystan, Bishkek	OK
+20	861272047250496	sb7677@nyu.edu	Nepal, Kathmandu	OK
+21	861272047235232	mb7099@nyu.edu	Ethiopia, Addis Ababa	OK
+22	868609048457575	la2369@nyu.edu	Syria, Latakia	OK
+23	861272047246510	ta2085@nyu.edu	Pakistan, Lahore	OK
+24	868609048446818	ss14247@nyu.edu	India, Navi, Mumbai	OK
+25	868609048440118	dai256@nyu.edu	USA, Brooklyn	STAY
+26	861272047230159	ot503@nyu.edu	Tunisia, Bizerte	OK
+27	868609048484298	raa9845@nyu.edu	Bahrain, Manama	OK
+28	861272047233690	omk4141@nyu.edu	Kenya, Mombasa	OK
+29	868609048469232	ala9902@nyu.edu	Portugal, Porto	OK
+30	861272047231199	rv2166@nyu.edu	Mexico, Queretaro	OK
+31	868609048162712	ldl380@nyu.edu	Brazil, Manaus	OK
+32	869883040136359	ps3471@nyu.edu	Cambodia, Siem Reap	STAY
+33	861272047236230	zmh6339@nyu.edu	Egypt, Cairo	STAY
+34	868515047495997	dt2307@nyu.edu	Georgia, Tblisi	OK
+35	868609048171531	olr7742@nyu.edu	Jordan, Amman	OK
+36	868609048166135	joseph.hong@nyu.edu	Korea, Seoul	OK
+37	868609048170376	mb8477@nyu.edu	Monglolia, Ulaanbaatar	OK
+38	868609048471196	yasir.zaki@nyu.edu	UAE, Dubai	OK
+39	861272047245850	po511@nyu.edu	Ukraine, Dnipro	OK
+40	861272047249217	None	None	STAY
+41	868609048470651	lp2233@nyu.edu	Australia, Melbourne, sydney	OK
+42	868609048168495	aad598@nyu.edu	Fiji Ba	OK
+43	868609048463516	mk7406@nyu.edu	Ireland, Kerry	OK
+44	861272047229458	ft2063@nyu.edu	Italy, Pisa	OK
+45	861272047250454	sma767@nyu.edu	Pakistan, Islamabad Karachi	OK
+46	868609048444557	hz2776@nyu.edu	Pakistan, Rawalpindi	OK
+47	868609048163033	crb596@nyu.edu	USA, Denver	OK
+48	868609048408990	caa10005@nyu.edu	Spain, Madrid	OK
+49	868609048479033	fa2093@nyu.edu	Italy, Rome	OK
+50	868609048444458	avk3320@nyu.edu	India, Pune	OK
+51	868609048442957	russell.coke@nyu.edu	Jamaica	OK
+52	868609048472574	mr5850@nyu.edu	Pakistan, Islamabad	OK
+53	868609048478753	ga2177@nyu.edu	Pakistan, Jhelum	OK
+54	868609048463730	rs7358@nyu.edu	India, Bangalore	OK
+55	868609048444037	ab9840@nyu.edu	Nepal, Dhangadhi	OK
+56	868609048233257	ms12976@nyu.edu	Nepal, Ppkhara	OK
+57	868609048168271	mz2829@nyu.edu	Pakistan, Rahim Yar	OK
+58	861272047239770	sk8795@nyu.edu	Kazakhstan, Nur-Sultan	OK
+59	861272047176451	he589@nyu.edu	USA, Johnson city	OK
+60	868515047500853	ri596@nyu.edu	USA, NYC	OK
+61	861272047251718	ab9884@nyu.edu	Bangladish Dhaka	STAY
+62	868609048167992	mz2934@nyu.edu	India, Hyderabad	OK
+63	868609048168354	None	Home	STAY
+64	868515047511793	None	Home	STAY
+65	861272047266971	None	Home	STAY
+66	868609048478555	None	Home	STAY
