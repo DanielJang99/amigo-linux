@@ -76,4 +76,4 @@ if __name__ == '__main__':
 			uid = fields[1]
 			email = fields[2]
 			location = fields[3]
-			print("insert_emails(physical_id, uid, email, location)")
+			print("insert_emails(" + physical_id +"," + uid +"," +email+"," + location+")")
