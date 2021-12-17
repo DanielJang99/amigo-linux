@@ -77,4 +77,6 @@ if __name__ == '__main__':
 			email = fields[2]
 			location = fields[3]
 			status = fields[4].strip()
-			print("insert_emails(" + physical_id + "," + uid + "," + email + "," + location + "," + status + ")")
+			#print("insert_emails(" + physical_id + "," + uid + "," + email + "," + location + "," + status + ")")
+			insert_emails(physical_id, uid, email, location, status)
+			break
