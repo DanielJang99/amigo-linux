@@ -248,4 +248,3 @@ echo "[`date`] net-testing $opt END. Duration: $t_p FreeSpace: ${free_space_e}GB
 	# 	# allow some time to rest 
 	# 	myprint "Resting post ZEUS test..."
 	# 	sleep 30
-
