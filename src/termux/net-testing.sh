@@ -99,9 +99,6 @@ run_zus(){
 	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/zeustest
 }
 
-#logging 
-echo "[`date`] net-testing START"
-
 # params
 MAX_ZEUS_RUNS=6             # maximum duration of NYU experiments
 ZEUS_DURATION=20            # duration of NYU experiments
@@ -117,7 +114,11 @@ then
 	opt=$4
 fi  
 
+#logging 
+echo "[`date`] net-testing $opt START"
+
 # lock out google maps to avoid any interference
+t_start=`date + %s`
 touch ".locked" 
 sleep 30 
 
@@ -229,7 +230,9 @@ free_space_e=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 space_used=`echo "$free_space_s $free_space_e" | awk '{print($1-$2)*1000}'`
 
 #logging 
-echo "[`date`] net-testing END. FreeSpace: ${free_space_e}GB SpaceUsed: ${space_used}MB"
+t_end=`date + %s`
+let "t_p = t_end - t_start"
+echo "[`date`] net-testing $opt END. Duration: $t_p FreeSpace: ${free_space_e}GB SpaceUsed: ${space_used}MB"
 
 ######################### disable wifi for zeus testing after 6pm
 # elif [ $curr_hour -ge 18 ] # we are past 6pm
