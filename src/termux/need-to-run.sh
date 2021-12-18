@@ -83,11 +83,13 @@ then
 	myprint "Updating our code..."
 	git pull
 	
-	# check if something to compress 
-  ./stop-net-testing.sh  	
+	# make sure net-testing is stopped
+	./stop-net-testing.sh  	
+
+	# check if there is something to compress 	
 	for f in `ls logs | grep 'state\|net'`
 	do  
-		echo $file | grep -w ".gz" > /dev/null
+		echo $f | grep -E "\.gz" > /dev/null
 		if [ $? -eq 1 ] 
 		then 
 			gzip "logs/${f}"
