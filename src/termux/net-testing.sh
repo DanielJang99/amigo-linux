@@ -97,16 +97,13 @@ run_zus(){
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 
 	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/zeustest
-
-	# status update 
-	let "num_runs_today++"	
 }
 
 #logging 
 echo "[`date`] net-testing START"
 
 # params
-MAX_ZEUS_RUNS=3             # maximum duration of NYU experiments
+MAX_ZEUS_RUNS=6             # maximum duration of NYU experiments
 ZEUS_DURATION=20            # duration of NYU experiments
 suffix=`date +%d-%m-%Y`
 t_s=`date +%s`
