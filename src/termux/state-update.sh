@@ -284,7 +284,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="1.4"                              # code version 
+vrs="1.5"                              # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
 
 # check if testing
@@ -638,24 +638,27 @@ do
 	if [ -f ".cpu-usage" ] 
 	then 
 		cpu_util=`cat ".cpu-usage" | cut -f 1 -d "."`
-		if [ $cpu_util -ge 85 ] 
-		then 
-			if [ $num -eq 0 ]
+		if [ ! -z $cpu_util ]
+		then 			
+			if [ $cpu_util -ge 85 ] 
 			then 
-				let "strike++"
-				if [ $strike -eq 6 ] 
+				if [ $num -eq 0 ]
 				then 
-					#myprint "Detected high CPU (>85%) in the last 90 seconds. Rebooting"
-					myprint "Detected high CPU (>85%) in the last 90 seconds.  -- Temporarily disabling rebooting"
-					#sudo reboot 
+					let "strike++"
+					if [ $strike -eq 6 ] 
+					then 
+						#myprint "Detected high CPU (>85%) in the last 90 seconds. Rebooting"
+						myprint "Detected high CPU (>85%) in the last 90 seconds.  -- Temporarily disabling rebooting"
+						#sudo reboot 
+					fi 
+				else 
+					myprint "Detected high CPU ($cpu_util>85%). Ignoring since we are net-testing"
 				fi 
 			else 
-				myprint "Detected high CPU ($cpu_util>85%). Ignoring since we are net-testing"
+				strike=0
 			fi 
-		else 
-			strike=0
+			myprint "CPU usage: $cpu_util StrikeCount: $strike NetTesting: $num"
 		fi 
-		myprint "CPU usage: $cpu_util StrikeCount: $strike NetTesting: $num"
 	fi 
 
 	# check if our foreground/background service is still running
