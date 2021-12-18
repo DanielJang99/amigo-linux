@@ -64,7 +64,8 @@ sync_barrier(){
 			myprint "Sync time passed, consider increasing"
 		fi 
 	else 
-		myprint "no sync requested"
+		myprint "no sync requested. Sleep 5 just in case..."
+		sleep 5
 	fi 
 }
 
@@ -139,7 +140,7 @@ wait_for_screen(){
 
 	myprint "Wait for activity: $screen_name"
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
-	#echo "==> $foreground"		
+	echo "==> $foreground"		
 	while [ $foreground != $screen_name ]
 	do 
 		let "c++"
@@ -203,10 +204,11 @@ run_zoom(){
 	myprint "Allow next page to load. No activity name, just sleep 10 seconds"
 	sleep 10 
 	
-	# click to join audio #FIXME 
-	# myprint "click to join audio"
-	# tap_screen 200 1110 3
-	# tap_screen 178 1110
+	# click to join audio
+	myprint "click to join audio"
+	tap_screen 178 1110 1
+	tap_screen 200 1110
+	
 	
 	# # MUTE! -- FIXME 
 	# use_mute="true"	
@@ -262,10 +264,10 @@ run_webex(){
 		myprint "Turning on video..."
 		tap_screen 280 $y_coord 2
 	fi  
-	if [ $use_mute == "true" ] 
-	then 
-		tap_screen 160 $y_coord 2
-	fi 
+	#if [ $use_mute == "true" ] 
+	#then 
+	#	tap_screen 160 $y_coord 2
+	#fi 
 	
 	# allow extra time when master script is not blocking
 	if [ $video_recording == "true" ]
@@ -291,6 +293,7 @@ run_webex(){
 }
 
 # helper function to join a google meet meeting
+## FailedToJoinMeetingActivity <== watch for this, happens when verification is needed 
 run_meet(){
 	if [ $clear_state == "true" ] 
 	then 
@@ -320,6 +323,7 @@ run_meet(){
 	
 	# join with video or not	
 	wait_for_screen "GreenroomActivity"		
+	use_mute="true"	
 	if [ $use_video == "false" ] 
 	then 
 		tap_screen 175 855 1 
@@ -328,7 +332,8 @@ run_meet(){
 	then 
 		tap_screen 295 855 1
 	fi 
-
+	sleep 5 
+	
 	# press join
 	tap_screen 485 855 5
 
@@ -497,12 +502,6 @@ fi
 myprint "Ensuring that screen is in portrait and auto-rotation disabled"
 sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
 sudo  settings put system user_rotation 0          # put in portrait
-
-#lower all the volumes
-myprint "Making sure volume is off"
-sudo media volume --stream 3 --set 0     # media volume
-sudo media volume --stream 1 --set 0	 # ring volume
-sudo media volume --stream 4 --set 0	 # alarm volume
 
 # update UID if needed 
 if [ $uid == "none" ]
