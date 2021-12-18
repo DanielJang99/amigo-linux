@@ -125,12 +125,12 @@ sleep 30
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 
 # run multiple MTR
-./mtr.sh $suffix $t_s
+timeout 300 ./mtr.sh $suffix $t_s
 
 # video testing with youtube
 if [ $opt == "long" ] 
 then 
-	./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
+	timeout 300 ./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
 	turn_device_off
 	myprint "Sleep 30 to lower CPU load..."
 	sleep 30  		 
@@ -188,17 +188,16 @@ sleep 15
 myprint "Running speedtest-cli..."
 res_folder="speedtest-cli-logs/${suffix}"
 mkdir -p $res_folder
-speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
+timeout 300 speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
 gzip "${res_folder}/speedtest-$t_s.json"
 myprint "Sleep 30 to lower CPU load..."
 sleep 30  		 
-
 
 # run a speedtest in the browser (fast.com) -- having issue on this phone 
 #./speed-browse-test.sh $suffix $t_s
 
 # test multiple CDNs
-./cdn-test.sh $suffix $t_s
+timeout 300 ./cdn-test.sh $suffix $t_s
 sleep 30 
 
 # QUIC test? 
@@ -207,7 +206,7 @@ sleep 30
 # test multiple webages -- TEMPORARILY DISABLED 
 if [ $opt == "long" ] 
 then 
-	./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap --single # reduced number of webpage tests
+	timeout 300 ./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap --single # reduced number of webpage tests
 	sleep 30 
 else 
 	myprint "Skipping WebTest test sing option:$opt"
@@ -231,8 +230,6 @@ space_used=`echo "$free_space_s $free_space_e" | awk '{print($1-$2)*1000}'`
 
 #logging 
 echo "[`date`] net-testing END. FreeSpace: ${free_space_e}GB SpaceUsed: ${space_used}MB"
-
-
 
 ######################### disable wifi for zeus testing after 6pm
 # elif [ $curr_hour -ge 18 ] # we are past 6pm
