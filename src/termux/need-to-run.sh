@@ -51,8 +51,9 @@ then
 fi 
 
 # inform server of reboot detected 
+curr_time=`date +%s`
 uptime_sec=`sudo cat /proc/uptime | awk '{print $1}' | cut -f 1 -d "."`
-echo "Uptime: $uptime_sec sec"
+echo "CurrentTime: $curr_time Uptime-sec:$uptime_sec"
 if [ $uptime_sec -le 180 ] 
 then
 	suffix=`date +%d-%m-%Y`
@@ -82,11 +83,13 @@ then
 	myprint "Updating our code..."
 	git pull
 	
-	# check if something to compress 
-  ./stop-net-testing.sh  	
+	# make sure net-testing is stopped
+	./stop-net-testing.sh  	
+
+	# check if there is something to compress 	
 	for f in `ls logs | grep 'state\|net'`
 	do  
-		echo $file | grep -w ".gz" > /dev/null
+		echo $f | grep -E "\.gz" > /dev/null
 		if [ $? -eq 1 ] 
 		then 
 			gzip "logs/${f}"

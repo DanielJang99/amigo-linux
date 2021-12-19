@@ -131,9 +131,19 @@ if __name__ == '__main__':
 		## TODO 
 
 		# find how many users are currently on
-		query = "select count(distinct tester_id)::int as num_users from status_update where to_timestamp(timestamp) > now() - interval '15 minutes';"
+		query = "select count(distinct tester_id)::int as num_users from status_update where type = 'status' and to_timestamp(timestamp) > now() - interval '15 minutes';"
 		info, msg  = run_query(query)
 		num_users = int(info[0][0])
+
+		
+		# #find IPs currently connected 
+		# query = "select data->>'wifi_ip' as "IP-List" from status_update where type = 'status' and to_timestamp(timestamp) > now() - interval '5 minutes';"
+		# info, msg  = run_query(query)
+		# print(infor)
+
+		# geolocate IPs 
+
+
 
 		# logging
 		created = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(create_time))		

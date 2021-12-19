@@ -97,16 +97,10 @@ run_zus(){
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 
 	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/zeustest
-
-	# status update 
-	let "num_runs_today++"	
 }
 
-#logging 
-echo "[`date`] net-testing START"
-
 # params
-MAX_ZEUS_RUNS=3             # maximum duration of NYU experiments
+MAX_ZEUS_RUNS=6             # maximum duration of NYU experiments
 ZEUS_DURATION=20            # duration of NYU experiments
 suffix=`date +%d-%m-%Y`
 t_s=`date +%s`
@@ -120,7 +114,11 @@ then
 	opt=$4
 fi  
 
+#logging 
+echo "[`date`] net-testing $opt START"
+
 # lock out google maps to avoid any interference
+t_start=`date +%s`
 touch ".locked" 
 sleep 30 
 
@@ -128,12 +126,12 @@ sleep 30
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 
 # run multiple MTR
-./mtr.sh $suffix $t_s
+timeout 300 ./mtr.sh $suffix $t_s
 
 # video testing with youtube
 if [ $opt == "long" ] 
 then 
-	./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
+	timeout 300 ./youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single
 	turn_device_off
 	myprint "Sleep 30 to lower CPU load..."
 	sleep 30  		 
@@ -141,7 +139,8 @@ else
 	myprint "Skipping YouTube test sing option:$opt"
 fi 
 
-# run nyu stuff -- only if MOBILE
+# run nyu stuff -- only if MOBILE and not done too many already 
+num_runs_today=0
 if [ ! -f ".data" ] 
 then
 	sudo dumpsys netstats > .data
@@ -152,7 +151,6 @@ then
 	#  status update 
 	curr_hour=`date +%H`
 	status_file=".zus-${suffix}"
-	num_runs_today=0
 	if [ -f $status_file ]
 	then
 		num_runs_today=`cat $status_file`
@@ -160,28 +158,15 @@ then
 	myprint "NYU-stuff. Found a mobile connection: $mobile_iface (DefaultConnection:$iface). NumRunsToday:$num_runs_today (MaxRuns: $MAX_ZEUS_RUNS)"
 	if [ $iface == $mobile_iface -a $num_runs_today -lt $MAX_ZEUS_RUNS ] 
 	then
-		myprint "NYU-stuff. We can run. Sleep 30 to allow state-update to know"
-		sleep 30  #FIXME
 		run_zus		
-		myprint "Sleep 30 to lower CPU load..."
+		let "num_runs_today++"
+		myprint "Done with zus. New count for the day: $num_runs_today"
+		echo $num_runs_today > $status_file
+		myprint "Sleep 30 to lower CPU load..."		
 		sleep 30  		 
-	# elif [ $curr_hour -ge 18 ] # we are past 6pm
-	# then 
-	# 	myprint "NYU-stuff. It is past 6pm and missing data. Resorting to disable WiFi (sleep 30 to allow state-update to know)"
-	# 	touch ".locked"
-	# 	sleep 30 
-	# 	toggle_wifi "off" $iface
-	# 	run_zus
-	# 	toggle_wifi "on" $iface
-	# 	myprint "Enabling WiFi back"		
-	
-	# 	# allow some time to rest 
-	# 	myprint "Resting post ZEUS test..."
-	# 	sleep 30
 	else 
-		myprint "NYU-stuff. Skipping since on WiFI and it not past 6pm"
+		myprint "NYU-stuff. Skipping since on WiFI!"
 	fi 
-	echo $num_runs_today > $status_file
 else 
 	myprint "No mobile connection found. Skipping NYU-ZUS"
 fi 
@@ -204,17 +189,16 @@ sleep 15
 myprint "Running speedtest-cli..."
 res_folder="speedtest-cli-logs/${suffix}"
 mkdir -p $res_folder
-speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
+timeout 300 speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
 gzip "${res_folder}/speedtest-$t_s.json"
 myprint "Sleep 30 to lower CPU load..."
 sleep 30  		 
-
 
 # run a speedtest in the browser (fast.com) -- having issue on this phone 
 #./speed-browse-test.sh $suffix $t_s
 
 # test multiple CDNs
-./cdn-test.sh $suffix $t_s
+timeout 300 ./cdn-test.sh $suffix $t_s
 sleep 30 
 
 # QUIC test? 
@@ -223,7 +207,7 @@ sleep 30
 # test multiple webages -- TEMPORARILY DISABLED 
 if [ $opt == "long" ] 
 then 
-	./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap --single # reduced number of webpage tests
+	timeout 300 ./web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap --single # reduced number of webpage tests
 	sleep 30 
 else 
 	myprint "Skipping WebTest test sing option:$opt"
@@ -246,4 +230,21 @@ free_space_e=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 space_used=`echo "$free_space_s $free_space_e" | awk '{print($1-$2)*1000}'`
 
 #logging 
-echo "[`date`] net-testing END. FreeSpace: ${free_space_e}GB SpaceUsed: ${space_used}MB"
+t_end=`date +%s`
+let "t_p = t_end - t_start"
+echo "[`date`] net-testing $opt END. Duration: $t_p FreeSpace: ${free_space_e}GB SpaceUsed: ${space_used}MB"
+
+######################### disable wifi for zeus testing after 6pm
+# elif [ $curr_hour -ge 18 ] # we are past 6pm
+	# then 
+	# 	myprint "NYU-stuff. It is past 6pm and missing data. Resorting to disable WiFi (sleep 30 to allow state-update to know)"
+	# 	touch ".locked"
+	# 	sleep 30 
+	# 	toggle_wifi "off" $iface
+	# 	run_zus
+	# 	toggle_wifi "on" $iface
+	# 	myprint "Enabling WiFi back"		
+	
+	# 	# allow some time to rest 
+	# 	myprint "Resting post ZEUS test..."
+	# 	sleep 30

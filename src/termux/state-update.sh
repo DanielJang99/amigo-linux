@@ -284,7 +284,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="1.4"                              # code version 
+vrs="1.5"                              # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
 isPaused="N/A"                         # hold info on whether a phone is paued or not
 	
@@ -598,38 +598,40 @@ do
 		ans=`timeout 15 curl -s "https://mobile.batterylab.dev:8082/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`
 		ret_code=$?
 		myprint "Checking if there is a command to execute. ANS:$ans - RetCode: $ret_code"		
-		if [[ "$ans" == *"No command matching"* ]]
-		then
-			myprint "No command found"
-		elif [ $$ret_code -ne 0 ]
-		then 
-			myprint "WARNING CURL return code: $ret_code (124:TIMEOUT)"
-		else 	
-			command=`echo $ans  | cut -f 1 -d ";"`
-			comm_id=`echo $ans  | cut -f 3 -d ";"`
-			duration=`echo $ans  | cut -f 4 -d ";" | sed 's/ //g'`	
-			background=`echo $ans  | cut -f 5 -d ";"`
-			myprint "Command:$command- ID:$comm_id - MaxDuration:$duration - IsBackground:$background - PrevCommand:$prev_command"
-
-			# verify command was not just run
-			if [ $prev_command == $comm_id ] 
+		if [[ "$ans" != *"No command matching"* ]]
+		then		 	
+			if [ $ret_code -eq 0 ]
 			then 
-				myprint "Command not allowed since it matches last command run!!"
-			else 
-				if [ $background == "true" ] 
+				command=`echo $ans  | cut -f 1 -d ";"`
+				comm_id=`echo $ans  | cut -f 3 -d ";"`
+				duration=`echo $ans  | cut -f 4 -d ";" | sed 's/ //g'`	
+				background=`echo $ans  | cut -f 5 -d ";"`
+				myprint "Command:$command- ID:$comm_id - MaxDuration:$duration - IsBackground:$background - PrevCommand:$prev_command"
+
+				# verify command was not just run
+				if [ $prev_command == $comm_id ] 
 				then 
-					eval timeout $duration $command & 
-					comm_status=$?
-					myprint "Command started in background. Status: $comm_status"
+					myprint "Command not allowed since it matches last command run!!"
 				else 
-					eval timeout $duration $command
-					comm_status=$?
-					myprint "Command executed. Status: $comm_status"
-				fi
-				ans=`timeout 15 curl -s "https://mobile.batterylab.dev:8082/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${termux_user}"`
-				myprint "Informed server about last command run. ANS: $ans"
+					if [ $background == "true" ] 
+					then 
+						eval timeout $duration $command & 
+						comm_status=$?
+						myprint "Command started in background. Status: $comm_status"
+					else 
+						eval timeout $duration $command
+						comm_status=$?
+						myprint "Command executed. Status: $comm_status"
+					fi
+					ans=`timeout 15 curl -s "https://mobile.batterylab.dev:8082/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${termux_user}"`
+					myprint "Informed server about last command run. ANS: $ans"
+				fi 
+				echo $comm_id > ".prev_command"
+			else 
+				myprint "CURL error ($ret_code (124:TIMEOUT))"
 			fi 
-			echo $comm_id > ".prev_command"
+		else 
+			myprint "Command not found ($ans)"
 		fi 
 	fi 
 
@@ -637,24 +639,27 @@ do
 	if [ -f ".cpu-usage" ] 
 	then 
 		cpu_util=`cat ".cpu-usage" | cut -f 1 -d "."`
-		if [ $cpu_util -ge 85 ] 
-		then 
-			if [ $num -eq 0 ]
+		if [ ! -z $cpu_util ]
+		then 			
+			if [ $cpu_util -ge 85 ] 
 			then 
-				let "strike++"
-				if [ $strike -eq 6 ] 
+				if [ $num -eq 0 ]
 				then 
-					#myprint "Detected high CPU (>85%) in the last 90 seconds. Rebooting"
-					myprint "Detected high CPU (>85%) in the last 90 seconds.  -- Temporarily disabling rebooting"
-					#sudo reboot 
+					let "strike++"
+					if [ $strike -eq 6 ] 
+					then 
+						#myprint "Detected high CPU (>85%) in the last 90 seconds. Rebooting"
+						myprint "Detected high CPU (>85%) in the last 90 seconds.  -- Temporarily disabling rebooting"
+						#sudo reboot 
+					fi 
+				else 
+					myprint "Detected high CPU ($cpu_util>85%). Ignoring since we are net-testing"
 				fi 
 			else 
-				myprint "Detected high CPU ($cpu_util>85%). Ignoring since we are net-testing"
+				strike=0
 			fi 
-		else 
-			strike=0
+			myprint "CPU usage: $cpu_util StrikeCount: $strike NetTesting: $num"
 		fi 
-		myprint "CPU usage: $cpu_util StrikeCount: $strike NetTesting: $num"
 	fi 
 
 	# check if our foreground/background service is still running
@@ -772,7 +777,7 @@ do
 		# condition-1: it is time!
 		if [ $time_from_last_net -gt $NET_INTERVAL ] 
 		then 
-			myprint "Time to run LONG net-test: $time_from_last_net > $NET_INTERVAL"			
+			myprint "Time to run LONG net-test: $time_from_last_net > $NET_INTERVAL -- DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
 			skipping="false"
 			update_wifi_mobile 
 			t_wifi_mobile_update=`date +%s`
@@ -788,7 +793,7 @@ do
 			if [ $skipping == "false" ]
 			then
 				myprint "./net-testing.sh $suffix $current_time $def_iface \"long\" > logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt"
-				(./net-testing.sh $suffix $current_time $def_iface "long"> logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+				(timeout 1200 ./net-testing.sh $suffix $current_time $def_iface "long"> logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
 				num=1
 				echo $current_time > ".last_net"
 				echo $current_time > ".last_net_short"			
@@ -796,7 +801,6 @@ do
 		# condition-2: we are on mobile only and did not do more than N test yet today # FIXME 
 		elif [ $time_from_last_net_short -gt $NET_INTERVAL_SHORT ] 
 		then
-			myprint "Time to run SHORT test: $time_from_last_net > $NET_INTERVAL_SHORT"
 			skipping="false"
 			update_wifi_mobile 
 			t_wifi_mobile_update=`date +%s`			
@@ -804,7 +808,7 @@ do
 			then 
 				if [ $def_iface != $mobile_iface -o $num_runs_today -ge $MAX_ZEUS_RUNS  -o $mobile_data -gt $MAX_MOBILE ] 
 				then 
-					myprint "Skipping net-testing-short. DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$MAX_MOBILE"
+					myprint "Skipping net-testing-short. DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
 					skipping="true"
 				fi 
 			else
@@ -813,8 +817,9 @@ do
 			fi
 			if [ $skipping == "false" ]
 			then
+				myprint "Time to run SHORT test: $time_from_last_net > $NET_INTERVAL_SHORT -- DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
 				myprint "./net-testing.sh $suffix $current_time $def_iface \"short\" > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt"
-				(./net-testing.sh $suffix $current_time $def_iface "short" > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+				(timeout 1200 ./net-testing.sh $suffix $current_time $def_iface "short" > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
 				num=1
 				echo $current_time > ".last_net_short"
 			fi
