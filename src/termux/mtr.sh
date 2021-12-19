@@ -67,4 +67,4 @@ test youtube.com youtube
 # logging 
 t_e=`date +%s`
 let "t_p = t_e - t_s"
-echo "Done MTR reporting. Duration: $t_p. ResFolder: $res_dir"
+myprint "Done MTR reporting. Duration: $t_p. ResFolder: $res_dir"
