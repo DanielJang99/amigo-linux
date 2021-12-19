@@ -776,7 +776,7 @@ do
 		# condition-1: it is time!
 		if [ $time_from_last_net -gt $NET_INTERVAL ] 
 		then 
-			myprint "Time to run LONG net-test: $time_from_last_net > $NET_INTERVAL"			
+			myprint "Time to run LONG net-test: $time_from_last_net > $NET_INTERVAL -- DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
 			skipping="false"
 			update_wifi_mobile 
 			t_wifi_mobile_update=`date +%s`
@@ -800,7 +800,6 @@ do
 		# condition-2: we are on mobile only and did not do more than N test yet today # FIXME 
 		elif [ $time_from_last_net_short -gt $NET_INTERVAL_SHORT ] 
 		then
-			myprint "Time to run SHORT test: $time_from_last_net > $NET_INTERVAL_SHORT -- DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$MAX_MOBILE"
 			skipping="false"
 			update_wifi_mobile 
 			t_wifi_mobile_update=`date +%s`			
@@ -808,7 +807,7 @@ do
 			then 
 				if [ $def_iface != $mobile_iface -o $num_runs_today -ge $MAX_ZEUS_RUNS  -o $mobile_data -gt $MAX_MOBILE ] 
 				then 
-					myprint "Skipping net-testing-short. DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$MAX_MOBILE"
+					myprint "Skipping net-testing-short. DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
 					skipping="true"
 				fi 
 			else
@@ -817,6 +816,7 @@ do
 			fi
 			if [ $skipping == "false" ]
 			then
+				myprint "Time to run SHORT test: $time_from_last_net > $NET_INTERVAL_SHORT -- DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
 				myprint "./net-testing.sh $suffix $current_time $def_iface \"short\" > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt"
 				(timeout 1200 ./net-testing.sh $suffix $current_time $def_iface "short" > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
 				num=1
