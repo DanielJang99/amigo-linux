@@ -118,7 +118,7 @@ fi
 echo "[`date`] net-testing $opt START"
 
 # lock out google maps to avoid any interference
-t_start=`date + %s`
+t_start=`date +%s`
 touch ".locked" 
 sleep 30 
 
@@ -230,7 +230,7 @@ free_space_e=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 space_used=`echo "$free_space_s $free_space_e" | awk '{print($1-$2)*1000}'`
 
 #logging 
-t_end=`date + %s`
+t_end=`date +%s`
 let "t_p = t_end - t_start"
 echo "[`date`] net-testing $opt END. Duration: $t_p FreeSpace: ${free_space_e}GB SpaceUsed: ${space_used}MB"
 
