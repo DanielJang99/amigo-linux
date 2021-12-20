@@ -229,6 +229,23 @@ update_wifi_mobile(){
 			echo $wifi_data > $wifi_today_file
 		fi 
 		prev_wifi_traffic=$wifi_traffic
+
+		# keep track of wifi encountered 
+		today_wifi="wifi-info/ssid-list-${suffix}"
+		mkdir -p "wifi-info"
+		force_net_test="false"
+		if [ -f $today_wifi ]
+		then
+			cat $today_wifi | grep "$wifi_ssid" > /dev/null
+			if [ $? -ne 0 ]
+			then 
+				force_net_test="true"
+				echo $wifi_ssid >> $today_wifi			
+			fi 
+		else 
+			echo $wifi_ssid > $today_wifi
+			force_net_test="true"
+		fi 	
 	else
 		wifi_ip="none"
 		wifi_ssid="none"
@@ -761,8 +778,7 @@ do
 	let "time_from_last_net = current_time - last_net"
 	let "time_from_last_net_short = current_time - last_net_short"	
 	myprint "TimeFromLastNetLong:$time_from_last_net sec TimeFromLastNetShort:$time_from_last_net_short sec ShouldRunIfTime:$net_status RunningNetProc:$num"
-	#################################TESTING#################################
-	# 1) flag set, 2) no previous running, 3) connected
+	# 1) flag set, 2) no previous running, 3) connected (basic checks to see if we should run)
 	if [ $net_status == "true" -a $num -eq 0 -a  $def_iface != "none" ]  
 	then
 		# update counter of how many runs today 
@@ -772,9 +788,25 @@ do
 		then
 			num_runs_today=`cat ".zus-${suffix}"`
 		fi 	
-	
-		# condition-1: it is time!
-		if [ $time_from_last_net -gt $NET_INTERVAL ] 
+
+		# condition-1: encountered a new wifi
+		if [ $force_net_test == "true" ] 
+		then
+			myprint "Forcing a net test on new wifi -- DefaultIface:$def_iface SSID:$wifi_ssid"
+			update_wifi_mobile 
+			t_wifi_mobile_update=`date +%s`
+			if [ ! -z $wifi_iface ]
+			then	 	  	    
+				myprint "./net-testing.sh $suffix $current_time $def_iface \"long\" > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+				(timeout 1200 ./net-testing.sh $suffix $current_time $def_iface "long"> logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+				num=1
+				echo $current_time > ".last_net"
+				echo $current_time > ".last_net_short"			
+			else 
+				myprint "Skipping forced net-testing since WiFi not found anymore"
+			fi 
+		# condition-2: it is time! (long freq, for both wifi and mobile)
+		elif [ $time_from_last_net -gt $NET_INTERVAL ] 
 		then 
 			myprint "Time to run LONG net-test: $time_from_last_net > $NET_INTERVAL -- DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
 			skipping="false"
@@ -797,7 +829,7 @@ do
 				echo $current_time > ".last_net"
 				echo $current_time > ".last_net_short"			
 			fi
-		# condition-2: we are on mobile only and did not do more than N test yet today # FIXME 
+		# condition-3: we are on mobile only and did not do more than N test yet today # FIXME 
 		elif [ $time_from_last_net_short -gt $NET_INTERVAL_SHORT ] 
 		then
 			skipping="false"
