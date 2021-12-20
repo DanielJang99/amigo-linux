@@ -441,7 +441,7 @@ do
 	suffix=`date +%d-%m-%Y`
 	
 	# check if net-testing is running
-	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`			
+	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | grep -v "timeout" | wc -l`			
 	
 	# update WiFi and mobile phone connectivity if it is time to do so (once a minute)
 	let "t_last_wifi_mobile_update =  current_time - t_wifi_mobile_update"
@@ -566,7 +566,7 @@ do
 	fi 
 		
 	# update Google account authorization status
-	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`	
+	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | grep -v "timeout" | wc -l`
 	t_last_google=`cat ".time_google_check"`
 	let "t_p = current_time - t_last_google"
 	if [ $t_p -gt $GOOGLE_CHECK_FREQ -a $num -eq 0 -a $asked_to_charge == "false" ] 
@@ -744,7 +744,7 @@ do
 	fi 
 
 	# check if it is time to run net experiments 
-	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | wc -l`
+	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | grep -v "timeout" | wc -l`	
 	if [ -f ".last_net" ] 
 	then 
 		last_net=`cat ".last_net"`
