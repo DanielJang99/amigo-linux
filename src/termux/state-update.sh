@@ -246,10 +246,10 @@ update_wifi_mobile(){
 			then 
 				force_net_test=6
 				echo $force_net_test > ".force_counter"
-				echo $wifi_ssid >> $today_wifi			
+				echo $wifi_ssid >> $wifi_list			
 			fi 
 		else 
-			echo $wifi_ssid > $today_wifi
+			echo $wifi_ssid > $wifi_list
 			force_net_test=6
 			echo $force_net_test > ".force_counter"				
 		fi 	
