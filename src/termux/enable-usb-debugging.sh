@@ -34,21 +34,24 @@ sleep $sleep_time
 echo "Swiping down..."
 sudo input swipe 300 1000 300 300
 sleep $sleep_time
-echo "Entering selection..."
+echo "Entering SYSTEM..."
 sudo input tap 370 1075
 sleep $sleep_time
-echo "Entering selection..."
+echo "Entering developer options..."
 sudo input tap 370 755
 sleep $sleep_time
-echo "Entering selection..."
+echo "Swiping down..."
 sudo input swipe 300 1000 300 300
 sleep $sleep_time
+echo "Clicking enable USB debugging..."
 sudo input tap 370 1010
+sleep $sleep_time
 
 if [ $opt == "enable" ] 
 then 
-	echo "tapping enable!"
+	echo "Clicking confirm..."
 	sudo input tap 580 835
 	sleep $sleep_time
 fi 
 close_all
+turn_device_off
