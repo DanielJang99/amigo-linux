@@ -44,17 +44,16 @@ def insert_stats_pool(current_time, perc_cpu, perc_mem, traffic_rx, num_proc, cr
 			print(insert_sql)
 			data = (current_time, perc_cpu, perc_mem, traffic_rx, num_proc, created, num_users)
 			ps_cursor.execute(insert_sql, data)
-			ps_connection.commit()   # make database changes persistent 	
-			ps_cursor.close()
-
-			# Use this method to release the connection object and send back to connection pool
-			postgreSQL_pool.putconn(ps_connection)
+			ps_connection.commit()   # make database changes persistent 				
 			msg = "status_update:all good" 				
 
 		# handle exception 
 		except Exception as e:
 			msg += 'Issue inserting into database. Error %s' % e    
-
+		# finally close things 
+		finally:
+			ps_cursor.close()
+			postgreSQL_pool.putconn(ps_connection)			
 	else:
 		msg = "Issue getting a connection from the pool"    
 
