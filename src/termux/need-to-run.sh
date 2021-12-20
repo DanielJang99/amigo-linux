@@ -97,7 +97,9 @@ then
 	done
 		
 	# restart script 
-	echo "Time to run!"	
+	n_sleep=`shuf -i 0-30 -n 1`
+	echo "Time to run! Sleep $n_sleep to avoid concurrent restarts"	
+	sleep $n_sleep
 	mkdir -p logs	
 	./state-update.sh > "logs/log-state-update-"`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1 &
 else 

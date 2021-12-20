@@ -231,20 +231,27 @@ update_wifi_mobile(){
 		prev_wifi_traffic=$wifi_traffic
 
 		# keep track of wifi encountered 
-		today_wifi="wifi-info/ssid-list-${suffix}"
+		wifi_list="wifi-info/ssid-list"
 		mkdir -p "wifi-info"
-		force_net_test="false"
-		if [ -f $today_wifi ]
+		if [ -f ".force_counter" ]
+		then 
+			force_net_test=`cat ".force_counter"`
+		else 
+			force_net_test=0
+		fi 
+		if [ -f $wifi_list ]
 		then
-			cat $today_wifi | grep "$wifi_ssid" > /dev/null
+			cat $wifi_list | grep "$wifi_ssid" > /dev/null
 			if [ $? -ne 0 ]
 			then 
-				force_net_test="true"
+				force_net_test=6
+				echo $force_net_test > ".force_counter"
 				echo $wifi_ssid >> $today_wifi			
 			fi 
 		else 
 			echo $wifi_ssid > $today_wifi
-			force_net_test="true"
+			force_net_test=6
+			echo $force_net_test > ".force_counter"				
 		fi 	
 	else
 		wifi_ip="none"
@@ -288,6 +295,7 @@ fast_freq=5                            # interval for checking the app (faster)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
 NET_INTERVAL=5400                      # interval of networking testing 
 NET_INTERVAL_SHORT=2700                # short interval of net testing (just on mobile)
+NET_INTERVAL_FORCED=1800               # short interval of net testing (wifi, hopefully on planes)
 GOOGLE_CHECK_FREQ=10800                # interval of Google account check via YT (seconds)
 MAX_ZEUS_RUNS=6                        # maximum number of zeus per day 
 MAX_PAUSE=1800                         # maximum time a user can pause (600) 
@@ -773,10 +781,18 @@ do
 		last_net_short=`cat ".last_net_short"`
 	else 
 		last_net_short=0
+	fi
+	if [ -f ".last_net_forced" ] 
+	then 
+		last_net_forced=`cat ".last_net_forced"`
+	else 
+		last_net_forced=0
 	fi 
 	net_status=`cat ".net_status"`
 	let "time_from_last_net = current_time - last_net"
-	let "time_from_last_net_short = current_time - last_net_short"	
+	let "time_from_last_net_short = current_time - last_net_short"
+	let "time_from_last_net_forced = current_time - last_net_forced"	
+	
 	myprint "TimeFromLastNetLong:$time_from_last_net sec TimeFromLastNetShort:$time_from_last_net_short sec ShouldRunIfTime:$net_status RunningNetProc:$num"
 	# 1) flag set, 2) no previous running, 3) connected (basic checks to see if we should run)
 	if [ $net_status == "true" -a $num -eq 0 -a  $def_iface != "none" ]  
@@ -789,10 +805,10 @@ do
 			num_runs_today=`cat ".zus-${suffix}"`
 		fi 	
 
-		# condition-1: encountered a new wifi
-		if [ $force_net_test == "true" ] 
+		# condition-1: encountered a new wifi (hopefully plane)
+		if [ $force_net_test -gt 0 -a $time_from_last_net_forced -gt $NET_INTERVAL_FORCED ] 
 		then
-			myprint "Forcing a net test on new wifi -- DefaultIface:$def_iface SSID:$wifi_ssid"
+			myprint "Forcing a net test on new wifi: $time_from_last_net_forced > $NET_INTERVAL_FORCED  -- NumRunsLeft: $force_net_test DefaultIface:$def_iface SSID:$wifi_ssid"
 			update_wifi_mobile 
 			t_wifi_mobile_update=`date +%s`
 			if [ ! -z $wifi_iface ]
@@ -801,7 +817,10 @@ do
 				(timeout 1200 ./net-testing.sh $suffix $current_time $def_iface "long"> logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
 				num=1
 				echo $current_time > ".last_net"
-				echo $current_time > ".last_net_short"			
+				echo $current_time > ".last_net_short"
+				let "force_net_test--"
+				echo $force_net_test > ".force_counter"
+				echo $current_time > ".last_net_forced"
 			else 
 				myprint "Skipping forced net-testing since WiFi not found anymore"
 			fi 
