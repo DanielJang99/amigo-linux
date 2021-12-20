@@ -69,12 +69,12 @@ if __name__ == '__main__':
 		
 
 	# find devices currently available, along with networking info 
-	query "select distinct(tester_id) from status_update WHERE type = 'status' and  data->>'vrs_num' is not NULL and to_timestamp(timestamp) > now() - interval '1 hrs';"
+	query = "select distinct(tester_id) from status_update WHERE type = 'status' and  data->>'vrs_num' is not NULL and to_timestamp(timestamp) > now() - interval '1 hrs';"
 	print(query)		
 	info, msg  = run_query(query)
 	print(info)
 	sys.exit(-1) 
-	
+
 	# iterate on testers until three are found who match
 	active_tester = [ ] 
 	for tester_id in active_testers: 
