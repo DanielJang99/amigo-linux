@@ -28,6 +28,29 @@ def connect_to_database_pool():
 	# all good 
 	return status, postgreSQL_pool
 
+# insert command for pi
+def insert_command(command_id, tester_id_list, timestamp, action, duration, isBackground):	
+	info = None
+	msg = ""
+	ps_connection = postgreSQL_pool.getconn()
+	if (ps_connection):
+		try:
+			ps_cursor = ps_connection.cursor()	
+			insert_sql = "insert into commands(command_id, tester_id_list, command, duration, background, timestamp, status) values(%s, %s, %s, %s, %s, %s, %s);"	
+			data = (command_id, tester_id_list, action, duration, isBackground, timestamp, "{active}")
+			ps_cursor.execute(insert_sql, data)
+			msg = "action_update:all good" 				
+			conn.commit()
+		# handle exception 
+		except Exception as e:
+			msg = 'Exception: %s' % e    
+		# finally close things 
+		finally:
+			ps_cursor.close()
+			postgreSQL_pool.putconn(ps_connection)	
+	# all good 
+	return info, msg 
+
 # run a generic query on the database
 def run_query(query):
 	info = None
@@ -133,6 +156,7 @@ if __name__ == '__main__':
 		print("potentially candidate found. Added to list. New size: " + str(len(candidate_testers)))
 
 		# check if we have a list ready for testing
+		curr_time = int(time.time()) 				
 		if len(candidate_testers) == VIDEOCONF_SIZE - 1: 
 			print("ready to start the conference with: ")
 			today = datetime.date.today()
@@ -143,8 +167,13 @@ if __name__ == '__main__':
 			sync_time = curr_id + 180 
 			command = basic_command + " --id " + str(curr_id) + " --sync " + str(sync_time) + " --suffix " + suffix
 
+			# compute duration 
+			t_sleep = (sync_time - curr_time) + VIDEOCONF_DUR + SAFE_TIME 
+
 			# add user specific options 
 			for tester_info in candidate_testers: 
+				uid_list = []			
+				uid = tester_info[0]
 				wifi_ip = tester_info[1]
 				wifi_iface   = tester_info[2]
 				mobile_ip    = tester_info[3]
@@ -154,13 +183,16 @@ if __name__ == '__main__':
 				elif mobile_ip != "none":
 					command = basic_command + " --iface " + mobile_iface 
 				print(command)
-				# FIXME 
-				#info = insert_pi_command(command_id, uid_list, time.time(), command, str(300), "false")
+				command_id = "root-" + str(curr_time)
+ 				uid_list.append(uid)
+				print("insert_command " + command_id + ',' + uid_list + ',' + str(time.time()) + ',' + command + ',' + str(t_sleep) + ", false)")
+				#info = insert_command(command_id, uid_list, time.time(), command, str(t_sleep), "false")
 
-			# wait for things to be done -- TODO 
-			t_sleep = sync_time + VIDEOCONF_DUR + SAFE_TIME 
+			# wait for experiment to be done 
+			print("Sleeping for: " + str(t_sleep))
+			#time.sleep(t_sleep)
 
-			# add an entry to the db -- TODO
+			# add entry to the db (can we confirm all good?) -- TODO
 			# clean list 
 			candidate_testers.clear()
 		
