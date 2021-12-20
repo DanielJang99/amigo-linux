@@ -793,7 +793,7 @@ do
 	let "time_from_last_net_short = current_time - last_net_short"
 	let "time_from_last_net_forced = current_time - last_net_forced"	
 	
-	myprint "TimeFromLastNetLong:$time_from_last_net sec TimeFromLastNetShort:$time_from_last_net_short sec ShouldRunIfTime:$net_status RunningNetProc:$num"
+	myprint "TimeFromLastNetLong:$time_from_last_net sec TimeFromLastNetShort:$time_from_last_net_short sec TimeFromLastNetForced:$time_from_last_net_forced sec ShouldRunIfTime:$net_status RunningNetProc:$num"
 	# 1) flag set, 2) no previous running, 3) connected (basic checks to see if we should run)
 	if [ $net_status == "true" -a $num -eq 0 -a  $def_iface != "none" ]  
 	then
