@@ -34,20 +34,26 @@ EOF
 # fi 
 
 # check if debugging or production
+debug="true"       # by default we are debugging
 if [ -f ".isDebug" ] 
 then 
 	debug=`cat .isDebug`
 fi 
 
-# add reboot jobs if missing
+# add reboot jobs if missing  (unless we are in debug mode)
 msg=""
 crontab -l | grep reboot
 if [ $? -eq 1 ]
 then 
-	echo "Detected need to add a new job"
-	(crontab -l 2>/dev/null; echo "0 2 * * * sudo reboot") | crontab -
-	#(crontab -l 2>/dev/null; echo "0 0 * * * sudo reboot") | crontab -
-	msg="added-reboot-"
+	echo "Detected need to add reboot job"
+	if [ $debug == "false" ]
+	then
+		(crontab -l 2>/dev/null; echo "0 2 * * * sudo reboot") | crontab -
+		#(crontab -l 2>/dev/null; echo "0 0 * * * sudo reboot") | crontab -
+		msg="added-reboot-"
+	else 
+		echo "Skipping adding reboot job since debug=$debug"
+	fi 
 fi 
 
 # inform server of reboot detected 

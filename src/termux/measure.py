@@ -44,6 +44,7 @@ for line in sys.stdin:
         if (size > big_packet_size) and (cur_ts > 10):
             if (cur_ts - prv_ts) > 2:
                 print ("%f\t%s:%s\t%s:%s\t%d" % (cur_ts, src_ip, src_port, dst_ip, dst_port, size))
+                prv_ts = cur_ts
 
 
 sys.stdout.close()

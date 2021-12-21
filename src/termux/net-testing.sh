@@ -145,7 +145,8 @@ if [ ! -f ".data" ]
 then
 	sudo dumpsys netstats > .data
 fi 
-mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
+#mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
+mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | grep "rmnet" | grep "true" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
 if [ ! -z $mobile_iface ]
 then 
 	#  status update 
@@ -180,8 +181,11 @@ close_all
 turn_device_off
 res_dir="locationlogs/${suffix}"
 mkdir -p $res_dir		
-sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
-loc_str=`cat $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
+#sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
+#loc_str=`cat $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
+sudo dumpsys location > $res_dir"/loc-$current_time.txt"
+loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "passive" | head -n 1`
+gzip $res_dir"/loc-$current_time.txt"
 myprint "Location info from inside net-testing: $loc_str"
 sleep 15 
 

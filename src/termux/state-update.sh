@@ -181,7 +181,8 @@ check_cpu(){
 update_wifi_mobile(){
 	sudo dumpsys netstats > .data
 	wifi_iface=`cat .data | grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
-	mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
+	#mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
+	mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | grep "rmnet" | grep "true" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
 	def_iface="none"
 	if [ ! -z $wifi_iface ]
 	then 
@@ -244,10 +245,11 @@ update_wifi_mobile(){
 			cat $wifi_list | grep "$wifi_ssid" > /dev/null
 			if [ $? -ne 0 ]
 			then 
+				myprint "Found a new wifi: $wifi_ssid"
 				force_net_test=6
-				echo $force_net_test > ".force_counter"
 				echo $wifi_ssid >> $wifi_list			
 			fi 
+			echo $force_net_test > ".force_counter"				
 		else 
 			echo $wifi_ssid > $wifi_list
 			force_net_test=6
@@ -309,7 +311,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="1.6"                              # code version 
+vrs="1.7"                              # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
 isPaused="N/A"                         # hold info on whether a phone is paued or not
 	
@@ -739,9 +741,12 @@ do
 							
 			# dump location information without running googlemaps
 			res_dir="locationlogs/${suffix}"		
-			sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
-			loc_str=`cat $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
-
+			#sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
+			#loc_str=`cat $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
+			sudo dumpsys location > $res_dir"/loc-$current_time.txt"
+			loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "passive" | head -n 1`
+			gzip $res_dir"/loc-$current_time.txt"
+			
 			# get uptime
 			uptime_info=`uptime`
 
@@ -807,6 +812,7 @@ do
 		fi 	
 
 		# condition-1: encountered a new wifi (hopefully plane)
+		force_net_test=`cat ".force_counter"`
 		if [ $force_net_test -gt 0 -a $time_from_last_net_forced -gt $NET_INTERVAL_FORCED ] 
 		then
 			myprint "Forcing a net test on new wifi: $time_from_last_net_forced > $NET_INTERVAL_FORCED  -- NumRunsLeft: $force_net_test DefaultIface:$def_iface SSID:$wifi_ssid"
@@ -915,8 +921,11 @@ do
 		fi 
 		res_dir="locationlogs/${suffix}"
 		mkdir -p $res_dir		
-		sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
-		loc_str=`cat $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
+		#sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
+		#loc_str=`cat $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
+		sudo dumpsys location > $res_dir"/loc-$current_time.txt"
+		loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "passive" | head -n 1`
+		gzip $res_dir"/loc-$current_time.txt"
 
 		# get uptime
 		uptime_info=`uptime`
