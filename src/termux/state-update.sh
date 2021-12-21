@@ -181,7 +181,8 @@ check_cpu(){
 update_wifi_mobile(){
 	sudo dumpsys netstats > .data
 	wifi_iface=`cat .data | grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
-	mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
+	#mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
+	mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | grep "rmnet" | grep "true" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
 	def_iface="none"
 	if [ ! -z $wifi_iface ]
 	then 
@@ -245,9 +246,9 @@ update_wifi_mobile(){
 			if [ $? -ne 0 ]
 			then 
 				force_net_test=6
-				echo $force_net_test > ".force_counter"
 				echo $wifi_ssid >> $wifi_list			
 			fi 
+			echo $force_net_test > ".force_counter"				
 		else 
 			echo $wifi_ssid > $wifi_list
 			force_net_test=6
@@ -806,6 +807,7 @@ do
 		fi 	
 
 		# condition-1: encountered a new wifi (hopefully plane)
+		force_net_test=`cat ".force_counter"`
 		if [ $force_net_test -gt 0 -a $time_from_last_net_forced -gt $NET_INTERVAL_FORCED ] 
 		then
 			myprint "Forcing a net test on new wifi: $time_from_last_net_forced > $NET_INTERVAL_FORCED  -- NumRunsLeft: $force_net_test DefaultIface:$def_iface SSID:$wifi_ssid"
