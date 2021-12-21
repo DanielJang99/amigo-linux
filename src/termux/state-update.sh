@@ -245,6 +245,7 @@ update_wifi_mobile(){
 			cat $wifi_list | grep "$wifi_ssid" > /dev/null
 			if [ $? -ne 0 ]
 			then 
+				myprint "Found a new wifi: $wifi_ssid"
 				force_net_test=6
 				echo $wifi_ssid >> $wifi_list			
 			fi 
