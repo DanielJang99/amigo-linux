@@ -157,6 +157,7 @@ generate_post_data(){
     "today":"${suffix}",
     "timestamp":"${current_time}",
     "uid":"${uid}",
+    "physical_id":"${physical_id}",
     "cpu_util_midload_perc":"${cpu_usage_middle}",
     "browser":"${browser}",
     "URL":"${url}",
@@ -268,7 +269,11 @@ if [ $uid == "none" ]
 then 
 	uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 fi 
-myprint "UID: $uid"
+if [ -f "uid-list.txt" ] 
+then 
+	physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | cut -f 1`
+fi 
+myprint "UID: $uid PhisicalID: $physical_id"
 
 # folder creation
 res_folder="./website-testing-results/$suffix"
