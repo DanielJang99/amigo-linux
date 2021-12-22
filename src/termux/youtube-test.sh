@@ -13,7 +13,7 @@ function ctrl_c() {
 
 safe_stop(){
 	myprint "Entering safe stop..."
-	#sudo pm clear com.google.android.youtube
+	sudo  settings put system user_rotation 0 
 	sudo killall tcpdump
 	close_all
 	if [ $single != "true" ] 
@@ -30,6 +30,12 @@ send_report(){
 		avg_ping=`cat notes-ping | grep "mdev" | cut -f 2 -d "=" | cut -f 2 -d "/"`
 		myprint "Average ping to youtube: $avg_ping"
 		rm notes-ping 
+	fi
+	if [ -f "notes-ping6" ] 
+	then 
+		avg_ping6=`cat notes-ping6 | grep "mdev" | cut -f 2 -d "=" | cut -f 2 -d "/"`
+		myprint "Average ping6 to youtube: $avg_ping6"
+		rm notes-ping6
 	fi 
 
 	if [ $cpu_usage_middle == "N/A" ]
@@ -47,10 +53,9 @@ send_report(){
 # activate stats for nerds  
 activate_stats_nerds(){
 	myprint "Activating stats for nerds!!"
-	sudo input tap 680 105 && sleep 0.2 && sudo input tap 680 105
+	sudo input tap 1240 50 && sleep 0.2 && sudo input tap 1240 50
 	sleep 3
-	tap_screen 370 1022 3
-	#tap_screen 370 1125 1 #3
+	tap_screen 670 670 3
 }
 
 # script usage
@@ -80,6 +85,7 @@ generate_post_data(){
     "test_id":"${curr_run_id}",
     "cpu_util_midload_perc":"${cpu_usage_middle}",
     "avg_ping":"${avg_ping}",
+    "avg_ping6":"${avg_ping6}",    
     "bdw_used_MB":"${traffic}",
     "tshark_traffic_MB":"${tshark_size}", 
     "msg":"${msg}"
@@ -90,6 +96,8 @@ EOF
 # helper to ping youtube 
 ping_youtube(){
 	ping -c 5 -W 2 youtube.com > notes-ping 2>&1
+	ping6 -c 5 -W 2 youtube.com > notes-ping6 2>&1
+
 }
 
 # import utilities files needed
@@ -170,13 +178,8 @@ then
 	done < ".ps-$app"
 fi 
 
-# make sure screen is in portrait 
-myprint "Ensuring that screen is in portrait and auto-rotation disabled"
-sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
-sudo  settings put system user_rotation 0          # put in portrait
-
-# measure ping to youtube 
-ping_youtube
+# measure ping to youtube  (should be safe in background)
+ping_youtube &
 
 # update UID if needed 
 if [ $uid == "none" ]
@@ -187,7 +190,7 @@ if [ -f "uid-list.txt" ]
 then 
 	physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | cut -f 1`
 fi 
-myprint "UID: $uid PhisicalID: $physical_id"
+myprint "UID: $uid PhysicalID: $physical_id"
 
 # folder creation
 res_folder="./youtube-results/$suffix"
@@ -200,16 +203,13 @@ termux-clipboard-set "none"
 # make sure screen is ON
 turn_device_on
 
-# clean youtube cache
-#sudo rm -rf /data/data/com.google.android.youtube/files /data/data/com.google.android.youtube/app_dg_cache /data/data/com.google.android.youtube/cache /data/data/com.google.android.youtube/no_backup /data/data/com.google.android.youtube/databases
-myprint "Cleaning YT state"
+# clean youtube cache 
+myprint "Cleaning YT cache"
 base_folder="/data/data/com.google.android.youtube/"
-sudo rm -rf "${base_folder}/app_dg_cache"
-#/data/data/com.google.android.youtube/cache
-sudo rm -rf "${base_folder}/cronet_metadata_cache"
-sudo rm -rf "${base_folder}/image_manager_disk_cache"
-sudo rm -rf "${base_folder}/volleyCache"
-sudo rm -rf "${base_folder}/gms_cache"
+sudo mv $base_folder/ ./
+sudo pm clear com.google.android.youtube
+sudo mv com.google.android.youtube/ "/data/data/"
+myprint "Cleaning YT state"
 
 # start CPU monitoring
 log_cpu="${res_folder}/${curr_run_id}.cpu"
@@ -223,15 +223,16 @@ if [ $pcap_collect == "true" ]
 then
     pcap_file="${res_folder}/${curr_run_id}.pcap"
     tshark_file="${res_folder}/${curr_run_id}.tshark"
-    sudo tcpdump -i $interface -w $pcap_file > /dev/null 2>&1 &
+    #sudo tcpdump -i $interface -w $pcap_file > /dev/null 2>&1 &
+	#sudo tcpdump -i $interface -vv ip6 -w $pcap_file > /dev/null 2>&1 &
+	sudo tcpdump -i $interface ip6 or ip -w $pcap_file > /dev/null 2>&1 &
 	myprint "Started tcpdump: $pcap_file Interface: $interface"
 fi
 
-# get initial network data information
-compute_bandwidth
-traffic_rx=$curr_traffic
-traffic_rx_last=$traffic_rx
-# myprint "[INFO] Abs. Bandwidth: $traffic_rx"
+# make sure screen is in landscape 
+myprint "Ensuring that screen is in portrait and auto-rotation disabled"
+sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
+sudo  settings put system user_rotation 1          # put in landscape
 
 #launch test video
 am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
@@ -245,6 +246,11 @@ sudo media volume --stream 4 --set 0	 # alarm volume
 # wait for GUI to load  -- IMPROVEME! 
 sleep 10
 
+# get initial network data information
+compute_bandwidth
+traffic_rx=$curr_traffic
+traffic_rx_last=$traffic_rx
+
 # check stats for nerds
 msg="NONE"
 tap_screen 592 216 1
@@ -253,7 +259,7 @@ cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
 if [ $? -ne 0 ] 
 then
 	activate_stats_nerds
-	tap_screen 592 216 1
+	tap_screen 1160 160 1
 	termux-clipboard-get > ".clipboard"
 	cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
 	if [ $? -ne 0 ] 
@@ -269,7 +275,6 @@ fi
 
 # collect data 
 myprint "Starting data collection for $DURATION seconds..."
-
 t_s=`date +%s`
 t_e=`date +%s`
 let "t_p = t_s - t_e"
@@ -277,8 +282,8 @@ let "HALF_DURATION = DURATION/2"
 while [ $t_p -lt $DURATION ] 
 do 
 	# click to copy clipboard 
-	tap_screen 592 216 1
-
+	tap_screen 1160 160 1
+	
 	# dump clipboard 
 	termux-clipboard-get >> $log_file
 	echo "" >> $log_file
@@ -303,10 +308,7 @@ gzip $log_file
 myprint "Stop playing!"
 sudo input keyevent KEYCODE_BACK
 sleep 2 
-tap_screen 670 1130 1 
-
-# update traffic rx
-compute_bandwidth $traffic_rx_last
+tap_screen 1000 580
 
 # stop tcpdump 
 if [ $pcap_collect == "true" ]
@@ -315,7 +317,8 @@ then
     sudo killall tcpdump
     myprint "Stopped tcpdump. Starting tshark analysis"
     tshark -nr $pcap_file -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file
-    tshark_size=`cat $tshark_file | awk -F "," -v my_ip=$my_ip '{if($4!=my_ip){if($8=="UDP"){tot_udp += ($NF-8);} if($8=="TCP"){tot_tcp += ($11);}}}END{tot=(tot_tcp+tot_udp)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000}'`
+    tshark_size=`cat $tshark_file | awk -F "," '{if($8=="UDP"){tot_udp += ($NF-8);} else if(index($8,"QUIC")!=0){tot_quic += ($NF-8);} else if($8=="TCP"){tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp+tot_quic)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000 " TOT-QUIC:" tot_quic/1000000}'`
+    myprint "[INFO] Traffic received (according to tshark): $tshark_size"
 	gzip $tshark_file
 	sudo rm $pcap_file
 fi
@@ -328,11 +331,17 @@ if [ $msg == "NONE" ]
 then 
 	msg="ALL-GOOD"
 fi 
+
+# clean youtube state and anything else 
+safe_stop
+
+# update traffic received counter 
+compute_bandwidth $traffic_rx_last
+myprint "[INFO] Traffic received (according to interface): $traffic"
+
+# send report 
 send_report
 #if [ -f $log_file ]  # FIXME 
 #then
 #	data=`tail -n 1 $log_file`
 #fi 
-
-# clean youtube state and anything else 
-safe_stop
