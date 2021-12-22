@@ -28,7 +28,7 @@ def connect_to_database_pool():
 	# all good 
 	return status, postgreSQL_pool
 
-# insert command for pi
+# insert command in the database 
 def insert_command(command_id, tester_id_list, timestamp, action, duration, isBackground):	
 	info = None
 	msg = ""
@@ -36,11 +36,12 @@ def insert_command(command_id, tester_id_list, timestamp, action, duration, isBa
 	if (ps_connection):
 		try:
 			ps_cursor = ps_connection.cursor()	
-			insert_sql = "insert into commands(command_id, tester_id_list, command, duration, background, timestamp, status) values(%s, %s, %s, %s, %s, %s, %s);"	
+			insert_sql = "insert into commands(command_id, tester_id_list, command, duration, background, timestamp, status) values(%s, %s, %s, %s, %s, %s, %s);"
+			print(insert_sql)
 			data = (command_id, tester_id_list, action, duration, isBackground, timestamp, "{active}")
 			ps_cursor.execute(insert_sql, data)
 			msg = "action_update:all good" 				
-			conn.commit()
+			ps_connection.commit()
 		# handle exception 
 		except Exception as e:
 			msg = 'Exception: %s' % e    
@@ -161,7 +162,7 @@ if __name__ == '__main__':
 			print("ready to start the conference with: ")
 			today = datetime.date.today()
 			suffix = str(today.day) + '-' + str(today.month) + '-' + str(today.year)
-			curr_id = int(time.time())
+			curr_id = curr_time
 			
 			# add common options: sync time, suffix, and test identifier
 			sync_time = curr_id + 180 
@@ -183,20 +184,21 @@ if __name__ == '__main__':
 				elif mobile_ip != "none":
 					command = basic_command + " --iface " + mobile_iface 
 				print(command)
-				command_id = "root-" + str(curr_time)
- 				uid_list.append(uid)
-				print("insert_command " + command_id + ',' + uid_list + ',' + str(time.time()) + ',' + command + ',' + str(t_sleep) + ", false)")
-				#info = insert_command(command_id, uid_list, time.time(), command, str(t_sleep), "false")
-
+				command_id = "root-" + str(curr_time) + '-' + uid
+				uid_list.append(uid)
+				print("insert_command " + command_id + ',' + uid_list[0] + ',' + str(time.time()) + ',' + command + ',' + str(t_sleep) + ", false)")
+				info = insert_command(command_id, uid_list, time.time(), command, str(t_sleep), "false")
+			
 			# wait for experiment to be done 
 			print("Sleeping for: " + str(t_sleep))
-			#time.sleep(t_sleep)
+			time.sleep(t_sleep)
 
-			# add entry to the db (can we confirm all good?) -- TODO
-			# clean list 
+			# add entry to the db (can we confirm all good?) 
+			# TODO
+
+			# clean list for moving forward with testing
 			candidate_testers.clear()
-		
-			print("Verify new size: " + str(len(candidate_testers)))
+			print("Temporary break while testing!")
 			break 
 
 	# close connection to database 
