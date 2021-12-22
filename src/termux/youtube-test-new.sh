@@ -190,7 +190,7 @@ if [ -f "uid-list.txt" ]
 then 
 	physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | cut -f 1`
 fi 
-myprint "UID: $uid PhisicalID: $physical_id"
+myprint "UID: $uid PhysicalID: $physical_id"
 
 # folder creation
 res_folder="./youtube-results/$suffix"
@@ -224,8 +224,8 @@ then
     pcap_file="${res_folder}/${curr_run_id}.pcap"
     tshark_file="${res_folder}/${curr_run_id}.tshark"
     #sudo tcpdump -i $interface -w $pcap_file > /dev/null 2>&1 &
-	#sudo tcpdump -i $interface -vv ip6 -w $pcap6_file > /dev/null 2>&1 &
-	sudo tcpdump -i $interface ip6 or ip -w $pcap_mix_file > /dev/null 2>&1 &
+	#sudo tcpdump -i $interface -vv ip6 -w $pcap_file > /dev/null 2>&1 &
+	sudo tcpdump -i $interface ip6 or ip -w $pcap_file > /dev/null 2>&1 &
 	myprint "Started tcpdump: $pcap_file Interface: $interface"
 fi
 
