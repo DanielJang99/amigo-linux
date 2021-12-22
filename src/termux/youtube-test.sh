@@ -209,7 +209,6 @@ base_folder="/data/data/com.google.android.youtube/"
 sudo mv $base_folder/ ./
 sudo pm clear com.google.android.youtube
 sudo mv com.google.android.youtube/ "/data/data/"
-myprint "Cleaning YT state"
 
 # start CPU monitoring
 log_cpu="${res_folder}/${curr_run_id}.cpu"
@@ -230,7 +229,7 @@ then
 fi
 
 # make sure screen is in landscape 
-myprint "Ensuring that screen is in portrait and auto-rotation disabled"
+myprint "Ensuring that screen is in landscape and auto-rotation disabled"
 sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
 sudo  settings put system user_rotation 1          # put in landscape
 
@@ -243,7 +242,7 @@ sudo media volume --stream 3 --set 0  # media volume
 sudo media volume --stream 1 --set 0	 # ring volume
 sudo media volume --stream 4 --set 0	 # alarm volume
 
-# wait for GUI to load  -- IMPROVEME! 
+# wait for GUI to load  -- IMPROVE ME! 
 sleep 10
 
 # get initial network data information
