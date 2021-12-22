@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-#import psutil
+import psutil
 import time, datetime
 import sys
-#import psycopg2
-#from psycopg2 import pool
+import psycopg2
+from psycopg2 import pool
 import subprocess
 
 # connect to databse (with a pool)
@@ -112,9 +112,15 @@ azure_user   =   "azureuser"     # azure user
 azure_server = "40.112.164.175"  # ip of azure server (USW)
 test_id = int(time.time())       # test identifier (used by host)
 azure_key = "/root/.ssh/id_rsa"  # ssh key for azureserver ## "/Users/bravello/.ssh/id_rsa" 
+isDev = True                     # flag for testing with devices in Yasir house only 
 
 # read user input 
 # TODO 
+
+# no need to start host while in dev. also smaller conf  
+if isDev: 
+	start_host = False
+	VIDEOCONF_SIZE = 3  # 1 host + 2 phones
 
 # start the host in the cloud (maybe manua)
 if start_host: 
@@ -138,16 +144,20 @@ if start_host:
 		remote_exec = "./googlemeet.sh"
 
 # populate meeting IDs and passwords
-list_meeting_ids["zoom"]="4170438763"  #6893560343
-zoom_password="6m2jmA"                 #m06Yb9
-list_meeting_ids["meet"]="nfk-ttfy-bzi"
-list_meeting_ids["webex"]="1828625842"
+if isDev: 
+	list_meeting_ids["zoom"]="4170438763"  
+	zoom_password="6m2jmA"                 
+	list_meeting_ids["meet"]="nfk-ttfy-bzi" #FIXME 
+	list_meeting_ids["webex"]="1828625842"
+else: 
+	print("FIXME -- need to populate meeting IDs and password") 
+	sys.exit(-1) 
 
 # command in common across apps and tests
 meeting_id = list_meeting_ids[app]
 basic_command = "./videoconf-tester.sh -a " + app + " -m " + meeting_id + " --dur " + str(VIDEOCONF_DUR) + " --pcap --clear" ## " --view --video"
 
-# add password for zoom
+# add password for zoom and right big packet size to basic command
 if app == "zoom": 
 	basic_command += " -p " + zoom_password + " --big 400"
 elif app == "webex": 
@@ -163,53 +173,67 @@ if not connected:
 # find current status of the videoconferencing database 
 query = "select tester_id from videoconf_status;"
 prev_tester_ids = run_query(query)
-print(prev_tester_ids)
-sys.exit(-1)
+print("Current devices with at least one videoconferenincg test: ", prev_tester_ids)
 
 # find devices currently available, along with networking info 
-query = "select distinct(tester_id) from status_update WHERE type = 'status' and  data->>'vrs_num' is not NULL and to_timestamp(timestamp) > now() - interval '1 hrs';"
-active_testers, msg  = run_query(query)
+active_testers = [] 
+tester_info_dic = {}
+if isDev: 
+	active_testers = [('868515047511793'), ('868609048478555')] 
+	print("[DEV-MODE] Using devices: ", active_testers) 
+	tester_info_dic['868515047511793'] = ('868515047511793', '192.168.1.17', 'wlan0', None, None)
+	tester_info_dic['868609048478555'] = ('868609048478555', '192.168.1.233', 'wlan0', None, None)
+else: 
+	query = "select distinct(tester_id) from status_update WHERE type = 'status' and  data->>'vrs_num' is not NULL and to_timestamp(timestamp) > now() - interval '1 hrs';"
+	active_testers, msg  = run_query(query)
+	print("Active devices in the last hour: ", active_testers) 
 
 # iterate on testers until three are found who match
 for entry in active_testers: 
 	tester_id = entry[0]
-	query = "select tester_id, timestamp, data->>'wifi_ip', data->>'wifi_iface', data->>'mobile_ip', data->>'mobile_iface', data->>'battery_level', data->>'net_testing_proc' from status_update WHERE type = 'status' and  data->>'vrs_num' is not NULL and to_timestamp(timestamp) > now() - interval '15 min' and tester_id = '" + tester_id + "';"
-	info, msg  = run_query(query)
-	if len(info) == 0: 
-		print("No info available for user %s in the last 15 minutes" %(tester_id))
-		continue
-	try: 
-		user_data = info[-1]
-		timestamp = user_data[1]
-		wifi_ip = user_data[2] 
-		wifi_iface = user_data[3]
-		mobile_ip = user_data[4]
-		mobile_iface = user_data[5]
-		battery_level = int(user_data[6].strip())
-		is_net_testing = int(user_data[7])
-		print(timestamp, wifi_ip, wifi_iface, mobile_ip, mobile_iface, battery_level, is_net_testing)
-	except AttributeError as e:
-		print("WARNING -- AttributeError")
-		continue
+	if not isDev: 
+		query = "select tester_id, timestamp, data->>'wifi_ip', data->>'wifi_iface', data->>'mobile_ip', data->>'mobile_iface', data->>'battery_level', data->>'net_testing_proc' from status_update WHERE type = 'status' and  data->>'vrs_num' is not NULL and to_timestamp(timestamp) > now() - interval '15 min' and tester_id = '" + tester_id + "';"
+		info, msg  = run_query(query)
+		if len(info) == 0: 
+			print("No info available for user %s in the last 15 minutes" %(tester_id))
+			continue
+		try: 
+			user_data = info[-1]
+			timestamp = user_data[1]
+			wifi_ip = user_data[2] 
+			wifi_iface = user_data[3]
+			mobile_ip = user_data[4]
+			mobile_iface = user_data[5]
+			battery_level = int(user_data[6].strip())
+			is_net_testing = int(user_data[7])
+			print(timestamp, wifi_ip, wifi_iface, mobile_ip, mobile_iface, battery_level, is_net_testing)
+		except AttributeError as e:
+			print("WARNING -- AttributeError")
+			continue
 
-	# make sure at least one connection is working
-	if wifi_ip == "none" and mobile_ip == "none":
-		print("Something seems wrong for user %s. Both wifi and mobile IPs are missing" %(tester_id))
-		continue	
-	
-	# make sure no net testing and enough battery 
-	if(is_net_testing != 0 or battery_level < 20): 
-		print("Low battery (%d) or net-testing (%d) detected. Skipping %s" %(battery_level, is_net_testing, tester_id))
-		continue	
-	
-	# geolocate IPs -- TODO 
+		# make sure at least one connection is working
+		if wifi_ip == "none" and mobile_ip == "none":
+			print("Something seems wrong for user %s. Both wifi and mobile IPs are missing" %(tester_id))
+			continue	
+		
+		# make sure no net testing and enough battery 
+		if(is_net_testing != 0 or battery_level < 20): 
+			print("Low battery (%d) or net-testing (%d) detected. Skipping %s" %(battery_level, is_net_testing, tester_id))
+			continue	
+		
+		# geolocate IPs -- TODO 
 
 	# if we reach here, user is good
-	tester_info = (tester_id, wifi_ip, wifi_iface, mobile_ip, mobile_iface)
+	tester_info = ()
+	if isDev: 
+		tester_info = tester_info_dic[tester_id]
+	else:
+		tester_info = (tester_id, wifi_ip, wifi_iface, mobile_ip, mobile_iface)
 	candidate_testers.append(tester_info)
-	print("potentially candidate found. Added to list. New size: " + str(len(candidate_testers)))
+	print("testing candidate found. Added to list. New size: " + str(len(candidate_testers)))
+	print(tester_info) 
 
-	# check if we have a list ready for testing
+	# check if we have enough devices for testing 
 	curr_time = int(time.time()) 				
 	if len(candidate_testers) == VIDEOCONF_SIZE - 1: 
 		print("ready to start the conference with: ")
@@ -245,11 +269,11 @@ for entry in active_testers:
 			info = insert_command(command_id, uid_list, time.time(), command, str(t_sleep), "false")
 		
 		# wait for experiment to be done 
-		print("Sleeping for: " + str(t_sleep))
+		print("Wait for videoconference to be done. Sleeping for: " + str(t_sleep))
 		time.sleep(t_sleep)
 
 		# check status of the experiment and update the videoconferencing database
-		for tester_info,command_id in zip(candidate_testers, command_ids_list):
+		for tester_info, command_id in zip(candidate_testers, command_ids_list):
 			uid = tester_info[0]
 			wifi_ip = tester_info[1]
 			mobile_ip    = tester_info[3]
@@ -276,7 +300,7 @@ for entry in active_testers:
 				info, msg  = run_query(query)
 				print(info, msg)			
 			else: 
-				print("First DB entry")
+				print("First DB entry in videoconf_status for", uid)
 				timestamp_list = [time.time()]
 				access_list = [access]
 				msg_list = [msg]
@@ -285,8 +309,9 @@ for entry in active_testers:
 			
 		# clean list for moving forward with testing
 		candidate_testers.clear()
-		print("Temporary break while testing!")
-		break 
+		if isDev: 
+			print("Temporary break while testing in dev mode!")
+			break 
 
 # close connection to database 
 if postgreSQL_pool:
