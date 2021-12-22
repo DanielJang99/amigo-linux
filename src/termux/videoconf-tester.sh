@@ -369,6 +369,35 @@ leave_meet(){
 	tap_screen 130 1180
 }
 
+# take multiple screenshots 
+take_screenshots(){
+	counter=1
+	isDone="false"
+	mkdir -p "${res_folder}/screenshots"
+	while [ $isDone == "false" ]
+	do 
+		t1=`date +%s`
+		screen_file="${res_folder}/screenshots/${test_id}-${counter}"
+		sudo screencap -p $screen_file".png"
+		sudo chown $USER:$USER $screen_file".png"
+		cwebp -q 80 ${screen_file}".png" -o ${screen_file}".webp" > /dev/null 2>&1 
+		if [ -f ${screen_file}".webp" ]
+		then 
+			chmod 644 ${screen_file}".webp"
+			rm ${screen_file}".png"
+		fi 
+		let "counter++"
+		t2=`date +%s`
+		let "t_p = 10 - (t2 - t1)"
+		if [ $t_p -gt 0 ]
+		then
+			echo "Sleeping $t_p between screenshots" 
+			sleep $t_p 
+		fi 
+		shouldRun=`cat ".done_videoconf"`
+	done	 
+}
+
 # script usage
 usage(){
     echo "====================================================================================================================================================================="
@@ -605,7 +634,7 @@ clean_file $log_cpu
 low_cpu="false"
 myprint "Starting cpu monitor. Log: $log_cpu LowCpu: $low_cpu"
 echo "true" > ".to_monitor"
-clean_file ".ready_to_start"
+clean_file ".done_videoconf"
 cpu_monitor $log_cpu &
 #cpu_monitor_top $log_cpu_top &
 
@@ -726,6 +755,14 @@ then
     (sudo screenrecord $screen_video".mp4" --time-limit $duration &)
 fi
 
+# take screenshots if needed 
+echo "false" > ".done_videoconf"
+screenshots="true"
+if [ $screenshots == "true" ]
+then 
+	take_screenshots & 
+fi
+
 # wait for test to end 
 myprint "Waiting $duration for experiment to end..."
 sleep 5 
@@ -744,20 +781,17 @@ if [ -f ".cpu-usage" ]
 then 
 	cpu_usage_middle=`cat .cpu-usage`
 fi
-sudo screencap -p $res_folder"/"$test_id".png" 
-sudo chown $USER:$USER $res_folder"/"$test_id".png"
+if [ $take_screenshots == "false" ]
+then
+	sudo screencap -p $res_folder"/"$test_id".png" 
+	sudo chown $USER:$USER $res_folder"/"$test_id".png"
+fi 
 
 # sleep rest of the experiment
 sleep $half_duration 
-sudo chown $USER:$USER $res_folder"/"$test_id".png"
 
-# close remote client if needed
-if [ $remote == "true" ] 
-then
-	myprint "Stopping $app remote client..."
-	echo "ssh -o StrictHostKeyChecking=no -i $key -f $user@$server \"$remote_exec stop\""
-	ssh -o StrictHostKeyChecking=no -i $key -f $user@$server "$remote_exec stop"
-fi 
+# mark we are down -- stop screenshotting
+echo "true" > ".done_videoconf"
 
 # stop tcpdump 
 if [ $pcap_collect == "true" ] 
