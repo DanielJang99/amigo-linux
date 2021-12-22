@@ -348,8 +348,8 @@ do
 	then
 		pcap_file="${res_folder}/${id}-${curr_run_id}.pcap"
 		tshark_file="${res_folder}/${id}-${curr_run_id}.tshark"
-		sudo tcpdump -i $interface -w $pcap_file > /dev/null 2>&1 &
-		disown -h %1  
+		#sudo tcpdump -i $interface -w $pcap_file > /dev/null 2>&1 &
+		sudo tcpdump -i $interface ip6 or ip -w $pcap_file > /dev/null 2>&1 &	
 		myprint "Started tcpdump: $pcap_file Interface: $interface"
 	fi
     
