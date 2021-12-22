@@ -394,7 +394,7 @@ take_screenshots(){
 			echo "Sleeping $t_p between screenshots" 
 			sleep $t_p 
 		fi 
-		shouldRun=`cat ".done_videoconf"`
+		isDone=`cat ".done_videoconf"`
 	done	 
 }
 
@@ -781,7 +781,7 @@ if [ -f ".cpu-usage" ]
 then 
 	cpu_usage_middle=`cat .cpu-usage`
 fi
-if [ $take_screenshots == "false" ]
+if [ $screenshots == "false" ]
 then
 	sudo screencap -p $res_folder"/"$test_id".png" 
 	sudo chown $USER:$USER $res_folder"/"$test_id".png"
