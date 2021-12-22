@@ -311,7 +311,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="1.7"                              # code version 
+vrs="1.8"                              # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
 
 # check if testing
@@ -745,7 +745,7 @@ do
 			sudo dumpsys location > $res_dir"/loc-$current_time.txt"
 			loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "passive" | head -n 1`
 			gzip $res_dir"/loc-$current_time.txt"
-			
+
 			# get uptime
 			uptime_info=`uptime`
 
