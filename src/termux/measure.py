@@ -13,7 +13,7 @@ test_id   = sys.argv[2]
 local_ip  = sys.argv[3]
 big_packet_size = int(sys.argv[4])
 
-probe_cmd = "mtr -r %s > %s/%s-%s &"
+probe_cmd = "mtr -r --tcp -P 8801 %s > %s/%s-%s &"   #FIXME: harcoded port number
 probe_tbl = dict()
 probe_tbl[local_ip] = 1
 delay_file = probe_dir + '/' + test_id + '-delay.txt'

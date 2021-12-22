@@ -592,8 +592,8 @@ then
 	then 
 		port_num=9000
 	fi 
-	sudo tcpdump -i $iface port $port_num -w $pcap_file > /dev/null 2>&1 & 
-	disown -h %1 # what is this doing?
+	sudo tcpdump -i $iface src port $port_num -w $pcap_file > /dev/null 2>&1 & 
+	disown -h %1  # make tcpdump as a deamon
 	myprint "Started tcpdump: $pcap_file Interface: $iface Port: $port_num BigPacketSize: $big_packet_size"
 fi 
 
