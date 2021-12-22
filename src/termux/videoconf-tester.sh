@@ -205,12 +205,12 @@ run_zoom(){
 	sleep 10 
 	
 	# click to join audio
-	myprint "click to join audio"
-	tap_screen 178 1110 1
-	tap_screen 200 1110
+	myprint "skipping joining audio to avoid privacy issues"
+	#myprint "click to join audio"
+	#tap_screen 178 1110 1
+	#tap_screen 200 1110	
 	
-	
-	# # MUTE! -- FIXME 
+	# # MUTE! -- FIXME, UNRELIABLE
 	# use_mute="true"	
 	# if [ $use_mute == "true" ] 
 	# then 
