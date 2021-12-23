@@ -279,6 +279,11 @@ compute_bandwidth
 traffic_rx=$curr_traffic
 traffic_rx_last=$traffic_rx
 
+
+######################### testing 
+sleep 30 
+########################
+
 # wait for GUI to load
 wait_on_cpu
 
