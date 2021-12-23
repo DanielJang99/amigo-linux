@@ -304,6 +304,7 @@ GOOGLE_CHECK_FREQ=10800                # interval of Google account check via YT
 WIFI_GMAPS=1800                        # lower frequency of launchign GMAPS when on wifi 				
 MAX_ZEUS_RUNS=6                        # maximum number of zeus per day 
 MAX_PAUSE=1800                         # maximum time a user can pause (600) 
+MAX_LOCATION=5                         # timeout of termux-location command
 kenzo_pkg="com.example.sensorexample"  # our app package name 
 last_report_time=0                     # last time a report was sent 
 last_net=0                             # last time a net test was done  
@@ -314,7 +315,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="1.8"                              # code version 
+vrs="1.9"                              # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
 
 # check if testing
@@ -913,9 +914,8 @@ do
 		t_wifi_mobile_update=`date +%s`	
 						
 		# dump location information (only start googlemaps if not net-testing to avoid collusion)
-		if [ ! -f ".locked" ]  # NOTE: this means that another app (browser, youtube, videoconf)  is running already!
+		if [ ! -f ".locked" ]  # NOTE: this means that another app (browser, youtube, videoconf) is already running!
 		then 
-			############################TESTING
 			skip_gmaps="false"
 			last_gmaps=0
 			if [ -f ".last_gmaps" ] 
@@ -931,7 +931,6 @@ do
 					skip_gmaps="true"
 				fi 
 			fi 
-			#######################################
 			if [ $skip_gmaps == "false" ]
 			then 
 				turn_device_on
@@ -945,25 +944,24 @@ do
 				sleep 10
 				close_all
 				turn_device_off
+				echo `date +%s` > ".last_gmaps"
 			else 
-				myprint "Skipping gmaps launch since on wifi and lower freq not met"
+				myprint "Skipping gmaps launch since on wifi and lower freq not met ($time_from_last_gmaps -lt $WIFI_GMAPS)"
 			fi 
 		fi 
 		res_dir="locationlogs/${suffix}"
 		mkdir -p $res_dir		
-		############## testing ################## 
-		timeout 5 termux-location -p network -r last > $res_dir"/network-loc-$current_time.txt"
+		timeout $MAX_LOCATION termux-location -p network -r last > $res_dir"/network-loc-$current_time.txt"
 		lat=`cat $res_dir"/network-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
 		long=`cat $res_dir"/network-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
 		network_loc="$lat,$long"
-		timeout 5 termux-location -p gps -r last > $res_dir"/gps-loc-$current_time.txt"		
+		timeout $MAX_LOCATION termux-location -p gps -r last > $res_dir"/gps-loc-$current_time.txt"		
 		lat=`cat $res_dir"/gps-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
 		long=`cat $res_dir"/gps-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
 		gps_loc="$lat,$long"		
 		sudo dumpsys location > $res_dir"/loc-$current_time.txt"
 		loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "passive" | head -n 1`
 		gzip $res_dir"/loc-$current_time.txt"
-		############## testing ################## 
 		
 		# get uptime
 		uptime_info=`uptime`

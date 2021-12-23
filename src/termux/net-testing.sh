@@ -102,6 +102,7 @@ run_zus(){
 # params
 MAX_ZEUS_RUNS=6             # maximum duration of NYU experiments
 ZEUS_DURATION=20            # duration of NYU experiments
+MAX_LOCATION=5              # timeout of duration command
 suffix=`date +%d-%m-%Y`
 t_s=`date +%s`
 iface="wlan0"
@@ -172,21 +173,34 @@ else
 	myprint "No mobile connection found. Skipping NYU-ZUS"
 fi 
 
-# launching googlemaps which is now locked out on other process
-turn_device_on
-myprint "Launching googlemaps to improve location accuracy"
-sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
-sleep 15
-close_all
-turn_device_off
-res_dir="locationlogs/${suffix}"
-mkdir -p $res_dir		
-current_time=`date +%s`
-sudo dumpsys location > $res_dir"/loc-$current_time.txt"
-loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "passive" | head -n 1`
-gzip $res_dir"/loc-$current_time.txt"
-myprint "Location info from inside net-testing: $loc_str"
-sleep 15 
+# if on mobile, launch googlemaps which is now locked out on other process
+if [ ! -z $mobile_iface ]
+then 
+	if [ $iface == $mobile_iface -a $num_runs_today -lt $MAX_ZEUS_RUNS ] 
+	then 
+		turn_device_on
+		myprint "Launching googlemaps from net-testing since we are on mobile (and main process is holding back)"
+		sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
+		sleep 15
+		close_all
+		turn_device_off
+		res_dir="locationlogs/${suffix}"
+		mkdir -p $res_dir		
+		current_time=`date +%s`
+		timeout $MAX_LOCATION termux-location -p network -r last > $res_dir"/network-loc-$current_time.txt"
+		lat=`cat $res_dir"/network-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
+		long=`cat $res_dir"/network-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
+		network_loc="$lat,$long"
+		timeout $MAX_LOCATION termux-location -p gps -r last > $res_dir"/gps-loc-$current_time.txt"		
+		lat=`cat $res_dir"/gps-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
+		long=`cat $res_dir"/gps-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
+		gps_loc="$lat,$long"		
+		sudo dumpsys location > $res_dir"/loc-$current_time.txt"
+		loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "passive" | head -n 1`
+		gzip $res_dir"/loc-$current_time.txt"
+		sleep 15 
+	fi 
+fi
 
 # run a speedtest 
 myprint "Running speedtest-cli..."
