@@ -53,9 +53,8 @@ send_report(){
 # activate stats for nerds  
 activate_stats_nerds(){
 	myprint "Activating stats for nerds!!"
-	sudo input tap 1240 50 && sleep 0.2 && sudo input tap 1240 50
-	#sleep 3
-	sleep 1 
+	sudo input tap 1240 50 && sleep 0.5 && sudo input tap 1240 50
+	sleep 1.5
 	tap_screen 670 670 1
 	#tap_screen 670 670 3
 }
@@ -278,11 +277,6 @@ sudo media volume --stream 4 --set 0	 # alarm volume
 compute_bandwidth
 traffic_rx=$curr_traffic
 traffic_rx_last=$traffic_rx
-
-
-######################### testing 
-sleep 120 
-########################
 
 # wait for GUI to load
 wait_on_cpu
