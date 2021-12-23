@@ -221,6 +221,7 @@ update_wifi_mobile(){
 		force_net_test=`cat ".force_counter"`
 	else 
 		force_net_test=0
+		echo $force_net_test > ".force_counter"
 	fi
 
 	# get more wifi info if active 
