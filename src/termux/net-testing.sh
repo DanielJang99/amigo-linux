@@ -125,9 +125,6 @@ sleep 30
 # current free space 
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 
-# run multiple MTR
-timeout 300 ./mtr.sh $suffix $t_s
-
 # video testing with youtube
 if [ $opt == "long" ] 
 then 
@@ -138,6 +135,9 @@ then
 else 
 	myprint "Skipping YouTube test sing option:$opt"
 fi 
+
+# run multiple MTR
+timeout 300 ./mtr.sh $suffix $t_s
 
 # run nyu stuff -- only if MOBILE and not done too many already 
 num_runs_today=0
