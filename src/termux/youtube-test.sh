@@ -210,6 +210,33 @@ sudo mv $base_folder/ ./
 sudo pm clear com.google.android.youtube
 sudo mv com.google.android.youtube/ "/data/data/"
 
+# make sure screen is in landscape 
+myprint "Ensuring that screen is in landscape and auto-rotation disabled"
+sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
+sudo  settings put system user_rotation 1          # put in landscape
+
+# launch YouTube and wait for sane CPU values 
+MAX_LAUNCH_TIMEOUT=30 
+myprint "Launching YT and wait for sane CPU"
+sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
+if [ -f ".cpu-usage" ]
+then 
+	sleep 5 
+	t1=`date +%s`
+	t2=`date +%s`
+	let "tp = t2 - t1"
+	while [ $tp -lt $MAX_LAUNCH_TIMEOUT -a $cpu_val -gt 90 ]
+	do 
+	    cpu_val=`cat .cpu-usage`
+	    myprint "CPU: $cpu_val"
+	    sleep 5 
+	    t2=`date +%s`
+		let "tp = t2 - t1"
+	done
+else 
+	sleep 10 
+fi 
+
 # start CPU monitoring
 log_cpu="${res_folder}/${curr_run_id}.cpu"
 clean_file $log_cpu
@@ -227,11 +254,6 @@ then
 	sudo tcpdump -i $interface ip6 or ip -w $pcap_file > /dev/null 2>&1 &
 	myprint "Started tcpdump: $pcap_file Interface: $interface"
 fi
-
-# make sure screen is in landscape 
-myprint "Ensuring that screen is in landscape and auto-rotation disabled"
-sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
-sudo  settings put system user_rotation 1          # put in landscape
 
 #launch test video
 am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
@@ -286,6 +308,15 @@ do
 	# dump clipboard 
 	termux-clipboard-get >> $log_file
 	echo "" >> $log_file
+
+	# make sure we are still inside the app
+	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+    if [ $curr_activity != "WatchWhileActivity" ] 
+    then 
+    	msg="ERROR-LEFT-YOUTUBE"
+    	myprint "ERROR detected. We left YouTube!"
+    	break 
+    fi 
 
 	# update on time passed 
 	sleep 1 

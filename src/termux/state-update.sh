@@ -806,8 +806,7 @@ do
 	locked="false"
 	if [  -f ".locked" ]
 	then 
-		locked="true"
-	fi 
+		locked="true"	fi 
 
 	myprint "TimeFromLastNetLong:$time_from_last_net sec TimeFromLastNetShort:$time_from_last_net_short sec TimeFromLastNetForced:$time_from_last_net_forced sec ShouldRunIfTime:$net_status RunningNetProc:$num LockedStatus:$locked"
 	# 1) flag set, 2) no previous running, 3) connected (basic checks to see if we should run)
@@ -831,7 +830,7 @@ do
 			if [ ! -z $wifi_iface ]
 			then	 	  	    
 				myprint "./net-testing.sh $suffix $current_time $def_iface \"long\" > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt"
-				(timeout 1200 ./net-testing.sh $suffix $current_time $def_iface "long"> logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+				(timeout 1200 ./net-testing.sh $suffix $current_time $def_iface "long" > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
 				num=1
 				echo $current_time > ".last_net"
 				echo $current_time > ".last_net_short"
