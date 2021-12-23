@@ -63,6 +63,7 @@ run_zus(){
 	
 	# send report to our server
 	traffic_start=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`	
+	current_time=$t_s
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 
 	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/zeustest
