@@ -267,6 +267,7 @@ sudo media volume --stream 1 --set 0	 # ring volume
 sudo media volume --stream 4 --set 0	 # alarm volume
 
 # wait for GUI to load  -- IMPROVE ME! 
+myprint "Wait 10 seconds for GUI to be ready...maybe too much now?"
 sleep 10
 
 # get initial network data information
@@ -274,27 +275,20 @@ compute_bandwidth
 traffic_rx=$curr_traffic
 traffic_rx_last=$traffic_rx
 
-# check stats for nerds
+# activate stats for nerds
 msg="NONE"
-tap_screen 592 216 1
+activate_stats_nerds
+tap_screen 1160 160 1
 termux-clipboard-get > ".clipboard"
 cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
 if [ $? -ne 0 ] 
 then
-	activate_stats_nerds
-	tap_screen 1160 160 1
-	termux-clipboard-get > ".clipboard"
-	cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
-	if [ $? -ne 0 ] 
-	then
-		msg="ERROR-STATS-NERDS"
-		myprint "Stats-for-nerds issue"
-	else
-		cat ".clipboard" > $log_file
-		echo "" >> $log_file
-		myprint "Stats-for-nerds correctly detecting"
-	fi 
-fi 
+	msg="ERROR-STATS-NERDS"
+	myprint "Stats-for-nerds issue"
+else
+	cat ".clipboard" > $log_file
+	echo "" >> $log_file
+	myprint "Stats-for-nerds correctly detecting"
 
 # collect data 
 myprint "Starting data collection for $DURATION seconds..."
