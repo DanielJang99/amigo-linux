@@ -215,6 +215,14 @@ update_wifi_mobile(){
 	wifi_ip="None"
 	phone_wifi_ssid="None"
 
+	# resume current wifi counter for this wifi 
+	if [ -f ".force_counter" ]
+	then 
+		force_net_test=`cat ".force_counter"`
+	else 
+		force_net_test=0
+	fi
+
 	# get more wifi info if active 
 	if [ ! -z $wifi_iface ]
 	then 
@@ -235,13 +243,7 @@ update_wifi_mobile(){
 
 		# keep track of wifi encountered 
 		wifi_list="wifi-info/ssid-list"
-		mkdir -p "wifi-info"
-		if [ -f ".force_counter" ]
-		then 
-			force_net_test=`cat ".force_counter"`
-		else 
-			force_net_test=0
-		fi 
+		mkdir -p "wifi-info"		 
 		if [ -f $wifi_list ]
 		then
 			cat $wifi_list | grep "$wifi_ssid" > /dev/null
@@ -458,6 +460,9 @@ termux_user=`whoami`
 close_all
 sudo input keyevent 111
 turn_device_off
+
+# always check connectivity on first run 
+update_wifi_mobile
 
 # external loop 
 sel_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/selection.txt"
@@ -826,6 +831,7 @@ do
 
 		# condition-1: encountered a new wifi (hopefully plane)
 		force_net_test=`cat ".force_counter"`
+
 		if [ $force_net_test -gt 0 -a $time_from_last_net_forced -gt $NET_INTERVAL_FORCED ] 
 		then
 			myprint "Forcing a net test on new wifi: $time_from_last_net_forced > $NET_INTERVAL_FORCED  -- NumRunsLeft: $force_net_test DefaultIface:$def_iface SSID:$wifi_ssid"
