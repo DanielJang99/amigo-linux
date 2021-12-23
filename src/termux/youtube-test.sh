@@ -53,7 +53,7 @@ send_report(){
 # activate stats for nerds  
 activate_stats_nerds(){
 	myprint "Activating stats for nerds!!"
-	sudo input tap 1240 50 && sleep 0.5 && sudo input tap 1240 50
+	sudo input tap 1240 50 && sleep 0.8 && sudo input tap 1240 50
 	sleep 1.5
 	tap_screen 670 670 1
 	#tap_screen 670 670 3
@@ -111,7 +111,7 @@ wait_on_cpu(){
 		let "tp = t2 - t1"
 		cpu_val=`cat .cpu-usage | cut -f 1 -d "."`
 		myprint "CPU: $cpu_val"	    
-		while [ $tp -lt $MAX_LAUNCH_TIMEOUT -a $cpu_val -gt 90 ]
+		while [ $tp -lt $MAX_LAUNCH_TIMEOUT -a $cpu_val -gt 95 ]
 		do 
 		    cpu_val=`cat .cpu-usage | cut -f 1 -d "."`
 		    myprint "CPU: $cpu_val"
