@@ -102,6 +102,30 @@ ping_youtube(){
 
 }
 
+# wait for sane CPU values 
+wait_on_cpu(){
+	if [ -f ".cpu-usage" ]
+	then 
+		sleep 5 
+		t1=`date +%s`
+		t2=`date +%s`
+		let "tp = t2 - t1"
+		cpu_val=`cat .cpu-usage | cut -f 1 -d "."`
+		myprint "CPU: $cpu_val"	    
+		while [ $tp -lt $MAX_LAUNCH_TIMEOUT -a $cpu_val -gt 90 ]
+		do 
+		    cpu_val=`cat .cpu-usage | cut -f 1 -d "."`
+		    myprint "CPU: $cpu_val"
+		    sleep 5 
+		    t2=`date +%s`
+			let "tp = t2 - t1"
+		done
+	else 
+		sleep 10 
+	fi 
+}
+
+
 # import utilities files needed
 script_dir=`pwd`
 adb_file=$script_dir"/adb-utils.sh"
@@ -120,6 +144,7 @@ single="false"                     # user initiated test (same logic as per web)
 sleep_time=5                       # time to sleep between clicks
 first_run="false"                  # first time ever youtube was run
 cpu_usage_middle="N/A"             # CPU measured in the middle of a test 
+MAX_LAUNCH_TIMEOUT=30              # maximum duration for youtube to launch
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -213,28 +238,9 @@ sudo pm clear com.google.android.youtube
 sudo mv com.google.android.youtube/ "/data/data/"
 
 # launch YouTube and wait for sane CPU values 
-MAX_LAUNCH_TIMEOUT=30 
-myprint "Launching YT and wait for sane CPU"
-sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
-if [ -f ".cpu-usage" ]
-then 
-	sleep 5 
-	t1=`date +%s`
-	t2=`date +%s`
-	let "tp = t2 - t1"
-	cpu_val=`cat .cpu-usage | cut -f 1 -d "."`
-	myprint "CPU: $cpu_val"	    
-	while [ $tp -lt $MAX_LAUNCH_TIMEOUT -a $cpu_val -gt 90 ]
-	do 
-	    cpu_val=`cat .cpu-usage | cut -f 1 -d "."`
-	    myprint "CPU: $cpu_val"
-	    sleep 5 
-	    t2=`date +%s`
-		let "tp = t2 - t1"
-	done
-else 
-	sleep 10 
-fi 
+#myprint "Launching YT and wait for sane CPU"
+#sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
+#wait_on_cpu
 
 # start CPU monitoring
 log_cpu="${res_folder}/${curr_run_id}.cpu"
@@ -268,14 +274,13 @@ sudo media volume --stream 3 --set 0  # media volume
 sudo media volume --stream 1 --set 0	 # ring volume
 sudo media volume --stream 4 --set 0	 # alarm volume
 
-# wait for GUI to load  -- IMPROVE ME! 
-#myprint "Wait 10 seconds for GUI to be ready...maybe too much now?"
-#sleep 10
-
 # get initial network data information
 compute_bandwidth
 traffic_rx=$curr_traffic
 traffic_rx_last=$traffic_rx
+
+# wait for GUI to load
+wait_on_cpu
 
 # activate stats for nerds
 msg="NONE"
@@ -299,14 +304,26 @@ t_s=`date +%s`
 t_e=`date +%s`
 let "t_p = t_s - t_e"
 let "HALF_DURATION = DURATION/2"
+attempt=0
 while [ $t_p -lt $DURATION ] 
 do 
 	# click to copy clipboard 
 	tap_screen 1160 160 1
 	
 	# dump clipboard 
-	termux-clipboard-get >> $log_file
-	echo "" >> $log_file
+	termux-clipboard-get > ".clipboard"
+	cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
+	if [ $? -ne 0 -a $attempt -lt 3 ] 
+	then
+		myprint "Stats-for-nerds not found...retrying?"
+		msg="ERROR-STATS-NERDS"	
+		activate_stats_nerds
+		let "attempt++"
+	else 
+		msg="ALL-GOOD"
+		cat ".clipboard" >> $log_file
+		echo "" >> $log_file
+	fi 
 
 	# make sure we are still inside the app
 	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
@@ -354,12 +371,6 @@ fi
 
 # stop monitoring CPU
 echo "false" > ".to_monitor"
-
-# log and report 
-if [ $msg == "NONE" ] 
-then 
-	msg="ALL-GOOD"
-fi 
 
 # clean youtube state and anything else 
 safe_stop
