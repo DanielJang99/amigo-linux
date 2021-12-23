@@ -267,8 +267,8 @@ sudo media volume --stream 1 --set 0	 # ring volume
 sudo media volume --stream 4 --set 0	 # alarm volume
 
 # wait for GUI to load  -- IMPROVE ME! 
-myprint "Wait 10 seconds for GUI to be ready...maybe too much now?"
-sleep 10
+#myprint "Wait 10 seconds for GUI to be ready...maybe too much now?"
+#sleep 10
 
 # get initial network data information
 compute_bandwidth
@@ -289,6 +289,7 @@ else
 	cat ".clipboard" > $log_file
 	echo "" >> $log_file
 	myprint "Stats-for-nerds correctly detecting"
+fi 
 
 # collect data 
 myprint "Starting data collection for $DURATION seconds..."
