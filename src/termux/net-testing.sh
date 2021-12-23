@@ -63,6 +63,7 @@ run_zus(){
 	
 	# send report to our server
 	traffic_start=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`	
+	current_time=$t_s
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 
 	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/zeustest
@@ -159,6 +160,13 @@ then
 	myprint "NYU-stuff. Found a mobile connection: $mobile_iface (DefaultConnection:$iface). NumRunsToday:$num_runs_today (MaxRuns: $MAX_ZEUS_RUNS)"
 	if [ $iface == $mobile_iface -a $num_runs_today -lt $MAX_ZEUS_RUNS ] 
 	then
+		########## make sure code is there 
+		if [ ! -f "FTPClient" ]
+		then
+			myprint "ERROR -- Missing FTPClient code, checking out!" 
+			git checkout FTPClient
+		fi 
+		#########
 		run_zus		
 		let "num_runs_today++"
 		myprint "Done with zus. New count for the day: $num_runs_today"
