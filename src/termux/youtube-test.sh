@@ -54,8 +54,10 @@ send_report(){
 activate_stats_nerds(){
 	myprint "Activating stats for nerds!!"
 	sudo input tap 1240 50 && sleep 0.2 && sudo input tap 1240 50
-	sleep 3
-	tap_screen 670 670 3
+	#sleep 3
+	sleep 1 
+	tap_screen 670 670 1
+	#tap_screen 670 670 3
 }
 
 # script usage
