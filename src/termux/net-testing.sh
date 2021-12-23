@@ -116,7 +116,7 @@ then
 fi  
 
 #logging 
-echo "[`date`] net-testing $opt START"
+echo "[`date`] net-testing $opt START.Sleeping 30 secs to propagate status"
 
 # lock out google maps to avoid any interference
 t_start=`date +%s`
@@ -146,7 +146,6 @@ if [ ! -f ".data" ]
 then
 	sudo dumpsys netstats > .data
 fi 
-#mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
 mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | grep "rmnet" | grep "true" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
 if [ ! -z $mobile_iface ]
 then 
