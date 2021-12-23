@@ -139,6 +139,8 @@ generate_post_data(){
     "battery_level":"${phone_battery}",
     "charging":"${charging}",
     "location_info":"${loc_str}",
+    "gps_loc":"${gps_loc}",
+    "network_loc":"${network_loc}",
     "foreground_app":"${foreground}",
     "net_testing_proc":"${num}", 
     "wifi_iface":"${wifi_iface}", 
@@ -299,6 +301,7 @@ NET_INTERVAL=5400                      # interval of networking testing
 NET_INTERVAL_SHORT=2700                # short interval of net testing (just on mobile)
 NET_INTERVAL_FORCED=1800               # short interval of net testing (wifi, hopefully on planes)
 GOOGLE_CHECK_FREQ=10800                # interval of Google account check via YT (seconds)
+WIFI_GMAPS=1800                        # lower frequency of launchign GMAPS when on wifi 				
 MAX_ZEUS_RUNS=6                        # maximum number of zeus per day 
 MAX_PAUSE=1800                         # maximum time a user can pause (600) 
 kenzo_pkg="com.example.sensorexample"  # our app package name 
@@ -912,26 +915,56 @@ do
 		# dump location information (only start googlemaps if not net-testing to avoid collusion)
 		if [ ! -f ".locked" ]  # NOTE: this means that another app (browser, youtube, videoconf)  is running already!
 		then 
-			turn_device_on
-			myprint "Launching googlemaps to improve location accuracy"
-			sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
-			sleep 5 
-			foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
-			myprint "Confirm Maps is in the foregound: $foreground" 
-			# needed in case maps ask for storage...
-			sudo input tap 108 1220
-			sleep 10
-			close_all
-			turn_device_off
+			############################TESTING
+			skip_gmaps="false"
+			last_gmaps=0
+			if [ -f ".last_gmaps" ] 
+			then 
+				last_gmaps=`cat ".last_gmaps"`
+			fi 
+			let "time_from_last_gmaps = current_time - last_gmaps"	
+			if [ ! -z $wifi_iface ] # Reduce gmaps launching rate when on WiFi
+			then  
+				# compute time from last check 
+				if [ $time_from_last_gmaps -lt $WIFI_GMAPS ] 
+				then 
+					skip_gmaps="true"
+				fi 
+			fi 
+			#######################################
+			if [ $skip_gmaps == "false" ]
+			then 
+				turn_device_on
+				myprint "Launching googlemaps to improve location accuracy"
+				sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
+				sleep 5 
+				foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+				myprint "Confirm Maps is in the foregound: $foreground" 
+				# needed in case maps ask for storage...
+				sudo input tap 108 1220
+				sleep 10
+				close_all
+				turn_device_off
+			else 
+				myprint "Skipping gmaps launch since on wifi and lower freq not met"
+			fi 
 		fi 
 		res_dir="locationlogs/${suffix}"
 		mkdir -p $res_dir		
-		#sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
-		#loc_str=`cat $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
+		############## testing ################## 
+		timeout 5 termux-location -p network -r last > $res_dir"/network-loc-$current_time.txt"
+		lat=`cat $res_dir"/network-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
+		long=`cat $res_dir"/network-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
+		network_loc="$lat,$long"
+		timeout 5 termux-location -p gps -r last > $res_dir"/gps-loc-$current_time.txt"		
+		lat=`cat $res_dir"/gps-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
+		long=`cat $res_dir"/gps-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
+		gps_loc="$lat,$long"		
 		sudo dumpsys location > $res_dir"/loc-$current_time.txt"
 		loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "passive" | head -n 1`
 		gzip $res_dir"/loc-$current_time.txt"
-
+		############## testing ################## 
+		
 		# get uptime
 		uptime_info=`uptime`
 
