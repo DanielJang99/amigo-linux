@@ -58,6 +58,18 @@ activate_stats_nerds(){
 	tap_screen 670 670 3
 }
 
+# monitor foregound 
+monitor_foreground(){
+	c=0
+	while [ $c -lt 40 ]
+	do 
+		foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
+		echo "==> $foreground"		
+		sleep 1 
+		let "c++"
+	done
+}
+
 # script usage
 usage(){
     echo "================================================================================"
@@ -227,6 +239,9 @@ then
 	sudo tcpdump -i $interface ip6 or ip -w $pcap_file > /dev/null 2>&1 &
 	myprint "Started tcpdump: $pcap_file Interface: $interface"
 fi
+
+# TESTING
+monitor_foreground & 
 
 # make sure screen is in landscape 
 myprint "Ensuring that screen is in landscape and auto-rotation disabled"
