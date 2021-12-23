@@ -322,6 +322,7 @@ do
 			msg="ERROR-STATS-NERDS"			
 			activate_stats_nerds
 			let "attempt++"
+			tap_screen 1160 160 1  # click to copy clipboard 
 			termux-clipboard-get > ".clipboard"
 			cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
 			if [ $? -eq 0 ]
