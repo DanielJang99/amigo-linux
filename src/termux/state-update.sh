@@ -936,7 +936,7 @@ do
 			if [ $skip_gmaps == "false" ]
 			then 
 				turn_device_on
-				myprint "Launching googlemaps to improve location accuracy"
+				myprint "Launching googlemaps to improve location accuracy - DefInterface: $def_iface - (TimeLastGmap:$time_from_last_gmaps (Max: $WIFI_GMAPS)"
 				sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
 				sleep 5 
 				foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
