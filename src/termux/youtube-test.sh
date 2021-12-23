@@ -281,7 +281,7 @@ traffic_rx_last=$traffic_rx
 
 
 ######################### testing 
-sleep 30 
+sleep 120 
 ########################
 
 # wait for GUI to load
