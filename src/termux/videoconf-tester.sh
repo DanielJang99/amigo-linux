@@ -205,12 +205,12 @@ run_zoom(){
 	sleep 10 
 	
 	# click to join audio
-	myprint "click to join audio"
-	tap_screen 178 1110 1
-	tap_screen 200 1110
+	myprint "skipping joining audio to avoid privacy issues"
+	#myprint "click to join audio"
+	#tap_screen 178 1110 1
+	#tap_screen 200 1110	
 	
-	
-	# # MUTE! -- FIXME 
+	# # MUTE! -- FIXME, UNRELIABLE
 	# use_mute="true"	
 	# if [ $use_mute == "true" ] 
 	# then 
@@ -367,6 +367,35 @@ leave_meet(){
         tap_screen $x_center $y_center
     fi 
 	tap_screen 130 1180
+}
+
+# take multiple screenshots 
+take_screenshots(){
+	counter=1
+	isDone="false"
+	mkdir -p "${res_folder}/screenshots/${test_id}"
+	while [ $isDone == "false" ]
+	do 
+		t1=`date +%s`
+		screen_file="${res_folder}/screenshots/${test_id}/screen-${counter}"
+		sudo screencap -p $screen_file".png"
+		sudo chown $USER:$USER $screen_file".png"
+		cwebp -q 80 ${screen_file}".png" -o ${screen_file}".webp" > /dev/null 2>&1 
+		if [ -f ${screen_file}".webp" ]
+		then 
+			chmod 644 ${screen_file}".webp"
+			rm ${screen_file}".png"
+		fi 
+		let "counter++"
+		t2=`date +%s`
+		let "t_p = 10 - (t2 - t1)"
+		if [ $t_p -gt 0 ]
+		then
+			echo "Sleeping $t_p between screenshots" 
+			sleep $t_p 
+		fi 
+		isDone=`cat ".done_videoconf"`
+	done	 
 }
 
 # script usage
@@ -592,8 +621,8 @@ then
 	then 
 		port_num=9000
 	fi 
-	sudo tcpdump -i $iface port $port_num -w $pcap_file > /dev/null 2>&1 & 
-	disown -h %1 # what is this doing?
+	sudo tcpdump -i $iface src port $port_num -w $pcap_file > /dev/null 2>&1 & 
+	disown -h %1  # make tcpdump as a deamon
 	myprint "Started tcpdump: $pcap_file Interface: $iface Port: $port_num BigPacketSize: $big_packet_size"
 fi 
 
@@ -605,7 +634,7 @@ clean_file $log_cpu
 low_cpu="false"
 myprint "Starting cpu monitor. Log: $log_cpu LowCpu: $low_cpu"
 echo "true" > ".to_monitor"
-clean_file ".ready_to_start"
+clean_file ".done_videoconf"
 cpu_monitor $log_cpu &
 #cpu_monitor_top $log_cpu_top &
 
@@ -726,6 +755,14 @@ then
     (sudo screenrecord $screen_video".mp4" --time-limit $duration &)
 fi
 
+# take screenshots if needed 
+echo "false" > ".done_videoconf"
+screenshots="true"
+if [ $screenshots == "true" ]
+then 
+	take_screenshots & 
+fi
+
 # wait for test to end 
 myprint "Waiting $duration for experiment to end..."
 sleep 5 
@@ -744,20 +781,17 @@ if [ -f ".cpu-usage" ]
 then 
 	cpu_usage_middle=`cat .cpu-usage`
 fi
-sudo screencap -p $res_folder"/"$test_id".png" 
-sudo chown $USER:$USER $res_folder"/"$test_id".png"
+if [ $screenshots == "false" ]
+then
+	sudo screencap -p $res_folder"/"$test_id".png" 
+	sudo chown $USER:$USER $res_folder"/"$test_id".png"
+fi 
 
 # sleep rest of the experiment
 sleep $half_duration 
-sudo chown $USER:$USER $res_folder"/"$test_id".png"
 
-# close remote client if needed
-if [ $remote == "true" ] 
-then
-	myprint "Stopping $app remote client..."
-	echo "ssh -o StrictHostKeyChecking=no -i $key -f $user@$server \"$remote_exec stop\""
-	ssh -o StrictHostKeyChecking=no -i $key -f $user@$server "$remote_exec stop"
-fi 
+# mark we are down -- stop screenshotting
+echo "true" > ".done_videoconf"
 
 # stop tcpdump 
 if [ $pcap_collect == "true" ] 

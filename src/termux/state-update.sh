@@ -798,9 +798,16 @@ do
 	let "time_from_last_net_short = current_time - last_net_short"
 	let "time_from_last_net_forced = current_time - last_net_forced"	
 	
-	myprint "TimeFromLastNetLong:$time_from_last_net sec TimeFromLastNetShort:$time_from_last_net_short sec TimeFromLastNetForced:$time_from_last_net_forced sec ShouldRunIfTime:$net_status RunningNetProc:$num"
+	# check if we are locked 
+	locked="false"
+	if [  -f ".locked" ]
+	then 
+		locked="true"
+	fi 
+
+	myprint "TimeFromLastNetLong:$time_from_last_net sec TimeFromLastNetShort:$time_from_last_net_short sec TimeFromLastNetForced:$time_from_last_net_forced sec ShouldRunIfTime:$net_status RunningNetProc:$num LockedStatus:$locked"
 	# 1) flag set, 2) no previous running, 3) connected (basic checks to see if we should run)
-	if [ $net_status == "true" -a $num -eq 0 -a  $def_iface != "none" ]  
+	if [ $net_status == "true" -a $num -eq 0 -a $def_iface != "none" -a $locked == "false" ]  
 	then
 		# update counter of how many runs today 
 		curr_hour=`date +%H`
@@ -881,10 +888,9 @@ do
 			fi
 		fi 
 	else
-		myprint "Skipping net-testing. NetStatus:$net_status NumNetProc:$num DefIface:$def_iface"
+		myprint "Skipping net-testing. NetStatus:$net_status NumNetProc:$num DefIface:$def_iface LockedStatus:$locked"
 	fi 
-	#################################TESTING#################################
-
+	
 	# check if it is time to status report
 	if [ -f ".last_report" ] 
 	then 
