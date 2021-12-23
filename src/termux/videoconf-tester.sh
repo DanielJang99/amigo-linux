@@ -373,11 +373,11 @@ leave_meet(){
 take_screenshots(){
 	counter=1
 	isDone="false"
-	mkdir -p "${res_folder}/screenshots"
+	mkdir -p "${res_folder}/screenshots/${test_id}"
 	while [ $isDone == "false" ]
 	do 
 		t1=`date +%s`
-		screen_file="${res_folder}/screenshots/${test_id}-${counter}"
+		screen_file="${res_folder}/screenshots/${test_id}/screen-${counter}"
 		sudo screencap -p $screen_file".png"
 		sudo chown $USER:$USER $screen_file".png"
 		cwebp -q 80 ${screen_file}".png" -o ${screen_file}".webp" > /dev/null 2>&1 
