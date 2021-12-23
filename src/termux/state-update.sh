@@ -139,6 +139,8 @@ generate_post_data(){
     "battery_level":"${phone_battery}",
     "charging":"${charging}",
     "location_info":"${loc_str}",
+    "gps_loc":"${gps_loc}",
+    "network_loc":"${network_loc}",
     "foreground_app":"${foreground}",
     "net_testing_proc":"${num}", 
     "wifi_iface":"${wifi_iface}", 
@@ -299,8 +301,10 @@ NET_INTERVAL=5400                      # interval of networking testing
 NET_INTERVAL_SHORT=2700                # short interval of net testing (just on mobile)
 NET_INTERVAL_FORCED=1800               # short interval of net testing (wifi, hopefully on planes)
 GOOGLE_CHECK_FREQ=10800                # interval of Google account check via YT (seconds)
+WIFI_GMAPS=1800                        # lower frequency of launchign GMAPS when on wifi 				
 MAX_ZEUS_RUNS=6                        # maximum number of zeus per day 
 MAX_PAUSE=1800                         # maximum time a user can pause (600) 
+MAX_LOCATION=5                         # timeout of termux-location command
 kenzo_pkg="com.example.sensorexample"  # our app package name 
 last_report_time=0                     # last time a report was sent 
 last_net=0                             # last time a net test was done  
@@ -311,7 +315,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="1.8"                              # code version 
+vrs="1.9"                              # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
 isPaused="N/A"                         # hold info on whether a phone is paued or not
 	
@@ -799,9 +803,18 @@ do
 	let "time_from_last_net_short = current_time - last_net_short"
 	let "time_from_last_net_forced = current_time - last_net_forced"	
 	
-	myprint "TimeFromLastNetLong:$time_from_last_net sec TimeFromLastNetShort:$time_from_last_net_short sec TimeFromLastNetForced:$time_from_last_net_forced sec ShouldRunIfTime:$net_status RunningNetProc:$num"
+	# check if we are locked 
+	locked="false"
+	if [  -f ".locked" ]
+	then 
+		locked="true"
+	fi 
+
+	# logging 
+	myprint "TimeFromLastNetLong:$time_from_last_net sec TimeFromLastNetShort:$time_from_last_net_short sec TimeFromLastNetForced:$time_from_last_net_forced sec ShouldRunIfTime:$net_status RunningNetProc:$num LockedStatus:$locked"
+	
 	# 1) flag set, 2) no previous running, 3) connected (basic checks to see if we should run)
-	if [ $net_status == "true" -a $num -eq 0 -a  $def_iface != "none" ]  
+	if [ $net_status == "true" -a $num -eq 0 -a $def_iface != "none" -a $locked == "false" ]  
 	then
 		# update counter of how many runs today 
 		curr_hour=`date +%H`
@@ -821,7 +834,7 @@ do
 			if [ ! -z $wifi_iface ]
 			then	 	  	    
 				myprint "./net-testing.sh $suffix $current_time $def_iface \"long\" > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt"
-				(timeout 1200 ./net-testing.sh $suffix $current_time $def_iface "long"> logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+				(timeout 1200 ./net-testing.sh $suffix $current_time $def_iface "long" > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
 				num=1
 				echo $current_time > ".last_net"
 				echo $current_time > ".last_net_short"
@@ -882,10 +895,9 @@ do
 			fi
 		fi 
 	else
-		myprint "Skipping net-testing. NetStatus:$net_status NumNetProc:$num DefIface:$def_iface"
+		myprint "Skipping net-testing. NetStatus:$net_status NumNetProc:$num DefIface:$def_iface LockedStatus:$locked"
 	fi 
-	#################################TESTING#################################
-
+	
 	# check if it is time to status report
 	if [ -f ".last_report" ] 
 	then 
@@ -905,28 +917,55 @@ do
 		t_wifi_mobile_update=`date +%s`	
 						
 		# dump location information (only start googlemaps if not net-testing to avoid collusion)
-		if [ ! -f ".locked" ]  # NOTE: this means that another app (browser, youtube, videoconf)  is running already!
+		if [ ! -f ".locked" ]  # NOTE: this means that another app (browser, youtube, videoconf) is already running!
 		then 
-			turn_device_on
-			myprint "Launching googlemaps to improve location accuracy"
-			sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
-			sleep 5 
-			foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
-			myprint "Confirm Maps is in the foregound: $foreground" 
-			# needed in case maps ask for storage...
-			sudo input tap 108 1220
-			sleep 10
-			close_all
-			turn_device_off
+			skip_gmaps="false"
+			last_gmaps=0
+			if [ -f ".last_gmaps" ] 
+			then 
+				last_gmaps=`cat ".last_gmaps"`
+			fi 
+			let "time_from_last_gmaps = current_time - last_gmaps"	
+			if [ ! -z $wifi_iface ] # Reduce gmaps launching rate when on WiFi
+			then  
+				# compute time from last check 
+				if [ $time_from_last_gmaps -lt $WIFI_GMAPS ] 
+				then 
+					skip_gmaps="true"
+				fi 
+			fi 
+			if [ $skip_gmaps == "false" ]
+			then 
+				turn_device_on
+				myprint "Launching googlemaps to improve location accuracy - DefInterface: $def_iface - (TimeLastGmap:$time_from_last_gmaps (Max: $WIFI_GMAPS)"
+				sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
+				sleep 5 
+				foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+				myprint "Confirm Maps is in the foregound: $foreground" 
+				# needed in case maps ask for storage...
+				sudo input tap 108 1220
+				sleep 10
+				close_all
+				turn_device_off
+				echo `date +%s` > ".last_gmaps"
+			else 
+				myprint "Skipping gmaps launch since on wifi and lower freq not met ($time_from_last_gmaps -lt $WIFI_GMAPS)"
+			fi 
 		fi 
 		res_dir="locationlogs/${suffix}"
 		mkdir -p $res_dir		
-		#sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
-		#loc_str=`cat $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
+		timeout $MAX_LOCATION termux-location -p network -r last > $res_dir"/network-loc-$current_time.txt"
+		lat=`cat $res_dir"/network-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
+		long=`cat $res_dir"/network-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
+		network_loc="$lat,$long"
+		timeout $MAX_LOCATION termux-location -p gps -r last > $res_dir"/gps-loc-$current_time.txt"		
+		lat=`cat $res_dir"/gps-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
+		long=`cat $res_dir"/gps-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
+		gps_loc="$lat,$long"		
 		sudo dumpsys location > $res_dir"/loc-$current_time.txt"
 		loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "passive" | head -n 1`
 		gzip $res_dir"/loc-$current_time.txt"
-
+		
 		# get uptime
 		uptime_info=`uptime`
 

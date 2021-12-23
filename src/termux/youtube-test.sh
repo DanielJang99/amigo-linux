@@ -53,9 +53,12 @@ send_report(){
 # activate stats for nerds  
 activate_stats_nerds(){
 	myprint "Activating stats for nerds!!"
-	sudo input tap 1240 50 && sleep 0.2 && sudo input tap 1240 50
-	sleep 3
-	tap_screen 670 670 3
+	#sudo input tap 1240 50 && sleep 0.5 && sudo input tap 1240 50
+	sudo input tap 1240 50
+	sudo input tap 1240 50	
+	sleep 1.5
+	tap_screen 670 670 1
+	#tap_screen 670 670 3
 }
 
 # script usage
@@ -100,6 +103,30 @@ ping_youtube(){
 
 }
 
+# wait for sane CPU values 
+wait_on_cpu(){
+	if [ -f ".cpu-usage" ]
+	then 
+		sleep 5
+		t1=`date +%s`
+		t2=`date +%s`
+		let "tp = t2 - t1"
+		cpu_val=`cat .cpu-usage | cut -f 1 -d "."`
+		myprint "CPU: $cpu_val"	    
+		while [ $tp -lt $MAX_LAUNCH_TIMEOUT -a $cpu_val -gt 95 ]
+		do 
+		    cpu_val=`cat .cpu-usage | cut -f 1 -d "."`
+		    myprint "CPU: $cpu_val"
+		    sleep 2
+		    t2=`date +%s`
+			let "tp = t2 - t1"
+		done
+	else 
+		sleep 10 
+	fi 
+}
+
+
 # import utilities files needed
 script_dir=`pwd`
 adb_file=$script_dir"/adb-utils.sh"
@@ -118,6 +145,7 @@ single="false"                     # user initiated test (same logic as per web)
 sleep_time=5                       # time to sleep between clicks
 first_run="false"                  # first time ever youtube was run
 cpu_usage_middle="N/A"             # CPU measured in the middle of a test 
+MAX_LAUNCH_TIMEOUT=30              # maximum duration for youtube to launch
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -210,6 +238,11 @@ sudo mv $base_folder/ ./
 sudo pm clear com.google.android.youtube
 sudo mv com.google.android.youtube/ "/data/data/"
 
+# launch YouTube and wait for sane CPU values 
+#myprint "Launching YT and wait for sane CPU"
+#sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
+#wait_on_cpu
+
 # start CPU monitoring
 log_cpu="${res_folder}/${curr_run_id}.cpu"
 clean_file $log_cpu
@@ -242,34 +275,30 @@ sudo media volume --stream 3 --set 0  # media volume
 sudo media volume --stream 1 --set 0	 # ring volume
 sudo media volume --stream 4 --set 0	 # alarm volume
 
-# wait for GUI to load  -- IMPROVE ME! 
-sleep 10
-
 # get initial network data information
 compute_bandwidth
 traffic_rx=$curr_traffic
 traffic_rx_last=$traffic_rx
 
-# check stats for nerds
+# wait for GUI to load
+wait_on_cpu
+
+# activate stats for nerds
 msg="NONE"
-tap_screen 592 216 1
+activate_stats_nerds
+tap_screen 1160 160 1
 termux-clipboard-get > ".clipboard"
 cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
 if [ $? -ne 0 ] 
 then
-	activate_stats_nerds
-	tap_screen 1160 160 1
-	termux-clipboard-get > ".clipboard"
-	cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
-	if [ $? -ne 0 ] 
-	then
-		msg="ERROR-STATS-NERDS"
-		myprint "Stats-for-nerds issue"
-	else
-		cat ".clipboard" > $log_file
-		echo "" >> $log_file
-		myprint "Stats-for-nerds correctly detecting"
-	fi 
+	msg="ERROR-STATS-NERDS"
+	myprint "Stats-for-nerds issue"
+	ready="false"
+else
+	cat ".clipboard" > $log_file
+	echo "" >> $log_file
+	myprint "Stats-for-nerds correctly detecting"
+	ready="true"
 fi 
 
 # collect data 
@@ -278,16 +307,43 @@ t_s=`date +%s`
 t_e=`date +%s`
 let "t_p = t_s - t_e"
 let "HALF_DURATION = DURATION/2"
+attempt=1
 while [ $t_p -lt $DURATION ] 
 do 
-	# click to copy clipboard 
-	tap_screen 1160 160 1
-	
-	# dump clipboard 
-	termux-clipboard-get >> $log_file
-	echo "" >> $log_file
+	if [ $ready == "true" ]
+	then 
+		# click to copy clipboard 
+		tap_screen 1160 160 1
+		termux-clipboard-get >> $log_file 
+		echo "" >> $log_file	
+		msg="ALL-GOOD"
+	else 
+		if [ $attempt -le 3 ] 
+		then
+			myprint "Stats-for-nerds not found...retrying! ($attempt/3)"
+			msg="ERROR-STATS-NERDS"			
+			activate_stats_nerds
+			let "attempt++"
+			tap_screen 1160 160 1  # click to copy clipboard 
+			termux-clipboard-get > ".clipboard"
+			cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
+			if [ $? -eq 0 ]
+			then
+				ready="true" 
+			fi 
+		fi 
+	fi 
 
-	# update on time passed 
+	# make sure we are still inside the app
+	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+    if [ $curr_activity != "WatchWhileActivity" ] 
+    then 
+    	msg="ERROR-LEFT-YOUTUBE"
+    	myprint "ERROR detected. We left YouTube!"
+    	break 
+    fi 
+
+	# rate control 
 	sleep 1 
 	t_e=`date +%s`
 	let "t_p = t_e - t_s"
@@ -324,12 +380,6 @@ fi
 
 # stop monitoring CPU
 echo "false" > ".to_monitor"
-
-# log and report 
-if [ $msg == "NONE" ] 
-then 
-	msg="ALL-GOOD"
-fi 
 
 # clean youtube state and anything else 
 safe_stop
