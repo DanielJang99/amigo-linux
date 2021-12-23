@@ -225,9 +225,11 @@ then
 	t1=`date +%s`
 	t2=`date +%s`
 	let "tp = t2 - t1"
+	cpu_val=`cat .cpu-usage | cut -f 1 -d "."`
+	myprint "CPU: $cpu_val"	    
 	while [ $tp -lt $MAX_LAUNCH_TIMEOUT -a $cpu_val -gt 90 ]
 	do 
-	    cpu_val=`cat .cpu-usage`
+	    cpu_val=`cat .cpu-usage | cut -f 1 -d "."`
 	    myprint "CPU: $cpu_val"
 	    sleep 5 
 	    t2=`date +%s`
