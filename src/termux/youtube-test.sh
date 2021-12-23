@@ -105,7 +105,7 @@ ping_youtube(){
 wait_on_cpu(){
 	if [ -f ".cpu-usage" ]
 	then 
-		sleep 5 
+		sleep 5
 		t1=`date +%s`
 		t2=`date +%s`
 		let "tp = t2 - t1"
@@ -115,7 +115,7 @@ wait_on_cpu(){
 		do 
 		    cpu_val=`cat .cpu-usage | cut -f 1 -d "."`
 		    myprint "CPU: $cpu_val"
-		    sleep 5 
+		    sleep 2
 		    t2=`date +%s`
 			let "tp = t2 - t1"
 		done
@@ -291,10 +291,12 @@ if [ $? -ne 0 ]
 then
 	msg="ERROR-STATS-NERDS"
 	myprint "Stats-for-nerds issue"
+	ready="false"
 else
 	cat ".clipboard" > $log_file
 	echo "" >> $log_file
 	myprint "Stats-for-nerds correctly detecting"
+	ready="true"
 fi 
 
 # collect data 
@@ -303,25 +305,30 @@ t_s=`date +%s`
 t_e=`date +%s`
 let "t_p = t_s - t_e"
 let "HALF_DURATION = DURATION/2"
-attempt=0
+attempt=1
 while [ $t_p -lt $DURATION ] 
 do 
-	# click to copy clipboard 
-	tap_screen 1160 160 1
-	
-	# dump clipboard 
-	termux-clipboard-get > ".clipboard"
-	cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
-	if [ $? -ne 0 -a $attempt -lt 3 ] 
-	then
-		myprint "Stats-for-nerds not found...retrying?"
-		msg="ERROR-STATS-NERDS"	
-		activate_stats_nerds
-		let "attempt++"
-	else 
+	if [ $ready == "true" ]
+	then 
+		# click to copy clipboard 
+		tap_screen 1160 160 1
+		termux-clipboard-get >> $log_file 
+		echo "" >> $log_file	
 		msg="ALL-GOOD"
-		cat ".clipboard" >> $log_file
-		echo "" >> $log_file
+	else 
+		if [ $attempt -le 3 ] 
+		then
+			myprint "Stats-for-nerds not found...retrying! ($attempt/3)"
+			msg="ERROR-STATS-NERDS"			
+			activate_stats_nerds
+			let "attempt++"
+			termux-clipboard-get > ".clipboard"
+			cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
+			if [ $? -eq 0 ]
+			then
+				ready="true" 
+			fi 
+		fi 
 	fi 
 
 	# make sure we are still inside the app
@@ -333,7 +340,7 @@ do
     	break 
     fi 
 
-	# update on time passed 
+	# rate control 
 	sleep 1 
 	t_e=`date +%s`
 	let "t_p = t_e - t_s"
