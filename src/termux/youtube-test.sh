@@ -210,11 +210,6 @@ sudo mv $base_folder/ ./
 sudo pm clear com.google.android.youtube
 sudo mv com.google.android.youtube/ "/data/data/"
 
-# make sure screen is in landscape 
-myprint "Ensuring that screen is in landscape and auto-rotation disabled"
-sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
-sudo  settings put system user_rotation 1          # put in landscape
-
 # launch YouTube and wait for sane CPU values 
 MAX_LAUNCH_TIMEOUT=30 
 myprint "Launching YT and wait for sane CPU"
@@ -256,6 +251,11 @@ then
 	sudo tcpdump -i $interface ip6 or ip -w $pcap_file > /dev/null 2>&1 &
 	myprint "Started tcpdump: $pcap_file Interface: $interface"
 fi
+
+# make sure screen is in landscape 
+myprint "Ensuring that screen is in landscape and auto-rotation disabled"
+sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
+sudo  settings put system user_rotation 1          # put in landscape
 
 #launch test video
 am start -a android.intent.action.VIEW -d "https://www.youtube.com/watch?v=TSZxxqHoLzE"
