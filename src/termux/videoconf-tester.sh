@@ -3,7 +3,6 @@
 ## Author: Matteo Varvello
 ## Date:   11/29/2021
 
-
 # trap ctrl-c and call ctrl_c()
 trap ctrl_c INT
 function ctrl_c() {
@@ -26,6 +25,7 @@ generate_post_data(){
     "today":"${suffix}",
     "timestamp":"${current_time}",
     "uid":"${uid}",
+    "physical_id":"${physical_id}",    
     "test_id":"${test_id}",
     "cpu_util_midload_perc":"${cpu_usage_middle}",
     "bdw_used_MB":"${traffic}",
@@ -537,7 +537,11 @@ if [ $uid == "none" ]
 then 
 	uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 fi 
-myprint "UID: $uid"
+if [ -f "uid-list.txt" ] 
+then 
+	physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | cut -f 1`
+fi 
+myprint "UID: $uid PhysicalID: $physical_id"
 
 # clean sync files 
 use_sync="true"
@@ -621,6 +625,7 @@ then
 	then 
 		port_num=9000
 	fi 
+	echo "sudo tcpdump -i $iface src port $port_num -w $pcap_file"
 	sudo tcpdump -i $iface src port $port_num -w $pcap_file > /dev/null 2>&1 & 
 	disown -h %1  # make tcpdump as a deamon
 	myprint "Started tcpdump: $pcap_file Interface: $iface Port: $port_num BigPacketSize: $big_packet_size"
