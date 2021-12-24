@@ -26,6 +26,33 @@ import psycopg2
 import db_manager
 from db_manager import run_query, insert_data, insert_command, connect_to_database_pool, insert_data_pool
 
+
+# run a generic query on the database (pool)
+def run_query_pool(query, postgreSQL_pool):
+	info = None
+	msg = ''
+
+	# Use getconn() to Get Connection from connection pool
+	ps_connection = postgreSQL_pool.getconn()
+	if (ps_connection):
+		try:
+			ps_cursor = ps_connection.cursor()
+			ps_cursor.execute(query)
+			if 'select' in query or 'SELECT' in query:
+				info = ps_cursor.fetchall()
+			else: 
+				ps_connection.commit()
+			msg = 'OK'
+		# handle exception 
+		except Exception as e:
+			msg = 'Exception: %s' % e    
+		# finally close things 
+		finally:
+			ps_cursor.close()
+			postgreSQL_pool.putconn(ps_connection)	
+	# all good 
+	return info, msg 
+
 # simple function to read json from a POST message 
 def read_json(req): 
 	cl = req.headers['Content-Length']
@@ -35,7 +62,7 @@ def read_json(req):
 	return body 
 
 # global parameters
-port    = 8082                    # default listening port 
+port    = 8083                    # default listening port 
 THREADS = []                      # list of threads 
 ACL     = False                   # control whether application ACL rules should be used 
 allowedips      = {               # ACL rules 
@@ -169,7 +196,9 @@ class StringGeneratorWebService(object):
 			# look for a potential action to be performed
 			#query = "select * from commands where (tester_id = '" + user_id + "' or tester_id = '*') and command_id != '" + prev_command + "' and status != 'DONE';"
 			query = "select * from commands where ('" + user_id + "' = ANY (tester_id_list) or '*' = ANY (tester_id_list)) and command_id != '" + prev_command + "';"
-			info, msg  = run_query(query)
+			#info, msg  = run_query(query)
+			info, msg  = run_query_pool(query, postgreSQL_pool)
+			
 			#print(info, msg)
 			if info is None:
 				cherrypy.response.status = 202
@@ -219,7 +248,8 @@ class StringGeneratorWebService(object):
 			# look for a potential action to be performed
 			status = termux_id + ';' + user_id
 			query = "update commands set status = array_append(status, '" + status + "') where command_id = '" + command_id + "';"
-			info, msg  = run_query(query)
+			#info, msg  = run_query(query)
+			info, msg  = run_query_pool(query, postgreSQL_pool)			
 			print(info, msg)
 	
 			# all good 
