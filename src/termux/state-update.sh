@@ -329,6 +329,16 @@ then
 	testing="true"
 fi 
 
+# coin toss to select which port to use 
+FLIP=$(($(($RANDOM%10))%2))
+if [ $FLIP -eq 1 ]
+then
+	SERVER_PORT=8082
+else 
+	SERVER_PORT=8083
+fi
+print "Web-app port selected: $SERVER_PORT"
+
 # make sure only this instance of this script is running
 my_pid=$$
 app="stateupdate"
