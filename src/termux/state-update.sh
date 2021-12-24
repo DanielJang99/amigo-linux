@@ -127,7 +127,7 @@ generate_post_data(){
     "today":"${suffix}", 
     "timestamp":"${current_time}",
     "server_port":"${SERVER_PORT}",
-    "last_curl_dur:"${curl_duration}",
+    "last_curl_dur":"${curl_duration}",
     "uid":"${uid}",
     "physical_id":"${physical_id}",
     "googleStatus":"${google_status}",
