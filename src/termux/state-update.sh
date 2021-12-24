@@ -850,6 +850,8 @@ do
 			else 
 				myprint "Skipping forced net-testing since WiFi not found anymore"
 			fi 
+		fi 
+		
 		# condition-2: it is time! (long freq, for both wifi and mobile)
 		if [ $num -eq 0 -a $time_from_last_net -gt $NET_INTERVAL ] 
 		then 
@@ -874,6 +876,8 @@ do
 				echo $current_time > ".last_net"
 				echo $current_time > ".last_net_short"			
 			fi
+		fi 
+		
 		# condition-3: we are on mobile only and did not do more than N test yet today # FIXME 
 		if [ $num -eq 0 -a $time_from_last_net_short -gt $NET_INTERVAL_SHORT ] 
 		then
