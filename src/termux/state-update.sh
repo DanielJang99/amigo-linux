@@ -299,8 +299,8 @@ update_wifi_mobile(){
 # parameters
 slow_freq=30                           # interval for checking commands to run (slower)
 fast_freq=5                            # interval for checking the app (faster)
-SERVER_PORT=8082                       # port of our web app
-#SERVER_PORT=8083                      # web app port (when debugging at server)
+#SERVER_PORT=8082                      # port of our web app
+SERVER_PORT=8083                       # web app port (when debugging at server)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
 NET_INTERVAL=5400                      # interval of networking testing 
 NET_INTERVAL_SHORT=2700                # short interval of net testing (just on mobile)
@@ -633,9 +633,12 @@ do
 		then
 			prev_command=`cat ".prev_command"`
 		fi 
-		ans=`timeout 15 curl -s "https://mobile.batterylab.dev:$SERVER_PORT/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`
+		t_curl_start=`date +%s`
+		ans=`timeout 15 curl -s "https://mobile.batterylab.dev:$SERVER_PORT/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`		
 		ret_code=$?
-		myprint "Checking if there is a command to execute. ANS:$ans - RetCode: $ret_code"		
+		t_curl_end=`date +%s`
+		let "curl_duration = t_curl_end - t_curl_start"		
+		myprint "Checking if there is a command to execute. ANS:$ans - RetCode: $ret_code - Duration:$curl_duration"	
 		if [[ "$ans" != *"No command matching"* ]]
 		then		 	
 			if [ $ret_code -eq 0 ]
@@ -767,7 +770,11 @@ do
 			else 
 				myprint "Data to send to the server:"
 				echo "$(generate_post_data)"
+				t_curl_start=`date +%s`			
 				timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/status
+				t_curl_end=`date +%s`
+				let "curl_duration = t_curl_end - t_curl_start"		
+				myprint "CURL duration POST: $curl_duration"
 			fi 
 			echo $current_time > ".last_report"
 		fi 
