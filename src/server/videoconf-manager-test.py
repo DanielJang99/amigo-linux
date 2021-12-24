@@ -5,6 +5,25 @@ import sys
 import psycopg2
 from psycopg2 import pool
 import subprocess
+import signal
+ 
+def handler(signum, frame):
+	msg = "Ctrl-c was pressed. Stopping"
+	# stop remote host if it was started
+	if start_host: 
+		print("Stopping host for ", app) 
+		command = remote_exec + " stop"
+		subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+	
+	# close connection to database 
+	if postgreSQL_pool:
+		postgreSQL_pool.closeall
+		print("PostgreSQL connection pool is closed")
+	# exit 
+	sys.exit(1)
+
+# listen to ctrl-c 
+signal.signal(signal.SIGINT, handler)
 
 # connect to databse (with a pool)
 def connect_to_database_pool(): 
@@ -262,18 +281,16 @@ for entry in active_testers:
 		if start_host: 
 			print("Starting host for ", app)
 			if app == "zoom":
-				command = "(./zoom.sh start " + str(curr_id) + "&)"
-				p = subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd} &".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-				#print(p)
+				command = "\"(./zoom.sh start " + str(curr_id) + " > log-" + str(curr_id)+" 2>&1 &)\""
 				remote_exec = "./zoom.sh"
 			elif app == "webex":
-				command = "(./webex.sh start " + str(curr_id) + "&)"
-				subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd} &".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()	
+				command = "\"(./webex.sh start " + str(curr_id) + " > log-" + str(curr_id)+" 2>&1 &)\""
 				remote_exec = "./webex.sh"
 			elif app == "meet":
-				command = "(./googlemeet.sh start " + str(curr_id) + "&)"
-				subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd} &".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+				command = "\"(./googlemeet.sh start " + str(curr_id) + " > log-" + str(curr_id)+" 2>&1 &)\""
 				remote_exec = "./googlemeet.sh"
+			p = subprocess.Popen("ssh -T -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+			#print(p)
 
 		# add common options: sync time, suffix, and test identifier
 		if isDev: 
