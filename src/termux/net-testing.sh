@@ -17,6 +17,7 @@ generate_post_data(){
     "timestamp":"${current_time}",
     "mobile_IP":"${mobile_ip}",
     "uid":"${uid}",
+    "physical_id":"${physical_id}",
     "net":"${net}",
     "mServiceState":"${mServiceState}",
     "data_Used":"${data_used}",        
@@ -36,7 +37,12 @@ run_zus(){
 	#switch to 3G 
 	traffic_start=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 	myprint "NYU-stuff. Switch to 3G"	
-	uid=`termux-telephony-deviceinfo | grep "device_id" | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+	uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+	if [ -f "uid-list.txt" ] 
+	then 
+		physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | cut -f 1`
+	fi 
+	myprint "UID: $uid PhysicalID: $physical_id"
 	turn_device_on
 	am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
 	sleep 5 
