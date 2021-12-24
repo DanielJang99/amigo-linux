@@ -341,6 +341,7 @@ testing="false"                        # keep track if we are testing or not
 strike=0                               # keep time of how many times in a row high CPU was detected 
 vrs="1.95"                             # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
+curl_duration="-1"
 
 # check if testing
 if [ $# -eq 1 ] 
