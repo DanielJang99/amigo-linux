@@ -363,7 +363,8 @@ for entry in active_testers:
 				id_list = [curr_id] 
 				access_list = [access]
 				msg_list = [msg]
-				insert_videoconf(uid, app, location, timestamp_list, id_list, access_list, msg_list)
+				info, msg = insert_videoconf(uid, app, location, timestamp_list, id_list, access_list, msg_list)
+				print(info, msg)
 				prev_tester_ids.append(uid)
 			
 		# clean list for moving forward with testing
