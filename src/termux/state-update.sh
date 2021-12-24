@@ -299,8 +299,8 @@ update_wifi_mobile(){
 # parameters
 slow_freq=25                           # interval for checking commands to run (slower)
 fast_freq=5                            # interval for checking the app (faster)
-#SERVER_PORT=8082
-SERVER_PORT=8083                       # web app port 
+SERVER_PORT=8082                       # port of our web app
+#SERVER_PORT=8083                      # web app port (when debugging at server)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
 NET_INTERVAL=5400                      # interval of networking testing 
 NET_INTERVAL_SHORT=2700                # short interval of net testing (just on mobile)
