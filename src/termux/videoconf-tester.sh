@@ -757,7 +757,7 @@ fi
 
 # take screenshots if needed 
 echo "false" > ".done_videoconf"
-screenshots="true"
+screenshots="false"
 if [ $screenshots == "true" ]
 then 
 	take_screenshots & 
@@ -798,7 +798,7 @@ if [ $pcap_collect == "true" ]
 then 
 	sudo killall tcpdump 
 	myprint "Stopped tcpdump. Starting background analysis: $pcap_file"
-	#echo "=> tcpdump -r $pcap_file -ttnn | python measure.py $res_folder $test_id $my_ip $big_packet_size" 
+	echo "=> tcpdump -r $pcap_file -ttnn | python measure.py $res_folder $test_id $my_ip $big_packet_size" 
 	tcpdump -r $pcap_file -ttnn | python measure.py $res_folder $test_id $my_ip $big_packet_size & 
 fi 
 
@@ -848,8 +848,8 @@ then
 		sleep 2
 		let "c++"
 	done
-	myprint "Cleaning PCAP file"
-	sudo rm $pcap_file
+	myprint "Cleaning PCAP file -- SKIPPING"
+	#sudo rm $pcap_file
 fi 
 
 # update traffic rx (for this URL)
