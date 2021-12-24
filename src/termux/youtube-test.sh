@@ -47,7 +47,7 @@ send_report(){
 	fi 
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 
-	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/youtubetest
+	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:$SERVER_PORT/youtubetest
 }
 
 # activate stats for nerds  
@@ -187,6 +187,14 @@ do
             ;;
     esac
 done
+
+# retrieve last used server port 
+if [ -f ".server_port" ] 
+then 
+	SERVER_PORT=`cat ".server_port"`
+else 
+	SERVER_PORT="8082"
+fi 
 
 # make sure only this instance of this script is running 
 my_pid=$$ 

@@ -40,6 +40,14 @@ then
 	debug=`cat .isDebug`
 fi 
 
+# retrieve last used server port 
+if [ -f ".server_port" ] 
+then 
+	SERVER_PORT=`cat ".server_port"`
+else 
+	SERVER_PORT="8082"
+fi 
+
 # add reboot jobs if missing  (unless we are in debug mode)
 msg=""
 crontab -l | grep reboot
@@ -68,7 +76,7 @@ then
 	uptime_info=`uptime`
 	msg=$msg"reboot"
 	echo "$(generate_post_data)"
-	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
+	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/status
 fi 
 
 # don't run if already running
@@ -83,7 +91,7 @@ then
 	uptime_info=`uptime`
 	msg="script-restart"
 	echo "$(generate_post_data)"
-	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
+	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/status
 
 	# update code 
 	myprint "Updating our code..."

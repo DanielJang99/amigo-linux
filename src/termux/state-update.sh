@@ -126,6 +126,8 @@ generate_post_data(){
     "vrs_num":"${vrs}",  
     "today":"${suffix}", 
     "timestamp":"${current_time}",
+    "server_port":"${SERVER_PORT}",
+    "last_curl_dur":"${curl_duration}",
     "uid":"${uid}",
     "physical_id":"${physical_id}",
     "googleStatus":"${google_status}",
@@ -177,6 +179,23 @@ check_cpu(){
 		sleep 2 
 		to_monitor=`cat ".cpu_monitor"`
 	done
+}
+
+# update location information 
+update_location(){
+	res_dir="locationlogs/${suffix}"
+	mkdir -p $res_dir		
+	timeout $MAX_LOCATION termux-location -p network -r last > $res_dir"/network-loc-$current_time.txt"
+	lat=`cat $res_dir"/network-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
+	long=`cat $res_dir"/network-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
+	network_loc="$lat,$long"
+	timeout $MAX_LOCATION termux-location -p gps -r last > $res_dir"/gps-loc-$current_time.txt"		
+	lat=`cat $res_dir"/gps-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
+	long=`cat $res_dir"/gps-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
+	gps_loc="$lat,$long"		
+	sudo dumpsys location > $res_dir"/loc-$current_time.txt"
+	loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "passive" | head -n 1`
+	gzip $res_dir"/loc-$current_time.txt"
 }
 
 # helper to maintain up-to-date wifi/mobile info 
@@ -297,8 +316,10 @@ update_wifi_mobile(){
 }
 
 # parameters
-slow_freq=25                           # interval for checking commands to run (slower)
+slow_freq=30                           # interval for checking commands to run (slower)
 fast_freq=5                            # interval for checking the app (faster)
+#SERVER_PORT=8082                      # port of our web app
+SERVER_PORT=8083                       # web app port (when debugging at server)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
 NET_INTERVAL=5400                      # interval of networking testing 
 NET_INTERVAL_SHORT=2700                # short interval of net testing (just on mobile)
@@ -318,8 +339,9 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="1.91"                             # code version 
+vrs="1.95"                             # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
+curl_duration="-1"                     # last value measured of curl duration
 isPaused="N/A"                         # hold info on whether a phone is paued or not
 	
 # check if testing
@@ -327,6 +349,17 @@ if [ $# -eq 1 ]
 then 
 	testing="true"
 fi 
+
+# coin toss to select which port to use 
+FLIP=$(($(($RANDOM%10))%2))
+if [ $FLIP -eq 1 ]
+then
+	SERVER_PORT=8082
+else 
+	SERVER_PORT=8083
+fi
+myprint "Web-app port selected: $SERVER_PORT"
+echo "$SERVER_PORT" > ".server_port"
 
 # make sure only this instance of this script is running
 my_pid=$$
@@ -513,7 +546,7 @@ do
 				myprint "Data to send to the server:"			
 				msg="PAUSED-BY-USER"			
 				echo "$(generate_post_data_short)" 		
-				timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:8082/status
+				timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:$SERVER_PORT/status
 			fi 
 		fi 
 		echo "true" > ".isPaused"
@@ -632,9 +665,12 @@ do
 		then
 			prev_command=`cat ".prev_command"`
 		fi 
-		ans=`timeout 15 curl -s "https://mobile.batterylab.dev:8082/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`
+		t_curl_start=`date +%s`
+		ans=`timeout 15 curl -s "https://mobile.batterylab.dev:$SERVER_PORT/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`		
 		ret_code=$?
-		myprint "Checking if there is a command to execute. ANS:$ans - RetCode: $ret_code"		
+		t_curl_end=`date +%s`
+		let "curl_duration = t_curl_end - t_curl_start"		
+		myprint "Checking if there is a command to execute. ANS:$ans - RetCode: $ret_code - Duration:$curl_duration"	
 		if [[ "$ans" != *"No command matching"* ]]
 		then		 	
 			if [ $ret_code -eq 0 ]
@@ -660,7 +696,7 @@ do
 						comm_status=$?
 						myprint "Command executed. Status: $comm_status"
 					fi
-					ans=`timeout 15 curl -s "https://mobile.batterylab.dev:8082/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${termux_user}"`
+					ans=`timeout 15 curl -s "https://mobile.batterylab.dev:$SERVER_PORT/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${termux_user}"`
 					myprint "Informed server about last command run. ANS: $ans"
 				fi 
 				echo $comm_id > ".prev_command"
@@ -731,12 +767,12 @@ do
 			asked_to_charge="true"
 			msg="ASKED-TO-CHARGE"
 			echo "$(generate_post_data_short)" 		
-			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:8082/status
+			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:$SERVER_PORT/status
 			sudo settings put system screen_off_timeout $max_screen_timeout		
 			myprint "Testing skipping the rest since paused..."		
 		fi 
 		
-		# check if it is time to status report
+		# check if it is time to status report (while "asked to charge")
 		if [ -f ".last_report" ] 
 		then 
 			last_report_time=`cat ".last_report"`
@@ -750,13 +786,8 @@ do
 			t_wifi_mobile_update=`date +%s`	
 							
 			# dump location information without running googlemaps
-			res_dir="locationlogs/${suffix}"		
-			#sudo dumpsys location | grep "hAcc" > $res_dir"/loc-$current_time.txt"
-			#loc_str=`cat $res_dir"/loc-$current_time.txt" | grep passive | head -n 1`
-			sudo dumpsys location > $res_dir"/loc-$current_time.txt"
-			loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "passive" | head -n 1`
-			gzip $res_dir"/loc-$current_time.txt"
-
+			update_location
+			
 			# get uptime
 			uptime_info=`uptime`
 
@@ -766,7 +797,11 @@ do
 			else 
 				myprint "Data to send to the server:"
 				echo "$(generate_post_data)"
-				timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
+				t_curl_start=`date +%s`			
+				timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/status
+				t_curl_end=`date +%s`
+				let "curl_duration = t_curl_end - t_curl_start"
+				myprint "CURL duration POST: $curl_duration"
 			fi 
 			echo $current_time > ".last_report"
 		fi 
@@ -778,7 +813,7 @@ do
 		then
 			msg="IN-CHARGE"
 			echo "$(generate_post_data_short)" 		
-			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:8082/status
+			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:$SERVER_PORT/status
 		fi 
 		sudo settings put system screen_off_timeout 60000
 		asked_to_charge="false"
@@ -963,20 +998,10 @@ do
 				myprint "Skipping gmaps launch since on wifi and lower freq not met ($time_from_last_gmaps -lt $WIFI_GMAPS)"
 			fi 
 		fi 
-		res_dir="locationlogs/${suffix}"
-		mkdir -p $res_dir		
-		timeout $MAX_LOCATION termux-location -p network -r last > $res_dir"/network-loc-$current_time.txt"
-		lat=`cat $res_dir"/network-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
-		long=`cat $res_dir"/network-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
-		network_loc="$lat,$long"
-		timeout $MAX_LOCATION termux-location -p gps -r last > $res_dir"/gps-loc-$current_time.txt"		
-		lat=`cat $res_dir"/gps-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
-		long=`cat $res_dir"/gps-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
-		gps_loc="$lat,$long"		
-		sudo dumpsys location > $res_dir"/loc-$current_time.txt"
-		loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "passive" | head -n 1`
-		gzip $res_dir"/loc-$current_time.txt"
-		
+
+		# update location info
+		update_location
+
 		# get uptime
 		uptime_info=`uptime`
 
@@ -984,9 +1009,14 @@ do
 		then
 			myprint "Skipping report sending since not connected"
 		else 
+			
 			myprint "Data to send to the server:"
 			echo "$(generate_post_data)"
-			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
+			t_curl_start=`date +%s`	
+			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/status
+			t_curl_end=`date +%s`
+			let "curl_duration = t_curl_end - t_curl_start"
+			myprint "CURL duration POST: $curl_duration"
 		fi 
 		echo $current_time > ".last_report"
 	fi 

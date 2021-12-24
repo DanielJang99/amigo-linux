@@ -5,6 +5,25 @@ import sys
 import psycopg2
 from psycopg2 import pool
 import subprocess
+import signal
+ 
+def handler(signum, frame):
+	msg = "Ctrl-c was pressed. Stopping"
+	# stop remote host if it was started
+	if start_host: 
+		print("Stopping host for ", app) 
+		command = remote_exec + " stop"
+		subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+	
+	# close connection to database 
+	if postgreSQL_pool:
+		postgreSQL_pool.closeall
+		print("PostgreSQL connection pool is closed")
+	# exit 
+	sys.exit(1)
+
+# listen to ctrl-c 
+signal.signal(signal.SIGINT, handler)
 
 # connect to databse (with a pool)
 def connect_to_database_pool(): 
@@ -54,14 +73,14 @@ def insert_command(command_id, tester_id_list, timestamp, action, duration, isBa
 	return info, msg 
 
 # insert command in the database 
-def insert_videoconf(tester_id, app, timestamp_list, id_list, access_list, msg_list):
+def insert_videoconf(tester_id, app, location, timestamp_list, id_list, access_list, msg_list):
 	info = None
 	msg = ""
 	ps_connection = postgreSQL_pool.getconn()
 	if (ps_connection):
 		try:
 			ps_cursor = ps_connection.cursor()	
-			insert_sql = "insert into videoconf_status(tester_id, app, timestamp_list, id_list, access_list, msg_list) values(%s, %s, %s, %s, %s, %s);"
+			insert_sql = "insert into videoconf_status(tester_id, app, location, timestamp_list, id_list, access_list, msg_list) values(%s, %s, %s, %s, %s, %s, %s);"
 			print(insert_sql)
 			data = (tester_id, app, timestamp_list, id_list, access_list, msg_list)
 			ps_cursor.execute(insert_sql, data)
@@ -114,7 +133,6 @@ list_meeting_ids = {}            # dictionaire of meeting IDs
 azure_user   =   "azureuser"     # azure user
 azure_server = "40.112.164.175"  # ip of azure server (USW)
 location = "usw"                 # host location 
-#azure_server = "20.120.91.176"  # ip of azure server (USE)
 azure_key = "/root/.ssh/id_rsa"  # ssh key for azureserver ## "/Users/bravello/.ssh/id_rsa" 
 isDev = True                     # flag for testing with devices in Yasir house only 
 MAX_RUNS=5                       # maximum number of runs per configuration 
@@ -124,11 +142,21 @@ connected, postgreSQL_pool = connect_to_database_pool()
 if not connected: 
 	print("Issue creating the connection pool")
 
-# populate meetings info based on location 
+# populate azure info and meetings based on location 
 meeting_info = {'zoom-home':"4170438763", 'zoom-usc':'7761594917', 'zoom-usw':'7761594917',
 			'webex-home':'1828625842', 'webex-usc':'1327911223', 'webex-usw':'1325147081',
 			'meet-home':'', 'meet-usc':'pyp-hixb-fwh', 'meet-usw':'pyp-hixb-fwh'}
 password_info = {'zoom-home':'6m2jmA', 'zoom-usc':'jXN8Rq', 'zoom-usw':'jXN8Rq'}
+azure = {"ch":"20.203.184.236", "in":"20.193.247.182", "uk":"52.142.186.54", 
+		 "usc":"40.113.240.105", "use":"20.120.91.176", "usw":"40.112.164.175"} 
+
+# retrieve azure server IP
+if location in azure: 
+	azure_server = azure[location]
+	print("Location %s Host: %s" %(location, azure_server))
+else:
+	print("ERROR. Location %s is not supported" %(location))
+	sys.exit(-1) 
 
 # no need to start host while in dev. also smaller conf  
 if isDev: 
@@ -152,10 +180,10 @@ elif app == "meet":
 	basic_command += " --big 500" 
 
 # find current status of the videoconferencing database 
-query = "select tester_id from videoconf_status where app = '" + app + "';"
+query = "select tester_id from videoconf_status where app = '" + app + "' and location = '" + location + "';"
 info, msg = run_query(query)
 prev_tester_ids = [x[0] for x in info]
-print("Current devices with at least one videoconferencing test for app %s: %s" %(app, prev_tester_ids))
+print("Current devices with at least one videoconferencing test for app %s and location %s: %s" %(app, location, prev_tester_ids))
 
 # find devices currently available, along with networking info 
 active_testers = [] 
@@ -174,7 +202,7 @@ else:
 if start_host: 
 	print("Stopping host for ", app) 
 	command = remote_exec + " stop"
-	subprocess.Popen("ssh -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+	subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
 # iterate on testers until three are found who match
 for entry in active_testers: 
@@ -253,20 +281,16 @@ for entry in active_testers:
 		if start_host: 
 			print("Starting host for ", app)
 			if app == "zoom":
-				command = "./zoom.sh start " + str(curr_id)
-				p = subprocess.Popen("ssh -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-				#print(p)
+				command = "\"(./zoom.sh start " + str(curr_id) + " > log-" + str(curr_id)+" 2>&1 &)\""
 				remote_exec = "./zoom.sh"
 			elif app == "webex":
-				meeting_id="1325147081"
-				command = "./webex.sh start " + str(curr_id)
-				subprocess.Popen("ssh -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()	
+				command = "\"(./webex.sh start " + str(curr_id) + " > log-" + str(curr_id)+" 2>&1 &)\""
 				remote_exec = "./webex.sh"
 			elif app == "meet":
-				meeting_id="fnu-xvxb-fdj"
-				command = "./googlemeet.sh start " + str(curr_id)
-				subprocess.Popen("ssh -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+				command = "\"(./googlemeet.sh start " + str(curr_id) + " > log-" + str(curr_id)+" 2>&1 &)\""
 				remote_exec = "./googlemeet.sh"
+			p = subprocess.Popen("ssh -T -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+			#print(p)
 
 		# add common options: sync time, suffix, and test identifier
 		if isDev: 
@@ -329,7 +353,7 @@ for entry in active_testers:
 			# modify videoconferencing db (need to insert before)
 			if uid in prev_tester_ids: 
 				#query = "update videoconf_status set access_list = array_append(access_list, '" + access + "'), timestamp_list = array_append(timestamp_list, '" + str(int(time.time())) + "'), id_list = array_append(id_list, '" + str(curr_id) + "'), msg_list = array_append(msg_list, '" + msg + "') where tester_id = '" + uid + "' and app = '" + app + "';"
-				query = "update videoconf_status set access_list = array_append(access_list, '{access}'), timestamp_list = array_append(timestamp_list, '{timestamp}'), id_list = array_append(id_list, '{curr_id}'), msg_list = array_append(msg_list, '{msg}') where tester_id = '{uid}' and app = '{app}';".format(access = access, timestamp = str(int(time.time())), curr_id = str(curr_id), msg = msg, uid = uid, app = app)
+				query = "update videoconf_status set access_list = array_append(access_list, '{access}'), timestamp_list = array_append(timestamp_list, '{timestamp}'), id_list = array_append(id_list, '{curr_id}'), msg_list = array_append(msg_list, '{msg}') where tester_id = '{uid}' and app = '{app}' and location = '{location}';".format(access = access, timestamp = str(int(time.time())), curr_id = str(curr_id), msg = msg, uid = uid, app = app, location = location)
 				print("==>", query)
 				info, msg  = run_query(query)
 				print(info, msg)			
@@ -339,7 +363,8 @@ for entry in active_testers:
 				id_list = [curr_id] 
 				access_list = [access]
 				msg_list = [msg]
-				insert_videoconf(uid, app, timestamp_list, id_list, access_list, msg_list)
+				info, msg = insert_videoconf(uid, app, location, timestamp_list, id_list, access_list, msg_list)
+				print(info, msg)
 				prev_tester_ids.append(uid)
 			
 		# clean list for moving forward with testing
@@ -349,7 +374,7 @@ for entry in active_testers:
 		if start_host: 
 			print("Stopping host for ", app) 
 			command = remote_exec + " stop"
-			subprocess.Popen("ssh -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+			subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
 		# stop here while debugging
 		if isDev: 

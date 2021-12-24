@@ -74,7 +74,7 @@ run_zus(){
 	current_time=$t_s
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 
-	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/zeustest
+	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:$SERVER_PORT/zeustest
 
 	#switch back to 4G 
 	myprint "NYU-stuff. Switch to 4G"	
@@ -105,7 +105,7 @@ run_zus(){
 	current_time=$t_s
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 
-	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/zeustest
+	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:$SERVER_PORT/zeustest
 }
 
 # params
@@ -124,8 +124,16 @@ then
 	opt=$4
 fi  
 
+# retrieve last used server port 
+if [ -f ".server_port" ] 
+then 
+	SERVER_PORT=`cat ".server_port"`
+else 
+	SERVER_PORT="8082"
+fi 
+
 #logging 
-echo "[`date`] net-testing $opt START.Sleeping 30 secs to propagate status"
+echo "[`date`] net-testing $opt START. SERVER_PORT:$SERVER_PORT -- $Sleeping 30 secs to propagate status"
 
 # lock out google maps to avoid any interference
 t_start=`date +%s`
