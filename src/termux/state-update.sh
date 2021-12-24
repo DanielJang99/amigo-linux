@@ -299,6 +299,8 @@ update_wifi_mobile(){
 # parameters
 slow_freq=25                           # interval for checking commands to run (slower)
 fast_freq=5                            # interval for checking the app (faster)
+#SERVER_PORT=8082
+SERVER_PORT=8083                       # web app port 
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
 NET_INTERVAL=5400                      # interval of networking testing 
 NET_INTERVAL_SHORT=2700                # short interval of net testing (just on mobile)
@@ -512,7 +514,7 @@ do
 				myprint "Data to send to the server:"			
 				msg="PAUSED-BY-USER"			
 				echo "$(generate_post_data_short)" 		
-				timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:8082/status
+				timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:$SERVER_PORT/status
 			fi 
 		fi 
 		echo "true" > ".isPaused"
@@ -631,7 +633,7 @@ do
 		then
 			prev_command=`cat ".prev_command"`
 		fi 
-		ans=`timeout 15 curl -s "https://mobile.batterylab.dev:8082/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`
+		ans=`timeout 15 curl -s "https://mobile.batterylab.dev:$SERVER_PORT/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`
 		ret_code=$?
 		myprint "Checking if there is a command to execute. ANS:$ans - RetCode: $ret_code"		
 		if [[ "$ans" != *"No command matching"* ]]
@@ -659,7 +661,7 @@ do
 						comm_status=$?
 						myprint "Command executed. Status: $comm_status"
 					fi
-					ans=`timeout 15 curl -s "https://mobile.batterylab.dev:8082/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${termux_user}"`
+					ans=`timeout 15 curl -s "https://mobile.batterylab.dev:$SERVER_PORT/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${termux_user}"`
 					myprint "Informed server about last command run. ANS: $ans"
 				fi 
 				echo $comm_id > ".prev_command"
@@ -730,7 +732,7 @@ do
 			asked_to_charge="true"
 			msg="ASKED-TO-CHARGE"
 			echo "$(generate_post_data_short)" 		
-			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:8082/status
+			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:$SERVER_PORT/status
 			sudo settings put system screen_off_timeout $max_screen_timeout		
 			myprint "Testing skipping the rest since paused..."		
 		fi 
@@ -765,7 +767,7 @@ do
 			else 
 				myprint "Data to send to the server:"
 				echo "$(generate_post_data)"
-				timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
+				timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/status
 			fi 
 			echo $current_time > ".last_report"
 		fi 
@@ -777,7 +779,7 @@ do
 		then
 			msg="IN-CHARGE"
 			echo "$(generate_post_data_short)" 		
-			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:8082/status
+			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:$SERVER_PORT/status
 		fi 
 		sudo settings put system screen_off_timeout 60000
 		asked_to_charge="false"
@@ -985,7 +987,7 @@ do
 		else 
 			myprint "Data to send to the server:"
 			echo "$(generate_post_data)"
-			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:8082/status
+			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/status
 		fi 
 		echo $current_time > ".last_report"
 	fi 
