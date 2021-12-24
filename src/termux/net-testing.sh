@@ -41,8 +41,7 @@ run_zus(){
 	am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
 	sleep 5 
 	sudo screencap -p "network-setting-last.png"
-	sudo chown $USER:$USER "network-setting-last.png"
-		
+	sudo chown $USER:$USER "network-setting-last.png"		
 	tap_screen 370 765 5
 	tap_screen 370 765 5 
 	tap_screen 370 660 2

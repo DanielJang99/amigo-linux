@@ -318,7 +318,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="1.9"                              # code version 
+vrs="1.91"                             # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
 isPaused="N/A"                         # hold info on whether a phone is paued or not
 	
