@@ -126,6 +126,8 @@ generate_post_data(){
     "vrs_num":"${vrs}",  
     "today":"${suffix}", 
     "timestamp":"${current_time}",
+    "server_port":"${SERVER_PORT}",
+    "last_curl_dur:"${curl_duration},
     "uid":"${uid}",
     "physical_id":"${physical_id}",
     "googleStatus":"${google_status}",
@@ -355,6 +357,7 @@ else
 	SERVER_PORT=8083
 fi
 myprint "Web-app port selected: $SERVER_PORT"
+echo "$SERVER_PORT" > ".server_port"
 
 # make sure only this instance of this script is running
 my_pid=$$
@@ -767,7 +770,7 @@ do
 			myprint "Testing skipping the rest since paused..."		
 		fi 
 		
-		# check if it is time to status report
+		# check if it is time to status report (while "asked to charge")
 		if [ -f ".last_report" ] 
 		then 
 			last_report_time=`cat ".last_report"`
@@ -790,7 +793,7 @@ do
 			then
 				myprint "Skipping report sending since not connected"
 			else 
-				myprint "Data to send to the server (TEST-TIMING):"
+				myprint "Data to send to the server:"
 				echo "$(generate_post_data)"
 				t_curl_start=`date +%s`			
 				timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/status
@@ -1005,7 +1008,7 @@ do
 			myprint "Skipping report sending since not connected"
 		else 
 			
-			myprint "Data to send to the server (TEST-TIMING-2):"
+			myprint "Data to send to the server:"
 			echo "$(generate_post_data)"
 			t_curl_start=`date +%s`	
 			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/status

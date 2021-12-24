@@ -41,7 +41,7 @@ send_report(){
 	msg=$1
 	myprint "Sending report to the server: "
 	echo "$(generate_post_data)" 
-	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:8082/videoconftest
+	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)"  https://mobile.batterylab.dev:$SERVER_PORT/videoconftest
 }
 
 # import utilities files needed
@@ -526,6 +526,14 @@ then
         fi
     done < ".ps-videoconf"
 fi
+
+# retrieve last used server port 
+if [ -f ".server_port" ] 
+then 
+	SERVER_PORT=`cat ".server_port"`
+else 
+	SERVER_PORT="8082"
+fi 
 
 # make sure screen is in portrait 
 myprint "Ensuring that screen is in portrait and auto-rotation disabled"
