@@ -183,7 +183,7 @@ else:
 if start_host: 
 	print("Stopping host for ", app) 
 	command = remote_exec + " stop"
-	subprocess.Popen("ssh -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+	subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
 # iterate on testers until three are found who match
 for entry in active_testers: 
@@ -263,18 +263,16 @@ for entry in active_testers:
 			print("Starting host for ", app)
 			if app == "zoom":
 				command = "./zoom.sh start " + str(curr_id)
-				p = subprocess.Popen("ssh -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+				p = subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 				#print(p)
 				remote_exec = "./zoom.sh"
 			elif app == "webex":
-				meeting_id="1325147081"
 				command = "./webex.sh start " + str(curr_id)
-				subprocess.Popen("ssh -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()	
+				subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()	
 				remote_exec = "./webex.sh"
 			elif app == "meet":
-				meeting_id="fnu-xvxb-fdj"
 				command = "./googlemeet.sh start " + str(curr_id)
-				subprocess.Popen("ssh -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+				subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 				remote_exec = "./googlemeet.sh"
 
 		# add common options: sync time, suffix, and test identifier
@@ -358,7 +356,7 @@ for entry in active_testers:
 		if start_host: 
 			print("Stopping host for ", app) 
 			command = remote_exec + " stop"
-			subprocess.Popen("ssh -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+			subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
 		# stop here while debugging
 		if isDev: 
