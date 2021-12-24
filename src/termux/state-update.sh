@@ -851,7 +851,7 @@ do
 				myprint "Skipping forced net-testing since WiFi not found anymore"
 			fi 
 		# condition-2: it is time! (long freq, for both wifi and mobile)
-		elif [ $time_from_last_net -gt $NET_INTERVAL ] 
+		if [ $num -eq 0 -a $time_from_last_net -gt $NET_INTERVAL ] 
 		then 
 			myprint "Time to run LONG net-test: $time_from_last_net > $NET_INTERVAL -- DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
 			skipping="false"
@@ -875,7 +875,7 @@ do
 				echo $current_time > ".last_net_short"			
 			fi
 		# condition-3: we are on mobile only and did not do more than N test yet today # FIXME 
-		elif [ $time_from_last_net_short -gt $NET_INTERVAL_SHORT ] 
+		if [ $num -eq 0 -a $time_from_last_net_short -gt $NET_INTERVAL_SHORT ] 
 		then
 			skipping="false"
 			update_wifi_mobile 
