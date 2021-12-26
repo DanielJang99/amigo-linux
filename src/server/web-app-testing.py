@@ -116,7 +116,7 @@ def web_app():
         'server.socket_port': port, 
         'server.ssl_module':'builtin',
         'server.ssl_certificate':'certificate.pem',
-        'server.thread_pool': 100,
+        'server.thread_pool': 50,
     }
     cherrypy.config.update(server_config)
 

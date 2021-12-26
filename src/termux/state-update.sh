@@ -218,15 +218,19 @@ update_wifi_mobile(){
 	# get update on data sent/received
 	wifi_today_file="./data/wifi/"$suffix".txt"
 	mobile_today_file="./data/mobile/"$suffix".txt"
-	wifi_data=0
-	mobile_data=0
 	if [ -f $wifi_today_file ] 
 	then 
 		wifi_data=`cat $wifi_today_file`
+	else 
+		wifi_data=0	
+		prev_wifi_traffic=0
 	fi 
 	if [ -f $mobile_today_file ] 
 	then 
 		mobile_data=`cat $mobile_today_file`
+	else 
+		mobile_data=0	
+		prev_mobile_traffic=0
 	fi 
 
 	# understand WiFi and mobile phone connectivity
@@ -339,7 +343,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="1.95"                             # code version 
+vrs="1.96"                             # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
 curl_duration="-1"                     # last value measured of curl duration
 isPaused="N/A"                         # hold info on whether a phone is paued or not
