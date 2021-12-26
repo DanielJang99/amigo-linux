@@ -1000,6 +1000,7 @@ do
 				echo `date +%s` > ".last_gmaps"
 			else 
 				myprint "Skipping gmaps launch since on wifi and lower freq not met ($time_from_last_gmaps -lt $WIFI_GMAPS)"
+				turn_device_off        # in case something is pending 				
 			fi 
 		fi 
 

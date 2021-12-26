@@ -30,6 +30,7 @@ generate_post_data(){
     "cpu_util_midload_perc":"${cpu_usage_middle}",
     "bdw_used_MB":"${traffic}",
     "tshark_traffic_MB":"${tshark_size}", 
+    "delay_info":"$delay_info",
     "msg":"${msg}"
     }
 EOF
@@ -190,6 +191,10 @@ run_zoom(){
 
 	# sync barrier 
 	sync_barrier
+
+	# potentially click accept term 
+	myprint "Accept term? Testing"
+	tap_screen 530 860 
 
 	# click join with video or not
 	if [ $use_video == "true" ] 
@@ -527,6 +532,14 @@ then
     done < ".ps-videoconf"
 fi
 
+# get delay info if there 
+delay_info="N/A"
+delay_file="${res_folder}/${test_id}-delay.txt"
+if [ -f $delay_file ]
+then 
+	delay_info=`tail -n 1 $delay_file`
+fi 
+
 # retrieve last used server port 
 if [ -f ".server_port" ] 
 then 
@@ -851,18 +864,18 @@ then
 	#tshark_size=`cat $tshark_file | awk -F "," -v my_ip=$my_ip '{if($4!=my_ip){if($8=="UDP"){tot_udp += ($NF-8);} if($8=="TCP"){tot_tcp += ($11);}}}END{tot=(tot_tcp+tot_udp)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000}'`
 	tshark_size=`cat $tshark_file | awk -F "," '{if($8=="UDP"){tot_udp += ($NF-8);} else if(index($8,"QUIC")!=0){tot_quic += ($NF-8);} else if($8=="TCP"){tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp+tot_quic)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000 " TOT-QUIC:" tot_quic/1000000}'`
 	# clean pcap when done
-	ps aux | grep measure.py | grep -v "grep" > /dev/null
+	ps aux | grep "measure.py" | grep -v "grep" > /dev/null
 	ans=$?
 	c=0
 	while [ $ans -eq 0 -a $c -lt 30 ] 
 	do 
-		ps aux | grep measure.py | grep -v "grep" > /dev/null
+		ps aux | grep "measure.py" | grep -v "grep" > /dev/null
 		ans=$?
 		sleep 2
 		let "c++"
 	done
-	myprint "Cleaning PCAP file -- SKIPPING"
-	#sudo rm $pcap_file
+	myprint "Cleaning PCAP file"
+	sudo rm $pcap_file
 fi 
 
 # update traffic rx (for this URL)
