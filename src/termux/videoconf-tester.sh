@@ -14,7 +14,10 @@ safe_stop(){
 	echo "done" > ".videoconfstatus"
 	echo "false" > ".to_monitor"
 	clean_file ".locked"
-	sudo pm clear $package	
+	if [ $clear_state == "true" ] 
+	then 
+		sudo pm clear $package
+	fi 
 	sudo killall tcpdump
 }
 
@@ -151,7 +154,7 @@ wait_for_screen(){
 		let "c++"
 		sleep 2 
 		foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
-		echo "==> $foreground"
+		#echo "==> $foreground"
 		if [ $c -eq $MAX_ATTEMPTS ]
 		then
 			myprint "Window $screen_name never loaded. Returning an error"
@@ -432,7 +435,7 @@ usage(){
 }
 
 # general parameters
-clear_state="true"                       # clear zoom state before the run 
+clear_state="false"                      # clear zoom state before the run 
 use_video="false" 	                     # flag to control video usage or not 
 package=""                               # package of videoconferencing app to be tested
 duration=10                              # default test duration before leaving the call
@@ -645,7 +648,7 @@ then
 	then 
 		port_num=9000
 	fi 
-	echo "sudo tcpdump -i $iface src port $port_num -w $pcap_file"
+	#echo "sudo tcpdump -i $iface src port $port_num -w $pcap_file"
 	sudo tcpdump -i $iface src port $port_num -w $pcap_file > /dev/null 2>&1 & 
 	sudo tcpdump -i $iface -w $pcap_file_full > /dev/null 2>&1 & 
 	disown -h %1  # make tcpdump as a deamon
@@ -865,7 +868,6 @@ then
 	#tshark_size=`cat $tshark_file | awk -F "," '{if($8=="UDP"){tot_udp += ($NF-8);} else if(index($8,"QUIC")!=0){tot_quic += ($NF-8);} else if($8=="TCP"){tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp+tot_quic)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000 " TOT-QUIC:" tot_quic/1000000}'`
 	echo "===> $tshark_size"
 	tshark -nr $pcap_file_full -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file_full
-	#tshark_size_full=`cat $tshark_file_full | awk -F "," '{if($8=="UDP"){tot_udp += ($NF-8);} else if(index($8,"QUIC")!=0){tot_quic += ($NF-8);} else if($8=="TCP"){tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp+tot_quic)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000 " TOT-QUIC:" tot_quic/1000000}'`
 	tshark_size_full=`cat $tshark_file_full | awk -F "," '{if($11==""){tot_udp += ($NF-8);} else {tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000}'`
 	echo "===> $tshark_size_full"	
 	
