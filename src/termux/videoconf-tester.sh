@@ -883,13 +883,13 @@ delay_file="${res_folder}/${test_id}-delay.txt"
 if [ -f $delay_file ]
 then 
 	info=`tail -n 1 $delay_file`
-	dst_ip=`echo $info | cut -f 2`
-	delay_info=`echo $info | cut -f 4`
+	dst_ip=`echo "$info" | cut -f 2`
+	delay_info=`echo "$info" | cut -f 4`
 fi 
 
 # check if user turned off the screen 
-sudo dumpsys window | grep "mAwake=false" > /dev/null 
 screen_info="ON"
+sudo dumpsys window | grep "mAwake=false" > /dev/null 
 if [ $? -eq 0 ]
 then
 	screen_info="OFF"
