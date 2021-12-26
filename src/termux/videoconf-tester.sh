@@ -30,6 +30,7 @@ generate_post_data(){
     "cpu_util_midload_perc":"${cpu_usage_middle}",
     "bdw_used_MB":"${traffic}",
     "tshark_traffic_MB":"${tshark_size}", 
+    "dst_ip":"${dst_ip}",
     "delay_info":"${delay_info}",
     "screen_info":"${screen_info}",
     "msg":"${msg}"
@@ -881,7 +882,9 @@ delay_info="N/A"
 delay_file="${res_folder}/${test_id}-delay.txt"
 if [ -f $delay_file ]
 then 
-	delay_info=`tail -n 1 $delay_file`
+	info=`tail -n 1 $delay_file`
+	dst_ip=`echo $info | cut -f 2`
+	delay_info=`echo $info | cut -f 4`
 fi 
 
 # check if user turned off the screen 
