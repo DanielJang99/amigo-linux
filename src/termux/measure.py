@@ -36,7 +36,8 @@ for line in sys.stdin:
         #print(cur_ts, src_ip, src_port, dst_ip, dst_port, size)
         if src_ip not in probe_tbl:        
             #print ("Probing %s" % src_ip)
-            os.system(probe_cmd % (dst_ip, probe_dir, dst_ip))
+            out_file = test_id + '-' + src_ip
+            os.system(probe_cmd % (src_ip, probe_dir, out_file))
             probe_tbl[src_ip] = 1
         if prv_ts == 0:
             prv_ts = cur_ts
