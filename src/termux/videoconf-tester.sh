@@ -27,7 +27,9 @@ generate_post_data(){
     "uid":"${uid}",
     "physical_id":"${physical_id}",    
     "test_id":"${test_id}",
+    "app":"${app}",
     "cpu_util_midload_perc":"${cpu_usage_middle}",
+    "port":"${port_num}",
     "bdw_used_MB":"${traffic}",
     "tshark_traffic_MB":"${tshark_size}", 
     "dst_ip":"${dst_ip}",
@@ -630,7 +632,9 @@ close_all
 if [ $pcap_collect == "true" ] 
 then 
     pcap_file="${res_folder}/${test_id}.pcap"
+    pcap_file_full="${res_folder}/${test_id}-full.pcap"    
     tshark_file="${res_folder}/${test_id}.tshark"
+    tshark_file_full="${res_folder}/${test_id}-full.tshark"    
     if [ $app == "zoom" ] 
 	then 
 		port_num=8801
@@ -643,6 +647,7 @@ then
 	fi 
 	echo "sudo tcpdump -i $iface src port $port_num -w $pcap_file"
 	sudo tcpdump -i $iface src port $port_num -w $pcap_file > /dev/null 2>&1 & 
+	sudo tcpdump -i $iface -w $pcap_file_full > /dev/null 2>&1 & 
 	disown -h %1  # make tcpdump as a deamon
 	myprint "Started tcpdump: $pcap_file Interface: $iface Port: $port_num BigPacketSize: $big_packet_size"
 fi 
@@ -856,9 +861,14 @@ if [ $pcap_collect == "true" ]
 then 
 	myprint "Starting tshark analysis: $tshark_file"
 	tshark -nr $pcap_file -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file 
-	#tshark_size=`cat $tshark_file | awk -F "," -v my_ip=$my_ip '{if($4!=my_ip){if($8=="UDP"){tot_udp += ($NF-8);} if($8=="TCP"){tot_tcp += ($11);}}}END{tot=(tot_tcp+tot_udp)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000}'`
+	#tshark_size=`cat $tshark_file | awk -F "," '{if($11==""){tot_udp += ($NF-8);} else {tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000"}'`
 	tshark_size=`cat $tshark_file | awk -F "," '{if($8=="UDP"){tot_udp += ($NF-8);} else if(index($8,"QUIC")!=0){tot_quic += ($NF-8);} else if($8=="TCP"){tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp+tot_quic)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000 " TOT-QUIC:" tot_quic/1000000}'`
-	# clean pcap when done
+	echo "===> $tshark_size"
+	tshark -nr $pcap_file_full -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file_fill
+	tshark_size_full=`cat $tshark_file_full | awk -F "," '{if($8=="UDP"){tot_udp += ($NF-8);} else if(index($8,"QUIC")!=0){tot_quic += ($NF-8);} else if($8=="TCP"){tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp+tot_quic)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000 " TOT-QUIC:" tot_quic/1000000}'`
+	echo "===> $tshark_size_full"	
+	
+	# clean pcap when done analyzing pcap for delay info 
 	ps aux | grep "measure.py" | grep -v "grep" > /dev/null
 	ans=$?
 	c=0
