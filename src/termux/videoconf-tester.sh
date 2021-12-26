@@ -31,6 +31,7 @@ generate_post_data(){
     "bdw_used_MB":"${traffic}",
     "tshark_traffic_MB":"${tshark_size}", 
     "delay_info":"$delay_info",
+    "screen_info":"$screen_info",    
     "msg":"${msg}"
     }
 EOF
@@ -193,7 +194,7 @@ run_zoom(){
 	sync_barrier
 
 	# potentially click accept term 
-	myprint "Accept term? Testing"
+	myprint "Potentially click accept terms..."
 	tap_screen 530 860 
 
 	# click join with video or not
@@ -532,13 +533,6 @@ then
     done < ".ps-videoconf"
 fi
 
-# get delay info if there 
-delay_info="N/A"
-delay_file="${res_folder}/${test_id}-delay.txt"
-if [ -f $delay_file ]
-then 
-	delay_info=`tail -n 1 $delay_file`
-fi 
 
 # retrieve last used server port 
 if [ -f ".server_port" ] 
@@ -881,6 +875,22 @@ fi
 # update traffic rx (for this URL)
 compute_bandwidth $traffic_rx_last
 traffic_rx_last=$curr_traffic
+
+# get delay info if there 
+delay_info="N/A"
+delay_file="${res_folder}/${test_id}-delay.txt"
+if [ -f $delay_file ]
+then 
+	delay_info=`tail -n 1 $delay_file`
+fi 
+
+# check if user turned off the screen 
+sudo dumpsys window | grep "mAwake=false" > /dev/null 
+screen_info="ON"
+if [ $? -eq 0 ]
+then
+	screen_info="OFF"
+fi 
 
 # log results
 median_cpu="N/A"
