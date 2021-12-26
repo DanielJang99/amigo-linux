@@ -16,6 +16,7 @@ safe_stop(){
 	clean_file ".locked"
 	if [ $clear_state == "true" ] 
 	then 
+		myprint "Cleaning $app"
 		sudo pm clear $package
 	fi 
 	sudo killall tcpdump
@@ -622,6 +623,7 @@ unlock_device
 # clear app states and  re-grant permissions
 if [ $clear_state == "true" ] 
 then 
+	myprint "Cleaning $app"
 	sudo pm clear $package
 fi 
 
@@ -845,6 +847,7 @@ then
 fi 
 if [ $clear_state == "true" ] 
 then 
+	myprint "Cleaning $app"
 	sudo pm clear $package
 fi 
 echo "done" > ".videoconfstatus"
