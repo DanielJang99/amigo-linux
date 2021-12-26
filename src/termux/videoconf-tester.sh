@@ -30,8 +30,8 @@ generate_post_data(){
     "cpu_util_midload_perc":"${cpu_usage_middle}",
     "bdw_used_MB":"${traffic}",
     "tshark_traffic_MB":"${tshark_size}", 
-    "delay_info":"$delay_info",
-    "screen_info":"$screen_info",    
+    "delay_info":"${delay_info}",
+    "screen_info":"${screen_info}",
     "msg":"${msg}"
     }
 EOF
