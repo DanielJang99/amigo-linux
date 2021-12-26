@@ -26,6 +26,33 @@ import psycopg2
 import db_manager
 from db_manager import run_query, insert_data, insert_command, connect_to_database_pool, insert_data_pool
 
+
+# run a generic query on the database (pool)
+def run_query_pool(query, postgreSQL_pool):
+	info = None
+	msg = ''
+
+	# Use getconn() to Get Connection from connection pool
+	ps_connection = postgreSQL_pool.getconn()
+	if (ps_connection):
+		try:
+			ps_cursor = ps_connection.cursor()
+			ps_cursor.execute(query)
+			if 'select' in query or 'SELECT' in query:
+				info = ps_cursor.fetchall()
+			else: 
+				ps_connection.commit()
+			msg = 'OK'
+		# handle exception 
+		except Exception as e:
+			msg = 'Exception: %s' % e    
+		# finally close things 
+		finally:
+			ps_cursor.close()
+			postgreSQL_pool.putconn(ps_connection)	
+	# all good 
+	return info, msg 
+
 # simple function to read json from a POST message 
 def read_json(req): 
 	cl = req.headers['Content-Length']
@@ -89,7 +116,7 @@ def web_app():
         'server.socket_port': port, 
         'server.ssl_module':'builtin',
         'server.ssl_certificate':'certificate.pem',
-        'server.thread_pool': 100,
+        'server.thread_pool': 50,
     }
     cherrypy.config.update(server_config)
 
@@ -152,8 +179,6 @@ class StringGeneratorWebService(object):
 			cherrypy.response.status = 400
 			print("User %s is not supported" %(user_id))
 			return "Error: User is not supported"
-		else: 
-			print("User %s is supported" %(user_id))
 	
 		# see if there is a command
 		if 'action' in cherrypy.url():
@@ -171,19 +196,18 @@ class StringGeneratorWebService(object):
 			# look for a potential action to be performed
 			#query = "select * from commands where (tester_id = '" + user_id + "' or tester_id = '*') and command_id != '" + prev_command + "' and status != 'DONE';"
 			query = "select * from commands where ('" + user_id + "' = ANY (tester_id_list) or '*' = ANY (tester_id_list)) and command_id != '" + prev_command + "';"
-			print(query)
-			info, msg  = run_query(query)
+			#info, msg  = run_query(query)
+			info, msg  = run_query_pool(query, postgreSQL_pool)
+			
 			#print(info, msg)
 			if info is None:
 				cherrypy.response.status = 202
-				print("No command matching the query found")
 				return "No command matching the query found"
 			#if len(info) > 1: 
 			#	print("WARNING: too many actions active at the same time. Returning most recent one")
 			max_timestamp = 0
 			unique_id = termux_id + ';' + user_id
 			for entry in info:
-				print(entry)
 				timestamp = entry[5]
 				user_target_list = entry[1]
 				status = entry[6]
@@ -202,10 +226,8 @@ class StringGeneratorWebService(object):
 			
 			# all good 
 			if max_timestamp == 0:
-				print("No command matching the query found")
 				return "No command matching the query found"
 			ans = command + ';' + str(max_timestamp) + ';' + comm_id + ';' + str(duration) + ';' + isBackground + '\n'
-			print("All good. Returning: ", ans)
 			cherrypy.response.status = 200
 			return ans 
 
@@ -226,12 +248,11 @@ class StringGeneratorWebService(object):
 			# look for a potential action to be performed
 			status = termux_id + ';' + user_id
 			query = "update commands set status = array_append(status, '" + status + "') where command_id = '" + command_id + "';"
-			print("==>", query)
-			info, msg  = run_query(query)
+			#info, msg  = run_query(query)
+			info, msg  = run_query_pool(query, postgreSQL_pool)			
 			print(info, msg)
 	
 			# all good 
-			print("Operation result:", msg)
 			cherrypy.response.status = 200
 			return msg
 
@@ -294,7 +315,6 @@ class StringGeneratorWebService(object):
 			else:
 				#msg = insert_data(user_id, post_type, timestamp, data_json)
 				msg = insert_data_pool(user_id, post_type, timestamp, data_json, postgreSQL_pool)	
-			print(msg)
 	
 		# respond all good 
 		cherrypy.response.headers['Content-Type'] = 'application/json'
