@@ -222,7 +222,6 @@ run_zoom(){
 	else 
 		y_coord="1180"     
 	fi 
-	myprint "UseVideo: $use_video => $x_center;$y_coord"
 	tap_screen $x_center $y_coord 1
 
 	# allow page to load
