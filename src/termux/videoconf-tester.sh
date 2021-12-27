@@ -929,6 +929,7 @@ turn_device_off
 clean_file ".locked"
 
 # report screenshot
+report="true"
 if [ $report == "true" ]
 then 
 	remote_file="/root/mobile-testbed/src/server/videoconferencing/${physical_id}-${test_id}.webp" 
