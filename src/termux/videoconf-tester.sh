@@ -222,7 +222,6 @@ run_zoom(){
 	else 
 		y_coord="1180"     
 	fi 
-	myprint "UseVideo: $use_video => $x_center;$y_coord"
 	tap_screen $x_center $y_coord 1
 
 	# allow page to load
@@ -819,11 +818,15 @@ if [ -f ".cpu-usage" ]
 then 
 	cpu_usage_middle=`cat .cpu-usage`
 fi
-if [ $screenshots == "false" ]
-then
-	sudo screencap -p $res_folder"/"$test_id".png" 
-	sudo chown $USER:$USER $res_folder"/"$test_id".png"
-fi 
+screen_file=$res_folder"/"$test_id 
+sudo screencap -p $screen_file".png"
+sudo chown $USER:$USER $screen_file".png"
+cwebp -q 80 ${screen_file}".png" -o ${screen_file}".webp" > /dev/null 2>&1 
+if [ -f ${screen_file}".webp" ]
+then 
+	chmod 644 ${screen_file}".webp"
+	rm ${screen_file}".png"
+fi
 
 # sleep rest of the experiment
 sleep $half_duration 
@@ -923,3 +926,11 @@ send_report "ALL-GOOD"
 close_all
 turn_device_off
 clean_file ".locked"
+
+# report screenshot
+report="true"
+if [ $report == "true" ]
+then 
+	remote_file="/root/mobile-testbed/src/server/videoconferencing/${physical_id}-${test_id}.webp" 
+	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
+fi 
