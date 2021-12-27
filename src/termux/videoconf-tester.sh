@@ -10,16 +10,21 @@ function ctrl_c() {
 	exit -1 
 }
 
+# stop in case things do not seem right
 safe_stop(){
-	echo "done" > ".videoconfstatus"
 	echo "false" > ".to_monitor"
-	clean_file ".locked"
+	echo "true" > ".done_videoconf"
+	sudo killall tcpdump	
+	sleep 5 
 	if [ $clear_state == "true" ] 
 	then 
 		myprint "Cleaning $app"
 		sudo pm clear $package
 	fi 
-	sudo killall tcpdump
+	close_all
+	turn_device_off
+	clean_file ".locked"
+	exit -1 
 }
 
 # generate data to be POSTed to my server
@@ -147,7 +152,10 @@ wait_for_screen(){
 	screen_name=$1
 	MAX_ATTEMPTS=10
 
+	# logging 
 	myprint "Wait for activity: $screen_name"
+
+	# check current activity
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
 	#echo "==> $foreground"		
 	while [ $foreground != $screen_name ]
@@ -163,6 +171,9 @@ wait_for_screen(){
 			send_report "WINDOW-NO-LOAD-$screen_name"
 			break
 		fi 
+		# testing -- check that device is on 
+		turn_device_on
+		#############################
 	done
 	status="success" #FIXME -- manage unsuccess 
 	sleep 2 	
@@ -385,6 +396,7 @@ leave_meet(){
 
 # take multiple screenshots 
 take_screenshots(){
+	myprint "Starting to take screenshots..."
 	counter=1
 	isDone="false"
 	mkdir -p "${res_folder}/screenshots/${test_id}"
@@ -410,6 +422,7 @@ take_screenshots(){
 		fi 
 		isDone=`cat ".done_videoconf"`
 	done	 
+	myprint "Done to take screenshots..."
 }
 
 # script usage
@@ -541,7 +554,6 @@ then
     done < ".ps-videoconf"
 fi
 
-
 # retrieve last used server port 
 if [ -f ".server_port" ] 
 then 
@@ -565,12 +577,6 @@ then
 	physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | cut -f 1`
 fi 
 myprint "UID: $uid PhysicalID: $physical_id"
-
-# clean sync files 
-use_sync="true"
-clean_file ".videoconfstatus"
-clean_file ".localsync" 
-clean_file ".globalsync" 
 
 # lock this device 
 touch ".locked"
@@ -851,7 +857,6 @@ then
 	myprint "Cleaning $app"
 	sudo pm clear $package
 fi 
-echo "done" > ".videoconfstatus"
 t_now=`date +%s`
 
 # stop CPU
@@ -911,16 +916,10 @@ then
 	screen_info="OFF"
 fi 
 
-# log results
-median_cpu="N/A"
-let "call_duration = t_now - t_actual_launch"
-log_traffic=$res_folder"/"$test_id".traffic"
-echo -e "$app_traffic\t$pi_traffic" > $log_traffic
-
 # send report to the server
 send_report "ALL-GOOD"
 
-# return HOME and turn off screen 
-sudo input keyevent HOME
+# close all and turn off screen 
+close_all
 turn_device_off
 clean_file ".locked"
