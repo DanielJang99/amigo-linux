@@ -157,13 +157,13 @@ wait_for_screen(){
 
 	# check current activity
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
-	echo "==> $foreground"		
+	#echo "==> $foreground"		
 	while [ $foreground != $screen_name ]
 	do 
 		let "c++"
 		sleep 2 
 		foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
-		echo "==> $foreground"
+		#echo "==> $foreground"
 		if [ $c -eq $MAX_ATTEMPTS ]
 		then
 			myprint "Window $screen_name never loaded. Returning an error"
@@ -320,9 +320,6 @@ run_webex(){
 ## FailedToJoinMeetingActivity <== watch for this, happens when verification is needed 
 run_meet(){
 
-	# testing 
-	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
-	echo "==> $foreground"		
 	if [ $foreground == "OnboardingActivity" ]
 	then 
 	#if [ $clear_state == "true" ] 
@@ -372,8 +369,8 @@ run_meet(){
 
 	# get full screen (comparable with zoom) ## FIXME 
 	wait_for_screen "SingleCallActivity"
-	myprint "get full screen -- FIXME"
-	tap_screen $x_center $y_center
+	#myprint "get full screen -- FIXME"  -- does not go full screen anymore 
+	#tap_screen $x_center $y_center
 }
 
 # leave zoom call
