@@ -21,6 +21,18 @@ safe_stop(){
 		myprint "Cleaning $app"
 		sudo pm clear $package
 	fi 
+
+	screen_file=$res_folder"/"$test_id 
+	sudo screencap -p $screen_file".png"
+	sudo chown $USER:$USER $screen_file".png"
+	cwebp -q 80 ${screen_file}".png" -o ${screen_file}".webp" > /dev/null 2>&1 
+	if [ -f ${screen_file}".webp" ]
+	then 
+		chmod 644 ${screen_file}".webp"
+		rm ${screen_file}".png"
+	fi
+	remote_file="/root/mobile-testbed/src/server/videoconferencing/${physical_id}-ERROR-${test_id}.webp" 
+	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
 	close_all
 	turn_device_off
 	clean_file ".locked"
@@ -167,8 +179,8 @@ wait_for_screen(){
 		if [ $c -eq $MAX_ATTEMPTS ]
 		then
 			myprint "Window $screen_name never loaded. Returning an error"
-			safe_stop 
 			send_report "WINDOW-NO-LOAD-$screen_name"
+			safe_stop 			
 			break
 		fi 
 		# testing -- check that device is on 
@@ -320,12 +332,12 @@ run_webex(){
 ## FailedToJoinMeetingActivity <== watch for this, happens when verification is needed 
 run_meet(){
 
-	if [ $foreground == "OnboardingActivity" ]
-	then 
-	#if [ $clear_state == "true" ] 
+	#if [ $foreground == "OnboardingActivity" ]   # nee more time -- FIXME
 	#then 
-	#	wait_for_screen "OnboardingActivity"	
-		tap_screen $x_center 1090 5 # FIXME: maybe even more? 
+	if [ $clear_state == "true" ] 
+	then 
+		wait_for_screen "OnboardingActivity"	
+		tap_screen $x_center 1090 5 
 	fi 
 
 	# click on "join a meeting"
