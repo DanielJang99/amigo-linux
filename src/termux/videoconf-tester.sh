@@ -201,8 +201,8 @@ run_zoom(){
 	sync_barrier
 
 	# potentially click accept term 
-	myprint "Potentially click accept terms..."
-	tap_screen 530 860 
+	#myprint "Potentially click accept terms..."
+	#tap_screen 530 860 
 
 	# click join with video or not
 	if [ $use_video == "true" ] 
@@ -211,6 +211,7 @@ run_zoom(){
 	else 
 		y_coord="1180"     
 	fi 
+	myprint "UseVideo: $use_video => $x_center;$y_coord"
 	tap_screen $x_center $y_coord 1
 
 	# allow page to load
@@ -686,8 +687,8 @@ sudo monkey -p $package 1 > /dev/null 2>&1
 # allow time for app to launch # FIXME 
 sleep 5 
 
-# needed to handle warning of zoom on rooted device 
-if [ $clear_state == "true" -a $app == "zoom" ] 
+# needed to handle warning of zoom on rooted devices (even if not clear) 
+if [ $app == "zoom" ] 
 then
 	wait_for_screen "LauncherActivity"	
 	myprint "Accepting warning due to rooted phone..."
