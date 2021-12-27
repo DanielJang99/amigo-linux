@@ -309,11 +309,11 @@ run_webex(){
 	# accept warning Q: not needed
 	#tap_screen 375 1075 3
 
-	# go full screen (which is comparable with zoom default)
-	if [ $change_view == "false" ]
-	then 
-		sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
-	fi 
+	# go full screen (which is comparable with zoom default) -- FIXME
+	#if [ $change_view == "false" ]
+	#then 
+	#	sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
+	#fi 
 }
 
 # helper function to join a google meet meeting
@@ -369,10 +369,10 @@ run_meet(){
 
 	# get full screen (comparable with zoom) ## FIXME 
 	wait_for_screen "SingleCallActivity"
-	myprint "get full screen => 160,460"
+	myprint "get full screen => FIXME"
 	#tap_screen $x_center $y_center
-	tap_screen 160 460 
-	tap_screen 160 460 
+	#tap_screen 180 460 
+	#tap_screen 180 460 
 }
 
 # leave zoom call
@@ -621,13 +621,6 @@ find_package
 res_folder="./videoconferencing/${suffix}"
 mkdir -p $res_folder 
 
-# # ntp update  # currently not supported on termux
-# use_ntp="false"
-# if [ $use_ntp == "tru" ] 
-# then 
-# 	sudo ntpdate 0.us.pool.ntp.org
-# fi 
-
 # make sure screen is on
 turn_device_on
 
@@ -709,43 +702,14 @@ then
 fi 
 
 # join a meeting in the app to be tested
-user="azureuser"
-server="168.61.166.242"
-key="$HOME/.ssh/id_rsa_azure"
 if [ $app == "zoom" ]
 then 
-	if [ $remote == "true" ] 
-	then
-		#meeting_id="259\ 888\ 3628"
-		meeting_id="689\ 356\ 0343"
-		password="abc"
-		myprint "Starting $app remote client..."
-		ssh -o StrictHostKeyChecking=no  -i $key -f $user@$server "./zoom.sh start $test_id"
-		remote_exec="./zoom.sh"
-		sleep 5
-	fi 
 	run_zoom 
 elif [ $app == "webex" ]
 then 
-	if [ $remote == "true" ] 
-	then
-		meeting_id="1325147081"
-		myprint "Starting $app remote client..."
-		ssh -o StrictHostKeyChecking=no -i $key -f $user@$server "./webex.sh start $test_id"
-		remote_exec="./webex.sh"
-		sleep 15
-	fi
     run_webex
 elif [ $app == "meet" ]
-then 
-	if [ $remote == "true" ] 
-	then
-		meeting_id="fnu-xvxb-fdj"
-		myprint "Starting $app remote client..."
-		ssh -o StrictHostKeyChecking=no -i $key -f $user@$server "./googlemeet.sh start $test_id"
-		remote_exec="./googlemeet.sh"
-		sleep 10
-	fi 
+then  
     run_meet
 fi 
 t_actual_launch=`date +%s`
@@ -770,36 +734,6 @@ then
     turn_device_off
 fi 
 
-# manage screen recording
-if [ $video_recording == "true" ]
-then
-    # rotate screen 
-	if [ $app != "zoom" ] # cause zoom ignores this
-	then 
-		myprint "Rotating screen in landscape mode..."
-		sudo content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:1
-		sleep 5
-	fi 
-
-    # make sure video is full screen 
-	if [ $app == "webex" ] 
-	then 
-		sudo input tap 730 250 & sleep 0.1; sudo input tap 730 250
-	elif [ $app == "meet" ]
-	then 
-    	tap_screen 1200 430 
-	fi 
-	
-    # skip first 60 seconds when screen is black anyway 
-    myprint "Skip first 60 seconds since screen is black anyway"
-    sleep 60
-    
-	# start recording the video 
-    screen_video="${res_folder}/video-rec-${test_id}"
-    myprint "Start video recording: $screen_video"
-    (sudo screenrecord $screen_video".mp4" --time-limit $duration &)
-fi
-
 # take screenshots if needed 
 echo "false" > ".done_videoconf"
 screenshots="false"
@@ -812,12 +746,12 @@ fi
 myprint "Waiting $duration for experiment to end..."
 sleep 5 
 
-# REDO go full screen (which is comparable with zoom default) -- sometimes fails...
-if [ $change_view == "false" -a $app == "webex" ]
-then 
-    myprint "Redoing tap for full screen, just in case. Verify no issue added" 
-    sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
-fi
+# REDO go full screen (which is comparable with zoom default) -- SKIPPING FOR NOW
+#if [ $change_view == "false" -a $app == "webex" ]
+#then 
+#    myprint "Redoing tap for full screen, just in case. Verify no issue added" 
+#    sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
+#fi
 
 # sleep up to mid experiment then take a screenshot and record mid CPU usage 
 let "half_duration = duration/2 - 5"
