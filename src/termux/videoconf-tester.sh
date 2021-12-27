@@ -319,9 +319,15 @@ run_webex(){
 # helper function to join a google meet meeting
 ## FailedToJoinMeetingActivity <== watch for this, happens when verification is needed 
 run_meet(){
-	if [ $clear_state == "true" ] 
+
+	# testing 
+	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
+	echo "==> $foreground"		
+	if [ $foreground == "OnboardingActivity" ]
 	then 
-		wait_for_screen "OnboardingActivity"	
+	#if [ $clear_state == "true" ] 
+	#then 
+	#	wait_for_screen "OnboardingActivity"	
 		tap_screen $x_center 1090 5 # FIXME: maybe even more? 
 	fi 
 
@@ -359,8 +365,8 @@ run_meet(){
 	sleep 5 
 	
 	# press join
-	myprint "Pressing JOIN: 485 855"
-	tap_screen 485 855 5
+	#tap_screen 485 855 5
+	tap_screen 485 975 5       # <== because of long meeting id? 
 
 	# get full screen (comparable with zoom) ## FIXME 
 	wait_for_screen "SingleCallActivity"
