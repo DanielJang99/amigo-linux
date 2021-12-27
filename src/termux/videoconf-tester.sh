@@ -333,11 +333,11 @@ run_meet(){
 
 	#if [ $foreground == "OnboardingActivity" ]   # nee more time -- FIXME
 	#then 
-	#if [ $clear_state == "true" ] 
-	#then 
-	#	wait_for_screen "OnboardingActivity"	
-	#	tap_screen $x_center 1090 5 
-	#fi 
+	if [ $clear_state == "true" ] 
+	then 
+		wait_for_screen "OnboardingActivity"	
+		tap_screen $x_center 1090 5 
+	fi 
 
 	# click on "join a meeting"
 	wait_for_screen "HomeActivity"	
