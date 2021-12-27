@@ -149,7 +149,7 @@ wait_for_screen(){
 
 	myprint "Wait for activity: $screen_name"
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
-	echo "==> $foreground"		
+	#echo "==> $foreground"		
 	while [ $foreground != $screen_name ]
 	do 
 		let "c++"
@@ -219,7 +219,7 @@ run_zoom(){
 	sleep 10 
 	
 	# click to join audio
-	myprint "skipping joining audio to avoid privacy issues"
+	myprint "WARNING: Skipping joining audio to avoid privacy issues"
 	#myprint "click to join audio"
 	#tap_screen 178 1110 1
 	#tap_screen 200 1110	
