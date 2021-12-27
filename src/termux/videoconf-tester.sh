@@ -157,13 +157,13 @@ wait_for_screen(){
 
 	# check current activity
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
-	#echo "==> $foreground"		
+	echo "==> $foreground"		
 	while [ $foreground != $screen_name ]
 	do 
 		let "c++"
 		sleep 2 
 		foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
-		#echo "==> $foreground"
+		echo "==> $foreground"
 		if [ $c -eq $MAX_ATTEMPTS ]
 		then
 			myprint "Window $screen_name never loaded. Returning an error"
@@ -172,7 +172,7 @@ wait_for_screen(){
 			break
 		fi 
 		# testing -- check that device is on 
-		turn_device_on
+		#turn_device_on
 		#############################
 	done
 	status="success" #FIXME -- manage unsuccess 
