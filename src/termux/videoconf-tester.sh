@@ -369,8 +369,9 @@ run_meet(){
 
 	# get full screen (comparable with zoom) ## FIXME 
 	wait_for_screen "SingleCallActivity"
-	#myprint "get full screen -- FIXME"  -- does not go full screen anymore 
+	myprint "get full screen => 160,460"
 	#tap_screen $x_center $y_center
+	tap_screen 160 460 
 }
 
 # leave zoom call
