@@ -15,13 +15,7 @@ safe_stop(){
 	echo "false" > ".to_monitor"
 	echo "true" > ".done_videoconf"
 	sudo killall tcpdump	
-	sleep 5 
-	if [ $clear_state == "true" ] 
-	then 
-		myprint "Cleaning $app"
-		sudo pm clear $package
-	fi 
-
+	sleep 5 	
 	screen_file=$res_folder"/"$test_id 
 	sudo screencap -p $screen_file".png"
 	sudo chown $USER:$USER $screen_file".png"
@@ -33,6 +27,11 @@ safe_stop(){
 	fi
 	remote_file="/root/mobile-testbed/src/server/videoconferencing/${physical_id}-ERROR-${test_id}.webp" 
 	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
+	if [ $clear_state == "true" ] 
+	then 
+		myprint "Cleaning $app"
+		sudo pm clear $package
+	fi 
 	close_all
 	turn_device_off
 	clean_file ".locked"
