@@ -372,6 +372,7 @@ run_meet(){
 	myprint "get full screen => 160,460"
 	#tap_screen $x_center $y_center
 	tap_screen 160 460 
+	tap_screen 160 460 
 }
 
 # leave zoom call
