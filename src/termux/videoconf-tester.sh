@@ -10,12 +10,21 @@ function ctrl_c() {
 	exit -1 
 }
 
+# stop in case things do not seem right
 safe_stop(){
-	echo "done" > ".videoconfstatus"
 	echo "false" > ".to_monitor"
+	echo "true" > ".done_videoconf"
+	sudo killall tcpdump	
+	sleep 5 
+	if [ $clear_state == "true" ] 
+	then 
+		myprint "Cleaning $app"
+		sudo pm clear $package
+	fi 
+	close_all
+	turn_device_off
 	clean_file ".locked"
-	sudo pm clear $package	
-	sudo killall tcpdump
+	exit -1 
 }
 
 # generate data to be POSTed to my server
@@ -27,9 +36,14 @@ generate_post_data(){
     "uid":"${uid}",
     "physical_id":"${physical_id}",    
     "test_id":"${test_id}",
+    "app":"${app}",
     "cpu_util_midload_perc":"${cpu_usage_middle}",
+    "port":"${port_num}",
     "bdw_used_MB":"${traffic}",
     "tshark_traffic_MB":"${tshark_size}", 
+    "dst_ip":"${dst_ip}",
+    "delay_info":"${delay_info}",
+    "screen_info":"${screen_info}",
     "msg":"${msg}"
     }
 EOF
@@ -138,15 +152,18 @@ wait_for_screen(){
 	screen_name=$1
 	MAX_ATTEMPTS=10
 
+	# logging 
 	myprint "Wait for activity: $screen_name"
+
+	# check current activity
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
-	echo "==> $foreground"		
+	#echo "==> $foreground"		
 	while [ $foreground != $screen_name ]
 	do 
 		let "c++"
 		sleep 2 
 		foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
-		echo "==> $foreground"
+		#echo "==> $foreground"
 		if [ $c -eq $MAX_ATTEMPTS ]
 		then
 			myprint "Window $screen_name never loaded. Returning an error"
@@ -154,6 +171,9 @@ wait_for_screen(){
 			send_report "WINDOW-NO-LOAD-$screen_name"
 			break
 		fi 
+		# testing -- check that device is on 
+		turn_device_on
+		#############################
 	done
 	status="success" #FIXME -- manage unsuccess 
 	sleep 2 	
@@ -191,6 +211,10 @@ run_zoom(){
 	# sync barrier 
 	sync_barrier
 
+	# potentially click accept term 
+	#myprint "Potentially click accept terms..."
+	#tap_screen 530 860 
+
 	# click join with video or not
 	if [ $use_video == "true" ] 
 	then 
@@ -198,6 +222,7 @@ run_zoom(){
 	else 
 		y_coord="1180"     
 	fi 
+	myprint "UseVideo: $use_video => $x_center;$y_coord"
 	tap_screen $x_center $y_coord 1
 
 	# allow page to load
@@ -205,7 +230,7 @@ run_zoom(){
 	sleep 10 
 	
 	# click to join audio
-	myprint "skipping joining audio to avoid privacy issues"
+	myprint "WARNING: Skipping joining audio to avoid privacy issues"
 	#myprint "click to join audio"
 	#tap_screen 178 1110 1
 	#tap_screen 200 1110	
@@ -371,6 +396,7 @@ leave_meet(){
 
 # take multiple screenshots 
 take_screenshots(){
+	myprint "Starting to take screenshots..."
 	counter=1
 	isDone="false"
 	mkdir -p "${res_folder}/screenshots/${test_id}"
@@ -396,6 +422,7 @@ take_screenshots(){
 		fi 
 		isDone=`cat ".done_videoconf"`
 	done	 
+	myprint "Done to take screenshots..."
 }
 
 # script usage
@@ -423,7 +450,7 @@ usage(){
 }
 
 # general parameters
-clear_state="true"                       # clear zoom state before the run 
+clear_state="false"                      # clear zoom state before the run 
 use_video="false" 	                     # flag to control video usage or not 
 package=""                               # package of videoconferencing app to be tested
 duration=10                              # default test duration before leaving the call
@@ -551,12 +578,6 @@ then
 fi 
 myprint "UID: $uid PhysicalID: $physical_id"
 
-# clean sync files 
-use_sync="true"
-clean_file ".videoconfstatus"
-clean_file ".localsync" 
-clean_file ".globalsync" 
-
 # lock this device 
 touch ".locked"
 
@@ -609,6 +630,7 @@ unlock_device
 # clear app states and  re-grant permissions
 if [ $clear_state == "true" ] 
 then 
+	myprint "Cleaning $app"
 	sudo pm clear $package
 fi 
 
@@ -622,7 +644,9 @@ close_all
 if [ $pcap_collect == "true" ] 
 then 
     pcap_file="${res_folder}/${test_id}.pcap"
+    #pcap_file_full="${res_folder}/${test_id}-full.pcap"    
     tshark_file="${res_folder}/${test_id}.tshark"
+    #tshark_file_full="${res_folder}/${test_id}-full.tshark"    
     if [ $app == "zoom" ] 
 	then 
 		port_num=8801
@@ -633,9 +657,10 @@ then
 	then 
 		port_num=9000
 	fi 
-	echo "sudo tcpdump -i $iface src port $port_num -w $pcap_file"
+	#echo "sudo tcpdump -i $iface src port $port_num -w $pcap_file"
 	sudo tcpdump -i $iface src port $port_num -w $pcap_file > /dev/null 2>&1 & 
-	disown -h %1  # make tcpdump as a deamon
+	disown -h %1  # make tcpdump as a deamon	
+	#sudo tcpdump -i $iface -w $pcap_file_full > /dev/null 2>&1 & 
 	myprint "Started tcpdump: $pcap_file Interface: $iface Port: $port_num BigPacketSize: $big_packet_size"
 fi 
 
@@ -668,8 +693,8 @@ sudo monkey -p $package 1 > /dev/null 2>&1
 # allow time for app to launch # FIXME 
 sleep 5 
 
-# needed to handle warning of zoom on rooted device 
-if [ $clear_state == "true" -a $app == "zoom" ] 
+# needed to handle warning of zoom on rooted devices (even if not clear) 
+if [ $app == "zoom" ] 
 then
 	wait_for_screen "LauncherActivity"	
 	myprint "Accepting warning due to rooted phone..."
@@ -811,7 +836,7 @@ if [ $pcap_collect == "true" ]
 then 
 	sudo killall tcpdump 
 	myprint "Stopped tcpdump. Starting background analysis: $pcap_file"
-	echo "=> tcpdump -r $pcap_file -ttnn | python measure.py $res_folder $test_id $my_ip $big_packet_size" 
+	#echo "=> tcpdump -r $pcap_file -ttnn | python measure.py $res_folder $test_id $my_ip $big_packet_size" 
 	tcpdump -r $pcap_file -ttnn | python measure.py $res_folder $test_id $my_ip $big_packet_size & 
 fi 
 
@@ -829,9 +854,9 @@ then
 fi 
 if [ $clear_state == "true" ] 
 then 
+	myprint "Cleaning $app"
 	sudo pm clear $package
 fi 
-echo "done" > ".videoconfstatus"
 t_now=`date +%s`
 
 # stop CPU
@@ -848,37 +873,53 @@ if [ $pcap_collect == "true" ]
 then 
 	myprint "Starting tshark analysis: $tshark_file"
 	tshark -nr $pcap_file -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file 
-	#tshark_size=`cat $tshark_file | awk -F "," -v my_ip=$my_ip '{if($4!=my_ip){if($8=="UDP"){tot_udp += ($NF-8);} if($8=="TCP"){tot_tcp += ($11);}}}END{tot=(tot_tcp+tot_udp)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000}'`
-	tshark_size=`cat $tshark_file | awk -F "," '{if($8=="UDP"){tot_udp += ($NF-8);} else if(index($8,"QUIC")!=0){tot_quic += ($NF-8);} else if($8=="TCP"){tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp+tot_quic)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000 " TOT-QUIC:" tot_quic/1000000}'`
-	# clean pcap when done
-	ps aux | grep measure.py | grep -v "grep" > /dev/null
+	tshark_size=`cat $tshark_file | awk -F "," '{if($11==""){tot_udp += ($NF-8);} else {tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000}'`
+	#tshark_size=`cat $tshark_file | awk -F "," '{if($8=="UDP"){tot_udp += ($NF-8);} else if(index($8,"QUIC")!=0){tot_quic += ($NF-8);} else if($8=="TCP"){tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp+tot_quic)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000 " TOT-QUIC:" tot_quic/1000000}'`
+	###############
+	#tshark -nr $pcap_file_full -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file_full
+	#tshark_size_full=`cat $tshark_file_full | awk -F "," '{if($11==""){tot_udp += ($NF-8);} else {tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000}'`
+	
+	# clean pcap when done analyzing pcap for delay info 
+	ps aux | grep "measure.py" | grep -v "grep" > /dev/null
 	ans=$?
 	c=0
 	while [ $ans -eq 0 -a $c -lt 30 ] 
 	do 
-		ps aux | grep measure.py | grep -v "grep" > /dev/null
+		ps aux | grep "measure.py" | grep -v "grep" > /dev/null
 		ans=$?
 		sleep 2
 		let "c++"
 	done
-	myprint "Cleaning PCAP file -- SKIPPING"
-	#sudo rm $pcap_file
+	myprint "Cleaning PCAP file"
+	sudo rm $pcap_file
 fi 
 
 # update traffic rx (for this URL)
 compute_bandwidth $traffic_rx_last
 traffic_rx_last=$curr_traffic
 
-# log results
-median_cpu="N/A"
-let "call_duration = t_now - t_actual_launch"
-log_traffic=$res_folder"/"$test_id".traffic"
-echo -e "$app_traffic\t$pi_traffic" > $log_traffic
+# get delay info if there 
+delay_info="N/A"
+delay_file="${res_folder}/${test_id}-delay.txt"
+if [ -f $delay_file ]
+then 
+	info=`tail -n 1 $delay_file`
+	dst_ip=`echo "$info" | cut -f 2`
+	delay_info=`echo "$info" | cut -f 4`
+fi 
+
+# check if user turned off the screen 
+screen_info="ON"
+sudo dumpsys window | grep "mAwake=false" > /dev/null 
+if [ $? -eq 0 ]
+then
+	screen_info="OFF"
+fi 
 
 # send report to the server
 send_report "ALL-GOOD"
 
-# return HOME and turn off screen 
-sudo input keyevent HOME
+# close all and turn off screen 
+close_all
 turn_device_off
 clean_file ".locked"

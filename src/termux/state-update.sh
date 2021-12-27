@@ -343,7 +343,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="1.96"                             # code version 
+vrs="1.97"                             # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
 curl_duration="-1"                     # last value measured of curl duration
 isPaused="N/A"                         # hold info on whether a phone is paued or not
@@ -1000,6 +1000,7 @@ do
 				echo `date +%s` > ".last_gmaps"
 			else 
 				myprint "Skipping gmaps launch since on wifi and lower freq not met ($time_from_last_gmaps -lt $WIFI_GMAPS)"
+				turn_device_off        # in case something is pending 				
 			fi 
 		fi 
 
