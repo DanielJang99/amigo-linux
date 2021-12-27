@@ -356,17 +356,19 @@ run_meet(){
 	use_mute="true"	
 	if [ $use_video == "false" ] 
 	then 
-		tap_screen 175 855 1 
+		#tap_screen 175 855 1 
+		tap_screen 175 975 1     # <== because of long meeting id? 
 	fi 
 	if [ $use_mute == "true" ] 
 	then 
-		tap_screen 295 855 1
+		#tap_screen 295 855 1
+		tap_screen 295 975 1	 # <== because of long meeting id? 
 	fi 
 	sleep 5 
 	
 	# press join
 	#tap_screen 485 855 5
-	tap_screen 485 975 5       # <== because of long meeting id? 
+	tap_screen 485 975 5        # <== because of long meeting id? 
 
 	# get full screen (comparable with zoom) ## FIXME 
 	wait_for_screen "SingleCallActivity"
