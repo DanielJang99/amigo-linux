@@ -720,6 +720,7 @@ then
     myprint "A view change was requested!"
     if [ $app == "zoom" ] 
     then 
+    	sleep 5 
         sudo input swipe 700 800 300 800
     elif [ $app == "meet" ] # -o $app == "webex" ] #CHECK: webex is naturally multi-view
     then 
