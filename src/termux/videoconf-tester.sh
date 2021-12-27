@@ -359,6 +359,7 @@ run_meet(){
 	sleep 5 
 	
 	# press join
+	myprint "Pressing JOIN: 485 855"
 	tap_screen 485 855 5
 
 	# get full screen (comparable with zoom) ## FIXME 
