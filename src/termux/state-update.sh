@@ -215,24 +215,6 @@ update_wifi_mobile(){
 	 	fi 
 	fi 
 		
-	# get update on data sent/received
-	wifi_today_file="./data/wifi/"$suffix".txt"
-	mobile_today_file="./data/mobile/"$suffix".txt"
-	if [ -f $wifi_today_file ] 
-	then 
-		wifi_data=`cat $wifi_today_file`
-	else 
-		wifi_data=0	
-		prev_wifi_traffic=0
-	fi 
-	if [ -f $mobile_today_file ] 
-	then 
-		mobile_data=`cat $mobile_today_file`
-	else 
-		mobile_data=0	
-		prev_mobile_traffic=0
-	fi 
-
 	# understand WiFi and mobile phone connectivity
 	myprint "Discover wifi ($wifi_iface) and mobile ($mobile_iface)"
 	wifi_ip="None"
@@ -250,6 +232,17 @@ update_wifi_mobile(){
 	# get more wifi info if active 
 	if [ ! -z $wifi_iface ]
 	then 
+		wifi_today_file="./data/wifi/"$suffix".txt"
+		if [ -f $wifi_today_file ] 
+		then 
+			wifi_data=`cat $wifi_today_file`
+		else 
+			wifi_data=0	
+			if [ -z $prev_wifi_traffic ]
+			then 
+				prev_wifi_traffic=`ifconfig $wifi_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`	
+			fi 
+		fi
 		wifi_ip=`ifconfig $wifi_iface | grep "\." | grep -v packets | awk '{print $2}'` 
 		wifi_ssid=`sudo dumpsys netstats | grep -E 'iface=wlan.*networkId' | head -n 1  | awk '{print $4}' | cut -f 2 -d "=" | sed s/","// | sed s/"\""//g`
 		sudo dumpsys wifi > ".wifi"
@@ -258,11 +251,8 @@ update_wifi_mobile(){
 		wifi_traffic=`ifconfig $wifi_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 	
 		# update data consumed 
-		if [ $prev_wifi_traffic != 0 ] 
-		then 
-			let "wifi_data += (wifi_traffic - prev_wifi_traffic)"
-			echo $wifi_data > $wifi_today_file
-		fi 
+		let "wifi_data += (wifi_traffic - prev_wifi_traffic)"
+		echo $wifi_data > $wifi_today_file
 		prev_wifi_traffic=$wifi_traffic
 
 		# keep track of wifi encountered 
@@ -294,16 +284,25 @@ update_wifi_mobile(){
 	# get more mobile info if active 
 	if [ ! -z $mobile_iface ]
 	then
+		# get update on data sent/received
+		mobile_today_file="./data/mobile/"$suffix".txt"	 
+		if [ -f $mobile_today_file ] 
+		then 
+			mobile_data=`cat $mobile_today_file`
+		else 
+			mobile_data=0	
+			if [ -z $prev_mobile_traffic ]
+			then 
+				prev_mobile_traffic=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`	
+			fi
+		fi 
 		mobile_ip=`ifconfig $mobile_iface | grep "\." | grep -v packets | awk '{print $2}'`
 		sudo dumpsys telephony.registry > ".tel"
 		mobile_state=`cat ".tel" | grep "mServiceState" | head -n 1`
 		mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
 		mobile_traffic=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
-		if [ $prev_mobile_traffic != 0 ] 
-		then 
-			let "mobile_data += (mobile_traffic - prev_mobile_traffic)"
-			echo $mobile_data > $mobile_today_file
-		fi 
+		let "mobile_data += (mobile_traffic - prev_mobile_traffic)"
+		echo $mobile_data > $mobile_today_file		 
 		prev_mobile_traffic=$mobile_traffic
 	else 
 		mobile_state="none"
@@ -343,7 +342,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="2.1"                              # code version 
+vrs="2.2"                              # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
 curl_duration="-1"                     # last value measured of curl duration
 isPaused="N/A"                         # hold info on whether a phone is paued or not
