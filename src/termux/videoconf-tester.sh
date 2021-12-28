@@ -159,6 +159,73 @@ grant_permission(){
     fi 
 }
 
+# check account verification via YT
+check_account_via_YT(){	
+	# launch youtube
+	myprint "Launching YT and allow to settle..."
+	sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
+
+	# lower all the volumes
+	myprint "Making sure volume is off"
+	sudo media volume --stream 3 --set 0    # media volume
+	sudo media volume --stream 1 --set 0	# ring volume
+	sudo media volume --stream 4 --set 0	# alarm volume
+
+	# wait for YT 
+	youtube_error="false"
+	sleep 5 
+	myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
+	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+	c=0
+	while [ $curr_activity != "WatchWhileActivity" ] 
+	do 
+		sleep 3 
+		curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+		let "c++"
+		if [ $c -ge 10 ]
+		then 
+			myprint "Something went wrong loading YouTube"
+			youtube_error="true"
+			break
+		fi 
+	done
+
+	# click account notification if there (guessing so far)
+	if [ $youtube_error == "false" ]
+	then
+		sleep 3
+		sudo input tap 560 725
+		sleep 10
+		sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep "MinuteMaidActivity"
+		need_to_verify=$?
+		if [ $need_to_verify -eq 0 ]
+		then
+		    myprint "Google account validation needed"
+		    sleep 10 
+		    sudo input tap 600 1200
+		    sleep 5
+		    sudo input text "Bremen2013"
+		    sleep 3
+		    sudo input keyevent KEYCODE_ENTER
+		    sleep 10
+		    sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep MinuteMaidActivity
+		    if [ $? -eq 0 ]
+		    then
+		        myprint "ERROR - notification cannot be accepted. Inform USER"
+		        echo "not-authorized" > ".google_status"
+		    	safe_stop
+		    else
+		    	echo "authorized" > ".google_status"
+		        myprint "Google account is now verified"
+		    fi
+		else
+			echo "authorized" > ".google_status"
+		    myprint "Google account is already verified"
+		fi
+	fi 
+}
+
+
 # wait for a specific screen id (only zoom for now)  
 wait_for_screen(){
 	status="failed"
@@ -170,7 +237,7 @@ wait_for_screen(){
 
 	# check current activity
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
-	echo "==> $foreground"
+	echo "==> $foreground"	 
 	while [ $foreground != $screen_name ]
 	do 
 		let "c++"
@@ -184,9 +251,18 @@ wait_for_screen(){
 			safe_stop 			
 			break
 		fi 
+		# this happens when the Google account is not verified 
+		if [ $foreground == "FailedToJoinMeetingActivity" ] 
+		then 
+			check_account_via_YT
+			myprint "YouTube account needed to be enabled!"
+			send_report "GOOGLE-ACCOUNT-ISSUE"
+			safe_stop 			
+			break
+		fi
+
 		# testing -- check that device is on 
-		#turn_device_on
-		#############################
+		turn_device_on
 	done
 	status="success" #FIXME -- manage unsuccess 
 	sleep 2 	
