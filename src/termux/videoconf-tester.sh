@@ -23,10 +23,11 @@ safe_stop(){
 	if [ -f ${screen_file}".webp" ]
 	then 
 		chmod 644 ${screen_file}".webp"
-		rm ${screen_file}".png"
-	fi
-	remote_file="/root/mobile-testbed/src/server/videoconferencing/${physical_id}-ERROR-${test_id}.webp" 
-	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
+		rm ${screen_file}".png"	
+		myprint "Uploading screenshot ${screen_file}.webp to the server..."
+		remote_file="/root/mobile-testbed/src/server/videoconferencing/${app}/${physical_id}-ERROR-${test_id}.webp" 	
+		(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
+	fi 
 	if [ $clear_state == "true" ] 
 	then 
 		myprint "Cleaning $app"
@@ -49,6 +50,7 @@ generate_post_data(){
     "test_id":"${test_id}",
     "app":"${app}",
     "cpu_util_midload_perc":"${cpu_usage_middle}",
+    "iface":"${iface}",
     "port":"${port_num}",
     "bdw_used_MB":"${traffic}",
     "tshark_traffic_MB":"${tshark_size}", 
@@ -157,6 +159,73 @@ grant_permission(){
     fi 
 }
 
+# check account verification via YT
+check_account_via_YT(){	
+	# launch youtube
+	myprint "Launching YT and allow to settle..."
+	sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
+
+	# lower all the volumes
+	myprint "Making sure volume is off"
+	sudo media volume --stream 3 --set 0    # media volume
+	sudo media volume --stream 1 --set 0	# ring volume
+	sudo media volume --stream 4 --set 0	# alarm volume
+
+	# wait for YT 
+	youtube_error="false"
+	sleep 5 
+	myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
+	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+	c=0
+	while [ $curr_activity != "WatchWhileActivity" ] 
+	do 
+		sleep 3 
+		curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+		let "c++"
+		if [ $c -ge 10 ]
+		then 
+			myprint "Something went wrong loading YouTube"
+			youtube_error="true"
+			break
+		fi 
+	done
+
+	# click account notification if there (guessing so far)
+	if [ $youtube_error == "false" ]
+	then
+		sleep 3
+		sudo input tap 560 725
+		sleep 10
+		sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep "MinuteMaidActivity"
+		need_to_verify=$?
+		if [ $need_to_verify -eq 0 ]
+		then
+		    myprint "Google account validation needed"
+		    sleep 10 
+		    sudo input tap 600 1200
+		    sleep 5
+		    sudo input text "Bremen2013"
+		    sleep 3
+		    sudo input keyevent KEYCODE_ENTER
+		    sleep 10
+		    sudo dumpsys window windows | grep -E 'mCurrentFocus' | grep MinuteMaidActivity
+		    if [ $? -eq 0 ]
+		    then
+		        myprint "ERROR - notification cannot be accepted. Inform USER"
+		        echo "not-authorized" > ".google_status"
+		    	safe_stop
+		    else
+		    	echo "authorized" > ".google_status"
+		        myprint "Google account is now verified"
+		    fi
+		else
+			echo "authorized" > ".google_status"
+		    myprint "Google account is already verified"
+		fi
+	fi 
+}
+
+
 # wait for a specific screen id (only zoom for now)  
 wait_for_screen(){
 	status="failed"
@@ -168,7 +237,7 @@ wait_for_screen(){
 
 	# check current activity
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
-	#echo "==> $foreground"		
+	#echo "==> $foreground"	 
 	while [ $foreground != $screen_name ]
 	do 
 		let "c++"
@@ -182,9 +251,18 @@ wait_for_screen(){
 			safe_stop 			
 			break
 		fi 
+		# this happens when the Google account is not verified 
+		if [ $foreground == "FailedToJoinMeetingActivity" ] 
+		then 
+			check_account_via_YT
+			myprint "YouTube account needed to be enabled!"
+			send_report "GOOGLE-ACCOUNT-ISSUE"
+			safe_stop 			
+			break
+		fi
+
 		# testing -- check that device is on 
-		#turn_device_on
-		#############################
+		turn_device_on
 	done
 	status="success" #FIXME -- manage unsuccess 
 	sleep 2 	
@@ -488,6 +566,7 @@ use_mute="false"                         # FIXME
 uid="none"                               # user ID
 sync_time=0                              # future sync time 
 cpu_usage_middle="N/A"                   # CPU measured in the middle of a test 
+report="true"                            # scp data back to the server
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -655,9 +734,9 @@ close_all
 if [ $pcap_collect == "true" ] 
 then 
     pcap_file="${res_folder}/${test_id}.pcap"
-    #pcap_file_full="${res_folder}/${test_id}-full.pcap"    
+    pcap_file_full="${res_folder}/${test_id}-full.pcap"    
     tshark_file="${res_folder}/${test_id}.tshark"
-    #tshark_file_full="${res_folder}/${test_id}-full.tshark"    
+    tshark_file_full="${res_folder}/${test_id}-full.tshark"    
     if [ $app == "zoom" ] 
 	then 
 		port_num=8801
@@ -668,10 +747,10 @@ then
 	then 
 		port_num=9000
 	fi 
-	#echo "sudo tcpdump -i $iface src port $port_num -w $pcap_file"
-	sudo tcpdump -i $iface src port $port_num -w $pcap_file > /dev/null 2>&1 & 
+	myprint "Running tcpdump without port filtering..."
+	sudo tcpdump -U -i $iface src port $port_num -w $pcap_file > /dev/null 2>&1 & 
 	disown -h %1  # make tcpdump as a deamon	
-	#sudo tcpdump -i $iface -w $pcap_file_full > /dev/null 2>&1 & 
+	sudo tcpdump -i $iface -w $pcap_file_full > /dev/null 2>&1 & 
 	myprint "Started tcpdump: $pcap_file Interface: $iface Port: $port_num BigPacketSize: $big_packet_size"
 fi 
 
@@ -831,6 +910,7 @@ then
 	myprint "Starting tshark analysis: $tshark_file"
 	tshark -nr $pcap_file -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file 
 	tshark_size=`cat $tshark_file | awk -F "," '{if($11==""){tot_udp += ($NF-8);} else {tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000}'`
+	gzip $tshark_file
 	#tshark_size=`cat $tshark_file | awk -F "," '{if($8=="UDP"){tot_udp += ($NF-8);} else if(index($8,"QUIC")!=0){tot_quic += ($NF-8);} else if($8=="TCP"){tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp+tot_quic)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000 " TOT-QUIC:" tot_quic/1000000}'`
 	###############
 	#tshark -nr $pcap_file_full -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file_full
@@ -847,7 +927,7 @@ then
 		sleep 2
 		let "c++"
 	done
-	myprint "Cleaning PCAP file"
+	myprint "Cleaning PCAP file -- (but keeping full one)"
 	sudo rm $pcap_file
 fi 
 
@@ -882,9 +962,9 @@ turn_device_off
 clean_file ".locked"
 
 # report screenshot
-report="true"
 if [ $report == "true" ]
 then 
-	remote_file="/root/mobile-testbed/src/server/videoconferencing/${physical_id}-${test_id}.webp" 
+	remote_file="/root/mobile-testbed/src/server/videoconferencing/${app}/${physical_id}-${test_id}.webp" 
+	myprint "Uploading screenshot ${screen_file}.webp to the server..."	
 	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
 fi 

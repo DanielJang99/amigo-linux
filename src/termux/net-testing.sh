@@ -46,8 +46,20 @@ run_zus(){
 	turn_device_on
 	am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
 	sleep 5 
+	
+	################### take screenshot of network settings and upload to our server 
 	sudo screencap -p "network-setting-last.png"
-	sudo chown $USER:$USER "network-setting-last.png"		
+	sudo chown $USER:$USER "network-setting-last.png"
+	cwebp -q 80 "network-setting-last.png" -o "network-setting-last.webp" > /dev/null 2>&1 
+	if [ -f "network-setting-last.webp" ]
+	then 
+		chmod 644 "network-setting-last.webp"
+		rm "network-setting-last.png"
+	fi
+	remote_file="/root/mobile-testbed/src/server/network-settings/${physical_id}.webp" 
+	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no "network-setting-last.webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
+	###################
+
 	tap_screen 370 765 5
 	tap_screen 370 765 5 
 	tap_screen 370 660 2
