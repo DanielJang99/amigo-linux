@@ -23,11 +23,11 @@ safe_stop(){
 	if [ -f ${screen_file}".webp" ]
 	then 
 		chmod 644 ${screen_file}".webp"
-		rm ${screen_file}".png"
-	fi
-	myprint "Uploading screenshot ${screen_file}.webp to the server..."
-	remote_file="/root/mobile-testbed/src/server/videoconferencing/${app}/${physical_id}-ERROR-${test_id}.webp" 	
-	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
+		rm ${screen_file}".png"	
+		myprint "Uploading screenshot ${screen_file}.webp to the server..."
+		remote_file="/root/mobile-testbed/src/server/videoconferencing/${app}/${physical_id}-ERROR-${test_id}.webp" 	
+		(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
+	fi 
 	if [ $clear_state == "true" ] 
 	then 
 		myprint "Cleaning $app"
@@ -237,13 +237,13 @@ wait_for_screen(){
 
 	# check current activity
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
-	echo "==> $foreground"	 
+	#echo "==> $foreground"	 
 	while [ $foreground != $screen_name ]
 	do 
 		let "c++"
 		sleep 2 
 		foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f2 | awk -F "." '{print $NF}' | sed 's/}//g'`
-		echo "==> $foreground"
+		#echo "==> $foreground"
 		if [ $c -eq $MAX_ATTEMPTS ]
 		then
 			myprint "Window $screen_name never loaded. Returning an error"
@@ -747,8 +747,9 @@ then
 	then 
 		port_num=9000
 	fi 
-	echo "sudo tcpdump -i $iface src port $port_num -w $pcap_file"
-	sudo tcpdump -i $iface src port $port_num -w $pcap_file > /dev/null 2>&1 & 
+	myprint "Running tcpdump without port filtering..."
+	#sudo tcpdump -U -i $iface src port $port_num -w $pcap_file > /dev/null 2>&1 & 
+	sudo tcpdump -U -i $iface -w $pcap_file > /dev/null 2>&1 & 	
 	disown -h %1  # make tcpdump as a deamon	
 	#sudo tcpdump -i $iface -w $pcap_file_full > /dev/null 2>&1 & 
 	myprint "Started tcpdump: $pcap_file Interface: $iface Port: $port_num BigPacketSize: $big_packet_size"
@@ -928,8 +929,7 @@ then
 		let "c++"
 	done
 	myprint "Cleaning PCAP file -- skipping"
-	#sudo rm $pcap_file
-	gzip $pcap_file
+	sudo rm $pcap_file
 fi 
 
 # update traffic rx (for this URL)
