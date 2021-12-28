@@ -25,7 +25,8 @@ safe_stop(){
 		chmod 644 ${screen_file}".webp"
 		rm ${screen_file}".png"
 	fi
-	remote_file="/root/mobile-testbed/src/server/videoconferencing/${app}/${physical_id}-ERROR-${test_id}.webp" 
+	myprint "Uploading screenshot ${screen_file}.webp to the server..."
+	remote_file="/root/mobile-testbed/src/server/videoconferencing/${app}/${physical_id}-ERROR-${test_id}.webp" 	
 	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
 	if [ $clear_state == "true" ] 
 	then 
@@ -489,6 +490,7 @@ use_mute="false"                         # FIXME
 uid="none"                               # user ID
 sync_time=0                              # future sync time 
 cpu_usage_middle="N/A"                   # CPU measured in the middle of a test 
+report="true"                            # scp data back to the server
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -883,9 +885,9 @@ turn_device_off
 clean_file ".locked"
 
 # report screenshot
-report="true"
 if [ $report == "true" ]
 then 
 	remote_file="/root/mobile-testbed/src/server/videoconferencing/${app}/${physical_id}-${test_id}.webp" 
+	myprint "Uploading screenshot ${screen_file}.webp to the server..."	
 	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
 fi 
