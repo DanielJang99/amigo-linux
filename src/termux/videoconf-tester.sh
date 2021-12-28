@@ -25,7 +25,7 @@ safe_stop(){
 		chmod 644 ${screen_file}".webp"
 		rm ${screen_file}".png"
 	fi
-	remote_file="/root/mobile-testbed/src/server/videoconferencing/${physical_id}-ERROR-${test_id}.webp" 
+	remote_file="/root/mobile-testbed/src/server/videoconferencing/${app}/${physical_id}-ERROR-${test_id}.webp" 
 	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
 	if [ $clear_state == "true" ] 
 	then 
@@ -49,6 +49,7 @@ generate_post_data(){
     "test_id":"${test_id}",
     "app":"${app}",
     "cpu_util_midload_perc":"${cpu_usage_middle}",
+    "iface":"${iface}",
     "port":"${port_num}",
     "bdw_used_MB":"${traffic}",
     "tshark_traffic_MB":"${tshark_size}", 
@@ -885,6 +886,6 @@ clean_file ".locked"
 report="true"
 if [ $report == "true" ]
 then 
-	remote_file="/root/mobile-testbed/src/server/videoconferencing/${physical_id}-${test_id}.webp" 
+	remote_file="/root/mobile-testbed/src/server/videoconferencing/${app}/${physical_id}-${test_id}.webp" 
 	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
 fi 
