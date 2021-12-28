@@ -747,7 +747,7 @@ then
 	then 
 		port_num=9000
 	fi 
-	#echo "sudo tcpdump -i $iface src port $port_num -w $pcap_file"
+	echo "sudo tcpdump -i $iface src port $port_num -w $pcap_file"
 	sudo tcpdump -i $iface src port $port_num -w $pcap_file > /dev/null 2>&1 & 
 	disown -h %1  # make tcpdump as a deamon	
 	#sudo tcpdump -i $iface -w $pcap_file_full > /dev/null 2>&1 & 
@@ -910,6 +910,7 @@ then
 	myprint "Starting tshark analysis: $tshark_file"
 	tshark -nr $pcap_file -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file 
 	tshark_size=`cat $tshark_file | awk -F "," '{if($11==""){tot_udp += ($NF-8);} else {tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000}'`
+	gzip $tshark_file
 	#tshark_size=`cat $tshark_file | awk -F "," '{if($8=="UDP"){tot_udp += ($NF-8);} else if(index($8,"QUIC")!=0){tot_quic += ($NF-8);} else if($8=="TCP"){tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp+tot_quic)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000 " TOT-QUIC:" tot_quic/1000000}'`
 	###############
 	#tshark -nr $pcap_file_full -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file_full
@@ -926,8 +927,9 @@ then
 		sleep 2
 		let "c++"
 	done
-	myprint "Cleaning PCAP file"
-	sudo rm $pcap_file
+	myprint "Cleaning PCAP file -- skipping"
+	#sudo rm $pcap_file
+	gzip $pcap_file
 fi 
 
 # update traffic rx (for this URL)
