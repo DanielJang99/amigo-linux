@@ -734,9 +734,9 @@ close_all
 if [ $pcap_collect == "true" ] 
 then 
     pcap_file="${res_folder}/${test_id}.pcap"
-    #pcap_file_full="${res_folder}/${test_id}-full.pcap"    
+    pcap_file_full="${res_folder}/${test_id}-full.pcap"    
     tshark_file="${res_folder}/${test_id}.tshark"
-    #tshark_file_full="${res_folder}/${test_id}-full.tshark"    
+    tshark_file_full="${res_folder}/${test_id}-full.tshark"    
     if [ $app == "zoom" ] 
 	then 
 		port_num=8801
@@ -748,10 +748,9 @@ then
 		port_num=9000
 	fi 
 	myprint "Running tcpdump without port filtering..."
-	#sudo tcpdump -U -i $iface src port $port_num -w $pcap_file > /dev/null 2>&1 & 
-	sudo tcpdump -U -i $iface -w $pcap_file > /dev/null 2>&1 & 	
+	sudo tcpdump -U -i $iface src port $port_num -w $pcap_file > /dev/null 2>&1 & 
 	disown -h %1  # make tcpdump as a deamon	
-	#sudo tcpdump -i $iface -w $pcap_file_full > /dev/null 2>&1 & 
+	sudo tcpdump -i $iface -w $pcap_file_full > /dev/null 2>&1 & 
 	myprint "Started tcpdump: $pcap_file Interface: $iface Port: $port_num BigPacketSize: $big_packet_size"
 fi 
 
@@ -928,7 +927,7 @@ then
 		sleep 2
 		let "c++"
 	done
-	myprint "Cleaning PCAP file -- skipping"
+	myprint "Cleaning PCAP file -- (but keeping full one)"
 	sudo rm $pcap_file
 fi 
 
