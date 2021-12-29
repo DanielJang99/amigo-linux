@@ -846,6 +846,7 @@ sleep 5
 if [ $change_view == "false" -a $app == "webex" ]
 then 
     myprint "Redoing tap for full screen, just in case. Verify no issue added" 
+    sudo dumpsys window windows | grep -E 'mCurrentFocus' 		
     #sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
     sudo input tap $x_center 400
     sudo input tap $x_center 400
