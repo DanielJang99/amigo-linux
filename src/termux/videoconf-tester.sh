@@ -398,11 +398,11 @@ run_webex(){
 	# accept warning Q: not needed
 	#tap_screen 375 1075 3
 
-	# go full screen (which is comparable with zoom default) -- FIXME
-	#if [ $change_view == "false" ]
-	#then 
-	#	sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
-	#fi 
+	# go full screen (which is comparable with zoom default)
+	if [ $change_view == "false" ]
+	then 
+		sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
+	fi 
 }
 
 # helper function to join a google meet meeting
@@ -513,7 +513,7 @@ take_screenshots(){
 		let "t_p = 10 - (t2 - t1)"
 		if [ $t_p -gt 0 ]
 		then
-			echo "Sleeping $t_p between screenshots" 
+			#echo "Sleeping $t_p between screenshots" 
 			sleep $t_p 
 		fi 
 		isDone=`cat ".done_videoconf"`
@@ -840,12 +840,12 @@ fi
 myprint "Waiting $duration for experiment to end..."
 sleep 5 
 
-# REDO go full screen (which is comparable with zoom default) -- SKIPPING FOR NOW
-#if [ $change_view == "false" -a $app == "webex" ]
-#then 
-#    myprint "Redoing tap for full screen, just in case. Verify no issue added" 
-#    sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
-#fi
+# REDO go full screen (which is comparable with zoom default)
+if [ $change_view == "false" -a $app == "webex" ]
+then 
+    myprint "Redoing tap for full screen, just in case. Verify no issue added" 
+    sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
+fi
 
 # sleep up to mid experiment then take a screenshot and record mid CPU usage 
 let "half_duration = duration/2 - 5"
