@@ -200,7 +200,7 @@ close_all
 # start video recording
 id=`date +%s`
 t_start=`date +%s`
-screen_video="zoom-recordin-${id}.mp4"
+screen_video="zoom-recording-${id}.mp4"
 (sudo screenrecord $screen_video --time-limit 60 &)
 myprint "Started screen recording on file: $screen_video"
 
@@ -243,10 +243,9 @@ fi
 myprint "Allow next page to load. No activity name, just sleep 10 seconds"
 sleep 10 
 
-
 # potentially click accept term 
-#myprint "Potentially click accept terms..." #<===
-#tap_screen 530 860 
+myprint "Click accept terms..."
+tap_screen 530 860 
 
 # see if time to upload video
 t_now=`date +%s`
@@ -256,6 +255,7 @@ then
 	myprint "Wait for video to be done..."
 	sleep $t_left 
 	myprint "Uploading file $screen_video"
+	sudo chown $USER:$USER $screen_video
 	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no $screen_video root@23.235.205.53: > /dev/null 2>&1 &)
 fi 
 
