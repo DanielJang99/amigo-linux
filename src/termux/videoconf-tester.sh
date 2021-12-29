@@ -39,6 +39,8 @@ safe_stop(){
 	exit -1 
 }
 
+
+
 # generate data to be POSTed to my server
 generate_post_data(){
   cat <<EOF
@@ -46,7 +48,9 @@ generate_post_data(){
     "today":"${suffix}",
     "timestamp":"${current_time}",
     "uid":"${uid}",
-    "physical_id":"${physical_id}",    
+    "physical_id":"${physical_id}",
+    "network_loc":"${network_loc}",
+    "gps_loc":"${gps_loc}",
     "test_id":"${test_id}",
     "app":"${app}",
     "cpu_util_midload_perc":"${cpu_usage_middle}",
@@ -398,11 +402,12 @@ run_webex(){
 	# accept warning Q: not needed
 	#tap_screen 375 1075 3
 
-	# go full screen (which is comparable with zoom default) -- FIXME
-	#if [ $change_view == "false" ]
-	#then 
-	#	sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
-	#fi 
+	# # go full screen (which is comparable with zoom default)
+	# if [ $change_view == "false" ]
+	# then 
+	# 	sudo input tap $x_center 400 #& sleep 0.1; 
+	# 	sudo input tap $x_center 400
+	# fi 
 }
 
 # helper function to join a google meet meeting
@@ -456,12 +461,9 @@ run_meet(){
 	#tap_screen 485 855 5
 	tap_screen 485 975 5        # <== because of long meeting id? 
 
-	# get full screen (comparable with zoom) ## FIXME 
+	# verify call started 
 	wait_for_screen "SingleCallActivity"
-	myprint "get full screen => FIXME"
-	#tap_screen $x_center $y_center
-	#tap_screen 180 460 
-	#tap_screen 180 460 
+	myprint "Call started correctly!"
 }
 
 # leave zoom call
@@ -492,7 +494,7 @@ leave_meet(){
 
 # take multiple screenshots 
 take_screenshots(){
-	myprint "Starting to take screenshots..."
+	myprint "START to take screenshots..."
 	counter=1
 	isDone="false"
 	mkdir -p "${res_folder}/screenshots/${test_id}"
@@ -502,23 +504,39 @@ take_screenshots(){
 		screen_file="${res_folder}/screenshots/${test_id}/screen-${counter}"
 		sudo screencap -p $screen_file".png"
 		sudo chown $USER:$USER $screen_file".png"
-		cwebp -q 80 ${screen_file}".png" -o ${screen_file}".webp" > /dev/null 2>&1 
-		if [ -f ${screen_file}".webp" ]
-		then 
-			chmod 644 ${screen_file}".webp"
-			rm ${screen_file}".png"
-		fi 
+		#cwebp -q 80 ${screen_file}".png" -o ${screen_file}".webp" > /dev/null 2>&1 
+		#if [ -f ${screen_file}".webp" ]
+		#then 
+		#	chmod 644 ${screen_file}".webp"
+		#	rm ${screen_file}".png"
+		#fi 
 		let "counter++"
 		t2=`date +%s`
 		let "t_p = 10 - (t2 - t1)"
 		if [ $t_p -gt 0 ]
 		then
-			echo "Sleeping $t_p between screenshots" 
+			#echo "Sleeping $t_p between screenshots" 
 			sleep $t_p 
 		fi 
 		isDone=`cat ".done_videoconf"`
 	done	 
-	myprint "Done to take screenshots..."
+	myprint "DONE to take screenshots..."
+}
+
+# update location information 
+update_location(){
+	current_time=`date +%s`
+	res_dir="locationlogs/${suffix}"
+	mkdir -p $res_dir
+	MAX_LOCATION=5
+	timeout $MAX_LOCATION termux-location -p network -r last > $res_dir"/network-loc-$current_time.txt"
+	lat=`cat $res_dir"/network-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
+	long=`cat $res_dir"/network-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
+	network_loc="$lat,$long"
+	timeout $MAX_LOCATION termux-location -p gps -r last > $res_dir"/gps-loc-$current_time.txt"		
+	lat=`cat $res_dir"/gps-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
+	long=`cat $res_dir"/gps-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
+	gps_loc="$lat,$long"		
 }
 
 # script usage
@@ -567,6 +585,7 @@ uid="none"                               # user ID
 sync_time=0                              # future sync time 
 cpu_usage_middle="N/A"                   # CPU measured in the middle of a test 
 report="true"                            # scp data back to the server
+screenshots="false"                      # should take screenshots or not 
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -626,6 +645,9 @@ do
         --sync)
         	shift; sync_time="$1"; shift;
             ;;
+        --shot)
+        	shift; screenshots="true";
+            ;;
         -*)
             echo "ERROR: Unknown option $1"
             usage
@@ -658,6 +680,9 @@ then
 else 
 	SERVER_PORT="8082"
 fi 
+
+# get a location update in background
+update_location &
 
 # make sure screen is in portrait 
 myprint "Ensuring that screen is in portrait and auto-rotation disabled"
@@ -749,8 +774,8 @@ then
 	fi 
 	myprint "Running tcpdump without port filtering..."
 	sudo tcpdump -U -i $iface src port $port_num -w $pcap_file > /dev/null 2>&1 & 
-	disown -h %1  # make tcpdump as a deamon	
-	sudo tcpdump -i $iface -w $pcap_file_full > /dev/null 2>&1 & 
+	disown -h %1  # make tcpdump as a daemon
+	#sudo tcpdump -i $iface -w $pcap_file_full > /dev/null 2>&1 & 
 	myprint "Started tcpdump: $pcap_file Interface: $iface Port: $port_num BigPacketSize: $big_packet_size"
 fi 
 
@@ -804,21 +829,6 @@ then
 fi 
 t_actual_launch=`date +%s`
 
-# change the view to multi windows 
-if [ $change_view == "true" ]
-then 
-    myprint "A view change was requested!"
-    if [ $app == "zoom" ] 
-    then 
-    	sleep 5 
-        sudo input swipe 700 800 300 800
-    elif [ $app == "meet" ] # -o $app == "webex" ] #CHECK: webex is naturally multi-view
-    then 
-        tap_screen $x_center $y_center
-    fi
-fi 
-### FIXME -- is meet now multi view too? 
-
 # turn off the screen 
 if [ $turn_off == "true" ] 
 then 
@@ -827,7 +837,6 @@ fi
 
 # take screenshots if needed 
 echo "false" > ".done_videoconf"
-screenshots="false"
 if [ $screenshots == "true" ]
 then 
 	take_screenshots & 
@@ -835,17 +844,34 @@ fi
 
 # wait for test to end 
 myprint "Waiting $duration for experiment to end..."
-sleep 5 
+sleep 5
+disc_time=5 
 
-# REDO go full screen (which is comparable with zoom default) -- SKIPPING FOR NOW
-#if [ $change_view == "false" -a $app == "webex" ]
-#then 
-#    myprint "Redoing tap for full screen, just in case. Verify no issue added" 
-#    sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
-#fi
+# Go full screen OR gird (different behavior for app under test) 
+if [ $change_view == "false" ] 
+then 
+	if [ $app == "webex" ]
+	then
+		sleep 10 
+		let "disc_time += 10"
+    	myprint "Tapping window in attempt at full screen..."
+    	sudo input tap $x_center 440 & sleep 0.1; sudo input tap $x_center 440 
+    fi 
+    if [ $app == "meet" ]
+	then
+		myprint "Tapping mid screen for attempt at full screen!"
+		sudo input tap $x_center $y_center & sleep 0.1; sudo input tap $x_center $y_center
+    fi 
+else 
+	if [ $app == "zoom" ]
+	then 
+    	myprint "Activating GRID for zoom"
+    	sudo input swipe 700 800 300 800
+	fi 
+fi
 
 # sleep up to mid experiment then take a screenshot and record mid CPU usage 
-let "half_duration = duration/2 - 5"
+let "half_duration = duration/2 - disc_time"
 sleep $half_duration 
 if [ -f ".cpu-usage" ]
 then 
