@@ -531,6 +531,7 @@ update_location(){
 	current_time=`date +%s`
 	res_dir="locationlogs/${suffix}"
 	mkdir -p $res_dir
+	MAX_LOCATION=5
 	timeout $MAX_LOCATION termux-location -p network -r last > $res_dir"/network-loc-$current_time.txt"
 	lat=`cat $res_dir"/network-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
 	long=`cat $res_dir"/network-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
