@@ -89,20 +89,9 @@ wait_for_screen(){
 		if [ $c -eq $MAX_ATTEMPTS ]
 		then
 			myprint "Window $screen_name never loaded. Returning an error"
-			send_report "WINDOW-NO-LOAD-$screen_name"
-			safe_stop 			
-			break
+			exit -1 			
 		fi 
-		# this happens when the Google account is not verified 
-		if [ $foreground == "FailedToJoinMeetingActivity" ] 
-		then 
-			check_account_via_YT
-			myprint "YouTube account needed to be enabled!"
-			send_report "GOOGLE-ACCOUNT-ISSUE"
-			safe_stop 			
-			break
-		fi
-
+		
 		# testing -- check that device is on 
 		turn_device_on
 	done
@@ -178,6 +167,9 @@ do
     esac
 done
 
+# lock this device 
+touch ".locked"
+
 # make sure screen is in portrait 
 myprint "Ensuring that screen is in portrait and auto-rotation disabled"
 sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
@@ -204,6 +196,13 @@ grant_permission
 
 # close all pending apps
 close_all
+
+# start video recording
+id=`date +%s`
+t_start=`date +%s`
+screen_video="zoom-recordin-${id}.mp4"
+(sudo screenrecord $screen_video --time-limit 60 &)
+myprint "Started screen recording on file: $screen_video"
 
 # start app 
 t_launch=`date +%s` 
@@ -245,24 +244,20 @@ myprint "Allow next page to load. No activity name, just sleep 10 seconds"
 sleep 10 
 
 
-############################
-id=`date +%s`
-# remote_file="/root/mobile-testbed/src/server/videoconferencing/${app}/${physical_id}-${id}-before.png" 
-# screen_file="./screen-before-$id"
-# sudo screencap -p $screen_file".png"
-# sudo chown $USER:$USER $screen_file".png"
-# (timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".png" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
-
 # potentially click accept term 
 #myprint "Potentially click accept terms..." #<===
 #tap_screen 530 860 
 
-remote_file="/root/mobile-testbed/src/server/videoconferencing/${app}/${physical_id}-${id}-after.png" 
-screen_file="./screen-after-$id"
-sudo screencap -p $screen_file".png"
-sudo chown $USER:$USER $screen_file".png"
-(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".png" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
-############################
+# see if time to upload video
+t_now=`date +%s`
+let "t_left = 65 - (t_now - t_start)"
+if [ $t_left -gt 0 ]
+then 
+	myprint "Wait for video to be done..."
+	sleep $t_left 
+	myprint "Uploading file $screen_video"
+	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no $screen_video root@23.235.205.53: > /dev/null 2>&1 &)
+fi 
 
 # close all and turn off screen 
 close_all
