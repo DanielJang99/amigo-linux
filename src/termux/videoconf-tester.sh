@@ -39,6 +39,8 @@ safe_stop(){
 	exit -1 
 }
 
+
+
 # generate data to be POSTed to my server
 generate_post_data(){
   cat <<EOF
@@ -46,7 +48,9 @@ generate_post_data(){
     "today":"${suffix}",
     "timestamp":"${current_time}",
     "uid":"${uid}",
-    "physical_id":"${physical_id}",    
+    "physical_id":"${physical_id}",
+    "network_loc":"${network_loc}",
+    "gps_loc":"${gps_loc}",
     "test_id":"${test_id}",
     "app":"${app}",
     "cpu_util_midload_perc":"${cpu_usage_middle}",
@@ -522,6 +526,19 @@ take_screenshots(){
 	myprint "Done to take screenshots..."
 }
 
+# update location information 
+update_location(){
+	timeout $MAX_LOCATION termux-location -p network -r last > $res_dir"/network-loc-$current_time.txt"
+	lat=`cat $res_dir"/network-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
+	long=`cat $res_dir"/network-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
+	network_loc="$lat,$long"
+	timeout $MAX_LOCATION termux-location -p gps -r last > $res_dir"/gps-loc-$current_time.txt"		
+	lat=`cat $res_dir"/gps-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
+	long=`cat $res_dir"/gps-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
+	gps_loc="$lat,$long"		
+}
+
+
 # script usage
 usage(){
     echo "====================================================================================================================================================================="
@@ -663,6 +680,9 @@ then
 else 
 	SERVER_PORT="8082"
 fi 
+
+# get a location update in background
+update_location &
 
 # make sure screen is in portrait 
 myprint "Ensuring that screen is in portrait and auto-rotation disabled"
