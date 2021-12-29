@@ -503,12 +503,12 @@ take_screenshots(){
 		screen_file="${res_folder}/screenshots/${test_id}/screen-${counter}"
 		sudo screencap -p $screen_file".png"
 		sudo chown $USER:$USER $screen_file".png"
-		cwebp -q 80 ${screen_file}".png" -o ${screen_file}".webp" > /dev/null 2>&1 
-		if [ -f ${screen_file}".webp" ]
-		then 
-			chmod 644 ${screen_file}".webp"
-			#rm ${screen_file}".png"
-		fi 
+		#cwebp -q 80 ${screen_file}".png" -o ${screen_file}".webp" > /dev/null 2>&1 
+		#if [ -f ${screen_file}".webp" ]
+		#then 
+		#	chmod 644 ${screen_file}".webp"
+		#	rm ${screen_file}".png"
+		#fi 
 		let "counter++"
 		t2=`date +%s`
 		let "t_p = 10 - (t2 - t1)"
