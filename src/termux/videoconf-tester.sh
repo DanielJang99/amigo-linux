@@ -461,12 +461,9 @@ run_meet(){
 	#tap_screen 485 855 5
 	tap_screen 485 975 5        # <== because of long meeting id? 
 
-	# get full screen (comparable with zoom) ## FIXME 
+	# verify call started 
 	wait_for_screen "SingleCallActivity"
-	myprint "get full screen => FIXME"
-	#tap_screen $x_center $y_center
-	#tap_screen 180 460 
-	#tap_screen 180 460 
+	myprint "Call started correctly!"
 }
 
 # leave zoom call
@@ -833,20 +830,12 @@ fi
 t_actual_launch=`date +%s`
 
 # change the view to multi windows 
-if [ $change_view == "true" ]
+if [ $change_view == "true" -a $app == "zoom" ]
 then 
-    myprint "A view change was requested!"
-    if [ $app == "zoom" ] 
-    then 
-    	sleep 5 
-        sudo input swipe 700 800 300 800
-    fi 
-    # elif [ $app == "meet" ] # -o $app == "webex" ] #CHECK: webex is naturally multi-view
-    # then 
-    #     tap_screen $x_center $y_center
-    # fi
+    myprint "Activating GRID for zoom"
+    sleep 5 
+    sudo input swipe 700 800 300 800
 fi 
-### FIXME -- meet is now now multi view too? 
 
 # turn off the screen 
 if [ $turn_off == "true" ] 
@@ -865,12 +854,18 @@ fi
 myprint "Waiting $duration for experiment to end..."
 sleep 10
 
-# REDO go full screen (which is comparable with zoom default)
-if [ $change_view == "false" -a $app == "webex" ]
+# Go full screen unless grid was asked  (which is comparable with zoom default)
+if [ $change_view == "false" ] 
 then 
-    myprint "Redoing tap for full screen, just in case. Verify no issue added" 
-    sudo dumpsys window windows | grep -E 'mCurrentFocus' 		
-    sudo input tap $x_center  400 & sleep 0.1; sudo input tap $x_center  400
+	if [ $app == "webex" ]
+	then 
+    	myprint "Tapping window in attempt at full screen..."
+    	sudo input tap $x_center  450 & sleep 0.1; sudo input tap $x_center  450 # 400? 
+    if [ $app == "meet" ]
+	then
+		myprint "Tapping mid screen for attempt at full screen!"
+		sudo input tap $x_center $y_center & sleep 0.1; sudo input tap $x_center $y_center
+    fi 
 fi
 
 # sleep up to mid experiment then take a screenshot and record mid CPU usage 
