@@ -829,14 +829,6 @@ then
 fi 
 t_actual_launch=`date +%s`
 
-# change the view to multi windows 
-if [ $change_view == "true" -a $app == "zoom" ]
-then 
-    myprint "Activating GRID for zoom"
-    sleep 5 
-    sudo input swipe 700 800 300 800
-fi 
-
 # turn off the screen 
 if [ $turn_off == "true" ] 
 then 
@@ -854,18 +846,25 @@ fi
 myprint "Waiting $duration for experiment to end..."
 sleep 10
 
-# Go full screen unless grid was asked  (which is comparable with zoom default)
+# Go full screen OR gird (different behavior for app under test) 
 if [ $change_view == "false" ] 
 then 
 	if [ $app == "webex" ]
 	then 
     	myprint "Tapping window in attempt at full screen..."
     	sudo input tap $x_center  450 & sleep 0.1; sudo input tap $x_center  450 # 400? 
+    fi 
     if [ $app == "meet" ]
 	then
 		myprint "Tapping mid screen for attempt at full screen!"
 		sudo input tap $x_center $y_center & sleep 0.1; sudo input tap $x_center $y_center
     fi 
+else 
+	if [ $app == "zoom" ]
+	then 
+    	myprint "Activating GRID for zoom"
+    	sudo input swipe 700 800 300 800
+	fi 
 fi
 
 # sleep up to mid experiment then take a screenshot and record mid CPU usage 
