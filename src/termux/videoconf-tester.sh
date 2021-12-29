@@ -774,8 +774,8 @@ then
 	fi 
 	myprint "Running tcpdump without port filtering..."
 	sudo tcpdump -U -i $iface src port $port_num -w $pcap_file > /dev/null 2>&1 & 
-	disown -h %1  # make tcpdump as a deamon	
-	sudo tcpdump -i $iface -w $pcap_file_full > /dev/null 2>&1 & 
+	disown -h %1  # make tcpdump as a daemon
+	#sudo tcpdump -i $iface -w $pcap_file_full > /dev/null 2>&1 & 
 	myprint "Started tcpdump: $pcap_file Interface: $iface Port: $port_num BigPacketSize: $big_packet_size"
 fi 
 
