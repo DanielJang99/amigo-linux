@@ -852,7 +852,7 @@ then
 	if [ $app == "webex" ]
 	then 
     	myprint "Tapping window in attempt at full screen..."
-    	sudo input tap $x_center  450 & sleep 0.1; sudo input tap $x_center  450 # 400? 
+    	sudo input tap $x_center 440 & sleep 0.1; sudo input tap $x_center 440 
     fi 
     if [ $app == "meet" ]
 	then
