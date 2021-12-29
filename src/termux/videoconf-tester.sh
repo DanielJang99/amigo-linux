@@ -398,12 +398,12 @@ run_webex(){
 	# accept warning Q: not needed
 	#tap_screen 375 1075 3
 
-	# go full screen (which is comparable with zoom default)
-	if [ $change_view == "false" ]
-	then 
-		sudo input tap $x_center 400 #& sleep 0.1; 
-		sudo input tap $x_center 400
-	fi 
+	# # go full screen (which is comparable with zoom default)
+	# if [ $change_view == "false" ]
+	# then 
+	# 	sudo input tap $x_center 400 #& sleep 0.1; 
+	# 	sudo input tap $x_center 400
+	# fi 
 }
 
 # helper function to join a google meet meeting
@@ -817,12 +817,13 @@ then
     then 
     	sleep 5 
         sudo input swipe 700 800 300 800
-    elif [ $app == "meet" ] # -o $app == "webex" ] #CHECK: webex is naturally multi-view
-    then 
-        tap_screen $x_center $y_center
-    fi
+    fi 
+    # elif [ $app == "meet" ] # -o $app == "webex" ] #CHECK: webex is naturally multi-view
+    # then 
+    #     tap_screen $x_center $y_center
+    # fi
 fi 
-### FIXME -- is meet now multi view too? 
+### FIXME -- meet is now now multi view too? 
 
 # turn off the screen 
 if [ $turn_off == "true" ] 
@@ -848,6 +849,7 @@ then
     #sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
     sudo input tap $x_center 400
     sudo input tap $x_center 400
+  	sudo input tap $x_center 400  
 fi
 
 # sleep up to mid experiment then take a screenshot and record mid CPU usage 
