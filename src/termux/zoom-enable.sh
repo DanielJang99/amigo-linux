@@ -201,7 +201,7 @@ close_all
 id=`date +%s`
 t_start=`date +%s`
 screen_video="zoom-recording-${id}.mp4"
-(sudo screenrecord $screen_video --time-limit 60 &)
+(sudo screenrecord $screen_video --time-limit 80 &)
 myprint "Started screen recording on file: $screen_video"
 
 # start app 
@@ -252,7 +252,7 @@ t_now=`date +%s`
 let "t_left = 65 - (t_now - t_start)"
 if [ $t_left -gt 0 ]
 then 
-	myprint "Wait for video to be done..."
+	myprint "Wait for video to be done... (sleep $t_left)"
 	sleep $t_left 
 	myprint "Uploading file $screen_video"
 	sudo chown $USER:$USER $screen_video
