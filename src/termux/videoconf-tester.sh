@@ -506,7 +506,7 @@ take_screenshots(){
 		if [ -f ${screen_file}".webp" ]
 		then 
 			chmod 644 ${screen_file}".webp"
-			rm ${screen_file}".png"
+			#rm ${screen_file}".png"
 		fi 
 		let "counter++"
 		t2=`date +%s`
@@ -567,6 +567,7 @@ uid="none"                               # user ID
 sync_time=0                              # future sync time 
 cpu_usage_middle="N/A"                   # CPU measured in the middle of a test 
 report="true"                            # scp data back to the server
+screenshots="false"                      # should take screenshots or not 
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -625,6 +626,9 @@ do
             ;;
         --sync)
         	shift; sync_time="$1"; shift;
+            ;;
+        --shot)
+        	shift; screenshots="true";
             ;;
         -*)
             echo "ERROR: Unknown option $1"
@@ -827,7 +831,6 @@ fi
 
 # take screenshots if needed 
 echo "false" > ".done_videoconf"
-screenshots="false"
 if [ $screenshots == "true" ]
 then 
 	take_screenshots & 
