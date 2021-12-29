@@ -342,7 +342,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="2.3"                              # code version 
+vrs="2.4"                              # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
 curl_duration="-1"                     # last value measured of curl duration
 isPaused="N/A"                         # hold info on whether a phone is paused or not
@@ -993,7 +993,7 @@ do
 				myprint "Confirm Maps is in the foregound: $foreground" 
 				# needed in case maps ask for storage...
 				sudo input tap 108 1220
-				sleep 10
+				sleep 15
 				close_all
 				turn_device_off
 				echo `date +%s` > ".last_gmaps"
