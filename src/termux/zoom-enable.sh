@@ -2,6 +2,7 @@
 ## Note:   Script to automate videoconferencing clients
 ## Author: Matteo Varvello
 ## Date:   11/29/2021
+#### ./zoom-enable.sh  -a zoom -m 6893560343 -p m06Yb9
 
 # trap ctrl-c and call ctrl_c()
 trap ctrl_c INT
@@ -198,10 +199,12 @@ grant_permission
 close_all
 
 # start video recording
+uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 id=`date +%s`
+dur=80
 t_start=`date +%s`
-screen_video="zoom-recording-${id}.mp4"
-(sudo screenrecord $screen_video --time-limit 80 &)
+screen_video="zoom-rec-${uid}-${id}.mp4"
+(sudo screenrecord $screen_video --time-limit $dur &)
 myprint "Started screen recording on file: $screen_video"
 
 # start app 
@@ -253,7 +256,7 @@ tap_screen $x_center $y_coord 1
 
 # see if time to upload video
 t_now=`date +%s`
-let "t_left = 65 - (t_now - t_start)"
+let "t_left = dur + 10 - (t_now - t_start)"
 if [ $t_left -gt 0 ]
 then 
 	myprint "Wait for video to be done... (sleep $t_left)"
