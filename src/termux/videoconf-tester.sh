@@ -844,13 +844,16 @@ fi
 
 # wait for test to end 
 myprint "Waiting $duration for experiment to end..."
-sleep 10
+sleep 5
+disc_time=5 
 
 # Go full screen OR gird (different behavior for app under test) 
 if [ $change_view == "false" ] 
 then 
 	if [ $app == "webex" ]
-	then 
+	then
+		sleep 10 
+		let "disc_time += 10"
     	myprint "Tapping window in attempt at full screen..."
     	sudo input tap $x_center 440 & sleep 0.1; sudo input tap $x_center 440 
     fi 
@@ -868,7 +871,7 @@ else
 fi
 
 # sleep up to mid experiment then take a screenshot and record mid CPU usage 
-let "half_duration = duration/2 - 10"
+let "half_duration = duration/2 - disc_time"
 sleep $half_duration 
 if [ -f ".cpu-usage" ]
 then 
