@@ -165,13 +165,7 @@ do
         -h | --help)
             usage
             ;;
-	    --suffix)
-            shift; suffix="$1"; shift;
-            ;;
-        --big)
-            shift; big_packet_size="$1"; big_packet="true"; shift;
-            ;;
-        -c | --clear)
+	    -c | --clear)
             shift; clear_state="true";
             ;;
         -i | --id)
@@ -252,18 +246,19 @@ sleep 10
 
 
 ############################
-remote_file="/root/mobile-testbed/src/server/videoconferencing/${app}/${physical_id}-${test_id}-before.png" 
-screen_file="${res_folder}/screenshots/${test_id}/screen-before"
-sudo screencap -p $screen_file".png"
-sudo chown $USER:$USER $screen_file".png"
-(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".png" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
+id=`date +%s`
+# remote_file="/root/mobile-testbed/src/server/videoconferencing/${app}/${physical_id}-${id}-before.png" 
+# screen_file="./screen-before-$id"
+# sudo screencap -p $screen_file".png"
+# sudo chown $USER:$USER $screen_file".png"
+# (timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".png" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
 
 # potentially click accept term 
-myprint "Potentially click accept terms..." #<===
-tap_screen 530 860 
+#myprint "Potentially click accept terms..." #<===
+#tap_screen 530 860 
 
-remote_file="/root/mobile-testbed/src/server/videoconferencing/${app}/${physical_id}-${test_id}-after.png" 
-screen_file="${res_folder}/screenshots/${test_id}/screen-after"
+remote_file="/root/mobile-testbed/src/server/videoconferencing/${app}/${physical_id}-${id}-after.png" 
+screen_file="./screen-after-$id"
 sudo screencap -p $screen_file".png"
 sudo chown $USER:$USER $screen_file".png"
 (timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".png" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
