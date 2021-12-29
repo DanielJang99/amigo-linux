@@ -401,7 +401,8 @@ run_webex(){
 	# go full screen (which is comparable with zoom default)
 	if [ $change_view == "false" ]
 	then 
-		sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
+		sudo input tap $x_center 400 #& sleep 0.1; 
+		sudo input tap $x_center 400
 	fi 
 }
 
@@ -844,7 +845,9 @@ sleep 5
 if [ $change_view == "false" -a $app == "webex" ]
 then 
     myprint "Redoing tap for full screen, just in case. Verify no issue added" 
-    sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
+    #sudo input tap 200 400 & sleep 0.1; sudo input tap 200 400
+    sudo input tap $x_center 400
+    sudo input tap $x_center 400
 fi
 
 # sleep up to mid experiment then take a screenshot and record mid CPU usage 
