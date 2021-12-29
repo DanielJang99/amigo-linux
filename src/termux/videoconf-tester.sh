@@ -497,7 +497,7 @@ leave_meet(){
 
 # take multiple screenshots 
 take_screenshots(){
-	myprint "Starting to take screenshots..."
+	myprint "START to take screenshots..."
 	counter=1
 	isDone="false"
 	mkdir -p "${res_folder}/screenshots/${test_id}"
@@ -523,11 +523,14 @@ take_screenshots(){
 		fi 
 		isDone=`cat ".done_videoconf"`
 	done	 
-	myprint "Done to take screenshots..."
+	myprint "DONE to take screenshots..."
 }
 
 # update location information 
 update_location(){
+	current_time=`date +%s`
+	res_dir="locationlogs/${suffix}"
+	mkdir -p $res_dir
 	timeout $MAX_LOCATION termux-location -p network -r last > $res_dir"/network-loc-$current_time.txt"
 	lat=`cat $res_dir"/network-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
 	long=`cat $res_dir"/network-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
@@ -537,7 +540,6 @@ update_location(){
 	long=`cat $res_dir"/gps-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
 	gps_loc="$lat,$long"		
 }
-
 
 # script usage
 usage(){
@@ -860,7 +862,7 @@ fi
 
 # wait for test to end 
 myprint "Waiting $duration for experiment to end..."
-sleep 5 
+sleep 10
 
 # REDO go full screen (which is comparable with zoom default)
 if [ $change_view == "false" -a $app == "webex" ]
@@ -874,7 +876,7 @@ then
 fi
 
 # sleep up to mid experiment then take a screenshot and record mid CPU usage 
-let "half_duration = duration/2 - 5"
+let "half_duration = duration/2 - 10"
 sleep $half_duration 
 if [ -f ".cpu-usage" ]
 then 
