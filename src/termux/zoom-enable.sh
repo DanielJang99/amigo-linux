@@ -247,6 +247,10 @@ sleep 10
 myprint "Click accept terms..."
 tap_screen 530 860 
 
+# click join without video
+y_coord="1180"     
+tap_screen $x_center $y_coord 1
+
 # see if time to upload video
 t_now=`date +%s`
 let "t_left = 65 - (t_now - t_start)"
