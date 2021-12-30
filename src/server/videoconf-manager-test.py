@@ -291,7 +291,7 @@ while shouldRun:
 				continue	
 			
 			# make sure no net testing and enough battery 
-			if(is_net_testing != 0 or battery_level < 20): 
+			if(is_net_testing != 0 or battery_level < 15): 
 				print("Low battery (%d) or net-testing (%d) detected. Skipping %s" %(battery_level, is_net_testing, tester_id))
 				continue	
 			

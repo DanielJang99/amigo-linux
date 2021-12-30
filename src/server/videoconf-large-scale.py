@@ -138,8 +138,9 @@ location = "usw"                 # host location
 azure_key = "/root/.ssh/id_rsa"  # ssh key for azureserver ## "/Users/bravello/.ssh/id_rsa" 
 isDev = True                     # flag for testing with devices in Yasir house only 
 MAX_RUNS = 5                     # maximum number of runs per configuration 
-MAX_DUR = 5 * 3600               # max test duration (5 hours)
-exp_type = "delay"               # experiment type: delay, quality, scale 
+MAX_DUR = 1 * 3600               # max test duration (5 hours)
+exp_type = "delay"               # experiment type: delay, quality-grid, quality-full, scale 
+startClientVMS = False 
 
 # populate azure info and meetings based on location 
 meeting_info = {'zoom-home':"4170438763", 'zoom-usc':'6893560343', 'zoom-usw':'7761594917', 'zoom-ch':'5204594812', 'zoom-use':'2598883628', 'zoom-in':'5850742961', 'zoom-uk':'8128761187',
@@ -148,10 +149,12 @@ meeting_info = {'zoom-home':"4170438763", 'zoom-usc':'6893560343', 'zoom-usw':'7
 password_info = {'zoom-home':'6m2jmA', 'zoom-usc':'m06Yb9', 'zoom-usw':'jXN8Rq', 'zoom-ch':'6Vj41A', 'zoom-use':'abc', 'zoom-in':'a6JhR2', 'zoom-uk':'E4zE4q'}
 azure = {"ch":"20.203.184.236", "in":"20.193.247.182", "uk":"52.142.186.54", 
 		 "usc":"40.113.240.105", "use":"20.120.91.176", "usw":"40.112.164.175"} 
+clienVMS = {"ch2":"20.203.150.92", "uk2":"51.141.27.109", "use2":"20.127.42.180"}
 
+ 
 # check input 
-if len(sys.argv) != 5: 
-	print("USAGE: ", sys.argv[0], " location app isDev exp_type")
+if len(sys.argv) != 6: 
+	print("USAGE: ", sys.argv[0], " location app isDev exp_type videoconf_size")
 	sys.exit(-1) 
 location = sys.argv[1]
 app = sys.argv[2]
@@ -160,7 +163,8 @@ if sys.argv[3] == "debug":
 else: 
 	isDev = False
 exp_type =  sys.argv[4]
-print("User input:", location, app, isDev, exp_type)
+VIDEOCONF_SIZE = int(sys.argv[5])      # this is a tentative value, always run when the set is done (aka use max avail)
+print("User input:", location, app, isDev, exp_type, VIDEOCONF_SIZE)
 
 # check that location is supported
 if location not in azure: 
@@ -185,7 +189,7 @@ else:
 # command in common across apps and tests
 meeting_id = meeting_info[app + '-' + location]
 basic_command = "./videoconf-tester.sh -a " + app + " -m " + meeting_id + " --dur " + str(VIDEOCONF_DUR) + " --pcap --big 400" ## " --view --video --clear"
-if exp_type == 'delay' or exp_type == 'quality-grid':
+if exp_type == 'delay' or exp_type == 'quality-grid' or exp_type == 'scale-grid':
 	basic_command += " --view"
 	print("Requested grid mode for app: ", app)
 if 'full' in exp_type:
@@ -253,11 +257,21 @@ while shouldRun:
 
 	# iterate on testers until three are found who match
 	random.shuffle(active_testers)   # avoid N processes to look at same testers (or reduce chance) 
+	last_tester_id = ''
+	if isDev: 
+		last_tester_id = active_testers[-1]
+	else:
+		last_tester_id = active_testers[-1][0]
+	last_entry = active_testers[-1]
 	for entry in active_testers: 
 		if isDev: 
 			tester_id = entry
 		else:
 			tester_id = entry[0]
+		if tester_id == last_tester_id:
+			lastChance = True
+		else: 
+			lastChance = False
 		if not isDev: 
 			query = "select tester_id, timestamp, data->>'wifi_ip', data->>'wifi_iface', data->>'mobile_ip', data->>'mobile_iface', data->>'battery_level', data->>'net_testing_proc' from status_update WHERE type = 'status' and  data->>'vrs_num' is not NULL and to_timestamp(timestamp) > now() - interval '15 min' and tester_id = '" + tester_id + "';"
 			info, msg  = run_query(query)
@@ -290,28 +304,28 @@ while shouldRun:
 				print("Something seems wrong for user %s. Both wifi and mobile IPs are missing" %(tester_id))
 				continue	
 			
-			# make sure no net testing and enough battery 
-			if(is_net_testing != 0 or battery_level < 20): 
-				print("Low battery (%d) or net-testing (%d) detected. Skipping %s" %(battery_level, is_net_testing, tester_id))
-				continue	
+			# # make sure no net testing and enough battery (we need to be more aggressive here)
+			# if(is_net_testing != 0 or battery_level < 20): 
+			# 	print("Low battery (%d) or net-testing (%d) detected. Skipping %s" %(battery_level, is_net_testing, tester_id))
+			# 	continue	
 			
-			# check if too many runs already done for this configuration 
-			query = "select access_list from videoconf_status where tester_id = '" + tester_id + "' and  app = '" + app + "' and location = '" + location + "' and exp_type = '" + exp_type + "';"
-			info, msg = run_query(query)
-			#if info is not None: 
-			if len(info) > 0: 
-				access_list = info[0][0]
-			else: 
-				access_list = [] 
-			counter = 0 
-			for a in access_list: 
-				#print(a, iface) 
-				if a == iface: 
-					counter += 1 
-			print("Found %d/%d test for tester_id %s for app %s in mode %s for location %s" %(counter, MAX_RUNS, app, tester_id, iface, location))
-			if counter >= MAX_RUNS: 
-				print("Already done %d/%d runs for %s for app %s in mode %s for location %s. Skipping" %(counter, MAX_RUNS, app, tester_id, iface, location))
-				continue
+			# # check if too many runs already done for this configuration (we don't really care about who joins)
+			# query = "select access_list from videoconf_status where tester_id = '" + tester_id + "' and  app = '" + app + "' and location = '" + location + "' and exp_type = '" + exp_type + "';"
+			# info, msg = run_query(query)
+			# #if info is not None: 
+			# if len(info) > 0: 
+			# 	access_list = info[0][0]
+			# else: 
+			# 	access_list = [] 
+			# counter = 0 
+			# for a in access_list: 
+			# 	#print(a, iface) 
+			# 	if a == iface: 
+			# 		counter += 1 
+			# print("Found %d/%d test for tester_id %s for app %s in mode %s for location %s" %(counter, MAX_RUNS, app, tester_id, iface, location))
+			# if counter >= MAX_RUNS: 
+			# 	print("Already done %d/%d runs for %s for app %s in mode %s for location %s. Skipping" %(counter, MAX_RUNS, app, tester_id, iface, location))
+			# 	continue
 	
 			# check if there is any pending command for this user (aka running with host at other location)
 			shouldSkip = False
@@ -340,8 +354,6 @@ while shouldRun:
 		# if we reach here, user is good (on dev it is good by default) 
 		tester_info = ()
 		if isDev: 
-			print(tester_id)
-			print(tester_info_dic)
 			tester_info = tester_info_dic[tester_id]
 		else:
 			tester_info = (tester_id, wifi_ip, wifi_iface, mobile_ip, mobile_iface)
@@ -349,9 +361,13 @@ while shouldRun:
 		print("testing candidate found. Added to list. New size: " + str(len(candidate_testers)))
 		print(tester_info) 
 
-		# check if we have enough devices for testing 
+		# check if we have enough devices for testing or it is the last hope
 		curr_time = int(time.time()) 				
-		if len(candidate_testers) == VIDEOCONF_SIZE - 1: 
+		if len(candidate_testers) == VIDEOCONF_SIZE - 1 or lastChance: 
+			# logging
+			if lastChance:
+				print("Starting a conference with size %s since it is our last chance" %(len(candidate_testers)))
+			
 			# logging 
 			today = datetime.date.today()
 			suffix = str(today.day) + '-' + str(today.month) + '-' + str(today.year)
@@ -377,6 +393,18 @@ while shouldRun:
 				# bash-out process 
 				p = subprocess.Popen("ssh -T -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 				#print(p)
+
+			# start clienVMS in the cloud -- #For webex, we will do it manually as we discussed.
+			if startClientVMS and app != "webex":
+				if app == "zoom":
+					command = "\"(./zoom_c.sh start " + str(curr_id) + " " + location
+				elif app == "meet":
+					command = "\"(./googlemeet_c.sh start " + str(curr_id)
+				command += " > log-" + str(curr_id)+" 2>&1 &)\""
+				print(command)				
+				for key, clientLoc in clienVMS.items():
+					p = subprocess.Popen("ssh -T -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = clientLoc, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+					#print(p)					
 
 			# add common options: sync time, suffix, and test identifier
 			sync_time = curr_id + 120 
@@ -464,7 +492,24 @@ while shouldRun:
 				subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 				print("Sleeping an extra minute to allow things to cool down")
 				time.sleep(60)
-					
+
+			# stop clienVMS in the cloud (manual for webex)
+			if startClientVMS and app != "webex":
+				if app == "zoom":
+					command = "./zoom_c.sh stop"
+				elif app == "meet":
+					command = "./googlemeet_c.sh stop"
+				print(command)				
+				for key, clientLoc in clienVMS.items():
+					p = subprocess.Popen("ssh -T -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = clientLoc, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+
+			# update numRuns
+			numRuns += 1 
+			if numRuns == MAX_RUNS: 
+				print("Done %d runs. Stopping" %(numRuns))
+				shouldRun = False 
+				break 
+
 			# time check 
 			time_passed = int(time.time()) - start_time
 			print("Time passed: ", time_passed)
@@ -497,6 +542,18 @@ while shouldRun:
 		print("Stopping host for ", app) 
 		command = remote_exec + " stop"
 		subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+
+	# stop clienVMS in the cloud (manual for webex)
+	if startClientVMS and app != "webex":
+		if app == "zoom":
+			command = "./zoom_c.sh stop"
+		elif app == "meet":
+			command = "./googlemeet_c.sh stop"
+		print(command)				
+		for key, clientLoc in clienVMS.items():
+			p = subprocess.Popen("ssh -T -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = clientLoc, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+
+	# rate control 	
 	time.sleep(30)
 
 # close connection to database 
