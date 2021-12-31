@@ -860,9 +860,11 @@ then
     if [ $app == "meet" ]
 	then
 		myprint "Tapping screen for attempt at full screen!" ## single user 
-		sudo input tap 190 435 & sleep 0.1; sudo input tap 190 435 # single user 
+		sudo input tap 190 435 & sleep 0.1; sudo input tap 190 435  # more than one user (assuming video is in top left corner)
 		#sudo input tap $x_center $y_center & sleep 0.1; sudo input tap $x_center $y_center # single user 
-
+		sleep 5 
+		let "disc_time += 5"
+    	sudo input tap 634 576    	
     fi 
 else 
 	if [ $app == "zoom" ]
