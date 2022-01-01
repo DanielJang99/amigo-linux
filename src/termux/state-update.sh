@@ -282,9 +282,9 @@ update_wifi_mobile(){
 		# force testing when on airplane mode ############## testing 
 		if [ $airplane_mode == "true" ] 
 		then
-			myprint "Make sure there is always once test to be done when on airplane mode hoping to be on a plane, i.e., keep testing each 30 mins" 
+			myprint "Make sure there is always one test to be done when on airplane mode hoping to be on a plane, i.e., keep testing each 30 mins" 
 			force_net_test=1
-			echo $wifi_ssid >> $wifi_list
+			echo $force_net_test > ".force_counter"
 		fi 
 	else
 		wifi_ip="none"
