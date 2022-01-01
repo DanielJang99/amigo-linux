@@ -234,15 +234,18 @@ update_wifi_mobile(){
 		echo $force_net_test > ".force_counter"
 	fi
 
-	# get more wifi info if active 
+	# update wifi data info
+	if [ -f $wifi_today_file ] 
+	then 
+		wifi_data=`cat $wifi_today_file`
+	else 
+		wifi_data=0	
+	fi 	
 	if [ ! -z $wifi_iface ]
 	then 
 		wifi_today_file="./data/wifi/"$suffix".txt"
-		if [ -f $wifi_today_file ] 
+		if [ ! -f $wifi_today_file ] 
 		then 
-			wifi_data=`cat $wifi_today_file`
-		else 
-			wifi_data=0	
 			if [ -z $prev_wifi_traffic ]
 			then 
 				prev_wifi_traffic=`ifconfig $wifi_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`	
@@ -257,7 +260,6 @@ update_wifi_mobile(){
 	
 		# update data consumed 
 		let "wifi_data += (wifi_traffic - prev_wifi_traffic)"
-		echo $wifi_data > $wifi_today_file
 		prev_wifi_traffic=$wifi_traffic
 
 		# keep track of wifi encountered 
@@ -293,17 +295,21 @@ update_wifi_mobile(){
 		wifi_qual="none"
 		wifi_traffic="none"
 	fi 
-	
-	# get more mobile info if active 
+	echo $wifi_data > $wifi_today_file
+		
+	# update mobile data sent/received
+	if [ -f $mobile_today_file ] 
+	then 
+		mobile_data=`cat $mobile_today_file`
+	else 
+		mobile_data=0	
+	fi	
 	if [ ! -z $mobile_iface ]
 	then
 		# get update on data sent/received
 		mobile_today_file="./data/mobile/"$suffix".txt"	 
-		if [ -f $mobile_today_file ] 
+		if [ ! -f $mobile_today_file ] 
 		then 
-			mobile_data=`cat $mobile_today_file`
-		else 
-			mobile_data=0	
 			if [ -z $prev_mobile_traffic ]
 			then 
 				prev_mobile_traffic=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`	
@@ -315,7 +321,6 @@ update_wifi_mobile(){
 		mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
 		mobile_traffic=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 		let "mobile_data += (mobile_traffic - prev_mobile_traffic)"
-		echo $mobile_data > $mobile_today_file		 
 		prev_mobile_traffic=$mobile_traffic
 	else 
 		mobile_state="none"
@@ -323,6 +328,9 @@ update_wifi_mobile(){
 		mobile_signal="none"
 		mobile_traffic="none"
 	fi 
+	echo $mobile_data > $mobile_today_file		 
+		
+	# update on cpu usage 
 	if [ -f ".cpu-usage" ] 
 	then 
 		cpu_util=`cat ".cpu-usage" | cut -f 1 -d "."`
@@ -355,7 +363,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="2.5"                              # code version 
+vrs="2.6"                              # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
 curl_duration="-1"                     # last value measured of curl duration
 isPaused="N/A"                         # hold info on whether a phone is paused or not
