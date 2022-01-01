@@ -235,6 +235,7 @@ update_wifi_mobile(){
 	fi
 
 	# update wifi data info
+	wifi_today_file="./data/wifi/"$suffix".txt"		
 	if [ -f $wifi_today_file ] 
 	then 
 		wifi_data=`cat $wifi_today_file`
@@ -243,7 +244,6 @@ update_wifi_mobile(){
 	fi 	
 	if [ ! -z $wifi_iface ]
 	then 
-		wifi_today_file="./data/wifi/"$suffix".txt"
 		if [ ! -f $wifi_today_file ] 
 		then 
 			if [ -z $prev_wifi_traffic ]
@@ -298,6 +298,7 @@ update_wifi_mobile(){
 	echo $wifi_data > $wifi_today_file
 		
 	# update mobile data sent/received
+	mobile_today_file="./data/mobile/"$suffix".txt"		
 	if [ -f $mobile_today_file ] 
 	then 
 		mobile_data=`cat $mobile_today_file`
@@ -307,7 +308,6 @@ update_wifi_mobile(){
 	if [ ! -z $mobile_iface ]
 	then
 		# get update on data sent/received
-		mobile_today_file="./data/mobile/"$suffix".txt"	 
 		if [ ! -f $mobile_today_file ] 
 		then 
 			if [ -z $prev_mobile_traffic ]
