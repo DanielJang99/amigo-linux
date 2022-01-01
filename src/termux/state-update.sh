@@ -130,6 +130,7 @@ generate_post_data(){
     "last_curl_dur":"${curl_duration}",
     "uid":"${uid}",
     "physical_id":"${physical_id}",
+    "airplane_mode":"${airplane_mode}",
     "googleStatus":"${google_status}",
     "timeGoogleCheck":"${t_last_google}",
     "uptime":"${uptime_info}",
@@ -200,9 +201,13 @@ update_location(){
 
 # helper to maintain up-to-date wifi/mobile info 
 update_wifi_mobile(){
+
+	# discover if we are in airplane mode or not
+	airplane_mode=`sudo  dumpsys wifi | grep mAirplaneModeOn | cut -f 2 -d " "`
+	
+	# get dympsys info for connectivity
 	sudo dumpsys netstats > .data
 	wifi_iface=`cat .data | grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
-	#mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
 	mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | grep "rmnet" | grep "true" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
 	def_iface="none"
 	if [ ! -z $wifi_iface ]
@@ -273,6 +278,14 @@ update_wifi_mobile(){
 			force_net_test=6
 			echo $force_net_test > ".force_counter"				
 		fi 	
+
+		# constantly force one test when on airplane mode 
+		if [ $airplane_mode == "true" ] 
+		then
+			myprint "Make sure there is always one test to be done when on airplane mode hoping to be on a plane, i.e., keep testing each 30 mins" 
+			force_net_test=1
+			echo $force_net_test > ".force_counter"
+		fi 
 	else
 		wifi_ip="none"
 		wifi_ssid="none"
@@ -342,7 +355,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="2.4"                              # code version 
+vrs="2.5"                              # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
 curl_duration="-1"                     # last value measured of curl duration
 isPaused="N/A"                         # hold info on whether a phone is paused or not
@@ -695,6 +708,13 @@ do
 						comm_status=$?
 						myprint "Command started in background. Status: $comm_status"
 					else 
+						# TODO: consider generalizing with a priority expressed in the command
+						echo $command | grep "videoconf-tester.sh" > /dev/null
+						if [ $? -eq 0 ] 
+						then 
+							myprint "Requested a videoconference. Making sure there is no pending net-testing"		
+							./stop-net-testing.sh
+						fi 
 						eval timeout $duration $command
 						comm_status=$?
 						myprint "Command executed. Status: $comm_status"

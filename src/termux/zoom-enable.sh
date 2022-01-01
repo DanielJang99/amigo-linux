@@ -264,7 +264,7 @@ then
 fi 
 myprint "Uploading file $screen_video"
 sudo chown $USER:$USER $screen_video
-(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no $screen_video root@23.235.205.53: > /dev/null 2>&1 &)
+(timeout 120 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no $screen_video root@23.235.205.53: > /dev/null 2>&1 &)
 
 # close all and turn off screen 
 close_all
