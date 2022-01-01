@@ -130,7 +130,7 @@ generate_post_data(){
     "last_curl_dur":"${curl_duration}",
     "uid":"${uid}",
     "physical_id":"${physical_id}",
-    "airplane_mode":"${airplane_mode},"
+    "airplane_mode":"${airplane_mode}",
     "googleStatus":"${google_status}",
     "timeGoogleCheck":"${t_last_google}",
     "uptime":"${uptime_info}",
