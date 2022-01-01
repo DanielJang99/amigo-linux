@@ -130,6 +130,7 @@ generate_post_data(){
     "last_curl_dur":"${curl_duration}",
     "uid":"${uid}",
     "physical_id":"${physical_id}",
+    "airplane_mode":"${airplane_mode},"
     "googleStatus":"${google_status}",
     "timeGoogleCheck":"${t_last_google}",
     "uptime":"${uptime_info}",
@@ -200,9 +201,13 @@ update_location(){
 
 # helper to maintain up-to-date wifi/mobile info 
 update_wifi_mobile(){
+
+	########## testing 
+	airplane_mode=`sudo  dumpsys wifi | grep mAirplaneModeOn | cut -f 2 -d " "`
+	#########
+	
 	sudo dumpsys netstats > .data
 	wifi_iface=`cat .data | grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
-	#mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
 	mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | grep "rmnet" | grep "true" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
 	def_iface="none"
 	if [ ! -z $wifi_iface ]
@@ -273,6 +278,14 @@ update_wifi_mobile(){
 			force_net_test=6
 			echo $force_net_test > ".force_counter"				
 		fi 	
+
+		# force testing when on airplane mode ############## testing 
+		if [ $airplane_mode == "true" ] 
+		then
+			myprint "Make sure there is always once test to be done when on airplane mode hoping to be on a plane, i.e., keep testing each 30 mins" 
+			force_net_test=1
+			echo $wifi_ssid >> $wifi_list
+		fi 
 	else
 		wifi_ip="none"
 		wifi_ssid="none"
