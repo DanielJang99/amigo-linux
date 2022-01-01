@@ -202,10 +202,10 @@ update_location(){
 # helper to maintain up-to-date wifi/mobile info 
 update_wifi_mobile(){
 
-	########## testing 
+	# discover if we are in airplane mode or not
 	airplane_mode=`sudo  dumpsys wifi | grep mAirplaneModeOn | cut -f 2 -d " "`
-	#########
 	
+	# get dympsys info for connectivity
 	sudo dumpsys netstats > .data
 	wifi_iface=`cat .data | grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
 	mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | grep "rmnet" | grep "true" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
@@ -279,7 +279,7 @@ update_wifi_mobile(){
 			echo $force_net_test > ".force_counter"				
 		fi 	
 
-		# force testing when on airplane mode ############## testing 
+		# constantly force one test when on airplane mode 
 		if [ $airplane_mode == "true" ] 
 		then
 			myprint "Make sure there is always one test to be done when on airplane mode hoping to be on a plane, i.e., keep testing each 30 mins" 
@@ -708,14 +708,13 @@ do
 						comm_status=$?
 						myprint "Command started in background. Status: $comm_status"
 					else 
-						####### testing (generalize with a priority mechanism)
+						# TODO: consider generalizing with a priority expressed in the command
 						echo $command | grep "videoconf-tester.sh" > /dev/null
 						if [ $? -eq 0 ] 
 						then 
 							myprint "Requested a videoconference. Making sure there is no pending net-testing"		
 							./stop-net-testing.sh
 						fi 
-						################
 						eval timeout $duration $command
 						comm_status=$?
 						myprint "Command executed. Status: $comm_status"
