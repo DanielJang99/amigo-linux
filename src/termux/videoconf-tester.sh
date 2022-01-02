@@ -861,19 +861,20 @@ then
 	then
 		#sleep 10 		
 		#let "disc_time += 10"    	
-		myprint "Tapping screen for attempt at full screen!" ## single user 
+		myprint "Attempt at full screen!" ## single user 
 		# more than one user (assuming video is in top left corner)		
 		sudo input touchscreen swipe 200 435 200 435 1000
+		sudo input tap $x_center 1110 
 		sleep 2 
-		sudo input tap 370 1110 
+		sudo input tap $x_center $y_center
+		let "disc_time += 2"    	
 		#sudo input tap 200 400 		
 		#$sudo input tap 200 435 #& 
 		#sleep 0.1 	
 		#sudo input tap 200 435 
 		#sudo input tap $x_center $y_center & sleep 0.1; sudo input tap $x_center $y_center # single user 
 		#sleep 5 
-		#let "disc_time += 5"
-    	#sudo input tap 634 576    	
+		#sudo input tap 634 576    	
     fi 
 else 
 	if [ $app == "zoom" ]
@@ -885,7 +886,10 @@ fi
 
 # sleep up to mid experiment then take a screenshot and record mid CPU usage 
 let "half_duration = duration/2 - disc_time"
-sleep $half_duration 
+if [ $half_duration -gt 0 ]
+then 
+	sleep $half_duration 
+fi 
 if [ -f ".cpu-usage" ]
 then 
 	cpu_usage_middle=`cat .cpu-usage`
