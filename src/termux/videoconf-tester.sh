@@ -864,6 +864,8 @@ then
 		myprint "Tapping screen for attempt at full screen!" ## single user 
 		# more than one user (assuming video is in top left corner)		
 		sudo input touchscreen swipe 200 435 200 435 1000
+		sleep 2 
+		sudo input tap 370 1110 
 		#sudo input tap 200 400 		
 		#$sudo input tap 200 435 #& 
 		#sleep 0.1 	
