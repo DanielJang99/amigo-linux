@@ -863,14 +863,14 @@ then
 		#let "disc_time += 10"    	
 		myprint "Tapping screen for attempt at full screen!" ## single user 
 		# more than one user (assuming video is in top left corner)		
-		sudo input tap 200 400 #435 
+		sudo input tap 200 400 &
+		sleep 0.2 
 		sudo input tap 200 400 #435  
-		#& sleep 0.1; 
 		
 		#sudo input tap $x_center $y_center & sleep 0.1; sudo input tap $x_center $y_center # single user 
-		sleep 5 
-		let "disc_time += 5"
-    	sudo input tap 634 576    	
+		#sleep 5 
+		#let "disc_time += 5"
+    	#sudo input tap 634 576    	
     fi 
 else 
 	if [ $app == "zoom" ]
