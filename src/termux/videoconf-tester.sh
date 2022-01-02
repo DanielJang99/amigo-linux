@@ -859,13 +859,14 @@ then
     fi 
     if [ $app == "meet" ]
 	then
-		sleep 10 		
-		let "disc_time += 5"    	
+		#sleep 10 		
+		#let "disc_time += 10"    	
 		myprint "Tapping screen for attempt at full screen!" ## single user 
 		# more than one user (assuming video is in top left corner)		
-		sudo input tap 190 435 
+		sudo input tap 200 400 #435 
+		sudo input tap 200 400 #435  
 		#& sleep 0.1; 
-		sudo input tap 190 435  
+		
 		#sudo input tap $x_center $y_center & sleep 0.1; sudo input tap $x_center $y_center # single user 
 		sleep 5 
 		let "disc_time += 5"
