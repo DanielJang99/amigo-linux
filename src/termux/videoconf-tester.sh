@@ -869,8 +869,8 @@ then
 		sudo input tap $x_center $y_center
 		let "disc_time += 2"    	
 		# make sure screen is in landscape 
-		myprint "Ensuring that screen is in landscape and auto-rotation disabled"
-		sudo  settings put system user_rotation 1          # put in landscape  
+		#myprint "Ensuring that screen is in landscape and auto-rotation disabled"
+		#sudo  settings put system user_rotation 1          # put in landscape  
     fi 
 else 
 	if [ $app == "zoom" ]
@@ -1008,6 +1008,5 @@ then
 	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
 fi 
 
-
 # put back in portrait 
-sudo  settings put system user_rotation 0
+#sudo  settings put system user_rotation 0
