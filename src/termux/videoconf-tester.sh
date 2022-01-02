@@ -847,7 +847,7 @@ myprint "Waiting $duration for experiment to end..."
 sleep 5
 disc_time=5 
 
-# Go full screen OR gird (different behavior for app under test) 
+# Go full screen or grid (different behavior for app under test) 
 if [ $change_view == "false" ] 
 then 
 	if [ $app == "webex" ]
@@ -859,6 +859,8 @@ then
     fi 
     if [ $app == "meet" ]
 	then
+		sleep 10 		
+		let "disc_time += 5"    	
 		myprint "Tapping screen for attempt at full screen!" ## single user 
 		sudo input tap 190 435 & sleep 0.1; sudo input tap 190 435  # more than one user (assuming video is in top left corner)
 		#sudo input tap $x_center $y_center & sleep 0.1; sudo input tap $x_center $y_center # single user 
