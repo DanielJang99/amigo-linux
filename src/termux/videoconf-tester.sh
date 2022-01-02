@@ -12,8 +12,8 @@ function ctrl_c() {
 
 # stop in case things do not seem right
 safe_stop(){
-	echo "false" > ".to_monitor"
-	echo "true" > ".done_videoconf"
+	echo "false" > ".to_monitor"     # stop CPU monitoring
+	echo "true" > ".done_videoconf"  # stop screenshotting if there 
 	sudo killall tcpdump	
 	sleep 5 	
 	screen_file=$res_folder"/"$test_id 
@@ -847,7 +847,7 @@ myprint "Waiting $duration for experiment to end..."
 sleep 5
 disc_time=5 
 
-# Go full screen OR gird (different behavior for app under test) 
+# Go full screen or grid (different behavior for app under test) 
 if [ $change_view == "false" ] 
 then 
 	if [ $app == "webex" ]
@@ -859,12 +859,18 @@ then
     fi 
     if [ $app == "meet" ]
 	then
-		myprint "Tapping screen for attempt at full screen!" ## single user 
-		sudo input tap 190 435 & sleep 0.1; sudo input tap 190 435  # more than one user (assuming video is in top left corner)
-		#sudo input tap $x_center $y_center & sleep 0.1; sudo input tap $x_center $y_center # single user 
-		sleep 5 
-		let "disc_time += 5"
-    	sudo input tap 634 576    	
+		#sleep 10 		
+		#let "disc_time += 10"    	
+		myprint "Attempt at full screen!" ## single user 
+		# more than one user (assuming video is in top left corner)		
+		sudo input touchscreen swipe 200 435 200 435 1000
+		sudo input tap $x_center 1110 
+		sleep 2 
+		sudo input tap $x_center $y_center
+		let "disc_time += 2"    	
+		# make sure screen is in landscape 
+		#myprint "Ensuring that screen is in landscape and auto-rotation disabled"
+		#sudo  settings put system user_rotation 1          # put in landscape  
     fi 
 else 
 	if [ $app == "zoom" ]
@@ -876,7 +882,10 @@ fi
 
 # sleep up to mid experiment then take a screenshot and record mid CPU usage 
 let "half_duration = duration/2 - disc_time"
-sleep $half_duration 
+if [ $half_duration -gt 0 ]
+then 
+	sleep $half_duration 
+fi 
 if [ -f ".cpu-usage" ]
 then 
 	cpu_usage_middle=`cat .cpu-usage`
@@ -998,3 +1007,6 @@ then
 	myprint "Uploading screenshot ${screen_file}.webp to the server..."	
 	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
 fi 
+
+# put back in portrait 
+#sudo  settings put system user_rotation 0
