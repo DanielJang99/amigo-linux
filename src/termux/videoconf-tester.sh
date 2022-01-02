@@ -862,7 +862,10 @@ then
 		sleep 10 		
 		let "disc_time += 5"    	
 		myprint "Tapping screen for attempt at full screen!" ## single user 
-		sudo input tap 190 435 & sleep 0.1; sudo input tap 190 435  # more than one user (assuming video is in top left corner)
+		# more than one user (assuming video is in top left corner)		
+		sudo input tap 190 435 
+		#& sleep 0.1; 
+		sudo input tap 190 435  
 		#sudo input tap $x_center $y_center & sleep 0.1; sudo input tap $x_center $y_center # single user 
 		sleep 5 
 		let "disc_time += 5"
