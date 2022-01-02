@@ -868,9 +868,9 @@ then
 		sleep 0.1 
 		sudo input tap 200 400 
 		#sudo input tap $x_center $y_center & sleep 0.1; sudo input tap $x_center $y_center # single user 
-		#sleep 5 
-		#let "disc_time += 5"
-    	#sudo input tap 634 576    	
+		sleep 5 
+		let "disc_time += 5"
+    	sudo input tap 634 576    	
     fi 
 else 
 	if [ $app == "zoom" ]
