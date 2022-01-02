@@ -868,13 +868,9 @@ then
 		sleep 2 
 		sudo input tap $x_center $y_center
 		let "disc_time += 2"    	
-		#sudo input tap 200 400 		
-		#$sudo input tap 200 435 #& 
-		#sleep 0.1 	
-		#sudo input tap 200 435 
-		#sudo input tap $x_center $y_center & sleep 0.1; sudo input tap $x_center $y_center # single user 
-		#sleep 5 
-		#sudo input tap 634 576    	
+		# make sure screen is in landscape 
+		myprint "Ensuring that screen is in landscape and auto-rotation disabled"
+		sudo  settings put system user_rotation 1          # put in landscape  
     fi 
 else 
 	if [ $app == "zoom" ]
@@ -1011,3 +1007,7 @@ then
 	myprint "Uploading screenshot ${screen_file}.webp to the server..."	
 	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
 fi 
+
+
+# put back in portrait 
+sudo  settings put system user_rotation 0
