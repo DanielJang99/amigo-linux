@@ -12,8 +12,8 @@ function ctrl_c() {
 
 # stop in case things do not seem right
 safe_stop(){
-	echo "false" > ".to_monitor"
-	echo "true" > ".done_videoconf"
+	echo "false" > ".to_monitor"     # stop CPU monitoring
+	echo "true" > ".done_videoconf"  # stop screenshotting if there 
 	sudo killall tcpdump	
 	sleep 5 	
 	screen_file=$res_folder"/"$test_id 
