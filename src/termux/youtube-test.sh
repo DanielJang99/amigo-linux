@@ -295,6 +295,19 @@ wait_on_cpu
 # activate stats for nerds
 msg="NONE"
 activate_stats_nerds
+
+# take a screenshot to see what is on screen and send to the server (in case of failure)
+screen_file="${res_folder}/screen-${curr_run_id}"
+sudo screencap -p $screen_file".png"
+sudo chown $USER:$USER $screen_file".png"
+cwebp -q 80 ${screen_file}".png" -o ${screen_file}".webp" > /dev/null 2>&1 
+if [ -f ${screen_file}".webp" ]
+then 
+	chmod 644 ${screen_file}".webp"
+	rm ${screen_file}".png"
+fi
+
+# attempt grabbing stats for nerds
 tap_screen 1160 160 1
 termux-clipboard-get > ".clipboard"
 cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
@@ -303,6 +316,8 @@ then
 	msg="ERROR-STATS-NERDS"
 	myprint "Stats-for-nerds issue"
 	ready="false"
+	remote_file="/root/mobile-testbed/src/server/youtube/${id}-${curr_run_id}.webp" 	
+	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
 else
 	cat ".clipboard" > $log_file
 	echo "" >> $log_file
