@@ -47,7 +47,7 @@ run_zus(){
 	am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
 	sleep 5 
 	
-	################### take screenshot of network settings and upload to our server 
+	# take screenshot of network settings and upload to our server 
 	sudo screencap -p "network-setting-last.png"
 	sudo chown $USER:$USER "network-setting-last.png"
 	cwebp -q 80 "network-setting-last.png" -o "network-setting-last.webp" > /dev/null 2>&1 
@@ -58,8 +58,8 @@ run_zus(){
 	fi
 	remote_file="/root/mobile-testbed/src/server/network-settings/${physical_id}.webp" 
 	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no "network-setting-last.webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
-	###################
-
+	
+	# enter and select either 3G or 4G
 	tap_screen 370 765 5
 	tap_screen 370 765 5 
 	tap_screen 370 660 2
@@ -188,13 +188,20 @@ then
 	myprint "NYU-stuff. Found a mobile connection: $mobile_iface (DefaultConnection:$iface). NumRunsToday:$num_runs_today (MaxRuns: $MAX_ZEUS_RUNS)"
 	if [ $iface == $mobile_iface -a $num_runs_today -lt $MAX_ZEUS_RUNS ] 
 	then
-		########## make sure code is there 
+		# make sure code is there (fix if not)
 		if [ ! -f "FTPClient" ]
 		then
 			myprint "ERROR -- Missing FTPClient code, checking out!" 
 			git checkout FTPClient
-		fi 
-		#########
+		fi 		
+	
+
+		##################### testing 
+		myprint "Ensuring that screen is in portrait and auto-rotation disabled"
+		sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
+		sudo  settings put system user_rotation 0          # put in portrait
+		##################### testing 
+		
 		run_zus		
 		let "num_runs_today++"
 		myprint "Done with zus. New count for the day: $num_runs_today"
