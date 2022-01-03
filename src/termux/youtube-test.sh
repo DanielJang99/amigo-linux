@@ -57,6 +57,19 @@ activate_stats_nerds(){
 	sudo input tap 1240 50
 	sudo input tap 1240 50	
 	sleep 1.5
+
+	# take a screenshot to see what is on screen and send to the server (in case of failure)
+	screen_file="${res_folder}/screen-${curr_run_id}"
+	sudo screencap -p $screen_file".png"
+	sudo chown $USER:$USER $screen_file".png"
+	cwebp -q 80 ${screen_file}".png" -o ${screen_file}".webp" > /dev/null 2>&1 
+	if [ -f ${screen_file}".webp" ]
+	then 
+		chmod 644 ${screen_file}".webp"
+		rm ${screen_file}".png"
+	fi
+
+	# click on stats-for-nerds 
 	tap_screen 670 670 1
 	#tap_screen 670 670 3
 }
@@ -146,6 +159,7 @@ sleep_time=5                       # time to sleep between clicks
 first_run="false"                  # first time ever youtube was run
 cpu_usage_middle="N/A"             # CPU measured in the middle of a test 
 MAX_LAUNCH_TIMEOUT=30              # maximum duration for youtube to launch
+record_video="false"               # record a video of enabling stats for nerds 
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -178,6 +192,9 @@ do
         --dur)
 			shift; DURATION="$1"; shift; 
             ;;
+        --record)
+			shift; record_video="true"; 
+			;;        
         -h | --help)
             usage
             ;;
@@ -292,26 +309,18 @@ traffic_rx_last=$traffic_rx
 # wait for GUI to load
 wait_on_cpu
 
-############# temp 
-screen_video="${res_folder}/screen-${curr_run_id}.mp4"
-(sudo screenrecord $screen_video --time-limit 10 &) #--bit-rate 1000000
-myprint "Started screen recording on file: $screen_video"
+############# testing 
+if [ $record_video == "true" ]
+then 
+	screen_video="${res_folder}/screen-${curr_run_id}.mp4"
+	(sudo screenrecord $screen_video --time-limit 10 &) #--bit-rate 1000000
+	myprint "Started screen recording on file: $screen_video"
+fi 
 #####################
 
 # activate stats for nerds
 msg="NONE"
 activate_stats_nerds
-
-# take a screenshot to see what is on screen and send to the server (in case of failure)
-screen_file="${res_folder}/screen-${curr_run_id}"
-sudo screencap -p $screen_file".png"
-sudo chown $USER:$USER $screen_file".png"
-cwebp -q 80 ${screen_file}".png" -o ${screen_file}".webp" > /dev/null 2>&1 
-if [ -f ${screen_file}".webp" ]
-then 
-	chmod 644 ${screen_file}".webp"
-	rm ${screen_file}".png"
-fi
 
 # attempt grabbing stats for nerds
 tap_screen 1160 160 1
@@ -331,9 +340,13 @@ else
 	ready="true"
 fi 
 
-##################### temp 
-remote_file="/root/mobile-testbed/src/server/youtube/${uid}-${curr_run_id}..mp4"
-(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_video} root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
+##################### temp video collection
+if [ $record_video == "true" ]
+then 
+	sudo chown $USER:$USER $screen_video
+	remote_file="/root/mobile-testbed/src/server/youtube/${uid}-${curr_run_id}.mp4"	
+	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_video} root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
+fi 
 ######################
 
 # collect data 
