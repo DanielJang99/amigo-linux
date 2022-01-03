@@ -803,13 +803,13 @@ traffic_rx_last=$traffic_rx
 # cleanup logcat
 sudo logcat -c 
 
+# make sure all volume is off 
+lower_volume
+
 # start app 
 t_launch=`date +%s` #NOTE: use posterior time in case u want to filter launching and joining a conference
 myprint "Launching $app..."
 sudo monkey -p $package 1 > /dev/null 2>&1
-
-# make sure all volume is off 
-lower_volume &
 
 # allow time for app to launch # FIXME 
 sleep 5 
@@ -859,11 +859,12 @@ then
 	if [ $app == "webex" ]
 	then
 		sleep 10 
-		myprint "Tapping window in attempt at full screen..."
-    	#sudo input tap $x_center 440 & sleep 0.1; sudo input tap $x_center 440 
-    	sudo input tap 654 272
-    	sleep 2 
+		myprint "Turn on full screen!"
+		sudo input tap 654 272
+    	sleep 1
     	sudo input tap 405 500 
+    	sleep 1 
+    	sudo input tap 654 272    	
     	let "disc_time += 10"	
     fi 
     if [ $app == "meet" ]
