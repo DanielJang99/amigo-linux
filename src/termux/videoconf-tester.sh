@@ -868,7 +868,7 @@ then
     	sudo input tap 654 272    	
     	let "disc_time += 12"
     fi 
-    if [ $app == "meet" ]
+    elif [ $app == "meet" ]
 	then
 		myprint "Turn on full screen!"
 		sudo input touchscreen swipe 200 435 200 435 1000
@@ -876,7 +876,13 @@ then
 		sleep 2 
 		sudo input tap $x_center $y_center
 		let "disc_time += 2"    	
-    fi 
+    fi
+    ################## testing 
+    elif [ $app == "zoom" ]
+	then 
+		sudo input tap $x_center $y_center # consider doing regardless to remove notification 
+	fi 
+	######################
 else 
 	if [ $app == "zoom" ]
 	then 
