@@ -854,12 +854,11 @@ myprint "Waiting $duration for experiment to end..."
 sleep 5
 disc_time=5 
 
-################## remove join with audio notification 
+# remove join with audio notification for zoom 
  if [ $app == "zoom" ]
 then 
 	sudo input tap $x_center $y_center 
 fi 
-######################
 
 # Go full screen or grid (different behavior for app under test) 
 if [ $change_view == "false" ] 
@@ -886,6 +885,8 @@ then
 else 
 	if [ $app == "zoom" ]
 	then 
+		sleep 5 
+		let "disc_time += 5"
     	myprint "Activating GRID for zoom"
     	sudo input swipe 700 800 300 800
 	fi 
