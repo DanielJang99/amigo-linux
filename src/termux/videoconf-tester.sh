@@ -867,7 +867,6 @@ then
     	sleep 1 
     	sudo input tap 654 272    	
     	let "disc_time += 12"
-    fi 
     elif [ $app == "meet" ]
 	then
 		myprint "Turn on full screen!"
@@ -876,7 +875,6 @@ then
 		sleep 2 
 		sudo input tap $x_center $y_center
 		let "disc_time += 2"    	
-    fi
     ################## testing 
     elif [ $app == "zoom" ]
 	then 
