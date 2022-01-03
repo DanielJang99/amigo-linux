@@ -57,6 +57,19 @@ activate_stats_nerds(){
 	sudo input tap 1240 50
 	sudo input tap 1240 50	
 	sleep 1.5
+
+	# take a screenshot to see what is on screen and send to the server (in case of failure)
+	screen_file="${res_folder}/screen-${curr_run_id}-${attempt}"
+	sudo screencap -p $screen_file".png"
+	sudo chown $USER:$USER $screen_file".png"
+	cwebp -q 80 ${screen_file}".png" -o ${screen_file}".webp" > /dev/null 2>&1 
+	if [ -f ${screen_file}".webp" ]
+	then 
+		chmod 644 ${screen_file}".webp"
+		rm ${screen_file}".png"
+	fi
+
+	# click on stats-for-nerds 
 	tap_screen 670 670 1
 	#tap_screen 670 670 3
 }
@@ -146,6 +159,7 @@ sleep_time=5                       # time to sleep between clicks
 first_run="false"                  # first time ever youtube was run
 cpu_usage_middle="N/A"             # CPU measured in the middle of a test 
 MAX_LAUNCH_TIMEOUT=30              # maximum duration for youtube to launch
+record_video="false"               # record a video of enabling stats for nerds 
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -178,6 +192,9 @@ do
         --dur)
 			shift; DURATION="$1"; shift; 
             ;;
+        --record)
+			shift; record_video="true"; 
+			;;        
         -h | --help)
             usage
             ;;
@@ -292,9 +309,21 @@ traffic_rx_last=$traffic_rx
 # wait for GUI to load
 wait_on_cpu
 
+############# testing 
+if [ $record_video == "true" ]
+then 
+	screen_video="${res_folder}/screen-${curr_run_id}.mp4"
+	(sudo screenrecord $screen_video --time-limit 10 &) #--bit-rate 1000000
+	myprint "Started screen recording on file: $screen_video"
+fi 
+#####################
+
 # activate stats for nerds
 msg="NONE"
+attempt=1
 activate_stats_nerds
+
+# attempt grabbing stats for nerds
 tap_screen 1160 160 1
 termux-clipboard-get > ".clipboard"
 cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
@@ -303,11 +332,24 @@ then
 	msg="ERROR-STATS-NERDS"
 	myprint "Stats-for-nerds issue"
 	ready="false"
+	remote_file="/root/mobile-testbed/src/server/youtube/${uid}-${curr_run_id}-ERROR.webp" 
 else
 	cat ".clipboard" > $log_file
 	echo "" >> $log_file
 	myprint "Stats-for-nerds correctly detecting"
 	ready="true"
+	remote_file="/root/mobile-testbed/src/server/youtube/${uid}-${curr_run_id}-GOOD.webp" 
+fi 
+
+# update youtube settings 
+(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
+
+# video collection if requested
+if [ $record_video == "true" ]
+then 
+	sudo chown $USER:$USER $screen_video
+	remote_file="/root/mobile-testbed/src/server/youtube/${uid}-${curr_run_id}.mp4"	
+	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_video} root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
 fi 
 
 # collect data 
@@ -332,7 +374,6 @@ do
 			myprint "Stats-for-nerds not found...retrying! ($attempt/3)"
 			msg="ERROR-STATS-NERDS"			
 			activate_stats_nerds
-			let "attempt++"
 			tap_screen 1160 160 1  # click to copy clipboard 
 			termux-clipboard-get > ".clipboard"
 			cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
@@ -340,6 +381,7 @@ do
 			then
 				ready="true" 
 			fi 
+			let "attempt++"			
 		fi 
 	fi 
 

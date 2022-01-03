@@ -195,7 +195,6 @@ then
 			git checkout FTPClient
 		fi 		
 	
-
 		##################### testing 
 		myprint "Ensuring that screen is in portrait and auto-rotation disabled"
 		sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
