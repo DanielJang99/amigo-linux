@@ -292,6 +292,12 @@ traffic_rx_last=$traffic_rx
 # wait for GUI to load
 wait_on_cpu
 
+############# temp 
+screen_video="${res_folder}/screen-${curr_run_id}.mp4"
+(sudo screenrecord $screen_video --time-limit 10 &) #--bit-rate 1000000
+myprint "Started screen recording on file: $screen_video"
+#####################
+
 # activate stats for nerds
 msg="NONE"
 activate_stats_nerds
@@ -316,7 +322,7 @@ then
 	msg="ERROR-STATS-NERDS"
 	myprint "Stats-for-nerds issue"
 	ready="false"
-	remote_file="/root/mobile-testbed/src/server/youtube/${id}-${curr_run_id}.webp" 	
+	remote_file="/root/mobile-testbed/src/server/youtube/${uid}-${curr_run_id}.webp" 	
 	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
 else
 	cat ".clipboard" > $log_file
@@ -324,6 +330,11 @@ else
 	myprint "Stats-for-nerds correctly detecting"
 	ready="true"
 fi 
+
+##################### temp 
+remote_file="/root/mobile-testbed/src/server/youtube/${uid}-${curr_run_id}..mp4"
+(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_video} root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
+######################
 
 # collect data 
 myprint "Starting data collection for $DURATION seconds..."
