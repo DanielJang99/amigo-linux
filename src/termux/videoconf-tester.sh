@@ -866,22 +866,16 @@ then
     	sudo input tap 405 500 
     	sleep 1 
     	sudo input tap 654 272    	
-    	let "disc_time += 10"	
+    	let "disc_time += 12"
     fi 
     if [ $app == "meet" ]
 	then
-		#sleep 10 		
-		#let "disc_time += 10"    	
 		myprint "Attempt at full screen!" ## single user 
-		# more than one user (assuming video is in top left corner)		
 		sudo input touchscreen swipe 200 435 200 435 1000
 		sudo input tap $x_center 1110 
 		sleep 2 
 		sudo input tap $x_center $y_center
 		let "disc_time += 2"    	
-		# make sure screen is in landscape 
-		#myprint "Ensuring that screen is in landscape and auto-rotation disabled"
-		#sudo  settings put system user_rotation 1          # put in landscape  
     fi 
 else 
 	if [ $app == "zoom" ]
