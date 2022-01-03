@@ -10,6 +10,15 @@ function ctrl_c() {
 	exit -1 
 }
 
+# lower all the volume 
+lower_volume(){
+	myprint "Making sure volume is off"
+	sudo media volume --stream 3 --set 0    # media volume
+	sudo media volume --stream 1 --set 0	# ring volume
+	sudo media volume --stream 4 --set 0	# alarm volume
+}
+
+
 # stop in case things do not seem right
 safe_stop(){
 	echo "false" > ".to_monitor"     # stop CPU monitoring
@@ -168,12 +177,6 @@ check_account_via_YT(){
 	# launch youtube
 	myprint "Launching YT and allow to settle..."
 	sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
-
-	# lower all the volumes
-	myprint "Making sure volume is off"
-	sudo media volume --stream 3 --set 0    # media volume
-	sudo media volume --stream 1 --set 0	# ring volume
-	sudo media volume --stream 4 --set 0	# alarm volume
 
 	# wait for YT 
 	youtube_error="false"
@@ -804,6 +807,9 @@ sudo logcat -c
 t_launch=`date +%s` #NOTE: use posterior time in case u want to filter launching and joining a conference
 myprint "Launching $app..."
 sudo monkey -p $package 1 > /dev/null 2>&1
+
+# make sure all volume is off 
+lower_volume &
 
 # allow time for app to launch # FIXME 
 sleep 5 
