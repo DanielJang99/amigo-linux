@@ -854,6 +854,13 @@ myprint "Waiting $duration for experiment to end..."
 sleep 5
 disc_time=5 
 
+################## remove join with audio notification 
+ if [ $app == "zoom" ]
+then 
+	sudo input tap $x_center $y_center 
+fi 
+######################
+
 # Go full screen or grid (different behavior for app under test) 
 if [ $change_view == "false" ] 
 then 
@@ -875,12 +882,7 @@ then
 		sleep 2 
 		sudo input tap $x_center $y_center
 		let "disc_time += 2"    	
-    ################## testing 
-    elif [ $app == "zoom" ]
-	then 
-		sudo input tap $x_center $y_center # consider doing regardless to remove notification 
-	fi 
-	######################
+   fi 
 else 
 	if [ $app == "zoom" ]
 	then 
