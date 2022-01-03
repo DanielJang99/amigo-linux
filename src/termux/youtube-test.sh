@@ -332,23 +332,25 @@ then
 	msg="ERROR-STATS-NERDS"
 	myprint "Stats-for-nerds issue"
 	ready="false"
-	remote_file="/root/mobile-testbed/src/server/youtube/${uid}-${curr_run_id}-${attempt}.webp" 	
-	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
+	remote_file="/root/mobile-testbed/src/server/youtube/${uid}-${curr_run_id}-ERROR.webp" 
 else
 	cat ".clipboard" > $log_file
 	echo "" >> $log_file
 	myprint "Stats-for-nerds correctly detecting"
 	ready="true"
+	remote_file="/root/mobile-testbed/src/server/youtube/${uid}-${curr_run_id}-GOOD.webp" 
 fi 
 
-##################### temp video collection
+# update youtube settings 
+(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
+
+# video collection if requested
 if [ $record_video == "true" ]
 then 
 	sudo chown $USER:$USER $screen_video
 	remote_file="/root/mobile-testbed/src/server/youtube/${uid}-${curr_run_id}.mp4"	
 	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_video} root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
 fi 
-######################
 
 # collect data 
 myprint "Starting data collection for $DURATION seconds..."
