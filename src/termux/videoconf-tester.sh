@@ -870,7 +870,7 @@ then
     fi 
     if [ $app == "meet" ]
 	then
-		myprint "Attempt at full screen!" ## single user 
+		myprint "Turn on full screen!"
 		sudo input touchscreen swipe 200 435 200 435 1000
 		sudo input tap $x_center 1110 
 		sleep 2 
