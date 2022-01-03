@@ -805,7 +805,7 @@ traffic_rx_last=$traffic_rx
 sudo logcat -c 
 
 # make sure all volume is off 
-lower_volume
+#lower_volume
 
 # start app 
 t_launch=`date +%s` #NOTE: use posterior time in case u want to filter launching and joining a conference
