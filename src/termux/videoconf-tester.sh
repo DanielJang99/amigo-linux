@@ -859,9 +859,12 @@ then
 	if [ $app == "webex" ]
 	then
 		sleep 10 
-		let "disc_time += 10"
-    	myprint "Tapping window in attempt at full screen..."
-    	sudo input tap $x_center 440 & sleep 0.1; sudo input tap $x_center 440 
+		myprint "Tapping window in attempt at full screen..."
+    	#sudo input tap $x_center 440 & sleep 0.1; sudo input tap $x_center 440 
+    	sudo input tap 654 272
+    	sleep 2 
+    	sudo input tap 405 500 
+    	let "disc_time += 10"	
     fi 
     if [ $app == "meet" ]
 	then
