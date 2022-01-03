@@ -13,7 +13,7 @@ function ctrl_c() {
 # lower all the volume 
 lower_volume(){
 	myprint "Making sure volume is off"
-	#sudo media volume --stream 0 --set 0    # call volume
+	termux-volume call 0
 	sudo media volume --stream 3 --set 0    # media volume
 	sudo media volume --stream 1 --set 0	# ring volume
 	sudo media volume --stream 4 --set 0	# alarm volume
@@ -805,8 +805,7 @@ traffic_rx_last=$traffic_rx
 sudo logcat -c 
 
 # make sure all volume is off 
-#lower_volume
-termux-volume call 0
+lower_volume
 
 # start app 
 t_launch=`date +%s` #NOTE: use posterior time in case u want to filter launching and joining a conference
