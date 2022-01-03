@@ -59,7 +59,7 @@ activate_stats_nerds(){
 	sleep 1.5
 
 	# take a screenshot to see what is on screen and send to the server (in case of failure)
-	screen_file="${res_folder}/screen-${curr_run_id}"
+	screen_file="${res_folder}/screen-${curr_run_id}-${attempt}"
 	sudo screencap -p $screen_file".png"
 	sudo chown $USER:$USER $screen_file".png"
 	cwebp -q 80 ${screen_file}".png" -o ${screen_file}".webp" > /dev/null 2>&1 
@@ -320,6 +320,7 @@ fi
 
 # activate stats for nerds
 msg="NONE"
+attempt=1
 activate_stats_nerds
 
 # attempt grabbing stats for nerds
@@ -331,7 +332,7 @@ then
 	msg="ERROR-STATS-NERDS"
 	myprint "Stats-for-nerds issue"
 	ready="false"
-	remote_file="/root/mobile-testbed/src/server/youtube/${uid}-${curr_run_id}.webp" 	
+	remote_file="/root/mobile-testbed/src/server/youtube/${uid}-${curr_run_id}-${attempt}.webp" 	
 	(timeout 60 scp -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no ${screen_file}".webp" root@23.235.205.53:$remote_file > /dev/null 2>&1 &)
 else
 	cat ".clipboard" > $log_file
@@ -371,7 +372,6 @@ do
 			myprint "Stats-for-nerds not found...retrying! ($attempt/3)"
 			msg="ERROR-STATS-NERDS"			
 			activate_stats_nerds
-			let "attempt++"
 			tap_screen 1160 160 1  # click to copy clipboard 
 			termux-clipboard-get > ".clipboard"
 			cat ".clipboard" | grep "cplayer" > /dev/null 2>&1
@@ -379,6 +379,7 @@ do
 			then
 				ready="true" 
 			fi 
+			let "attempt++"			
 		fi 
 	fi 
 
