@@ -44,6 +44,7 @@ check_account_via_YT(){
 
 	# lower all the volumes
 	myprint "Making sure volume is off"
+	termux-volume call 0                    # call volume 
 	sudo media volume --stream 3 --set 0    # media volume
 	sudo media volume --stream 1 --set 0	# ring volume
 	sudo media volume --stream 4 --set 0	# alarm volume
@@ -363,7 +364,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="2.7"                              # code version 
+vrs="2.8"                              # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
 curl_duration="-1"                     # last value measured of curl duration
 isPaused="N/A"                         # hold info on whether a phone is paused or not

@@ -10,6 +10,16 @@ function ctrl_c() {
 	exit -1 
 }
 
+# lower all the volume 
+lower_volume(){
+	myprint "Making sure volume is off"
+	termux-volume call 0
+	sudo media volume --stream 3 --set 0    # media volume
+	sudo media volume --stream 1 --set 0	# ring volume
+	sudo media volume --stream 4 --set 0	# alarm volume
+}
+
+
 # stop in case things do not seem right
 safe_stop(){
 	echo "false" > ".to_monitor"     # stop CPU monitoring
@@ -168,12 +178,6 @@ check_account_via_YT(){
 	# launch youtube
 	myprint "Launching YT and allow to settle..."
 	sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
-
-	# lower all the volumes
-	myprint "Making sure volume is off"
-	sudo media volume --stream 3 --set 0    # media volume
-	sudo media volume --stream 1 --set 0	# ring volume
-	sudo media volume --stream 4 --set 0	# alarm volume
 
 	# wait for YT 
 	youtube_error="false"
@@ -800,6 +804,9 @@ traffic_rx_last=$traffic_rx
 # cleanup logcat
 sudo logcat -c 
 
+# make sure all volume is off 
+lower_volume
+
 # start app 
 t_launch=`date +%s` #NOTE: use posterior time in case u want to filter launching and joining a conference
 myprint "Launching $app..."
@@ -853,24 +860,22 @@ then
 	if [ $app == "webex" ]
 	then
 		sleep 10 
-		let "disc_time += 10"
-    	myprint "Tapping window in attempt at full screen..."
-    	sudo input tap $x_center 440 & sleep 0.1; sudo input tap $x_center 440 
+		myprint "Turn on full screen!"
+		sudo input tap 654 272
+    	sleep 1
+    	sudo input tap 405 500 
+    	sleep 1 
+    	sudo input tap 654 272    	
+    	let "disc_time += 12"
     fi 
     if [ $app == "meet" ]
 	then
-		#sleep 10 		
-		#let "disc_time += 10"    	
-		myprint "Attempt at full screen!" ## single user 
-		# more than one user (assuming video is in top left corner)		
+		myprint "Turn on full screen!"
 		sudo input touchscreen swipe 200 435 200 435 1000
 		sudo input tap $x_center 1110 
 		sleep 2 
 		sudo input tap $x_center $y_center
 		let "disc_time += 2"    	
-		# make sure screen is in landscape 
-		#myprint "Ensuring that screen is in landscape and auto-rotation disabled"
-		#sudo  settings put system user_rotation 1          # put in landscape  
     fi 
 else 
 	if [ $app == "zoom" ]
