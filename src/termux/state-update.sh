@@ -364,7 +364,7 @@ prev_mobile_traffic=0                  # keep track of mobile traffic used today
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
-vrs="2.8"                              # code version 
+vrs="2.9"                              # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
 curl_duration="-1"                     # last value measured of curl duration
 isPaused="N/A"                         # hold info on whether a phone is paused or not
@@ -722,6 +722,12 @@ do
 						if [ $? -eq 0 ] 
 						then 
 							myprint "Requested a videoconference. Making sure there is no pending net-testing"		
+							./stop-net-testing.sh
+						fi
+						echo $command | grep "muzeel" > /dev/null
+						if [ $? -eq 0 ] 
+						then 
+							myprint "Requested a muzeel test. Making sure there is no pending net-testing"		
 							./stop-net-testing.sh
 						fi 
 						eval timeout $duration $command

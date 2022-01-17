@@ -164,6 +164,7 @@ generate_post_data(){
     "uid":"${uid}",
     "physical_id":"${physical_id}",
     "mode":"${mode}",    
+    "target_url":"${url_counter}",
     "cpu_util_midload_perc":"${cpu_usage_middle}",
     "browser":"${browser}",
     "URL":"${url}",
@@ -209,7 +210,7 @@ app="chrome"                       # used to detect process in CPU monitoring
 url="none"                         # URL to test 
 uid="none"                         # user ID
 mode="none"                        # mode we are running, either dce or direct 
-MAX_URLS=3                         # max number of URLs to test 
+MAX_URLS=2                         # max number of URLs to test 
 TARGET_URL=0                       # id of URL in the list where to start from 
 
 # read input parameters
@@ -231,9 +232,6 @@ do
         --id)
             shift; curr_run_id="$1"; shift;
             ;;
-        --single)
-            shift; single="true"; 
-            ;;
         --url)
         	shift; url="$1"; single="true"; shift;
             ;;
@@ -243,9 +241,6 @@ do
         --pcap)
             shift; pcap_collect="true";
 			;;		
-		--mode)
-			shift; mode="$1"; shift;
-			;;
 		--target)
 			shift; TARGET_URL="$1"; shift;
 			;;
@@ -258,21 +253,6 @@ do
             ;;
     esac
 done
-
-# switch proxy based on test to be run 
-if [ $mode == "muzeel" ]
-then 
-	proxy="212.227.209.11:50000"
-elif [ $mode == "direct" ] 
-then 
-	proxy="212.227.209.11:50001"
-else 
-	myprint "ERROR. Option $mode not supported"
-	exit -1 
-fi 
-myprint "Mode:$mode Proxy:$proxy"
-sudo settings put global http_proxy $proxy
-sudo settings put global https_proxy $proxy
 
 # make sure only this instance of this script is running
 my_pid=$$
@@ -341,133 +321,156 @@ do
     let "line_id++"
 done < $url_file
 
-# clean the browser before testing 
-browser="chrome"
-package="com.android.chrome"
-activity="com.google.android.apps.chrome.Main"
-myprint "[INFO] Cleaning browser data ($app-->$package)"
-sudo pm clear $package
-am start -n $package/$activity
-chrome_onboarding
-
-# get private  IP in use
-my_ip=`ifconfig $interface | grep "\." | grep -v "packets" | awk '{print $2}'`
-myprint "Interface: $interface IP: $my_ip" 
-
-# loop across URLs to be tested
-myprint "Loaded $num_urls URLs"
-screenshots_flag="false"
-for((ii=0; ii<num_urls; ii++))
+# array of modes to be tested
+declare -a mode_list=("muzeel" "direct" )
+ 
+# Iterate the string array using for loop
+for mode in ${mode_list[@]}
 do
-    # get URL to be tested 
-    if [ $url == "none" ] 
-   	then
-		if [ $single == "true" ] 
-		then 
-			let "i = RANDOM % num_urls"
-		    url=${urlList[$i]} 
-		    myprint "Random URL: $url ($i)"
-			ii=$num_urls
-		else 
-		    url=${urlList[$ii]} 
-		    myprint "Next URL: $url ($i)"
-	 	fi 
-	else 
-	 	myprint "Using URL passed by user: $url"
-		ii=$num_urls	
-	fi 
-	
-    # file naming
-    id=`echo $url | md5sum | cut -f1 -d " "`
-    log_cpu="${res_folder}/${id}-${curr_run_id}.cpu"
-    log_cpu_top="${res_folder}/${id}-${curr_run_id}.cpu_top"
-    log_traffic="${res_folder}/${id}-${curr_run_id}.traffic"
-    log_run="${res_folder}/${id}-${curr_run_id}.run"
-    
-    # start background process to monitor CPU on the device
-    clean_file $log_cpu
-    clean_file $log_cpu_top
-    myprint "Starting listener to CPU monitor. Log: $log_cpu"
-    echo "true" > ".to_monitor"
-    cpu_monitor $log_cpu &
-	#cpu_monitor_top $log_cpu_top &
-
-	# start pcap collection if needed
-	if [ $pcap_collect == "true" ]
-	then
-		pcap_file="${res_folder}/${id}-${curr_run_id}.pcap"
-		tshark_file="${res_folder}/${id}-${curr_run_id}.tshark"
-		#sudo tcpdump -i $interface -w $pcap_file > /dev/null 2>&1 &
-		sudo tcpdump -i $interface ip6 or ip -w $pcap_file > /dev/null 2>&1 &	
-		myprint "Started tcpdump: $pcap_file Interface: $interface"
-	fi
-    
-    # run a test 
-    run_test 
-    
-	# stop monitoring CPU
-	myprint "Stop monitoring CPU"
-	echo "false" > ".to_monitor"
-	t_1=`date +%s`
-
-	# take screenshot of final load
-	counter=0
-	screen_file="${res_folder}/${id}-${curr_run_id}-${counter}"
-	sudo screencap -p $screen_file".png"
-	sudo chown $USER:$USER $screen_file".png"
-	cwebp -q 80 ${screen_file}".png" -o ${screen_file}".webp" > /dev/null 2>&1 
-	if [ -f ${screen_file}".webp" ]
+	url_counter=$TARGET_URL
+	if [ $mode == "muzeel" ]
 	then 
-		chmod 644 ${screen_file}".webp"
-		rm ${screen_file}".png"
+		proxy="212.227.209.11:50000"
+	elif [ $mode == "direct" ] 
+	then 
+		proxy="212.227.209.11:50001"
+	else 
+		myprint "ERROR. Option $mode not supported"
+		exit -1 
 	fi 
+	myprint "Mode:$mode Proxy:$proxy"
+	sudo settings put global http_proxy $proxy
+	sudo settings put global https_proxy $proxy
 
-   	# stop pcap collection and run analysis 
-	tshark_size="N/A"
-	if [ $pcap_collect == "true" ]
-	then
-		sudo killall tcpdump	
-		myprint "Stopped tcpdump. Starting background analysis: $pcap_file"
-		tshark -nr $pcap_file -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file
-		tshark_size=`cat $tshark_file | awk -F "," '{if($8=="UDP"){tot_udp += ($NF-8);} else if(index($8,"QUIC")!=0){tot_quic += ($NF-8);} else if($8=="TCP"){tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp+tot_quic)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000 " TOT-QUIC:" tot_quic/1000000}'`
-		sudo rm $pcap_file
-		gzip $tshark_file
-	fi
-	myprint "Done with tshark analysis"
-	
-	# wait for visual analysis to be done
-	myprint "Waiting for visual metrics to be done..."
-	c=0
-	while [ ! -f ".visualmetrics" ] 
-	do 
-		sleep 2 
-		let "c++"
-		if [ $c -eq 20 ]
-		then 
-			# stop process 						 
-			myprint "visualmetrics.py seems stuck. Killing it."
-			for pid in `ps aux | grep "visualmetrics.py" | grep -v "grep" | awk '{print $2}'`
-			do 
-				kill -9 $pid
-			done
-			break 
+	# clean the browser before testing 
+	browser="chrome"
+	package="com.android.chrome"
+	activity="com.google.android.apps.chrome.Main"
+	myprint "[INFO] Cleaning browser data ($app-->$package)"
+	sudo pm clear $package
+	am start -n $package/$activity
+	chrome_onboarding
+
+	# get private  IP in use
+	my_ip=`ifconfig $interface | grep "\." | grep -v "packets" | awk '{print $2}'`
+	myprint "Interface: $interface IP: $my_ip" 
+
+	# loop across URLs to be tested
+	myprint "Loaded $num_urls URLs"
+	screenshots_flag="false"
+	for((ii=0; ii<num_urls; ii++))
+	do
+	    # get URL to be tested 
+	    if [ $url == "none" ] 
+	   	then
+			if [ $single == "true" ] 
+			then 
+				let "i = RANDOM % num_urls"
+			    url=${urlList[$i]} 
+			    myprint "Random URL: $url ($i)"
+				ii=$num_urls
+			else 
+			    url=${urlList[$ii]} 
+			    myprint "Next URL: $url ($i)"
+		 	fi 
+		else 
+		 	myprint "Using URL passed by user: $url"
+			ii=$num_urls	
 		fi 
+		
+	    # file naming
+	    id=`echo $url | md5sum | cut -f1 -d " "`
+	    log_cpu="${res_folder}/${id}-${curr_run_id}.cpu"
+	    log_cpu_top="${res_folder}/${id}-${curr_run_id}.cpu_top"
+	    log_traffic="${res_folder}/${id}-${curr_run_id}.traffic"
+	    log_run="${res_folder}/${id}-${curr_run_id}.run"
+	    
+	    # start background process to monitor CPU on the device
+	    clean_file $log_cpu
+	    clean_file $log_cpu_top
+	    myprint "Starting listener to CPU monitor. Log: $log_cpu"
+	    echo "true" > ".to_monitor"
+	    cpu_monitor $log_cpu &
+		#cpu_monitor_top $log_cpu_top &
+
+		# start pcap collection if needed
+		if [ $pcap_collect == "true" ]
+		then
+			pcap_file="${res_folder}/${id}-${curr_run_id}.pcap"
+			tshark_file="${res_folder}/${id}-${curr_run_id}.tshark"
+			#sudo tcpdump -i $interface -w $pcap_file > /dev/null 2>&1 &
+			sudo tcpdump -i $interface ip6 or ip -w $pcap_file > /dev/null 2>&1 &	
+			myprint "Started tcpdump: $pcap_file Interface: $interface"
+		fi
+	    
+	    # run a test 
+	    run_test 
+	    
+		# stop monitoring CPU
+		myprint "Stop monitoring CPU"
+		echo "false" > ".to_monitor"
+		t_1=`date +%s`
+
+		# take screenshot of final load
+		counter=0
+		screen_file="${res_folder}/${id}-${curr_run_id}-${counter}"
+		sudo screencap -p $screen_file".png"
+		sudo chown $USER:$USER $screen_file".png"
+		cwebp -q 80 ${screen_file}".png" -o ${screen_file}".webp" > /dev/null 2>&1 
+		if [ -f ${screen_file}".webp" ]
+		then 
+			chmod 644 ${screen_file}".webp"
+			rm ${screen_file}".png"
+		fi 
+
+	   	# stop pcap collection and run analysis 
+		tshark_size="N/A"
+		if [ $pcap_collect == "true" ]
+		then
+			sudo killall tcpdump	
+			myprint "Stopped tcpdump. Starting background analysis: $pcap_file"
+			tshark -nr $pcap_file -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file
+			tshark_size=`cat $tshark_file | awk -F "," '{if($8=="UDP"){tot_udp += ($NF-8);} else if(index($8,"QUIC")!=0){tot_quic += ($NF-8);} else if($8=="TCP"){tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp+tot_quic)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000 " TOT-QUIC:" tot_quic/1000000}'`
+			sudo rm $pcap_file
+			gzip $tshark_file
+		fi
+		myprint "Done with tshark analysis"
+		
+		# wait for visual analysis to be done
+		myprint "Waiting for visual metrics to be done..."
+		c=0
+		while [ ! -f ".visualmetrics" ] 
+		do 
+			sleep 2 
+			let "c++"
+			if [ $c -eq 20 ]
+			then 
+				# stop process 						 
+				myprint "visualmetrics.py seems stuck. Killing it."
+				for pid in `ps aux | grep "visualmetrics.py" | grep -v "grep" | awk '{print $2}'`
+				do 
+					kill -9 $pid
+				done
+				break 
+			fi 
+		done
+		if [ -f ".visualmetrics" ] 
+		then
+			speed_index=`cat ".visualmetrics" | cut -f 1`
+			last_change=`cat ".visualmetrics" | cut -f 2`
+		fi 
+
+		# log and report 
+		current_time=`date +%s`
+		myprint "Sending report to the server: "
+		echo "$(generate_post_data)" 	
+		timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/muzeeltest
+		myprint "[RESULTS]\tMode:$mode\tBrowser:$browser\tURL:$url\tBDW-LOAD:$traffic_before_scroll MB\tBDW-SCROLL:$traffic_after_scroll MB\tTSharkTraffic:$tshark_size\tLoadTime:$load_time\tSpeedIndex:$speed_index\tLastVisualChange:$last_change"
+		let "url_counter++"
+
+		# resett url
+		url="none"   	
 	done
-	if [ -f ".visualmetrics" ] 
-	then
-		speed_index=`cat ".visualmetrics" | cut -f 1`
-		last_change=`cat ".visualmetrics" | cut -f 2`
-	fi 
-
-	# log and report 
-	current_time=`date +%s`
-	myprint "Sending report to the server: "
-	echo "$(generate_post_data)" 	
-	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/webtest
-	myprint "[RESULTS]\tBrowser:$browser\tURL:$url\tBDW-LOAD:$traffic_before_scroll MB\tBDW-SCROLL:$traffic_after_scroll MB\tTSharkTraffic:$tshark_size\tLoadTime:$load_time\tSpeedIndex:$speed_index\tLastVisualChange:$last_change"
-
-	# resett url
-	url="none"   	
 done
 
 # remove proxy 
