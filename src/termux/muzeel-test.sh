@@ -261,15 +261,18 @@ done
 # switch proxy based on test to be run 
 if [ $mode == "muzeel" ]
 then 
-	proxy="212.227.209.11:?"
+	proxy="212.227.209.11:50000"
 elif [ $mode == "direct" ] 
 then 
-	proxy="212.227.209.11:?"
+	proxy="212.227.209.11:50001"
 else 
 	myprint "ERROR. Option $mode not supported"
 	exit -1 
 fi 
 myprint "Mode:$mode Proxy:$proxy"
+sudo settings put global http_proxy $proxy
+sudo settings put global https_proxy $proxy
+
 
 # make sure only this instance of this script is running
 my_pid=$$
@@ -350,10 +353,6 @@ chrome_onboarding
 # get private  IP in use
 my_ip=`ifconfig $interface | grep "\." | grep -v "packets" | awk '{print $2}'`
 myprint "Interface: $interface IP: $my_ip" 
-
-# add muzeel proxy # verify it works 
-sudo settings put global http_proxy $proxy
-sudo settings put global https_proxy $proxy
 
 # loop across URLs to be tested
 myprint "Loaded $num_urls URLs"
