@@ -163,6 +163,7 @@ generate_post_data(){
     "timestamp":"${current_time}",
     "uid":"${uid}",
     "physical_id":"${physical_id}",
+    "mode":"${mode}",    
     "cpu_util_midload_perc":"${cpu_usage_middle}",
     "browser":"${browser}",
     "URL":"${url}",
@@ -272,7 +273,6 @@ fi
 myprint "Mode:$mode Proxy:$proxy"
 sudo settings put global http_proxy $proxy
 sudo settings put global https_proxy $proxy
-
 
 # make sure only this instance of this script is running
 my_pid=$$
