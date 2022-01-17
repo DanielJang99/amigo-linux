@@ -94,12 +94,10 @@ run_test(){
     compute_bandwidth
     traffic_rx=$curr_traffic
     traffic_rx_last=$traffic_rx
-    # myprint "[INFO] Abs. Bandwidth: $traffic_rx"
-
+    
 	# attempt page load 
-	myprint "URL: $url PROTO: $PROTO  RES-FOLDER: $res_folder TIMEOUT: $MAX_DURATION"
+	myprint "URL: $url MODE: $mode RES-FOLDER: $res_folder TIMEOUT: $MAX_DURATION"
 	t_launch=`date +%s`
-	#am start -n $package/$activity -a $intent -d $url 
 	am start -n $package/$activity -d $url 	
 	t_now=`date +%s`
 
@@ -296,10 +294,6 @@ then
 fi 
 myprint "UID: $uid PhisicalID: $physical_id"
 
-# folder creation
-res_folder="./muzeel-results-$mode/$suffix"
-mkdir -p $res_folder
-
 # make sure the screen is ON
 turn_device_on
 
@@ -328,6 +322,12 @@ declare -a mode_list=("muzeel" "direct" )
 for mode in ${mode_list[@]}
 do
 	url_counter=$TARGET_URL
+	
+	# folder creation
+	res_folder="./muzeel-results-$mode/$suffix"
+	mkdir -p $res_folder
+
+	# switch proxy based on test to run 
 	if [ $mode == "muzeel" ]
 	then 
 		proxy="212.227.209.11:50000"
@@ -350,10 +350,6 @@ do
 	sudo pm clear $package
 	am start -n $package/$activity
 	chrome_onboarding
-
-	# get private  IP in use
-	my_ip=`ifconfig $interface | grep "\." | grep -v "packets" | awk '{print $2}'`
-	myprint "Interface: $interface IP: $my_ip" 
 
 	# loop across URLs to be tested
 	myprint "Loaded $num_urls URLs"
