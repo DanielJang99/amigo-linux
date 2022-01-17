@@ -270,6 +270,9 @@ then
     done < ".ps-$app"
 fi
 
+# close all pending apps
+close_all
+
 # retrieve last used server port 
 if [ -f ".server_port" ] 
 then 
