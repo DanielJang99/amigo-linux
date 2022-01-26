@@ -333,10 +333,10 @@ do
 	# switch proxy based on test to run 
 	if [ $mode == "muzeel" ]
 	then 
-		proxy="212.227.209.11:50000"
+		proxy="198.46.86.89:50000"
 	elif [ $mode == "direct" ] 
 	then 
-		proxy="212.227.209.11:50001"
+		proxy="198.46.86.89:50001"
 	else 
 		myprint "ERROR. Option $mode not supported"
 		exit -1 
