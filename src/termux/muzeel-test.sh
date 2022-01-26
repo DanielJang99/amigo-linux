@@ -208,7 +208,8 @@ app="chrome"                       # used to detect process in CPU monitoring
 url="none"                         # URL to test 
 uid="none"                         # user ID
 mode="none"                        # mode we are running, either dce or direct 
-MAX_URLS=2                         # max number of URLs to test 
+#MAX_URLS=2                         # max number of URLs to test 
+MAX_URLS=5 
 TARGET_URL=0                       # id of URL in the list where to start from 
 
 # read input parameters
