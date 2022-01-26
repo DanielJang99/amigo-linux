@@ -119,11 +119,11 @@ run_test(){
     then 
         cpu_usage_middle=`cat .cpu-usage`
     fi  
-	if [ $url == "https://www.nytimes.com/" ]
-	then 
-		myprint "Attempt accepting cookies"
-		tap_screen 120 1200
-	fi 
+	# if [ $url == "https://www.nytimes.com/" ]
+	# then 
+	# 	myprint "Attempt accepting cookies"
+	# 	tap_screen 120 1200
+	# fi 
 	sleep $half
 
 	# stop video recording and run we perf analysis
