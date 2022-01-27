@@ -464,8 +464,8 @@ do
 			tshark_size=`cat $tshark_file | awk -F "," '{if($8=="UDP"){tot_udp += ($NF-8);} else if(index($8,"QUIC")!=0){tot_quic += ($NF-8);} else if($8=="TCP"){tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp+tot_quic)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000 " TOT-QUIC:" tot_quic/1000000}'`
 			sudo rm $pcap_file
 			gzip $tshark_file
+			myprint "Done with tshark analysis"		
 		fi
-		myprint "Done with tshark analysis"
 		
 		# wait for visual analysis to be done
 		myprint "Waiting for visual metrics to be done..."
