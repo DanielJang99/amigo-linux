@@ -161,6 +161,7 @@ generate_post_data(){
     "timestamp":"${current_time}",
     "uid":"${uid}",
     "physical_id":"${physical_id}",
+    "test_id":"${curr_run_id}",
     "interface":"${interface}",
     "mode":"${mode}",    
     "target_url":"${url_counter}",
@@ -351,7 +352,8 @@ do
 done < $url_file
 
 # array of modes to be tested
-declare -a mode_list=("muzeel" "direct" )
+#declare -a mode_list=("muzeel" "direct" )
+declare -a mode_list=("direct" "muzeel" )
  
 # Iterate the string array using for loop
 for mode in ${mode_list[@]}
