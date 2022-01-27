@@ -161,13 +161,15 @@ generate_post_data(){
     "timestamp":"${current_time}",
     "uid":"${uid}",
     "physical_id":"${physical_id}",
+    "interface":"${interface}",
     "mode":"${mode}",    
     "target_url":"${url_counter}",
     "cpu_util_midload_perc":"${cpu_usage_middle}",
     "browser":"${browser}",
     "URL":"${url}",
+    "mobile_state":"${mobile_state}", 
+    "mobile_signal":"${mobile_signal}",
     "bdw_load_MB":"${traffic_before_scroll}",
-    "bdw_scroll_MB":"${traffic_after_scroll}",
     "tshark_traffic_MB":"${tshark_size}",
     "load_dur_sec":"${load_time}",
     "speed_index_ms":"${speed_index}",
@@ -176,13 +178,31 @@ generate_post_data(){
 EOF
 }
 
+# helper to make sure we run on mobile
+update_wifi_mobile(){
+	# get dympsys info for connectivity
+	sudo dumpsys netstats > .data
+	wifi_iface=`cat .data | grep "WIFI" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
+	mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | grep "rmnet" | grep "true" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
+	def_iface="none"
+	if [ ! -z $wifi_iface ]
+	then 
+		def_iface=$wifi_iface
+	else  
+		if [ ! -z $mobile_iface ]
+		then
+			def_iface=$mobile_iface
+	 	fi 
+	fi 
+}	
+
+
 # script usage
 usage(){
     echo "=================================================================================================="
-    echo "USAGE: $0 --load,	--novideo, --single, --url, --pcap, --uid, --mode, --target"
+    echo "USAGE: $0 --load,	--novideo, --single, --url, --pcap, --uid, --mode, --target, --mobile"
     echo "=================================================================================================="
     echo "--load       Page load max duration"
-    echo "--iface      Network interface in use"
     echo "--novideo    Turn off video recording" 
     echo "--single     Just one test" 
     echo "--url        Force using a passed URL"       
@@ -190,6 +210,7 @@ usage(){
     echo "--uid        IMEI of the device"
     echo "--mode       muzeel/classic"
     echo "--target     ID of URL in the list from where to start loading"
+    echo "--mobile     Force a switch to mobile (aka turn off wifi)"     
     echo "=================================================================================================="
     exit -1
 }
@@ -208,9 +229,9 @@ app="chrome"                       # used to detect process in CPU monitoring
 url="none"                         # URL to test 
 uid="none"                         # user ID
 mode="none"                        # mode we are running, either dce or direct 
-#MAX_URLS=2                         # max number of URLs to test 
-MAX_URLS=5 
+MAX_URLS=5                         # how many tabs to open before closing and cleaning the browser
 TARGET_URL=0                       # id of URL in the list where to start from 
+force_mobile="false"               # flag to control if to turn off wifi or not
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -221,9 +242,6 @@ do
             ;;
         --novideo)
             shift; video_recording="false";
-            ;;
-        --iface)
-            shift; interface="$1"; shift;
             ;;
         --suffix)
             shift; suffix="$1"; shift;
@@ -242,6 +260,9 @@ do
 			;;		
 		--target)
 			shift; TARGET_URL="$1"; shift;
+			;;
+		--mobile)
+            shift; force_mobile="true";
 			;;
         -h | --help)
             usage
@@ -270,6 +291,15 @@ then
         fi
     done < ".ps-$app"
 fi
+
+# make sure we run on mobile
+if [ $force_mobile == "true" ] 
+then
+	termux-wifi-enable false
+	sleep 5 
+fi 
+update_wifi_mobile
+interface=$def_iface
 
 # close all pending apps
 close_all
@@ -462,6 +492,14 @@ do
 
 		# log and report 
 		current_time=`date +%s`
+		mobile_state="N/A"
+		mobile_signal="N/A"		
+		if [ $force_mobile == "true" ]
+		then
+			sudo dumpsys telephony.registry > ".tel"
+			mobile_state=`cat ".tel" | grep "mServiceState" | head -n 1`
+			mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
+		fi 
 		myprint "Sending report to the server: "
 		echo "$(generate_post_data)" 	
 		timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/muzeeltest
