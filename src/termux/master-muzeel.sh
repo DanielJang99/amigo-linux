@@ -11,6 +11,16 @@ function ctrl_c() {
 	exit -1 
 }
 
+# make sure SELinux is permissive
+ans=`sudo getenforce`
+myprint "SELinux: $ans"
+if [ $ans == "Enforcing" ]
+then
+    echo "[$0][`date +%s`]Disabling SELinux"
+    sudo setenforce 0
+    sudo getenforce
+fi
+
 # main 
 N=`wc -l muzeel-urls.txt | cut -f 1 -d " "`
 target_url=0
@@ -19,7 +29,7 @@ curr_id=`date +%s`
 iface="wlan0"
 num_increase=5
 force_mobile="false"
-echo "TestID: $curr_id"
+echo "[$0][`date +%s`] TestID: $curr_id"
 while [ $target_url -le $N ] 
 do 
 	if [ $force_mobile == "true" ]
