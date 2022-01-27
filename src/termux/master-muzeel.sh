@@ -19,6 +19,7 @@ curr_id=`date +%s`
 iface="wlan0"
 num_increase=5
 force_mobile="false"
+echo "TestID: $curr_id"
 while [ $target_url -le $N ] 
 do 
 	if [ $force_mobile == "true" ]
