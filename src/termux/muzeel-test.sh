@@ -300,6 +300,7 @@ then
 fi 
 update_wifi_mobile
 interface=$def_iface
+myprint "Running on interface: $interface ForceMobile: $force_mobile"
 
 # close all pending apps
 close_all
