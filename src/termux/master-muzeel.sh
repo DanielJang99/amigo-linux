@@ -13,10 +13,10 @@ function ctrl_c() {
 
 # make sure SELinux is permissive
 ans=`sudo getenforce`
-myprint "SELinux: $ans"
+echo "[$0][`date +%s`] SELinux: $ans"
 if [ $ans == "Enforcing" ]
 then
-    echo "[$0][`date +%s`]Disabling SELinux"
+    echo "[$0][`date +%s`] Disabling SELinux"
     sudo setenforce 0
     sudo getenforce
 fi
