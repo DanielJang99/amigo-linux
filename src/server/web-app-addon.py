@@ -126,7 +126,8 @@ def web_app():
     cherrypy.tree.mount(StringGeneratorWebService(), '/removeACLRule', conf)
     cherrypy.tree.mount(StringGeneratorWebService(), '/action', conf)         # for now query each rand(30) seconds
     cherrypy.tree.mount(StringGeneratorWebService(), '/commandDone', conf)    # allow marking a command as done
-    cherrypy.tree.mount(StringGeneratorWebService(), '/code', conf)
+    cherrypy.tree.mount(StringGeneratorWebService(), '/code', conf)           # get e new code for payment of check for a code validity
+    cherrypy.tree.mount(StringGeneratorWebService(), '/confIDS', conf)        # get info on current conference IDs to be used 
 
     # POST/REPORT-MEASUREMENTS 
     cherrypy.tree.mount(StringGeneratorWebService(), '/addonstatus', conf)
@@ -172,38 +173,55 @@ class StringGeneratorWebService(object):
 				print("received request to check code:", src_ip, cherrypy.request.params['code'])
 				
 				# query the db for a code for this user -- which needs to match what reported
-				query = "select code from crowdsourcing where tester_ip = " + src_ip + " and to_timestamp(timestamp) > now() - interval '10 mins' order by timestamp desc"
+				query = "select code from crowdsourcing where tester_ip = '" + src_ip + "' and to_timestamp(timestamp) > now() - interval '10 mins' order by timestamp desc"
 				info, msg  = run_query_pool(query, postgreSQL_pool)							
 				print(info, msg)				
 
 				# prepare response to send back 				
 				ans = {}				
 				ans['msg']="ERROR"				
-				if info is None:
+				if info is None or len(info) == 0:
 					cherrypy.response.status = 202
+					print(src_ip, ans)
 					return "myCallBackMethod(" + json.dumps(ans) + ")"
 				local_code = info[0][0] 				
 				cherrypy.response.status = 200				
 				if local_code == cherrypy.request.params['code']:
 					ans['msg'] = "ok"
+				print(src_ip, ans)
 				return "myCallBackMethod(" + json.dumps(ans) + ")"
 			else: 
 				# logging 
 				print("received a request to generate a code") 
 				
-				# compute unique code to be returned
+				# compute unique code to be returned (unless already available in db)
+				query = "select code from crowdsourcing where tester_ip = '" + src_ip + "' and to_timestamp(timestamp) > now() - interval '10 mins' order by timestamp desc"
+				info, msg  = run_query_pool(query, postgreSQL_pool)							
+				if info is not None:
+					print("Found code available in db")
+					code_to_return = info[0][0] 				
+				else: 
+					print("Generating a new code")
+					code_to_return = ''.join(random.choice(letters) for i in range(12))
 				ans = {}
-				code_to_return = print ( ''.join(random.choice(letters) for i in range(12)) )
 				ans['code'] = code_to_return
 				
 				# insert code in the database 
-				insert_code(src_ip, time.time(), code_to_return, postgreSQL_pool):
+				insert_code(src_ip, time.time(), code_to_return, postgreSQL_pool)
 				
 				# send out the response 
-				print(src_ip, code_to_return)
+				print(src_ip, ans)
 				cherrypy.response.status = 200				
 				return "myCallBackMethod(" + json.dumps(ans) + ")"
-				
+		elif 'confIDS' in cherrypy.url():
+			ans = {}
+			ans['zoom']  = "https://us05web.zoom.us/wc/join/2598883628?wpk=wcpk5003dbc469f5b6da7cbf0feb75795ef0"
+			ans['webex'] = "https://meet9.webex.com/wbxmjs/joinservice/sites/meet9/meeting/download/5f9302fff62ad24450132962511c732c?launchApp=true&siteurl=meet9" 
+			ans['meet']  = "https://meet.google.com/pyp-hixb-fwh"
+			print(src_ip, ans)
+			cherrypy.response.status = 200
+			return json.dumps(ans)
+		"""
 		if 'uid' not in cherrypy.request.params: 
 			cherrypy.response.status = 400
 			print("Malformed URL")
@@ -273,6 +291,7 @@ class StringGeneratorWebService(object):
 			# all good 
 			cherrypy.response.status = 200
 			return msg
+	"""
 
 	# handle POST requests 
 	def POST(self, name="test"):
