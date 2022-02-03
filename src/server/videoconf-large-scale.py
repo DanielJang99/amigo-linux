@@ -11,6 +11,23 @@ import random
  
 def handler(signum, frame):
 	msg = "Ctrl-c was pressed. Stopping"
+
+	# stop clienVMS in the cloud (manual for webex)
+	if startClientVMS and app != "webex":
+		if app == "zoom":
+			command = "./zoom_c.sh stop"
+		elif app == "meet":
+			command = "./googlemeet_c.sh stop"
+		if client_VM is None: 
+			for key, clientLoc in clientVMS.items():
+				print("Stopping client at %s-%s:" %(key, clientLoc))
+				p = subprocess.Popen("ssh -T -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = clientLoc, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+		else: 
+			print("Requested a single client VM", client_VM)
+			clientLoc = clientVMS[client_VM]
+			print("Stopping client at %s-%s:" %(client_VM, clientLoc))
+			p = subprocess.Popen("ssh -T -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = clientLoc, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+
 	# stop remote host if it was started
 	if start_host: 
 		print("Stopping host for ", app) 
@@ -140,7 +157,7 @@ isDev = True                     # flag for testing with devices in Yasir house 
 MAX_RUNS = 5                     # maximum number of runs per configuration 
 MAX_DUR = 1 * 3600               # max test duration (5 hours)
 exp_type = "delay"               # experiment type: delay, quality-grid, quality-full, scale 
-startClientVMS = False 
+startClientVMS = False           # flag to control if to start VM clients or not 
 
 # populate azure info and meetings based on location 
 meeting_info = {'zoom-home':"4170438763", 'zoom-usc':'6893560343', 'zoom-usw':'7761594917', 'zoom-ch':'5204594812', 'zoom-use':'2598883628', 'zoom-in':'5850742961', 'zoom-uk':'8128761187',
@@ -149,12 +166,11 @@ meeting_info = {'zoom-home':"4170438763", 'zoom-usc':'6893560343', 'zoom-usw':'7
 password_info = {'zoom-home':'6m2jmA', 'zoom-usc':'m06Yb9', 'zoom-usw':'jXN8Rq', 'zoom-ch':'6Vj41A', 'zoom-use':'abc', 'zoom-in':'a6JhR2', 'zoom-uk':'E4zE4q'}
 azure = {"ch":"20.203.184.236", "in":"20.193.247.182", "uk":"52.142.186.54", 
 		 "usc":"40.113.240.105", "use":"20.120.91.176", "usw":"40.112.164.175"} 
-clienVMS = {"ch2":"20.203.150.92", "uk2":"51.141.27.109", "use2":"20.127.42.180"}
+clientVMS = {"ch2":"20.203.150.92", "in2":"20.198.92.95", "use2":"20.127.42.180"}
 
- 
 # check input 
-if len(sys.argv) != 6: 
-	print("USAGE: ", sys.argv[0], " location app isDev exp_type videoconf_size")
+if len(sys.argv) != 6 and len(sys.argv) != 7: 
+	print("USAGE: ", sys.argv[0], " location app isDev exp_type videoconf_size [client-vm]")
 	sys.exit(-1) 
 location = sys.argv[1]
 app = sys.argv[2]
@@ -166,6 +182,17 @@ exp_type =  sys.argv[4]
 VIDEOCONF_SIZE = int(sys.argv[5])      # this is a tentative value, always run when the set is done (aka use max avail)
 print("User input:", location, app, isDev, exp_type, VIDEOCONF_SIZE)
 
+# check VIDEOCONF_SIZE
+if VIDEOCONF_SIZE < 2: 
+	print("Setting VIDEOCONF_SIZE to at least 2, cause we also need the host") 
+	VIDEOCONF_SIZE = 2 
+
+# read optional parameter
+client_VM = None
+if len(sys.argv) == 7:
+	client_VM = sys.argv[6]
+	print("Optional user input:", client_VM)
+
 # check that location is supported
 if location not in azure: 
 	print("Location %s not supported")
@@ -175,6 +202,7 @@ if location not in azure:
 if isDev: 
 	print("Running in dev mode")
 	VIDEOCONF_DUR = 30  
+	MAX_RUNS = 1
 else: 
 	print("Running in production mode")
 
@@ -220,23 +248,51 @@ else:
 	prev_tester_ids = [x[0] for x in info]
 print("Current devices with at least one videoconf test for app:%s location:%s exp_type:%s -- %s" %(app, location, exp_type, prev_tester_ids))
 
+# make sure client VMs are started for scale experiments 
+if 'scale' in exp_type: 
+	startClientVMS = True 
+	print("Scale experiments require starting clients in remote VMs")
+
+
+# set value for remote_exec
+if app == "zoom":
+	remote_exec = "./zoom.sh"
+elif app == "webex":
+	remote_exec = "./webex.sh"
+elif app == "meet":
+	remote_exec = "./googlemeet.sh"
+
+# stop clienVMS in the cloud (just in case) 
+#if startClientVMS and app != "webex":
+#	if app == "zoom":
+#		command = "./zoom_c.sh stop"
+#	elif app == "meet":
+#		command = "./googlemeet_c.sh stop"
+#	print(command)				
+#	for key, clientLoc in clientVMS.items():
+#		print("Stopping client at %s-%s" %(key, clientLoc))
+#		p = subprocess.Popen("ssh -T -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = clientLoc, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+
 # stop remote host (just in case) 
-if start_host: 
-	if app == "zoom":
-		remote_exec = "./zoom.sh"
-	elif app == "webex":
-		remote_exec = "./webex.sh"
-	elif app == "meet":
-		remote_exec = "./googlemeet.sh"
-	command = remote_exec + " stop"
-	subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+#if start_host: 
+#	print("Stopping host")
+#	if app == "zoom":
+#		remote_exec = "./zoom.sh"
+#	elif app == "webex":
+#		remote_exec = "./webex.sh"
+#	elif app == "meet":
+#		remote_exec = "./googlemeet.sh"
+#	command = remote_exec + " stop"
+#	subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
 # outside loop  -- stop by creating file ".done"
 shouldRun = True
+numRuns = 0 
 start_time = int(time.time())
 if os.path.isfile(".done"):
 	os.remove(".done")
 print("Started outside loop. Stop by creating file <<.done>>")
+wasStopped = False 
 while shouldRun:
 	# find devices currently available, along with networking info 
 	active_testers = [] 
@@ -253,17 +309,17 @@ while shouldRun:
 	else: 
 		query = "select distinct(tester_id) from status_update WHERE type = 'status' and  data->>'vrs_num' is not NULL and to_timestamp(timestamp) > now() - interval '1 hrs';"
 		active_testers, msg  = run_query(query)
-		print("Active devices in the last hour: ", active_testers) 
 
 	# iterate on testers until three are found who match
 	random.shuffle(active_testers)   # avoid N processes to look at same testers (or reduce chance) 
+	print("Active devices in the last hour: ", active_testers) 
 	last_tester_id = ''
 	if isDev: 
 		last_tester_id = active_testers[-1]
 	else:
 		last_tester_id = active_testers[-1][0]
-	last_entry = active_testers[-1]
 	for entry in active_testers: 
+		wasStopped = False 
 		if isDev: 
 			tester_id = entry
 		else:
@@ -363,7 +419,7 @@ while shouldRun:
 
 		# check if we have enough devices for testing or it is the last hope
 		curr_time = int(time.time()) 				
-		if len(candidate_testers) == VIDEOCONF_SIZE - 1 or lastChance: 
+		if len(candidate_testers) == VIDEOCONF_SIZE - 1 or lastChance is True: 
 			# logging
 			if lastChance:
 				print("Starting a conference with size %s since it is our last chance" %(len(candidate_testers)))
@@ -387,8 +443,11 @@ while shouldRun:
 				
 				# switch to obama video 
 				if "quality" in exp_type:
-					command = command + " obama"
+					command += " obama"
+				if "scale" in exp_type: 
+					command += " highmotion"
 				command += " > log-" + str(curr_id)+" 2>&1 &)\""
+				print(command) 
 
 				# bash-out process 
 				p = subprocess.Popen("ssh -T -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
@@ -401,13 +460,20 @@ while shouldRun:
 				elif app == "meet":
 					command = "\"(./googlemeet_c.sh start " + str(curr_id)
 				command += " > log-" + str(curr_id)+" 2>&1 &)\""
-				print(command)				
-				for key, clientLoc in clienVMS.items():
+				if client_VM is None:
+					for key, clientLoc in clientVMS.items():
+						ssh_command = "ssh -T -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = clientLoc, cmd = command)
+						print("Starting client VM: " + ssh_command)
+						p = subprocess.Popen("ssh -T -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = clientLoc, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+				else: 
+					print("Requested a single client VM", client_VM)
+					clientLoc = clientVMS[client_VM]
+					ssh_command = "ssh -T -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = clientLoc, cmd = command)
+					print("Starting client VM: " + ssh_command)
 					p = subprocess.Popen("ssh -T -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = clientLoc, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-					#print(p)					
-
+				
 			# add common options: sync time, suffix, and test identifier
-			sync_time = curr_id + 120 
+			sync_time =  int(time.time()) + 120 
 			command = basic_command + " --id " + str(curr_id) + " --sync " + str(sync_time) + " --suffix " + suffix
 
 			# compute duration 
@@ -485,30 +551,29 @@ while shouldRun:
 			# clean list for moving forward with testing
 			candidate_testers.clear()
 
-			# stop remote host if it was started
-			if start_host: 
-				print("Stopping host for ", app) 
-				command = remote_exec + " stop"
-				subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-				print("Sleeping an extra minute to allow things to cool down")
-				time.sleep(60)
-
-			# stop clienVMS in the cloud (manual for webex)
+			# stop clientVMS in the cloud (manual for webex)
 			if startClientVMS and app != "webex":
+				wasStopped = True
 				if app == "zoom":
 					command = "./zoom_c.sh stop"
 				elif app == "meet":
 					command = "./googlemeet_c.sh stop"
-				print(command)				
-				for key, clientLoc in clienVMS.items():
+				if client_VM is None: 
+					for key, clientLoc in clientVMS.items():
+						print("Stopping client at %s:%s" %(key, clientLoc))
+						p = subprocess.Popen("ssh -T -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = clientLoc, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+				else: 	
+					print("Requested a single client VM", client_VM)
+					clientLoc = clientVMS[client_VM]
+					print("Stopping client at %s-%s:" %(client_VM, clientLoc))
 					p = subprocess.Popen("ssh -T -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = clientLoc, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
 			# update numRuns
 			numRuns += 1 
+			print("Run-count %d for videoconf-size: %d" %(numRuns, VIDEOCONF_SIZE))
 			if numRuns == MAX_RUNS: 
 				print("Done %d runs. Stopping" %(numRuns))
 				shouldRun = False 
-				break 
 
 			# time check 
 			time_passed = int(time.time()) - start_time
@@ -516,47 +581,70 @@ while shouldRun:
 			if time_passed > MAX_DUR: 
 				print("Stopping since max duration has passed")
 				shouldRun = False 
-				break 
 
 			# user want to stop check 
 			if os.path.isfile(".done"):
 				print("User asked to stop")
 				shouldRun = False  
-				break 
 
 			# stop here while debugging
-			if isDev: 
+			if isDev and exp_type != "scale":
 				print("Temporary break while testing in dev mode!")
 				shouldRun = False
-				break 
 
+			# stop remote host if it was started
+			if start_host: 
+				wasStopped = True
+				print("Stopping host for ", app) 
+				command = remote_exec + " stop"
+				subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+				if shouldRun is True: 
+					print("Sleeping an extra minute to allow things to cool down")
+					time.sleep(60)
+
+			# break from this loop if we are done
+			if shouldRun is False:
+				break
+ 
 	# user want to stop check 
 	if os.path.isfile(".done"):
 		print("User asked to stop")
 		shouldRun = False  
 		break 
 	
-	# reach the end of the list 
-	print("Reached the end of the list. Cleaning host just in case then going back up after a 30 sec sleep...")
-	if start_host: 
-		print("Stopping host for ", app) 
-		command = remote_exec + " stop"
-		subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-
 	# stop clienVMS in the cloud (manual for webex)
-	if startClientVMS and app != "webex":
+	if startClientVMS and app != "webex" and wasStopped is False:
 		if app == "zoom":
 			command = "./zoom_c.sh stop"
 		elif app == "meet":
 			command = "./googlemeet_c.sh stop"
-		print(command)				
-		for key, clientLoc in clienVMS.items():
+		print(command)		
+		if client_VM is None:		
+			for key, clientLoc in clientVMS.items():
+				print("Stopping client at %s-%s" %(key, clientLoc))
+				p = subprocess.Popen("ssh -T -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = clientLoc, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+		else: 
+			print("Requested a single client VM", client_VM)
+			clientLoc = clientVMS[client_VM]
+			print("Stopping client at %s-%s:" %(client_VM, clientLoc))
 			p = subprocess.Popen("ssh -T -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = clientLoc, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
+	# reach the end of the list 
+	print("Reached the end of the list. Cleaning host and clientVMs if they were not stopped right before") 
+	if start_host and wasStopped is False: 
+		print("Stopping host for ", app) 
+		command = remote_exec + " stop"
+		subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+
 	# rate control 	
-	time.sleep(30)
+	if shouldRun is True: 
+		print("30 sec sleep as rate control...")
+		time.sleep(30)
 
 # close connection to database 
 if postgreSQL_pool:
 	postgreSQL_pool.closeall
 	print("PostgreSQL connection pool is closed")
+
+# all good	
+print("DONE! All good!")
