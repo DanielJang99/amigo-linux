@@ -86,7 +86,8 @@ def run_query(query):
 
 
 # parameters 
-processName = "web-app.py" # make sure our process is running 
+processName = "web-app.py" 
+processNameMore = "web-app-testing.py"
 frequency = 300            # check stats each 5 minutes
 
 # main goes here 
@@ -100,7 +101,8 @@ if __name__ == '__main__':
 	# iterate on data 
 	while True:
 		current_time = time.time()
-		perc_cpu = psutil.cpu_percent(30)
+		#perc_cpu = psutil.cpu_percent(30)
+		perc_cpu = psutil.cpu_percent(5)
 
 		# gives an object with many fields
 		#psutil.virtual_memory()
@@ -115,13 +117,15 @@ if __name__ == '__main__':
 		#Iterate over the all the running process
 		num_proc = 0 
 		create_time = 0 
+		create_time_more = 0 
 		for proc in psutil.process_iter():
 			try:
 				if processName in proc.cmdline():
 					num_proc += 1 
-					#print(proc)
 					create_time = proc.create_time()
-					#print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(create_time)))
+				elif processNameMore in proc.cmdline():
+					num_proc += 1 
+					create_time_more = proc.create_time()
 			except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
 				pass
 		
@@ -141,11 +145,10 @@ if __name__ == '__main__':
 
 		# geolocate IPs 
 
-
-
 		# logging
-		created = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(create_time))		
-		print("Time:%d\tCPU:%f\tNUM_PROC:%d\tCREATED:%s" %(current_time, perc_cpu, num_proc, created))
+		created = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(create_time))	
+		created_more = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(create_time_more))
+		print("Time:%d\tCPU:%f\tNUM_PROC:%d\tCREATED:%s\CREATED-MORE:%s" %(current_time, perc_cpu, num_proc, created, created_more))
 		perc_mem = -1 
 		traffic_rx = 0 
 
