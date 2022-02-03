@@ -197,7 +197,7 @@ class StringGeneratorWebService(object):
 				ans['code'] = code_to_return
 				
 				# insert code in the database 
-				insert_code(src_ip, time.time(), code_to_return):
+				insert_code(src_ip, time.time(), code_to_return, postgreSQL_pool):
 				
 				# send out the response 
 				print(src_ip, code_to_return)

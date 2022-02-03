@@ -72,7 +72,7 @@ def insert_data_pool(tester_id, post_type, timestamp, data_json, postgreSQL_pool
 	return msg
 
 # insert completion code for videoconf testers via addon
-def insert_code(tester_ip, timestamp, code):
+def insert_code(tester_ip, timestamp, code, postgreSQL_pool):
 	# local parameters 
 	msg = '' 
 
