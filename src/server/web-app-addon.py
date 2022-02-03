@@ -14,6 +14,7 @@ import string
 import json
 import cherrypy
 import os
+from os.path import exists
 from threading import Thread
 import threading
 import signal
@@ -61,6 +62,24 @@ def read_json(req):
 	body = simplejson.loads(rawbody)	
 	return body 
 
+# helper to derive a videoconf URL
+def compute_url(app, vm_location):
+	# videoconf parameters
+	# FIXME: zoom and webex need web version of the URL
+	meeting_info = {'zoom-home':"4170438763", 'zoom-usc':'6893560343', 'zoom-usw':'7761594917', 'zoom-ch':'5204594812', 			'zoom-use':'2598883628', 'zoom-in':'5850742961', 'zoom-uk':'8128761187',
+					'webex-home':'1828625842', 'webex-usc':'1326532448', 'webex-usw':'1325147081', 'webex-uk':'1325616456', 'webex-ch':'1321892446', 'webex-in':'1324958312', 'webex-use':'1327911223',
+					'meet-home':'', 'meet-usc':'pyp-hixb-fwh', 'meet-usw':'pyp-hixb-fwh', 'meet-uk':'pyp-hixb-fwh', 'meet-ch':'pyp-hixb-fwh', 'meet-in':'pyp-hixb-fwh', 'meet-use':'pyp-hixb-fwh'}
+	meeting_id = meeting_info[app + '-' + vm_location]
+	if app == 'zoom':
+		# FIXME: how to derive the second part? 
+		# FIXME: zoom password need to be "abc" all over 		
+		return "https://us05web.zoom.us/wc/join/" + meeting_id + "?wpk=wcpk5003dbc469f5b6da7cbf0feb75795ef0" 
+	elif app == 'webex':
+		# FIXME: how to derive this? Maybe  need to be done manually? 
+		return "https://meet9.webex.com/wbxmjs/joinservice/sites/meet9/meeting/download/5f9302fff62ad24450132962511c732c?launchApp=true&siteurl=meet9" 	
+	elif app == 'meet':
+		return "https://meet.google.com/" + meeting_id
+			
 # global parameters
 port    = 8084                    # default listening port 
 THREADS = []                      # list of threads 
@@ -214,10 +233,30 @@ class StringGeneratorWebService(object):
 				cherrypy.response.status = 200				
 				return "myCallBackMethod(" + json.dumps(ans) + ")"
 		elif 'confIDS' in cherrypy.url():
+			vm_locations = {}
 			ans = {}
+			
+			# discover VM-app mapping
+			if not exists('app-vm-mapping.txt'):
+				print("ERROR. File 'app-vm-mapping.txt' is missing")
+				cherrypy.response.status = 202
+				return json.dumps(ans)
+			with open('app-vm-mapping.txt') as file:
+    			for line in file:
+        			fields = line.rstrip().split('\t')
+					app = fields[0]
+					location = fields[1]				
+					vm_locations[app] = location 
+			print("Locations:", vm_locations)
+
+			# prepare and send out response
 			ans['zoom']  = "https://us05web.zoom.us/wc/join/2598883628?wpk=wcpk5003dbc469f5b6da7cbf0feb75795ef0"
 			ans['webex'] = "https://meet9.webex.com/wbxmjs/joinservice/sites/meet9/meeting/download/5f9302fff62ad24450132962511c732c?launchApp=true&siteurl=meet9" 
 			ans['meet']  = "https://meet.google.com/pyp-hixb-fwh"
+			## FIXME: need to fix function compute_url - things are hardcoded for USE
+			#ans['zoom']  = compute_url('zoom',  vm_locations['zoom']):
+			#ans['webex'] = compute_url('webex', vm_locations['webex']):
+			#ans['meet']  = compute_url('meet',  vm_locations['meet']):			
 			print(src_ip, ans)
 			cherrypy.response.status = 200
 			return json.dumps(ans)
