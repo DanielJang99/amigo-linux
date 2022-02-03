@@ -24,7 +24,7 @@ import simplejson
 import subprocess
 import psycopg2
 import db_manager
-from db_manager import run_query, insert_data, insert_command, connect_to_database_pool, insert_data_pool
+from db_manager import run_query, insert_data, insert_command, connect_to_database_pool, insert_data_pool, insert_code
 import random 
 
 # run a generic query on the database (pool)
@@ -172,7 +172,7 @@ class StringGeneratorWebService(object):
 				print("received request to check code:", src_ip, cherrypy.request.params['code'])
 				
 				# query the db for a code for this user -- which needs to match what reported
-				query = "select code from crowdsourcing where tester_ip = " + src_ip " and to_timestamp(timestamp) > now() - interval '10 mins' order by timestamp desc"
+				query = "select code from crowdsourcing where tester_ip = " + src_ip + " and to_timestamp(timestamp) > now() - interval '10 mins' order by timestamp desc"
 				info, msg  = run_query_pool(query, postgreSQL_pool)							
 				print(info, msg)				
 
