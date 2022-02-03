@@ -71,6 +71,37 @@ def insert_data_pool(tester_id, post_type, timestamp, data_json, postgreSQL_pool
 	# all done 
 	return msg
 
+# insert completion code for videoconf testers via addon
+def insert_code(tester_ip, timestamp, code):
+	# local parameters 
+	msg = '' 
+
+	# Use getconn() to Get Connection from connection pool
+	ps_connection = postgreSQL_pool.getconn()
+
+	if (ps_connection):
+		try:
+			ps_cursor = ps_connection.cursor()
+			insert_sql = "insert into crowdsourcing(tester_ip, timestamp, code) values(%s, %s, %s);"
+			data = (tester_ip, timestamp, code)
+			ps_cursor.execute(insert_sql, data)
+			ps_connection.commit()   # make database changes persistent 	
+			msg = "status_update:all good" 				
+
+		# handle exception 
+		except Exception as e:
+			msg += 'Issue inserting into database. Error %s' % e    
+
+		# always close connection
+		finally:
+			ps_cursor.close()
+			postgreSQL_pool.putconn(ps_connection)			
+	else:
+		msg = "Issue getting a connection from the pool"    
+
+	# all done 
+	return msg
+
 # run a generic query on the database
 def run_query(query):
 	info = None

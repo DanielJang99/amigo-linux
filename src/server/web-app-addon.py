@@ -168,23 +168,40 @@ class StringGeneratorWebService(object):
 		print(cherrypy.request.params)
 		if 'code' in cherrypy.url():
 			if 'code' in cherrypy.request.params: 
+				# logging 
 				print("received request to check code:", src_ip, cherrypy.request.params['code'])
-				cherrypy.response.status = 200
-				# FIXME: this needs to be read from the db 
-				local_code = "1234"
-				ans = {}
-				ans['msg']="ERROR"
+				
+				# query the db for a code for this user -- which needs to match what reported
+				query = "select code from crowdsourcing where tester_ip = " + src_ip " and to_timestamp(timestamp) > now() - interval '10 mins' order by timestamp desc"
+				info, msg  = run_query_pool(query, postgreSQL_pool)							
+				print(info, msg)				
+
+				# prepare response to send back 				
+				ans = {}				
+				ans['msg']="ERROR"				
+				if info is None:
+					cherrypy.response.status = 202
+					return "myCallBackMethod(" + json.dumps(ans) + ")"
+				local_code = info[0][0] 				
+				cherrypy.response.status = 200				
 				if local_code == cherrypy.request.params['code']:
-					ans['msg']="ok"
+					ans['msg'] = "ok"
 				return "myCallBackMethod(" + json.dumps(ans) + ")"
 			else: 
+				# logging 
 				print("received a request to generate a code") 
-				cherrypy.response.status = 200
+				
+				# compute unique code to be returned
 				ans = {}
 				code_to_return = print ( ''.join(random.choice(letters) for i in range(12)) )
-				ans['code']=code_to_return
-				## FIXME: this needs to be stored in the db (create a table for it first) 
+				ans['code'] = code_to_return
+				
+				# insert code in the database 
+				insert_code(src_ip, time.time(), code_to_return):
+				
+				# send out the response 
 				print(src_ip, code_to_return)
+				cherrypy.response.status = 200				
 				return "myCallBackMethod(" + json.dumps(ans) + ")"
 				
 		if 'uid' not in cherrypy.request.params: 
