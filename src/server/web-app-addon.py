@@ -242,8 +242,8 @@ class StringGeneratorWebService(object):
 				cherrypy.response.status = 202
 				return json.dumps(ans)
 			with open('app-vm-mapping.txt') as file:
-    			for line in file:
-        			fields = line.rstrip().split('\t')
+				for line in file:
+					fields = line.rstrip().split('\t')
 					app = fields[0]
 					location = fields[1]				
 					vm_locations[app] = location 
