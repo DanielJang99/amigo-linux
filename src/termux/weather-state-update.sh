@@ -343,10 +343,10 @@ update_wifi_mobile(){
 # parameters
 slow_freq=30                           # interval for checking commands to run (slower)
 fast_freq=5                            # interval for checking the app (faster)
-#SERVER_PORT=8082                      # port of our web app
-SERVER_PORT=8083                       # web app port (when debugging at server)
+SERVER_PORT=8082                       # port of our web app
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
-NET_INTERVAL=5400                      # interval of networking testing 
+#NET_INTERVAL=5400                     # interval of networking testing 
+NET_INTERVAL=3600                      # interval of networking testing 
 NET_INTERVAL_SHORT=2700                # short interval of net testing (just on mobile)
 NET_INTERVAL_FORCED=1800               # short interval of net testing (wifi, hopefully on planes)
 GOOGLE_CHECK_FREQ=10800                # interval of Google account check via YT (seconds)
@@ -923,7 +923,10 @@ do
 		# 		myprint "Skipping forced net-testing since WiFi not found anymore"
 		# 	fi 
 		# fi 
-		
+
+		# condition-1: interesting weather conditions 
+		## TODO 
+
 		# condition-2: it is time! (long freq, for both wifi and mobile) <=
 		if [ $num -eq 0 -a $time_from_last_net -gt $NET_INTERVAL ] 
 		then 
