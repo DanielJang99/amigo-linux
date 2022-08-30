@@ -30,7 +30,6 @@ generate_post_data(){
 EOF
 }
 
-
 # parameters
 suffix=`date +%d-%m-%Y`
 t_s=`date +%s`
@@ -53,7 +52,10 @@ fi
 #logging 
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 t_start=`date +%s`
-echo "[`date`] net-testing-weather START. SERVER_PORT:$SERVER_PORT -- FreeSpace: $free_space"
+echo "[`date`] net-testing-weather START. SERVER_PORT:$SERVER_PORT -- FreeSpace: $free_space_s"
+
+# make sure screen is on (sometimes things can get sleepy...)
+turn_device_on
 
 # run multiple MTR
 timeout 300 ./mtr.sh $suffix $t_s
