@@ -14,6 +14,7 @@ import string
 import json
 import cherrypy
 import os
+from os.path import exists
 from threading import Thread
 import threading
 import signal
@@ -24,8 +25,8 @@ import simplejson
 import subprocess
 import psycopg2
 import db_manager
-from db_manager import run_query, insert_data, insert_command, connect_to_database_pool, insert_data_pool
-
+from db_manager import run_query, insert_data, insert_command, connect_to_database_pool, insert_data_pool, insert_code
+import random 
 
 # run a generic query on the database (pool)
 def run_query_pool(query, postgreSQL_pool):
@@ -61,8 +62,26 @@ def read_json(req):
 	body = simplejson.loads(rawbody)	
 	return body 
 
+# helper to derive a videoconf URL
+def compute_url(app, vm_location):
+	# videoconf parameters
+	# FIXME: zoom and webex need web version of the URL
+	meeting_info = {'zoom-home':"4170438763", 'zoom-usc':'6893560343', 'zoom-usw':'7761594917', 'zoom-ch':'5204594812', 			'zoom-use':'2598883628', 'zoom-in':'5850742961', 'zoom-uk':'8128761187',
+					'webex-home':'1828625842', 'webex-usc':'1326532448', 'webex-usw':'1325147081', 'webex-uk':'1325616456', 'webex-ch':'1321892446', 'webex-in':'1324958312', 'webex-use':'1327911223',
+					'meet-home':'', 'meet-usc':'pyp-hixb-fwh', 'meet-usw':'pyp-hixb-fwh', 'meet-uk':'pyp-hixb-fwh', 'meet-ch':'pyp-hixb-fwh', 'meet-in':'pyp-hixb-fwh', 'meet-use':'pyp-hixb-fwh'}
+	meeting_id = meeting_info[app + '-' + vm_location]
+	if app == 'zoom':
+		# FIXME: how to derive the second part? 
+		# FIXME: zoom password need to be "abc" all over 		
+		return "https://us05web.zoom.us/wc/join/" + meeting_id + "?wpk=wcpk5003dbc469f5b6da7cbf0feb75795ef0" 
+	elif app == 'webex':
+		# FIXME: how to derive this? Maybe  need to be done manually? 
+		return "https://meet9.webex.com/wbxmjs/joinservice/sites/meet9/meeting/download/5f9302fff62ad24450132962511c732c?launchApp=true&siteurl=meet9" 	
+	elif app == 'meet':
+		return "https://meet.google.com/" + meeting_id
+			
 # global parameters
-port    = 8082                    # default listening port 
+port    = 8084                    # default listening port 
 THREADS = []                      # list of threads 
 ACL     = False                   # control whether application ACL rules should be used 
 allowedips      = {               # ACL rules 
@@ -73,6 +92,7 @@ session_data = {}
 supportedIDs = ['c95ad2777d56']   # list of client IDs supported 
 id_control  = False               # flag for client ID control 
 postgreSQL_pool = None            # pool of connection to DB
+letters = string.ascii_lowercase  # collection of lowercase letter used to compute unique identifier
 
 # function to run a bash command
 def run_bash(bashCommand, verbose = True):
@@ -125,18 +145,12 @@ def web_app():
     cherrypy.tree.mount(StringGeneratorWebService(), '/removeACLRule', conf)
     cherrypy.tree.mount(StringGeneratorWebService(), '/action', conf)         # for now query each rand(30) seconds
     cherrypy.tree.mount(StringGeneratorWebService(), '/commandDone', conf)    # allow marking a command as done
+    cherrypy.tree.mount(StringGeneratorWebService(), '/code', conf)           # get e new code for payment of check for a code validity
+    cherrypy.tree.mount(StringGeneratorWebService(), '/confIDS', conf)        # get info on current conference IDs to be used 
 
     # POST/REPORT-MEASUREMENTS 
-    cherrypy.tree.mount(StringGeneratorWebService(), '/status', conf)
-    cherrypy.tree.mount(StringGeneratorWebService(), '/appstatus', conf)     # report charging state, wifi password, etc. 
-    cherrypy.tree.mount(StringGeneratorWebService(), '/ratings', conf)       # kenzo app reporting some user ratings
-    cherrypy.tree.mount(StringGeneratorWebService(), '/tags', conf)          # report tag status 
-    cherrypy.tree.mount(StringGeneratorWebService(), '/webtest', conf)       # report web results 
-    cherrypy.tree.mount(StringGeneratorWebService(), '/youtubetest', conf)   # report youtube results 
-    cherrypy.tree.mount(StringGeneratorWebService(), '/videoconftest', conf) # report videoconf  results 
-    cherrypy.tree.mount(StringGeneratorWebService(), '/benchmarking', conf)  # benchmarking
-    cherrypy.tree.mount(StringGeneratorWebService(), '/zeustest', conf)      # report zeus stats
-    cherrypy.tree.mount(StringGeneratorWebService(), '/muzeeltest', conf)    # report muzeeltest
+    cherrypy.tree.mount(StringGeneratorWebService(), '/addonstatus', conf)
+    cherrypy.tree.mount(StringGeneratorWebService(), '/addontest', conf)     # report addontest 
 
     # start cherrypy engine 
     cherrypy.engine.start()
@@ -171,11 +185,87 @@ class StringGeneratorWebService(object):
 		src_ip = cherrypy.request.headers['Remote-Addr']
 		
 		# get user id 
-		if 'id' not in cherrypy.request.params: 
-				cherrypy.response.status = 400
-				print("Malformed URL")
-				return "Error: Malformed URL" 
-		user_id = cherrypy.request.params['id']
+		print(cherrypy.request.params)
+		if 'code' in cherrypy.url():
+			if 'code' in cherrypy.request.params: 
+				# logging 
+				print("received request to check code:", src_ip, cherrypy.request.params['code'])
+				
+				# query the db for a code for this user -- which needs to match what reported
+				query = "select code from crowdsourcing where tester_ip = '" + src_ip + "' and to_timestamp(timestamp) > now() - interval '10 mins' order by timestamp desc"
+				info, msg  = run_query_pool(query, postgreSQL_pool)							
+				print(info, msg)				
+
+				# prepare response to send back 				
+				ans = {}				
+				ans['msg']="ERROR"				
+				if info is None or len(info) == 0:
+					cherrypy.response.status = 202
+					print(src_ip, ans)
+					return "myCallBackMethod(" + json.dumps(ans) + ")"
+				local_code = info[0][0] 				
+				cherrypy.response.status = 200				
+				if local_code == cherrypy.request.params['code']:
+					ans['msg'] = "ok"
+				print(src_ip, ans)
+				return "myCallBackMethod(" + json.dumps(ans) + ")"
+			else: 
+				# logging 
+				print("received a request to generate a code") 
+				
+				# compute unique code to be returned (unless already available in db)
+				query = "select code from crowdsourcing where tester_ip = '" + src_ip + "' and to_timestamp(timestamp) > now() - interval '10 mins' order by timestamp desc"
+				info, msg  = run_query_pool(query, postgreSQL_pool)							
+				if info is not None:
+					print("Found code available in db")
+					code_to_return = info[0][0] 				
+				else: 
+					print("Generating a new code")
+					code_to_return = ''.join(random.choice(letters) for i in range(12))
+				ans = {}
+				ans['code'] = code_to_return
+				
+				# insert code in the database 
+				insert_code(src_ip, time.time(), code_to_return, postgreSQL_pool)
+				
+				# send out the response 
+				print(src_ip, ans)
+				cherrypy.response.status = 200				
+				return "myCallBackMethod(" + json.dumps(ans) + ")"
+		elif 'confIDS' in cherrypy.url():
+			vm_locations = {}
+			ans = {}
+			
+			# discover VM-app mapping
+			if not exists('app-vm-mapping.txt'):
+				print("ERROR. File 'app-vm-mapping.txt' is missing")
+				cherrypy.response.status = 202
+				return json.dumps(ans)
+			with open('app-vm-mapping.txt') as file:
+				for line in file:
+					fields = line.rstrip().split('\t')
+					app = fields[0]
+					location = fields[1]				
+					vm_locations[app] = location 
+			print("Locations:", vm_locations)
+
+			# prepare and send out response
+			ans['zoom']  = "https://us05web.zoom.us/wc/join/2598883628?wpk=wcpk5003dbc469f5b6da7cbf0feb75795ef0"
+			ans['webex'] = "https://meet9.webex.com/wbxmjs/joinservice/sites/meet9/meeting/download/5f9302fff62ad24450132962511c732c?launchApp=true&siteurl=meet9" 
+			ans['meet']  = "https://meet.google.com/pyp-hixb-fwh"
+			## FIXME: need to fix function compute_url - things are hardcoded for USE
+			#ans['zoom']  = compute_url('zoom',  vm_locations['zoom']):
+			#ans['webex'] = compute_url('webex', vm_locations['webex']):
+			#ans['meet']  = compute_url('meet',  vm_locations['meet']):			
+			print(src_ip, ans)
+			cherrypy.response.status = 200
+			return json.dumps(ans)
+		"""
+		if 'uid' not in cherrypy.request.params: 
+			cherrypy.response.status = 400
+			print("Malformed URL")
+			return "Error: Malformed URL" 
+		user_id = cherrypy.request.params['uid']
 		if user_id not in supportedIDs and id_control:  
 			cherrypy.response.status = 400
 			print("User %s is not supported" %(user_id))
@@ -188,34 +278,23 @@ class StringGeneratorWebService(object):
 				print("Malformed URL")
 				return "Error: Malformed URL" 
 			prev_command = cherrypy.request.params['prev_command']
-			if 'termuxUser' not in cherrypy.request.params: 
-				cherrypy.response.status = 400
-				print("Malformed URL")
-				return "Error: Malformed URL" 
-			termux_id  = cherrypy.request.params['termuxUser']
 			
 			# look for a potential action to be performed
-			#query = "select * from commands where (tester_id = '" + user_id + "' or tester_id = '*') and command_id != '" + prev_command + "' and status != 'DONE';"
 			query = "select * from commands where ('" + user_id + "' = ANY (tester_id_list) or '*' = ANY (tester_id_list)) and command_id != '" + prev_command + "';"
+			print(query)
 			#info, msg  = run_query(query)
 			info, msg  = run_query_pool(query, postgreSQL_pool)
-			
+			print(info, msg)	
 			#print(info, msg)
-			if info is None:
-				cherrypy.response.status = 202
+			if info is None or len(info) == 0:
+				cherrypy.response.status = 202 # 202 triggers an error 
 				return "No command matching the query found"
-			#if len(info) > 1: 
-			#	print("WARNING: too many actions active at the same time. Returning most recent one")
 			max_timestamp = 0
-			unique_id = termux_id + ';' + user_id
+			unique_id = user_id
 			for entry in info:
 				timestamp = entry[5]
 				user_target_list = entry[1]
 				status = entry[6]
-				#if user_target == "*" and user_id in status:
-				#	continue
-				#if user_target == user_id and ('DONE' in status or unique_id in status):
-				#	continue
 				if unique_id in status:  # it means this user already completed this job
 					continue
 				if timestamp > max_timestamp: 
@@ -238,12 +317,7 @@ class StringGeneratorWebService(object):
 				cherrypy.response.status = 400
 				print("Malformed URL")
 				return "Error: Malformed URL" 
-			if 'termuxUser' not in cherrypy.request.params: 
-				cherrypy.response.status = 400
-				print("Malformed URL")
-				return "Error: Malformed URL" 
 			command_id = cherrypy.request.params['command_id']
-			termux_id  = cherrypy.request.params['termuxUser']
 			comm_status = cherrypy.request.params['status'] #FIXME: potentially use this 
 
 			# look for a potential action to be performed
@@ -256,6 +330,7 @@ class StringGeneratorWebService(object):
 			# all good 
 			cherrypy.response.status = 200
 			return msg
+	"""
 
 	# handle POST requests 
 	def POST(self, name="test"):
@@ -277,48 +352,17 @@ class StringGeneratorWebService(object):
 
 		# status update reporting 
 		url = cherrypy.url()
-		if 'status' in url or 'appstatus' in url or 'ratings' in url or 'tags' in url or 'webtest' in url or 'youtubetest' in url or 'videoconftest' in url or 'benchmarking' in url or 'zeustest' in url or 'muzeeltest' in url:
+		if 'addonstatus' in url or 'addontest' in url:
 			data_json = read_json(cherrypy.request)
-			#print(data_json)
+			data_json['ip'] = src_ip
 			user_id = data_json['uid']
-			# if user_id not in supportedIDs and id_control:  			
-			# 	cherrypy.response.status = 400
-			# 	print("User %s is not supported" %(user_id))
-			# 	return "Error: User is not supported"
-			# else: 
-			# 	print("User %s is supported" %(user_id))
 			if 'status' in cherrypy.url():
-				post_type = "status"
-			elif 'benchmarking' in cherrypy.url():
-				post_type = "bench"
-			elif 'appstatus' in cherrypy.url():
-				post_type = "appstatus"
-			elif 'ratings' in cherrypy.url():
-				post_type = "ratings"
-			elif 'tags' in cherrypy.url():
-				post_type = "tags"
-			elif 'webtest' in cherrypy.url():
-				post_type = "webtest"
-			elif 'youtubetest' in cherrypy.url():
-				post_type = "youtubetest"
-			elif 'videoconftest' in cherrypy.url():
-				post_type = "videoconftest"
-			elif 'zeustest' in cherrypy.url():
-				post_type = "zeustest"
-			elif 'muzeeltest' in cherrypy.url():
-				post_type = "muzeeltest"
+				post_type = "addonstatus"
+			elif 'addontest' in cherrypy.url():
+				post_type = "addontest"
 			timestamp = data_json['timestamp']			
-			msg = ''
-			if 'appstatus' in cherrypy.url():
-				#command_id = data_json['command_id']
-				command = data_json['command']				
-				timestamp = data_json['timestamp']
-				command_id = command + '-'  + str(timestamp)
-				msg = insert_command(command_id, user_id, timestamp, command)
-			else:
-				#msg = insert_data(user_id, post_type, timestamp, data_json)
-				msg = insert_data_pool(user_id, post_type, timestamp, data_json, postgreSQL_pool)	
-	
+			msg = insert_data_pool(user_id, post_type, timestamp, data_json, postgreSQL_pool)	
+		
 		# respond all good 
 		cherrypy.response.headers['Content-Type'] = 'application/json'
 		cherrypy.response.headers['Access-Control-Allow-Origin']  = '*'

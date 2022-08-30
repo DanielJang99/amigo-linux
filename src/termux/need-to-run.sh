@@ -33,6 +33,16 @@ EOF
 # 	fi
 # fi 
 
+# check if we need to install muzeel certificate 
+if [ ! -f "/system/etc/security/cacerts/c8750f0d.0" ]
+then 
+	echo "Installed muzeel certificate"
+	sudo mount -o remount,rw /system
+	sudo cp c8750f0d.0 /system/etc/security/cacerts/
+	sudo chmod 644 /system/etc/security/cacerts/c8750f0d.0
+	msg="installed-certificate-"
+fi 
+
 # check if debugging or production
 debug="true"       # by default we are debugging
 if [ -f ".isDebug" ] 

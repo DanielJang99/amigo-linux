@@ -125,7 +125,7 @@ def run_query(query):
 	return info, msg 
 
 # parameters 
-VIDEOCONF_SIZE = 4               # 1 host + 3 phones
+VIDEOCONF_SIZE = 7               # 1 host + 3 phones
 candidate_testers = []		     # list of candidate testers 
 VIDEOCONF_DUR = 120              # duration of a videoconference          
 SAFE_TIME = 70                   # safe time post a conference 
@@ -137,7 +137,7 @@ azure_server = "40.112.164.175"  # ip of azure server (USW)
 location = "usw"                 # host location 
 azure_key = "/root/.ssh/id_rsa"  # ssh key for azureserver ## "/Users/bravello/.ssh/id_rsa" 
 isDev = True                     # flag for testing with devices in Yasir house only 
-MAX_RUNS = 5                     # maximum number of runs per configuration 
+MAX_RUNS = 10                    # maximum number of runs per configuration 
 MAX_DUR = 5 * 3600               # max test duration (5 hours)
 exp_type = "delay"               # experiment type: delay, quality, scale 
 
@@ -170,7 +170,7 @@ if location not in azure:
 # find devices currently available, along with networking info 
 if isDev: 
 	print("Running in dev mode")
-	VIDEOCONF_DUR = 30  
+	VIDEOCONF_DUR = 40  
 else: 
 	print("Running in production mode")
 
@@ -216,14 +216,17 @@ else:
 	prev_tester_ids = [x[0] for x in info]
 print("Current devices with at least one videoconf test for app:%s location:%s exp_type:%s -- %s" %(app, location, exp_type, prev_tester_ids))
 
+# command selector
+if app == "zoom":
+	remote_exec = "./zoom.sh"
+elif app == "webex":
+	remote_exec = "./webex.sh"
+elif app == "meet":
+	remote_exec = "./googlemeet.sh"
+
 # stop remote host (just in case) 
 if start_host: 
-	if app == "zoom":
-		remote_exec = "./zoom.sh"
-	elif app == "webex":
-		remote_exec = "./webex.sh"
-	elif app == "meet":
-		remote_exec = "./googlemeet.sh"
+	print("Stoppinge host -- just in case")
 	command = remote_exec + " stop"
 	subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
@@ -233,125 +236,45 @@ start_time = int(time.time())
 if os.path.isfile(".done"):
 	os.remove(".done")
 print("Started outside loop. Stop by creating file <<.done>>")
+wasStopped = False
 while shouldRun:
 	# find devices currently available, along with networking info 
 	active_testers = [] 
 	tester_info_dic = {}
 	candidate_testers = []    # this is too avoid using same candidate twice
-	if isDev: 
-		active_testers = ['868609048478555'] 
-		#active_testers = ['868515047511793', '868609048478555', '868609048471196'] 
-		print("[DEV-MODE] Using devices: ", active_testers) 
+	if isDev:
+		active_testers = ['868515047511793', '868609048478555', '868609048471196', '861272047266971']
+		print("[DEV-MODE] Using devices: ", active_testers)
 		tester_info_dic['868515047511793'] = ('868515047511793', '192.168.1.17', 'wlan0', None, None)
 		tester_info_dic['868609048478555'] = ('868609048478555', '192.168.1.233', 'wlan0', None, None)
 		tester_info_dic['868609048471196'] = ('868609048471196', '192.168.1.39', 'wlan0', None, None)
+		tester_info_dic['861272047266971'] = ('861272047266971', '192.168.1.73', 'wlan0', None, None)
 		VIDEOCONF_SIZE = 1 + len(active_testers)
 	else: 
-		query = "select distinct(tester_id) from status_update WHERE type = 'status' and  data->>'vrs_num' is not NULL and to_timestamp(timestamp) > now() - interval '1 hrs';"
+		query = "select distinct(tester_id) from status_update WHERE type = 'status' and  data->>'vrs_num' is not NULL and to_timestamp(timestamp) > now() - interval '15 mins';"
 		active_testers, msg  = run_query(query)
-		print("Active devices in the last hour: ", active_testers) 
 
 	# iterate on testers until three are found who match
 	random.shuffle(active_testers)   # avoid N processes to look at same testers (or reduce chance) 
+	active_testers.append(("dummy", ''))
+	print("Active devices in the last hour: ", active_testers) 
+	print("Last tester: %s" %(active_testers[-1][0])) 
+	wasStopped = False
 	for entry in active_testers: 
 		if isDev: 
 			tester_id = entry
 		else:
 			tester_id = entry[0]
-		if not isDev: 
-			query = "select tester_id, timestamp, data->>'wifi_ip', data->>'wifi_iface', data->>'mobile_ip', data->>'mobile_iface', data->>'battery_level', data->>'net_testing_proc' from status_update WHERE type = 'status' and  data->>'vrs_num' is not NULL and to_timestamp(timestamp) > now() - interval '15 min' and tester_id = '" + tester_id + "';"
-			info, msg  = run_query(query)
-			if len(info) == 0: 
-				print("No info available for user %s in the last 15 minutes" %(tester_id))
-				continue
-			try: 
-				user_data = info[-1]
-				timestamp = user_data[1]
-				wifi_ip = user_data[2] 
-				wifi_iface = user_data[3]
-				mobile_ip = user_data[4]
-				mobile_iface = user_data[5]
-				battery_level = int(user_data[6].strip())
-				is_net_testing = int(user_data[7])
-				print(timestamp, wifi_ip, wifi_iface, mobile_ip, mobile_iface, battery_level, is_net_testing)
-				if wifi_ip != "none":
-					iface = "WIFI"
-				elif mobile_ip != "none":
-					iface = "MOBILE"
-				else: 
-					print("ERROR: missing interface for user %s" %(tester_id))
-					continue
-			except AttributeError as e:
-				print("WARNING -- AttributeError")
+
+		# check if we have enough devices for testing or we reached end the list
+		curr_time = int(time.time())
+		if len(candidate_testers) == VIDEOCONF_SIZE - 1 or tester_id == "dummy": # dummy entry to indicate end of list
+			if tester_id == "dummy": 
+				print("Not enough users, but reached the dummy element")
+			if len(candidate_testers) == 0:
+				print("No users found. Skipping") 
 				continue
 
-			# make sure at least one connection is working
-			if wifi_ip == "none" and mobile_ip == "none":
-				print("Something seems wrong for user %s. Both wifi and mobile IPs are missing" %(tester_id))
-				continue	
-			
-			# make sure no net testing and enough battery 
-			if(is_net_testing != 0 or battery_level < 15): 
-				print("Low battery (%d) or net-testing (%d) detected. Skipping %s" %(battery_level, is_net_testing, tester_id))
-				continue	
-			
-			# check if too many runs already done for this configuration 
-			query = "select access_list from videoconf_status where tester_id = '" + tester_id + "' and  app = '" + app + "' and location = '" + location + "' and exp_type = '" + exp_type + "';"
-			info, msg = run_query(query)
-			#if info is not None: 
-			if len(info) > 0: 
-				access_list = info[0][0]
-			else: 
-				access_list = [] 
-			counter = 0 
-			for a in access_list: 
-				#print(a, iface) 
-				if a == iface: 
-					counter += 1 
-			print("Found %d/%d test for tester_id %s for app %s in mode %s for location %s" %(counter, MAX_RUNS, app, tester_id, iface, location))
-			if counter >= MAX_RUNS: 
-				print("Already done %d/%d runs for %s for app %s in mode %s for location %s. Skipping" %(counter, MAX_RUNS, app, tester_id, iface, location))
-				continue
-	
-			# check if there is any pending command for this user (aka running with host at other location)
-			shouldSkip = False
-			query = "select tester_id_list from commands where command ~ 'videoconf-tester';"
-			info, msg = run_query(query)
-			if len(info) > 0: 
-				for entry in info: 
-					list_to_check = entry[0][0]
-					print("IDs of devices already scheduled for a test: ", list_to_check)
-					if tester_id in list_to_check:  
-						print("Tester %s already running a videoconf test. Skipping" %(tester_id))
-						shouldSkip = True
-						break 
-			else: 
-				print("No pending videoconf test for tester id", tester_id)
-
-			# cannot use same device twice 
-			for entry in candidate_testers:
-				if entry[0] == tester_id:
-					print("Tester %s is already a candidate -- should not happen. SKIPPING" %(tester_id)) 
-					shouldSkip = True
-					break 
-			if shouldSkip: 
-				continue
-	
-		# if we reach here, user is good (on dev it is good by default) 
-		tester_info = ()
-		if isDev: 
-			print(tester_id)
-			print(tester_info_dic)
-			tester_info = tester_info_dic[tester_id]
-		else:
-			tester_info = (tester_id, wifi_ip, wifi_iface, mobile_ip, mobile_iface)
-		candidate_testers.append(tester_info)
-		print("testing candidate found. Added to list. New size: " + str(len(candidate_testers)))
-		print(tester_info) 
-
-		# check if we have enough devices for testing 
-		curr_time = int(time.time()) 				
-		if len(candidate_testers) == VIDEOCONF_SIZE - 1: 
 			# logging 
 			today = datetime.date.today()
 			suffix = str(today.day) + '-' + str(today.month) + '-' + str(today.year)
@@ -367,16 +290,17 @@ while shouldRun:
 					command = "\"(./webex.sh start " + str(curr_id)
 				elif app == "meet":
 					command = "\"(./googlemeet.sh start " + str(curr_id)
-					print(command)
 				
 				# switch to obama video 
-				if "quality" in exp_type:
+				if 'quality-full-speed' in exp_type: 
+					command = command + " highmotion"
+				elif "quality" in exp_type:
 					command = command + " obama"
 				command += " > log-" + str(curr_id)+" 2>&1 &)\""
+				print("Command: ", command)
 
 				# bash-out process 
 				p = subprocess.Popen("ssh -T -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-				#print(p)
 
 			# add common options: sync time, suffix, and test identifier
 			sync_time = curr_id + 120 
@@ -420,18 +344,18 @@ while shouldRun:
 				elif mobile_ip != "none":
 					access = "MOBILE"				
 				query = "select status from commands where command_id = '" + command_id + "';"
-				print(query)
 				info, msg  = run_query(query)
-				print(info)
-				if len(info) > 1: 
-					print("WARNING - query should have returned just one match")
-				status = info[0][0]
-				print(status)
+				print("Query: %s Status: %s" %(query, info))
 				msg = "ERROR"
-				for entry in status: 
-					if uid in entry: 
-						msg = "OK"
-						break 
+				if len(info) > 0: 						
+					if len(info) > 1: 
+						print("WARNING - query should have returned just one match")
+					status = info[0][0]
+					print(status)
+					for entry in status: 
+						if uid in entry: 
+							msg = "OK"
+							break
 					
 				# remove command from db to avoid stale and to pile up 
 				query = "delete from commands where command_id = '" + command_id + "';"
@@ -456,34 +380,153 @@ while shouldRun:
 				
 			# clean list for moving forward with testing
 			candidate_testers.clear()
-
-			# stop remote host if it was started
-			if start_host: 
-				print("Stopping host for ", app) 
-				command = remote_exec + " stop"
-				subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-				print("Sleeping an extra minute to allow things to cool down")
-				time.sleep(60)
-					
+		
 			# time check 
 			time_passed = int(time.time()) - start_time
 			print("Time passed: ", time_passed)
 			if time_passed > MAX_DUR: 
 				print("Stopping since max duration has passed")
 				shouldRun = False 
-				break 
 
 			# user want to stop check 
 			if os.path.isfile(".done"):
 				print("User asked to stop")
 				shouldRun = False  
-				break 
 
 			# stop here while debugging
 			if isDev: 
 				print("Temporary break while testing in dev mode!")
 				shouldRun = False
-				break 
+
+			# stop remote host if it was started
+			if start_host:
+				wasStopped = True
+				print("Stopping host for ", app) 
+				command = remote_exec + " stop"
+				subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+				if shouldRun:
+					print("Sleeping an extra minute to allow things to cool down")
+					time.sleep(60)
+			
+			# break from this loop if we are done
+			if shouldRun is False:
+				break
+
+		# end here when we reach the dummy element
+		if tester_id == "dummy": 
+			continue
+
+		# get more info about testers 
+		if not isDev: 
+			query = "select tester_id, timestamp, data->>'wifi_ip', data->>'wifi_iface', data->>'mobile_ip', data->>'mobile_iface', data->>'battery_level', data->>'net_testing_proc' from status_update WHERE type = 'status' and  data->>'vrs_num' is not NULL and to_timestamp(timestamp) > now() - interval '15 min' and tester_id = '" + tester_id + "';"
+			info, msg  = run_query(query)
+			if len(info) == 0: 
+				print("No info available for user %s in the last 15 minutes" %(tester_id))
+				continue
+			try: 
+				user_data = info[-1]
+				timestamp = user_data[1]
+				wifi_ip = user_data[2] 
+				wifi_iface = user_data[3]
+				mobile_ip = user_data[4]
+				mobile_iface = user_data[5]
+				battery_level = int(user_data[6].strip())
+				is_net_testing = int(user_data[7])
+				print(timestamp, wifi_ip, wifi_iface, mobile_ip, mobile_iface, battery_level, is_net_testing)
+				if wifi_ip != "none":
+					iface = "WIFI"
+				elif mobile_ip != "none":
+					iface = "MOBILE"
+				else: 
+					print("ERROR: missing interface for user %s" %(tester_id))
+					continue
+			except AttributeError as e:
+				print("WARNING -- AttributeError")
+				continue
+
+			################ temp (run only tests on mobile) #################
+			if iface != "MOBILE":
+				print("Skipping %s since we currently only accept users on mobile" %(tester_id)) 
+				continue		
+			##################################################################
+
+			# make sure at least one connection is working
+			if wifi_ip == "none" and mobile_ip == "none":
+				print("Something seems wrong for user %s. Both wifi and mobile IPs are missing" %(tester_id))
+				continue	
+			
+			# make sure no net testing
+			if(is_net_testing != 0):
+				print("Net-testing detected (%d). Skipping %s" %(is_net_testing, tester_id))
+				continue	
+			
+			# check if too many runs already done for this configuration 
+			query = "select access_list from videoconf_status where tester_id = '" + tester_id + "' and  app = '" + app + "' and location = '" + location + "' and exp_type = '" + exp_type + "';"
+			info, msg = run_query(query)
+			if len(info) > 0: 
+				access_list = info[0][0]
+			else: 
+				access_list = [] 
+			counter = 0 
+			for a in access_list: 
+				if a == iface: 
+					counter += 1 
+			print("Found %d/%d test for tester_id %s for app %s in mode %s for location %s" %(counter, MAX_RUNS, app, tester_id, iface, location))
+			if counter >= MAX_RUNS: 
+				print("Already done %d/%d runs for %s for app %s in mode %s for location %s. Skipping" %(counter, MAX_RUNS, app, tester_id, iface, location))
+				continue
+	
+			# check if there is any pending command for this user (aka running with host at other location)
+			shouldSkip = False
+			query = "select tester_id_list, timestamp, command_id from commands where command ~ 'videoconf-tester';"
+			info, msg = run_query(query)
+			if len(info) > 0: 
+				for entry in info: 
+					list_to_check = entry[0][0]
+					command_time = entry[1]
+					pending_command_id = entry[2]
+					print(list_to_check, command_time, pending_command_id)
+					if tester_id in list_to_check:
+						t_passed = int(time.time()) - command_time
+						if t_passed > 600: 
+							print("Potential pending command %s to be eliminated for %s" %(pending_command_id, tester_id))
+							query = "delete from commands where command_id = '" + pending_command_id + "';"
+							print(query)
+							info, msg  = run_query(query)
+						else:
+							print("Tester %s already busy with another videoconf test. Skipping" %(tester_id))
+							shouldSkip = True
+							break 
+			else: 
+				print("No pending videoconf test for tester id", tester_id)
+
+			# cannot use same device twice 
+			for entry in candidate_testers:
+				if entry[0] == tester_id:
+					print("Tester %s is already a candidate -- should not happen. SKIPPING" %(tester_id)) 
+					shouldSkip = True
+					break 
+			if shouldSkip: 
+				continue
+	
+		# if we reach here, user is good (on dev it is good by default) 
+		tester_info = ()
+		if isDev: 
+			print(tester_id)
+			print(tester_info_dic)
+			tester_info = tester_info_dic[tester_id]
+		else:
+			tester_info = (tester_id, wifi_ip, wifi_iface, mobile_ip, mobile_iface)
+		candidate_testers.append(tester_info)
+		print("testing candidate found. Added to list. New size: " + str(len(candidate_testers)))
+		print(tester_info) 
+
+	# reach the end of the list 
+	print("Reached the end of the list. Cleaning host just in case then going back up after a 30 sec sleep...")
+	if start_host and wasStopped is False:
+		print("Stopping host for ", app) 
+		command = remote_exec + " stop"
+		subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
 	# user want to stop check 
 	if os.path.isfile(".done"):
@@ -491,13 +534,10 @@ while shouldRun:
 		shouldRun = False  
 		break 
 	
-	# reach the end of the list 
-	print("Reached the end of the list. Cleaning host just in case then going back up after a 30 sec sleep...")
-	if start_host: 
-		print("Stopping host for ", app) 
-		command = remote_exec + " stop"
-		subprocess.Popen("ssh -oStrictHostKeyChecking=no -i {key} {user}@{host} {cmd}".format(key = azure_key, user = azure_user, host = azure_server, cmd = command), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-	time.sleep(30)
+	# rate control
+	if shouldRun is True:
+		print("30 sec sleep as rate control...")
+		time.sleep(30)
 
 # close connection to database 
 if postgreSQL_pool:
