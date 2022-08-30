@@ -1,7 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/env bash
-## NOTE: report updates to the central server 
+## NOTE:   Monitor mobile performance as a function of weather information
 ## Author: Matteo Varvello (matteo.varvello@nokia.com)
-## Date: 11/3/2021
+## Date:   8/30/2022
 
 # trap ctrl-c and call ctrl_c()
 trap ctrl_c INT
@@ -361,7 +361,6 @@ t_wifi_mobile_update=0                 # last time wifi/mobile info was checked
 asked_to_charge="false"                # keep track if we already asked user to charge their phone
 prev_wifi_traffic=0                    # keep track of wifi traffic used today
 prev_mobile_traffic=0                  # keep track of mobile traffic used today
-MAX_MOBILE_GB=4                        # maximum mobile data usage per day
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
 vrs="2.9"                              # code version 
@@ -374,6 +373,10 @@ if [ $# -eq 1 ]
 then 
 	testing="true"
 fi 
+
+# derive maximum mobile data usage per day
+MAX_MOBILE_GB=4        
+let "MAX_MOBILE = MAX_MOBILE_GB * 1000000000" 
 
 # coin toss to select which port to use 
 FLIP=$(($(($RANDOM%10))%2))
@@ -405,11 +408,6 @@ then
     done < ".ps-$app"
 fi
 
-# # always make sure screen is in portrait -- does not carry over time 
-# myprint "Ensuring that screen is in portrait and auto-rotation disabled"
-# sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
-# sudo  settings put system user_rotation 0          # put in portrait
-
 # update Google account authorization status
 t_last_google=0
 current_time=`date +%s`
@@ -437,23 +435,23 @@ else
 fi 
 google_status=`cat ".google_status"`
 	
-# update code 
+# update code, if needed 
 myprint "Updating our code..."
 git pull
 
 # start CPU monitoring (background)
 ./monitor-cpu.sh &
 
-# ensure that BT is enabled 
-myprint "Make sure that BT is running" 
-bt_status=`sudo settings get global bluetooth_on`
-if [ $bt_status -ne 1 ] 
-then 
-	myprint "Activating BT" 
-	sudo service call bluetooth_manager 6
-else 
-	myprint "BT is active: $bt_status"
-fi 
+# ensure that BT is enabled - NOT NEEDED 
+#myprint "Make sure that BT is running" 
+#bt_status=`sudo settings get global bluetooth_on`
+#if [ $bt_status -ne 1 ] 
+#then 
+#	myprint "Activating BT" 
+#	sudo service call bluetooth_manager 6
+#else 
+#	myprint "BT is active: $bt_status"
+#fi 
 
 # retrieve unique ID for this device and pass to our app
 physical_id="N/A"
@@ -469,21 +467,18 @@ echo "true" > ".status"
 to_run=`cat ".status"`
 sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"
 
-#restart Kenzo - so that background service runs and info is populated 
-turn_device_on
-echo -e "$uid\t$physical_id" > ".temp"
-sudo cp ".temp" "/storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
-myprint "Granting Kenzo permission and restart..."
-sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
-sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
-sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
-sleep 5
-foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
-myprint "Confirm Kenzo is in the foregound: $foreground" 
-sudo cp ".temp" "/storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
-
-# derive B from GB
-let "MAX_MOBILE = MAX_MOBILE_GB * 1000000000"
+#restart Kenzo - so that background service runs and info is populated - NOT NEEDED
+#turn_device_on
+#echo -e "$uid\t$physical_id" > ".temp"
+#sudo cp ".temp" "/storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
+#myprint "Granting Kenzo permission and restart..."
+#sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
+#sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
+#sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
+#sleep 5
+#foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+#myprint "Confirm Kenzo is in the foregound: $foreground" 
+#sudo cp ".temp" "/storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
 
 # folder and file organization 
 mkdir -p "./logs"
@@ -509,10 +504,10 @@ then
     sudo getenforce
 fi
 
-# set NTP server #TOCHECK 
+# set NTP server #DOES NOT REALLY WORK
 #sudo settings put global ntp_server pool.ntp.org
 
-# find termuxt user 
+# find termux user 
 termux_user=`whoami`
 
 #close all and turn off screen
@@ -547,7 +542,7 @@ do
 		t_wifi_mobile_update=`date +%s`
 	fi 
 	
-	# check if user wants us to pause 
+	# check if user wants us to pause - NOT USED
 	user_status="true"
 	if [ -f $user_file ] 
 	then 
@@ -581,7 +576,7 @@ do
 		echo "false" > ".isPaused"	
 	fi 
 	
-	# check if user wants to run a test 
+	# check if user wants to run a test - NOT USED
 	if [ -f $sel_file ] 
 	then 
 		sel_id=`sudo cat $sel_file | cut -f 1`
@@ -682,69 +677,69 @@ do
 	fi 
 	last_slow_loop_time=$current_time
 
-	# check if there is a new command to run
-	if [ $def_iface != "none" ] 
-	then	
-		prev_command="none"
-		if [ -f ".prev_command" ] 
-		then
-			prev_command=`cat ".prev_command"`
-		fi 
-		t_curl_start=`date +%s`
-		ans=`timeout 15 curl -s "https://mobile.batterylab.dev:$SERVER_PORT/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`		
-		ret_code=$?
-		t_curl_end=`date +%s`
-		let "curl_duration = t_curl_end - t_curl_start"		
-		myprint "Checking if there is a command to execute. ANS:$ans - RetCode: $ret_code - Duration:$curl_duration"	
-		if [[ "$ans" != *"No command matching"* ]]
-		then		 	
-			if [ $ret_code -eq 0 ]
-			then 
-				command=`echo $ans  | cut -f 1 -d ";"`
-				comm_id=`echo $ans  | cut -f 3 -d ";"`
-				duration=`echo $ans  | cut -f 4 -d ";" | sed 's/ //g'`	
-				background=`echo $ans  | cut -f 5 -d ";"`
-				myprint "Command:$command- ID:$comm_id - MaxDuration:$duration - IsBackground:$background - PrevCommand:$prev_command"
+	# # check if there is a new command to run - NOT NEEDED
+	# if [ $def_iface != "none" ] 
+	# then	
+	# 	prev_command="none"
+	# 	if [ -f ".prev_command" ] 
+	# 	then
+	# 		prev_command=`cat ".prev_command"`
+	# 	fi 
+	# 	t_curl_start=`date +%s`
+	# 	ans=`timeout 15 curl -s "https://mobile.batterylab.dev:$SERVER_PORT/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`		
+	# 	ret_code=$?
+	# 	t_curl_end=`date +%s`
+	# 	let "curl_duration = t_curl_end - t_curl_start"		
+	# 	myprint "Checking if there is a command to execute. ANS:$ans - RetCode: $ret_code - Duration:$curl_duration"	
+	# 	if [[ "$ans" != *"No command matching"* ]]
+	# 	then		 	
+	# 		if [ $ret_code -eq 0 ]
+	# 		then 
+	# 			command=`echo $ans  | cut -f 1 -d ";"`
+	# 			comm_id=`echo $ans  | cut -f 3 -d ";"`
+	# 			duration=`echo $ans  | cut -f 4 -d ";" | sed 's/ //g'`	
+	# 			background=`echo $ans  | cut -f 5 -d ";"`
+	# 			myprint "Command:$command- ID:$comm_id - MaxDuration:$duration - IsBackground:$background - PrevCommand:$prev_command"
 
-				# verify command was not just run
-				if [ $prev_command == $comm_id ] 
-				then 
-					myprint "Command not allowed since it matches last command run!!"
-				else 
-					if [ $background == "true" ] 
-					then 
-						eval timeout $duration $command & 
-						comm_status=$?
-						myprint "Command started in background. Status: $comm_status"
-					else 
-						# TODO: consider generalizing with a priority expressed in the command
-						echo $command | grep "videoconf-tester.sh" > /dev/null
-						if [ $? -eq 0 ] 
-						then 
-							myprint "Requested a videoconference. Making sure there is no pending net-testing"		
-							./stop-net-testing.sh
-						fi
-						echo $command | grep "muzeel" > /dev/null
-						if [ $? -eq 0 ] 
-						then 
-							myprint "Requested a muzeel test. Making sure there is no pending net-testing"		
-							./stop-net-testing.sh
-						fi 
-						eval timeout $duration $command
-						comm_status=$?
-						myprint "Command executed. Status: $comm_status"
-					fi
-					ans=`timeout 15 curl -s "https://mobile.batterylab.dev:$SERVER_PORT/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${termux_user}"`
-					myprint "Informed server about last command run. ANS: $ans"
-				fi 
-				echo $comm_id > ".prev_command"
-			else 
-				myprint "CURL error ($ret_code (124:TIMEOUT))"
-			fi 
-		else 
-			myprint "Command not found ($ans)"
-		fi 
-	fi 
+	# 			# verify command was not just run
+	# 			if [ $prev_command == $comm_id ] 
+	# 			then 
+	# 				myprint "Command not allowed since it matches last command run!!"
+	# 			else 
+	# 				if [ $background == "true" ] 
+	# 				then 
+	# 					eval timeout $duration $command & 
+	# 					comm_status=$?
+	# 					myprint "Command started in background. Status: $comm_status"
+	# 				else 
+	# 					# TODO: consider generalizing with a priority expressed in the command
+	# 					echo $command | grep "videoconf-tester.sh" > /dev/null
+	# 					if [ $? -eq 0 ] 
+	# 					then 
+	# 						myprint "Requested a videoconference. Making sure there is no pending net-testing"		
+	# 						./stop-net-testing.sh
+	# 					fi
+	# 					echo $command | grep "muzeel" > /dev/null
+	# 					if [ $? -eq 0 ] 
+	# 					then 
+	# 						myprint "Requested a muzeel test. Making sure there is no pending net-testing"		
+	# 						./stop-net-testing.sh
+	# 					fi 
+	# 					eval timeout $duration $command
+	# 					comm_status=$?
+	# 					myprint "Command executed. Status: $comm_status"
+	# 				fi
+	# 				ans=`timeout 15 curl -s "https://mobile.batterylab.dev:$SERVER_PORT/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${termux_user}"`
+	# 				myprint "Informed server about last command run. ANS: $ans"
+	# 			fi 
+	# 			echo $comm_id > ".prev_command"
+	# 		else 
+	# 			myprint "CURL error ($ret_code (124:TIMEOUT))"
+	# 		fi 
+	# 	else 
+	# 		myprint "Command not found ($ans)"
+	# 	fi 
+	# fi 
 
 	# check CPU usage 
 	if [ -f ".cpu-usage" ] 
@@ -760,7 +755,7 @@ do
 					if [ $strike -eq 6 ] 
 					then 
 						#myprint "Detected high CPU (>85%) in the last 90 seconds. Rebooting"
-						myprint "Detected high CPU (>85%) in the last 90 seconds.  -- Temporarily disabling rebooting"
+						myprint "Detected high CPU (>85%) in the last 90 seconds. Rebooting -- Disabled"
 						#sudo reboot 
 					fi 
 				else 
@@ -773,17 +768,17 @@ do
 		fi 
 	fi 
 
-	# check if our foreground/background service is still running
-	N_kenzo=`sudo ps aux | grep "com.example.sensor" | grep -v "grep" | grep -v "curl" | wc -l `
-	if [ $N_kenzo -eq 0 ] 
-	then 
-		myprint "BT background process (kenzo service) was stopped. Restarting!"
-		sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
-		sleep 5
-		close_all
-	fi 
+	# # check if our foreground/background service is still running - NOT NEEDED
+	# N_kenzo=`sudo ps aux | grep "com.example.sensor" | grep -v "grep" | grep -v "curl" | wc -l `
+	# if [ $N_kenzo -eq 0 ] 
+	# then 
+	# 	myprint "BT background process (kenzo service) was stopped. Restarting!"
+	# 	sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
+	# 	sleep 5
+	# 	close_all
+	# fi 
 
-	# get simple stats
+	# get simple stats about device and app in foreground
 	free_space=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 	mem_info=`free -m | grep "Mem" | awk '{print "Total:"$2";Used:"$3";Free:"$4";Available:"$NF}'`
 	foreground=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
@@ -796,18 +791,18 @@ do
 	then 
  		if [ $asked_to_charge == "false" ] 
 		then 
+			asked_to_charge="true"			
 			myprint "Phone battery is low. Asking to recharge!"
-			#termux-notification -c "Please charge your phone!" -t "recharge" --icon warning --prio high --vibrate pattern 500,500
+			termux-notification -c "Please charge your phone!" -t "recharge" --icon warning --prio high --vibrate pattern 500,500
 			./stop-net-testing.sh
-			sleep 5 
-			turn_device_on
-			am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Phone-battery-is-low.-Consider-charging!"
-			asked_to_charge="true"
-			msg="ASKED-TO-CHARGE"
-			echo "$(generate_post_data_short)" 		
-			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:$SERVER_PORT/status
-			sudo settings put system screen_off_timeout $max_screen_timeout		
-			myprint "Testing skipping the rest since paused..."		
+			#sleep 5  - NOT NEEDED WITHOUT APP
+			#turn_device_on
+			#am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Phone-battery-is-low.-Consider-charging!"
+			#msg="ASKED-TO-CHARGE"
+			#echo "$(generate_post_data_short)" 		
+			#timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data_short)" https://mobile.batterylab.dev:$SERVER_PORT/status
+			#sudo settings put system screen_off_timeout $max_screen_timeout		
+			#myprint "Testing skipping the rest since paused..."		
 		fi 
 		
 		# check if it is time to status report (while "asked to charge")
@@ -906,27 +901,27 @@ do
 		# condition-1: encountered a new wifi (hopefully plane)
 		force_net_test=`cat ".force_counter"`
 
-		if [ $force_net_test -gt 0 -a $time_from_last_net_forced -gt $NET_INTERVAL_FORCED ] 
-		then
-			myprint "Forcing a net test on new wifi: $time_from_last_net_forced > $NET_INTERVAL_FORCED  -- NumRunsLeft: $force_net_test DefaultIface:$def_iface SSID:$wifi_ssid"
-			update_wifi_mobile 
-			t_wifi_mobile_update=`date +%s`
-			if [ ! -z $wifi_iface ]
-			then	 	  	    
-				myprint "./net-testing.sh $suffix $current_time $def_iface \"long\" > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt"
-				(timeout 1200 ./net-testing.sh $suffix $current_time $def_iface "long" > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
-				num=1
-				echo $current_time > ".last_net"
-				echo $current_time > ".last_net_short"
-				let "force_net_test--"
-				echo $force_net_test > ".force_counter"
-				echo $current_time > ".last_net_forced"
-			else 
-				myprint "Skipping forced net-testing since WiFi not found anymore"
-			fi 
-		fi 
+		# if [ $force_net_test -gt 0 -a $time_from_last_net_forced -gt $NET_INTERVAL_FORCED ] #NOT-NEEDED
+		# then
+		# 	myprint "Forcing a net test on new wifi: $time_from_last_net_forced > $NET_INTERVAL_FORCED  -- NumRunsLeft: $force_net_test DefaultIface:$def_iface SSID:$wifi_ssid"
+		# 	update_wifi_mobile 
+		# 	t_wifi_mobile_update=`date +%s`
+		# 	if [ ! -z $wifi_iface ]
+		# 	then	 	  	    
+		# 		myprint "./net-testing.sh $suffix $current_time $def_iface \"long\" > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+		# 		(timeout 1200 ./net-testing.sh $suffix $current_time $def_iface "long" > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+		# 		num=1
+		# 		echo $current_time > ".last_net"
+		# 		echo $current_time > ".last_net_short"
+		# 		let "force_net_test--"
+		# 		echo $force_net_test > ".force_counter"
+		# 		echo $current_time > ".last_net_forced"
+		# 	else 
+		# 		myprint "Skipping forced net-testing since WiFi not found anymore"
+		# 	fi 
+		# fi 
 		
-		# condition-2: it is time! (long freq, for both wifi and mobile)
+		# condition-2: it is time! (long freq, for both wifi and mobile) <=
 		if [ $num -eq 0 -a $time_from_last_net -gt $NET_INTERVAL ] 
 		then 
 			myprint "Time to run LONG net-test: $time_from_last_net > $NET_INTERVAL -- DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
@@ -952,32 +947,32 @@ do
 			fi
 		fi 
 		
-		# condition-3: we are on mobile only and did not do more than N test yet today # FIXME 
-		if [ $num -eq 0 -a $time_from_last_net_short -gt $NET_INTERVAL_SHORT ] 
-		then
-			skipping="false"
-			update_wifi_mobile 
-			t_wifi_mobile_update=`date +%s`			
-			if [ ! -z $mobile_iface ] 
-			then 
-				if [ $def_iface != $mobile_iface -o $num_runs_today -ge $MAX_ZEUS_RUNS  -o $mobile_data -gt $MAX_MOBILE ] 
-				then 
-					myprint "Skipping net-testing-short. DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
-					skipping="true"
-				fi 
-			else
-				myprint "Skipping net-testing-short since not on mobile at all"				 
-				skipping="true"
-			fi
-			if [ $skipping == "false" ]
-			then
-				myprint "Time to run SHORT test: $time_from_last_net > $NET_INTERVAL_SHORT -- DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
-				myprint "./net-testing.sh $suffix $current_time $def_iface \"short\" > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt"
-				(timeout 1200 ./net-testing.sh $suffix $current_time $def_iface "short" > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
-				num=1
-				echo $current_time > ".last_net_short"
-			fi
-		fi 
+		# # condition-3: we are on mobile only and did not do more than N test yet today # NOT NEEDED
+		# if [ $num -eq 0 -a $time_from_last_net_short -gt $NET_INTERVAL_SHORT ] 
+		# then
+		# 	skipping="false"
+		# 	update_wifi_mobile 
+		# 	t_wifi_mobile_update=`date +%s`			
+		# 	if [ ! -z $mobile_iface ] 
+		# 	then 
+		# 		if [ $def_iface != $mobile_iface -o $num_runs_today -ge $MAX_ZEUS_RUNS  -o $mobile_data -gt $MAX_MOBILE ] 
+		# 		then 
+		# 			myprint "Skipping net-testing-short. DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
+		# 			skipping="true"
+		# 		fi 
+		# 	else
+		# 		myprint "Skipping net-testing-short since not on mobile at all"				 
+		# 		skipping="true"
+		# 	fi
+		# 	if [ $skipping == "false" ]
+		# 	then
+		# 		myprint "Time to run SHORT test: $time_from_last_net > $NET_INTERVAL_SHORT -- DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
+		# 		myprint "./net-testing.sh $suffix $current_time $def_iface \"short\" > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+		# 		(timeout 1200 ./net-testing.sh $suffix $current_time $def_iface "short" > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+		# 		num=1
+		# 		echo $current_time > ".last_net_short"
+		# 	fi
+		# fi 
 	else
 		myprint "Skipping net-testing. NetStatus:$net_status NumNetProc:$num DefIface:$def_iface LockedStatus:$locked"
 	fi 
@@ -1001,9 +996,9 @@ do
 		t_wifi_mobile_update=`date +%s`	
 						
 		# dump location information (only start googlemaps if not net-testing to avoid collusion)
+		skip_gmaps="true" # location is not that important here 			
 		if [ ! -f ".locked" ]  # NOTE: this means that another app (browser, youtube, videoconf) is already running!
 		then 
-			skip_gmaps="false"
 			last_gmaps=0
 			if [ -f ".last_gmaps" ] 
 			then 
