@@ -17,6 +17,7 @@ fi
 test(){
 	prefix=$2
 	myprint "Testing $prefix"
+	echo "==>    sudo mtr --first-ttl 3 -r4wc $num $1     <=="
 	sudo mtr --first-ttl 3 -r4wc $num $1  >  $res_dir/$prefix-ipv4-$ts.txt 2>&1
 	gzip $res_dir/$prefix-ipv4-$ts.txt
 	if [ $use_v6 == "true" ]
@@ -57,9 +58,9 @@ test amazon.com amazon
 
 # popular DNS
 myprint "Testing popular DNS: [google, cloudflare]"
-sudo mtr -r4wc $num 8.8.8.8 >  $res_dir/google-dns-ipv4-$ts.txt 2>&1
+sudo mtr --first-ttl 3 -r4wc $num 8.8.8.8 >  $res_dir/google-dns-ipv4-$ts.txt 2>&1
 gzip $res_dir/google-dns-ipv4-$ts.txt
-sudo mtr -r4wc $num 1.1.1.1 >  $res_dir/cloudflare-dns-ipv4-$ts.txt 2>&1
+sudo mtr --first-ttl 3 -r4wc $num 1.1.1.1 >  $res_dir/cloudflare-dns-ipv4-$ts.txt 2>&1
 gzip $res_dir/cloudflare-dns-ipv4-$ts.txt 
 if [ $use_v6 == "true" ]
 then 
