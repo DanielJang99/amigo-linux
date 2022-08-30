@@ -31,18 +31,15 @@ EOF
 }
 
 
-# params
-MAX_LOCATION=5              # timeout of duration command
+# parameters
 suffix=`date +%d-%m-%Y`
 t_s=`date +%s`
 iface="wlan0"
-opt="long"
 if [ $# -eq 4 ] 
 then
 	suffix=$1
 	t_s=$2
 	iface=$3
-	opt=$4
 fi  
 
 # retrieve last used server port 
@@ -56,7 +53,7 @@ fi
 #logging 
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 t_start=`date +%s`
-echo "[`date`] net-testing-weather $opt START. SERVER_PORT:$SERVER_PORT -- FreeSpace: $free_space"
+echo "[`date`] net-testing-weather START. SERVER_PORT:$SERVER_PORT -- FreeSpace: $free_space"
 
 # run multiple MTR
 timeout 300 ./mtr.sh $suffix $t_s
@@ -93,4 +90,4 @@ space_used=`echo "$free_space_s $free_space_e" | awk '{print($1-$2)*1000}'`
 #logging 
 t_end=`date +%s`
 let "t_p = t_end - t_start"
-echo "[`date`] net-testing $opt END. Duration: $t_p FreeSpace: ${free_space_e}GB SpaceUsed: ${space_used}MB"
+echo "[`date`] net-testing END. Duration: $t_p FreeSpace: ${free_space_e}GB SpaceUsed: ${space_used}MB"

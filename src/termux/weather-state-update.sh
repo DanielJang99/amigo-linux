@@ -379,14 +379,17 @@ MAX_MOBILE_GB=4
 let "MAX_MOBILE = MAX_MOBILE_GB * 1000000000" 
 
 # coin toss to select which port to use 
-FLIP=$(($(($RANDOM%10))%2))
-if [ $FLIP -eq 1 ]
-then
-	SERVER_PORT=8082
-else 
-	SERVER_PORT=8083
-fi
-myprint "Web-app port selected: $SERVER_PORT"
+#FLIP=$(($(($RANDOM%10))%2))
+#if [ $FLIP -eq 1 ]
+#then
+#	SERVER_PORT=8082
+#else 
+#	SERVER_PORT=8083
+#fi
+#myprint "Web-app port selected: $SERVER_PORT"
+
+SERVER_PORT=8082
+myprint "Web-app port statically selected: $SERVER_PORT"
 echo "$SERVER_PORT" > ".server_port"
 
 # make sure only this instance of this script is running
@@ -939,8 +942,8 @@ do
 			fi  
 			if [ $skipping == "false" ]
 			then
-				myprint "./net-testing.sh $suffix $current_time $def_iface \"long\" > logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt"
-				(timeout 1200 ./net-testing.sh $suffix $current_time $def_iface "long"> logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+				myprint "./net-testing-weather.sh $suffix $current_time $def_iface > logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+				(timeout 1200 ./net-testing-weather.sh $suffix $current_time $def_iface > logs/net-testing-weather-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
 				num=1
 				echo $current_time > ".last_net"
 				echo $current_time > ".last_net_short"			

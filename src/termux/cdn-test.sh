@@ -148,6 +148,12 @@ myprint "Starting CDN tests..."
 test_download "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" "cloudflare"
 test_download "https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js" "google-comp-quic"
 test_download "https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" "jsdelivr"
+isShort="true"
+if [ isShort == "true" ]
+then 
+	exit 0 
+fi 
+
 test_download "https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.6.0.min.js" "microsoft"
 test_download "https://code.jquery.com/jquery-3.6.0.min.js" "jquery"
 #test_download "https://www.google.com" "google-comp-quic"      # skipping cause size diff with H3
