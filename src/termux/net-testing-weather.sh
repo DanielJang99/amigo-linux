@@ -41,6 +41,9 @@ then
 	iface=$3
 fi  
 
+# snapshot of current data usage 
+traffic_start=`ifconfig $iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
+
 # retrieve last used server port 
 if [ -f ".server_port" ] 
 then 
@@ -52,7 +55,7 @@ fi
 #logging 
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 t_start=`date +%s`
-echo "[`date`] net-testing-weather START. SERVER_PORT:$SERVER_PORT -- FreeSpace: $free_space_s"
+echo "[`date`][net-testing-weather][START] SERVER_PORT:$SERVER_PORT FreeSpace:$free_space_s"
 
 # make sure screen is on (sometimes things can get sleepy...)
 turn_device_on
@@ -61,6 +64,7 @@ turn_device_on
 timeout 300 ./mtr.sh $suffix $t_s
 
 # run a speedtest 
+# Q: can we switch to fast? 
 myprint "Running speedtest-cli..."
 res_folder="speedtest-cli-logs/${suffix}"
 mkdir -p $res_folder
@@ -89,7 +93,11 @@ turn_device_off
 free_space_e=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 space_used=`echo "$free_space_s $free_space_e" | awk '{print($1-$2)*1000}'`
 
+# amount of traffic used (received)
+traffic_end=`ifconfig $iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
+let "traffic = (traffic_end - traffic_start)/(1000*1000)"
+
 #logging 
 t_end=`date +%s`
 let "t_p = t_end - t_start"
-echo "[`date`] net-testing END. Duration: $t_p FreeSpace: ${free_space_e}GB SpaceUsed: ${space_used}MB"
+echo "[`date`][net-testing-weather][END] Duration:$t_p FreeSpace:${free_space_e}GB SpaceUsed:${space_used}MB Traffic:${traffic}MB"
