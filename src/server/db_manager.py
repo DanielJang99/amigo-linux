@@ -20,14 +20,14 @@ def connect_to_database():
 def connect_to_database_pool(): 
 	postgreSQL_pool = None
 	try:
-		print("connecting to database with a pool")
+		#print("[DEBUG] connecting to database with a pool")
 		postgreSQL_pool = psycopg2.pool.SimpleConnectionPool(1, 20, user="nyu",
 					password="pa0l1n0",
 					host="127.0.0.1",
 					port="5432",
 					database="mobile_testbed")
 		if (postgreSQL_pool):
-			print("Connection pool created successfully")
+			print("[DEBUG] Connection pool to DB created successfully")
 			status = True
 		else: 
 			print("Something is wrong")
