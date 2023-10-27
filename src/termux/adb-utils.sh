@@ -123,6 +123,7 @@ turn_device_on(){
 		then
 			myprint "Screen was OFF. Turning ON (Attempt $num_tries/$max_attempts)"
 			sudo input keyevent KEYCODE_POWER
+			sudo input swipe 500 1900 500 1000
 		else
 			myprint "Screen is ON. Nothing to do!"
 			is_on="true"
@@ -187,11 +188,11 @@ accept_cookies(){
 
 # needed unless I can fix the other thing
 chrome_onboarding(){
-	curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -f 2 -d "/" | sed s/"}"// | awk -F '.' '{print $NF}'`
+	curr_activity=`sudo dumpsys activity | grep -E 'mCurrentFocus' | cut -f 2 -d "/" | sed s/"}"// | awk -F '.' '{print $NF}'`
 	c=0
-	while [ $curr_activity != "FirstRunActivity" ]
+	while [[ $curr_activity != *"FirstRunActivity"* ]]
 	do 
-		curr_activity=`sudo dumpsys window windows | grep -E 'mCurrentFocus' | cut -f 2 -d "/" | sed s/"}"// | awk -F '.' '{print $NF}'`
+		curr_activity=`sudo dumpsys activity | grep -E 'mCurrentFocus' | cut -f 2 -d "/" | sed s/"}"// | awk -F '.' '{print $NF}'`
 		sleep 2 
 		let "c++"
 		if [ $c -eq 0 ]
@@ -199,11 +200,15 @@ chrome_onboarding(){
 			break 
 		fi 
 	done
-	if [ $curr_activity == "FirstRunActivity" ]
+	if [[ $curr_activity == *"FirstRunActivity"* ]]
 	then
-		tap_screen 370 1210 1   # click ACCEPT 
+		tap_screen 550 1730 1   # click ACCEPT 
+		tap_screen 850 2040 1 
+		sudo input swipe 500 1300 500 800
+		tap_screen 850 2040 1 
+		tap_screen 550 1700 1 
 		#tap_screen 370 1210 1  # yes to sync 
-		sudo input tap 120 1200 && sleep 0.1 && sudo input tap 120 1200
+		# sudo input tap 120 1200 && sleep 0.1 && sudo input tap 120 1200
 		#tap_screen 120 1200 1   # no sync		
 		#tap_screen 120 1200 1   # no sync (no idea why need a double tap)
 		# below is needed in case of lite mode 
@@ -305,9 +310,12 @@ close_all(){
 	# enter switch application tab 
 	sudo input keyevent KEYCODE_APP_SWITCH
 	sleep 2
-
-	# press close all 
-	tap_screen 370 1210 
+	if [ $dev_model == "SM-A346E" ] 
+	then 
+		tap_screen 540 1820
+	else  
+		tap_screen 370 1210 
+	fi
 
 	# go back HOME  (needed when there was nothing to close)
 	sudo input keyevent KEYCODE_HOME
