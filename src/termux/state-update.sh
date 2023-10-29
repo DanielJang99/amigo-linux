@@ -4,6 +4,19 @@
 ## Date: 11/3/2021
 
 # trap ctrl-c and call ctrl_c()
+
+dev_model=`getprop ro.product.model | sed s/" "//g`
+if [[ $dev_model == *"SM-"* ]]
+then 
+	if [ $# -eq 1 ] 
+	then 
+		./v2/state-update.sh test
+	else
+		./v2/state-update.sh 
+	fi 
+	exit 0
+fi
+
 trap ctrl_c INT
 function ctrl_c() {
 	myprint "Trapped CTRL-C"
