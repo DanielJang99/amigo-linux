@@ -149,7 +149,7 @@ test_download "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js
 test_download "https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js" "google-comp-quic"
 test_download "https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" "jsdelivr"
 isShort="true"
-if [ isShort == "true" ]
+if [ $isShort == "true" ]
 then 
 	exit 0 
 fi 

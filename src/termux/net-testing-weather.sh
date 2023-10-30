@@ -57,19 +57,20 @@ free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 t_start=`date +%s`
 echo "[`date`][net-testing-weather][START] SERVER_PORT:$SERVER_PORT FreeSpace:$free_space_s"
 
-# make sure screen is on (sometimes things can get sleepy...)
+# make sure screen is on (things can get sleepy when the screen is off)
 turn_device_on
 
 # run multiple MTR
 timeout 300 ./mtr.sh $suffix $t_s
 
 # run a speedtest 
-# Q: can we switch to fast? 
 myprint "Running speedtest-cli..."
 res_folder="speedtest-cli-logs/${suffix}"
 mkdir -p $res_folder
 timeout 300 speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
 gzip "${res_folder}/speedtest-$t_s.json"
+
+# give a break post BDW measurement
 myprint "Sleep 30 to lower CPU load..."
 sleep 30  		 
 
