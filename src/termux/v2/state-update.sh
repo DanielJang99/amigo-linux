@@ -484,7 +484,6 @@ myprint "Granting Kenzo permission and restart..."
 sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
 sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
 sudo pm grant $kenzo_pkg android.permission.BLUETOOTH_SCAN
-sudo pm grant $kenzo_pkg android.permission.READ_PRIVILEGED_PHONE_STATE
 su -c monkey -p $kenzo_pkg 1 > /dev/null 2>&1
 sleep 5
 foreground=`sudo dumpsys activity | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`

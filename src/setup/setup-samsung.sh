@@ -297,7 +297,7 @@ then
 
     adb -s $device_id shell input text "apt\ upgrade\ -y"
     adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-    sleep 20
+    sleep 300
 
 	echo "Setting default password: $password"
 	adb -s $device_id shell input text "pkg\ install\ -y\ termux-auth"
@@ -344,7 +344,7 @@ then
 	sleep 2 
 	adb -s $device_id shell input text ".\/install.sh"
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-	sleep 30  # watch out cause it is not blocking (ADB gets out) 
+	sleep 100  # watch out cause it is not blocking (ADB gets out) 
 fi 
 
 # wait for above process to be done
@@ -471,7 +471,7 @@ do
     name=${name_list[$i]}
 	apk=${apk_list[$i]}
 	install_simple $package $apk
-	install_app_playstore "$package" "$name"
+	#install_app_playstore "$package" "$name"
 done
 cd - > /dev/null 2>&1
 adb -s $device_id shell "input keyevent KEYCODE_HOME"
