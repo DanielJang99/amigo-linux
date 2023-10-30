@@ -137,6 +137,7 @@ def web_app():
     cherrypy.tree.mount(StringGeneratorWebService(), '/benchmarking', conf)  # benchmarking
     cherrypy.tree.mount(StringGeneratorWebService(), '/zeustest', conf)      # report zeus stats
     cherrypy.tree.mount(StringGeneratorWebService(), '/muzeeltest', conf)    # report muzeeltest
+    cherrypy.tree.mount(StringGeneratorWebService(), '/itag', conf)          # report itag data 
 
     # start cherrypy engine 
     cherrypy.engine.start()
@@ -277,7 +278,7 @@ class StringGeneratorWebService(object):
 
 		# status update reporting 
 		url = cherrypy.url()
-		if 'status' in url or 'appstatus' in url or 'ratings' in url or 'tags' in url or 'webtest' in url or 'youtubetest' in url or 'videoconftest' in url or 'benchmarking' in url or 'zeustest' in url or 'muzeeltest' in url:
+		if 'status' in url or 'appstatus' in url or 'ratings' in url or 'tags' in url or 'webtest' in url or 'youtubetest' in url or 'videoconftest' in url or 'benchmarking' in url or 'zeustest' in url or 'muzeeltest' in url or 'itag' in url:
 			data_json = read_json(cherrypy.request)
 			#print(data_json)
 			user_id = data_json['uid']
@@ -307,6 +308,8 @@ class StringGeneratorWebService(object):
 				post_type = "zeustest"
 			elif 'muzeeltest' in cherrypy.url():
 				post_type = "muzeeltest"
+			elif 'itag' in cherrypy.url():
+				post_type = "itag"
 			timestamp = data_json['timestamp']			
 			msg = ''
 			if 'appstatus' in cherrypy.url():
@@ -316,6 +319,7 @@ class StringGeneratorWebService(object):
 				command_id = command + '-'  + str(timestamp)
 				msg = insert_command(command_id, user_id, timestamp, command)
 			else:
+				print("inserting:", user_id, post_type, timestamp, data_json)
 				#msg = insert_data(user_id, post_type, timestamp, data_json)
 				msg = insert_data_pool(user_id, post_type, timestamp, data_json, postgreSQL_pool)	
 	
