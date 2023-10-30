@@ -46,6 +46,9 @@ else
 fi
 python visualmetrics.py --check
 
+pkg install -y patchelf 
+patchelf --replace-needed libxml2.so libxml2.so.2 /data/data/com.termux/files/usr/lib/libwireshark.so
+
 # install jobs in crontab
 crontab -r 
 (crontab -l 2>/dev/null; echo "*/1 * * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/ && ./need-to-run.sh > log-need-run") | crontab -
@@ -63,7 +66,7 @@ sudo pm grant com.example.sensorexample android.permission.READ_PHONE_STATE
 # accept termux wake lock 
 termux-wake-lock
 sleep 2 
-sudo input tap 587 832
+# sudo input tap 587 832
 
 # ensure that BT is enabled
 bt_status=`sudo settings get global bluetooth_on`

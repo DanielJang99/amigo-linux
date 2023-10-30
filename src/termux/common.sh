@@ -23,7 +23,7 @@ compute_bandwidth(){
     
 	# for first run, just report on current traffic	
 	#curr_traffic=`cat /proc/net/xt_qtaguid/stats | grep $interface | awk '{traffic += $6}END{print traffic}'`
-	curr_traffic=`ifconfig $interface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
+	curr_traffic=`sudo ifconfig $interface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
     myprint "[INFO] Current traffic rx: $curr_traffic"
     if [ -z $prev_traffic ]
     then
