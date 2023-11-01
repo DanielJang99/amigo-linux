@@ -123,6 +123,7 @@ turn_device_on(){
 		then
 			myprint "Screen was OFF. Turning ON (Attempt $num_tries/$max_attempts)"
 			sudo input keyevent KEYCODE_POWER
+			sleep 1
 			sudo input swipe 500 1900 500 1000
 		else
 			myprint "Screen is ON. Nothing to do!"

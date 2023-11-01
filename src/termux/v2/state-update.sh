@@ -206,6 +206,18 @@ update_location(){
 	sudo input keyevent KEYCODE_HOME
 }
 
+# helper to get current mobile network type (3g, 4g, 5g)
+get_mobile_type(){
+	sudo dumpsys telephony.registry > ".tel"
+	mobile_level=`cat ".tel" | grep "SignalBarInfo" | head -n 1 | grep "lteLevel"`
+	if [ -z "$mobile_level" ];
+		mobile_state="3G"
+	else 
+		mobile_state="4G"
+		# TODO: Classify 4G vs 5G - hard to do in Abu Dhabi where there is no 5G coverage
+	fi
+}
+
 # helper to maintain up-to-date wifi/mobile info 
 update_wifi_mobile(){
 
@@ -215,14 +227,18 @@ update_wifi_mobile(){
 	# get dympsys info for connectivity
 	sudo dumpsys netstats > .data
 	wifi_iface=`cat .data | grep "wifiNetworkKey=" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
-	# TODO - mobile
-	mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | grep "rmnet" | grep "true" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
+	mobile_iface=`cat .data | grep -A1 "All mobile interfaces" | grep "rmnet"`
+	if [ ! -z "$mobile_iface" ];then
+		mobile_iface=`cat .data | grep "iface=rmnet" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
+		# mobile_iface=`cat .data | grep "iface=rmnet" | grep "defaultNetwork=true" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
+	fi 
+
 	def_iface="none"
-	if [ ! -z $wifi_iface ]
+	if [ ! -z "$wifi_iface" ]
 	then 
 		def_iface=$wifi_iface
 	else  
-		if [ ! -z $mobile_iface ]
+		if [ ! -z "$mobile_iface" ]
 		then
 			def_iface=$mobile_iface
 	 	fi 
@@ -250,11 +266,11 @@ update_wifi_mobile(){
 	else 
 		wifi_data=0	
 	fi 	
-	if [ ! -z $wifi_iface ]
+	if [ ! -z "$wifi_iface" ]
 	then 
 		if [ ! -f $wifi_today_file ] 
 		then 
-			if [ -z $prev_wifi_traffic ]
+			if [ -z "$prev_wifi_traffic" ]
 			then 
 				prev_wifi_traffic=`sudo ifconfig $wifi_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`	
 			fi 
@@ -262,8 +278,8 @@ update_wifi_mobile(){
 		wifi_ip=`sudo ifconfig $wifi_iface | grep "\." | grep -v packets | awk '{print $2}'` 
 		wifi_ssid=`sudo dumpsys netstats | grep -E 'iface=wlan.*wifiNetworkKey=' | head -n 1  | awk '{print $4}' | cut -f 2 -d "=" | sed s/","// | cut -c2- | cut -f 1 -d '"'`
 		sudo dumpsys wifi > ".wifi"
-		wifi_info=`cat ".wifi" | grep "mWifiInfo"`
-		wifi_qual=`cat ".wifi" | grep "mLastSignalLevel"`
+		wifi_info=`cat ".wifi" | grep "mWifiInfo" | grep "$wifi_ssid"`
+		wifi_qual=`cat ".wifi" | grep -A2 "$wifi_info" | grep "mLastSignalLevel"`
 		wifi_traffic=`sudo ifconfig $wifi_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 	
 		# update data consumed 
@@ -302,7 +318,7 @@ update_wifi_mobile(){
 		wifi_info="none"
 		wifi_qual="none"
 		wifi_traffic="none"
-	fi 
+	fi
 	echo $wifi_data > $wifi_today_file
 		
 	# update mobile data sent/received
@@ -313,12 +329,12 @@ update_wifi_mobile(){
 	else 
 		mobile_data=0	
 	fi	
-	if [ ! -z $mobile_iface ]
+	if [ ! -z "$mobile_iface" ]
 	then
 		# get update on data sent/received
 		if [ ! -f $mobile_today_file ] 
 		then 
-			if [ -z $prev_mobile_traffic ]
+			if [ -z "$prev_mobile_traffic" ]
 			then 
 				prev_mobile_traffic=`sudo ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`	
 			fi
@@ -457,7 +473,7 @@ bt_status=`sudo settings get global bluetooth_on`
 if [ $bt_status -ne 1 ] 
 then 
 	myprint "Activating BT" 
-	sudo service call bluetooth_manager 6
+    sudo cmd bluetooth_manager enable
 else 
 	myprint "BT is active: $bt_status"
 fi 
@@ -758,7 +774,7 @@ do
 	if [ -f ".cpu-usage" ] 
 	then 
 		cpu_util=`cat ".cpu-usage" | cut -f 1 -d "."`
-		if [ ! -z $cpu_util ]
+		if [ ! -z "$cpu_util" ]
 		then 			
 			if [ $cpu_util -ge 85 ] 
 			then 
@@ -919,7 +935,7 @@ do
 			myprint "Forcing a net test on new wifi: $time_from_last_net_forced > $NET_INTERVAL_FORCED  -- NumRunsLeft: $force_net_test DefaultIface:$def_iface SSID:$wifi_ssid"
 			update_wifi_mobile 
 			t_wifi_mobile_update=`date +%s`
-			if [ ! -z $wifi_iface ]
+			if [ ! -z "$wifi_iface" ]
 			then	 	  	    
 				myprint "./net-testing.sh $suffix $current_time $def_iface \"long\" > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt"
 				(./v2/net-testing.sh $suffix $current_time $def_iface "long" | timeout 1200 cat > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
@@ -941,7 +957,7 @@ do
 			skipping="false"
 			update_wifi_mobile 
 			t_wifi_mobile_update=`date +%s`
-			if [ ! -z $mobile_iface ]
+			if [ ! -z "$mobile_iface" ]
 			then
 	 	  	    # if enough mobile data is available 
 				if [ $def_iface == $mobile_iface -a $mobile_data -gt $MAX_MOBILE ]
@@ -966,7 +982,7 @@ do
 			skipping="false"
 			update_wifi_mobile 
 			t_wifi_mobile_update=`date +%s`			
-			if [ ! -z $mobile_iface ] 
+			if [ ! -z "$mobile_iface" ] 
 			then 
 				if [ $def_iface != $mobile_iface -o $num_runs_today -ge $MAX_ZEUS_RUNS  -o $mobile_data -gt $MAX_MOBILE ] 
 				then 
@@ -1018,7 +1034,7 @@ do
 				last_gmaps=`cat ".last_gmaps"`
 			fi 
 			let "time_from_last_gmaps = current_time - last_gmaps"	
-			if [ ! -z $wifi_iface ] # Reduce gmaps launching rate when on WiFi
+			if [ ! -z "$wifi_iface" ] # Reduce gmaps launching rate when on WiFi
 			then  
 				# compute time from last check 
 				if [ $time_from_last_gmaps -lt $WIFI_GMAPS ] 

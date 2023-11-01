@@ -64,7 +64,7 @@ visual(){
 	clean_file ".visualmetrics"
     sleep 5 # allow things to finish (maybe can be saved)
     myprint "Running visualmetrics/visualmetrics.py (background - while visual prep is done)"
-	python visualmetrics/visualmetrics.py --video $screen_video --viewport > $perf_video 2>&1
+	python /data/data/com.termux/files/home/mobile-testbed/src/setup/visualmetrics/visualmetrics.py --video $screen_video --viewport > $perf_video 2>&1
 	speed_index=`cat $perf_video | grep "Speed Index" | cut -f 2 -d ":" | sed s/" "//g`
 	last_change=`cat $perf_video | grep "Last" | cut -f 2 -d ":" | sed s/" "//g`
 	echo -e "$speed_index\t$last_change" > ".visualmetrics"
@@ -127,7 +127,7 @@ run_test(){
 	if [ $video_recording == "true" ]
 	then
 		sudo chown $USER:$USER $screen_video
-		if [ -f "visualmetrics/visualmetrics.py" ] 
+		if [ -f "/data/data/com.termux/files/home/mobile-testbed/src/setup/visualmetrics" ] 
 		then
 			myprint "Running visual analysis in the background" 
 			visual &

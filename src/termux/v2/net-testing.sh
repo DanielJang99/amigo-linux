@@ -176,72 +176,76 @@ then
 	sudo dumpsys netstats > .data
 fi 
 mobile_iface=`cat .data | grep "MOBILE" | grep "iface" | grep "rmnet" | grep "true" | head -n 1  | cut -f 2 -d "=" | cut -f 1 -d " "`
-if [ ! -z $mobile_iface ]
-then 
-	#  status update 
-	curr_hour=`date +%H`
-	status_file=".zus-${suffix}"
-	if [ -f $status_file ]
-	then
-		num_runs_today=`cat $status_file`
-	fi 	
-	myprint "NYU-stuff. Found a mobile connection: $mobile_iface (DefaultConnection:$iface). NumRunsToday:$num_runs_today (MaxRuns: $MAX_ZEUS_RUNS)"
-	if [ $iface == $mobile_iface -a $num_runs_today -lt $MAX_ZEUS_RUNS ] 
-	then
-		# make sure code is there (fix if not)
-		if [ ! -f "FTPClient" ]
-		then
-			myprint "ERROR -- Missing FTPClient code, checking out!" 
-			git checkout FTPClient
-		fi 		
-	
-		##################### testing 
-		myprint "Ensuring that screen is in portrait and auto-rotation disabled"
-		sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
-		sudo  settings put system user_rotation 0          # put in portrait
-		##################### testing 
-		
-		run_zus		
-		let "num_runs_today++"
-		myprint "Done with zus. New count for the day: $num_runs_today"
-		echo $num_runs_today > $status_file
-		myprint "Sleep 30 to lower CPU load..."		
-		sleep 30  		 
-	else 
-		myprint "NYU-stuff. Skipping since on WiFI!"
-	fi 
-else 
-	myprint "No mobile connection found. Skipping NYU-ZUS"
+mobile_iface=`cat .data | grep -A1 "All mobile interfaces" | grep "rmnet"`
+if [ ! -z "$mobile_iface" ];then
+	mobile_iface=`cat .data | grep "iface=rmnet" | grep "defaultNetwork=true" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
 fi 
+# if [ ! -z $mobile_iface ]
+# then 
+# 	#  status update 
+# 	curr_hour=`date +%H`
+# 	status_file=".zus-${suffix}"
+# 	if [ -f $status_file ]
+# 	then
+# 		num_runs_today=`cat $status_file`
+# 	fi 	
+# 	myprint "NYU-stuff. Found a mobile connection: $mobile_iface (DefaultConnection:$iface). NumRunsToday:$num_runs_today (MaxRuns: $MAX_ZEUS_RUNS)"
+# 	if [ $iface == $mobile_iface -a $num_runs_today -lt $MAX_ZEUS_RUNS ] 
+# 	then
+# 		# make sure code is there (fix if not)
+# 		if [ ! -f "FTPClient" ]
+# 		then
+# 			myprint "ERROR -- Missing FTPClient code, checking out!" 
+# 			git checkout FTPClient
+# 		fi 		
+	
+# 		##################### testing 
+# 		myprint "Ensuring that screen is in portrait and auto-rotation disabled"
+# 		sudo  settings put system accelerometer_rotation 0 # disable (shows portrait) 
+# 		sudo  settings put system user_rotation 0          # put in portrait
+# 		##################### testing 
+		
+# 		run_zus		
+# 		let "num_runs_today++"
+# 		myprint "Done with zus. New count for the day: $num_runs_today"
+# 		echo $num_runs_today > $status_file
+# 		myprint "Sleep 30 to lower CPU load..."		
+# 		sleep 30  		 
+# 	else 
+# 		myprint "NYU-stuff. Skipping since on WiFI!"
+# 	fi 
+# else 
+# 	myprint "No mobile connection found. Skipping NYU-ZUS"
+# fi 
 
 # if on mobile, launch googlemaps which is now locked out on other process
-if [ ! -z $mobile_iface ]
-then 
-	if [ $iface == $mobile_iface -a $num_runs_today -lt $MAX_ZEUS_RUNS ] 
-	then 
-		turn_device_on
-		myprint "Launching googlemaps from net-testing since we are on mobile (and main process is holding back)"
-		sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
-		sleep 15
-		close_all
-		turn_device_off
-		res_dir="locationlogs/${suffix}"
-		mkdir -p $res_dir		
-		current_time=`date +%s`
-		timeout $MAX_LOCATION termux-location -p network -r last > $res_dir"/network-loc-$current_time.txt"
-		lat=`cat $res_dir"/network-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
-		long=`cat $res_dir"/network-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
-		network_loc="$lat,$long"
-		timeout $MAX_LOCATION termux-location -p gps -r last > $res_dir"/gps-loc-$current_time.txt"		
-		lat=`cat $res_dir"/gps-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
-		long=`cat $res_dir"/gps-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
-		gps_loc="$lat,$long"		
-		sudo dumpsys location > $res_dir"/loc-$current_time.txt"
-		loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "passive" | head -n 1`
-		gzip $res_dir"/loc-$current_time.txt"
-		sleep 15 
-	fi 
-fi
+# if [ ! -z $mobile_iface ]
+# then 
+# 	if [ $iface == $mobile_iface -a $num_runs_today -lt $MAX_ZEUS_RUNS ] 
+# 	then 
+# 		turn_device_on
+# 		myprint "Launching googlemaps from net-testing since we are on mobile (and main process is holding back)"
+# 		sudo monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
+# 		sleep 15
+# 		close_all
+# 		turn_device_off
+# 		res_dir="locationlogs/${suffix}"
+# 		mkdir -p $res_dir		
+# 		current_time=`date +%s`
+# 		timeout $MAX_LOCATION termux-location -p network -r last > $res_dir"/network-loc-$current_time.txt"
+# 		lat=`cat $res_dir"/network-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
+# 		long=`cat $res_dir"/network-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
+# 		network_loc="$lat,$long"
+# 		timeout $MAX_LOCATION termux-location -p gps -r last > $res_dir"/gps-loc-$current_time.txt"		
+# 		lat=`cat $res_dir"/gps-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
+# 		long=`cat $res_dir"/gps-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
+# 		gps_loc="$lat,$long"		
+# 		sudo dumpsys location > $res_dir"/loc-$current_time.txt"
+# 		loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "passive" | head -n 1`
+# 		gzip $res_dir"/loc-$current_time.txt"
+# 		sleep 15 
+# 	fi 
+# fi
 
 # run a speedtest 
 myprint "Running speedtest-cli..."

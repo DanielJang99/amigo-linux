@@ -62,6 +62,7 @@ sudo pm grant com.termux.api android.permission.ACCESS_FINE_LOCATION
 sudo pm grant com.google.android.apps.maps android.permission.ACCESS_FINE_LOCATION
 sudo pm grant com.example.sensorexample android.permission.ACCESS_FINE_LOCATION
 sudo pm grant com.example.sensorexample android.permission.READ_PHONE_STATE
+sudo pm grant com.example.sensorexample android.permission.BLUETOOTH_SCAN
 
 # accept termux wake lock 
 termux-wake-lock
@@ -73,7 +74,7 @@ bt_status=`sudo settings get global bluetooth_on`
 if [ $bt_status -ne 1 ]
 then
     echo "Activating BT"
-    sudo service call bluetooth_manager 6
+    sudo cmd bluetooth_manager enable
 else
  	echo "BT is active: $bt_status"
 fi 
