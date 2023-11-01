@@ -43,6 +43,14 @@ then
 	msg="installed-certificate-"
 fi 
 
+dev_model=`getprop ro.product.model | sed s/" "//g`
+if [ $dev_model == "SM-A346E" ] 
+then 
+	uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
+else
+	uid=`termux-telephony-deviceinfo | grep "device_id" | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+fi
+
 # check if debugging or production
 debug="true"       # by default we are debugging
 if [ -f ".isDebug" ] 
@@ -67,7 +75,6 @@ then
 	if [ $debug == "false" ]
 	then
 		(crontab -l 2>/dev/null; echo "0 2 * * * sudo reboot") | crontab -
-		#(crontab -l 2>/dev/null; echo "0 0 * * * sudo reboot") | crontab -
 		msg="added-reboot-"
 	else 
 		echo "Skipping adding reboot job since debug=$debug"
@@ -82,7 +89,6 @@ if [ $uptime_sec -le 180 ]
 then
 	suffix=`date +%d-%m-%Y`
 	current_time=`date +%s`
-	uid=`termux-telephony-deviceinfo | grep "device_id" | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 	uptime_info=`uptime`
 	msg=$msg"reboot"
 	echo "$(generate_post_data)"
@@ -97,7 +103,6 @@ then
 	# inform server of restart needed
 	suffix=`date +%d-%m-%Y`
 	current_time=`date +%s`
-	uid=`termux-telephony-deviceinfo | grep "device_id" | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 	uptime_info=`uptime`
 	msg="script-restart"
 	echo "$(generate_post_data)"
