@@ -44,7 +44,7 @@ run_zus(){
 	fi 
 	myprint "UID: $uid PhysicalID: $physical_id"
 	turn_device_on
-	am start -n com.qualcomm.qti.networksetting/com.qualcomm.qti.networksetting.MobileNetworkSettings
+	am start -n com.samsung.android.app.telephonyui/com.samsung.android.app.telephonyui.netsettings.ui.simcardmanager.SimCardMgrActivity
 	sleep 5 
 	
 	# take screenshot of network settings and upload to our server 

@@ -55,12 +55,12 @@ check_account_via_YT(){
 	youtube_error="false"
 	sleep 5 
 	myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
-	curr_activity=`sudo dumpsys activity | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+	curr_activity=`sudo dumpsys activity | grep -E 'mCurrentFocus' | head -n 1 | awk -F "." '{print $NF}' | sed s/"}"//g`
 	c=0
 	while [[ $curr_activity != *"WatchWhileActivity"* ]] 
 	do 
 		sleep 3 
-	    curr_activity=`sudo dumpsys activity | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
+	    curr_activity=`sudo dumpsys activity | grep -E 'mCurrentFocus' | head -n 1 | awk -F "." '{print $NF}' | sed s/"}"//g`
 		let "c++"
 		if [ $c -ge 10 ]
 		then 
@@ -124,6 +124,12 @@ EOF
 
 # generate data to be POSTed to my server 
 generate_post_data(){
+
+	# handle foreground variable when screen is turned off  
+	if [[ $foreground == *"NotificationShade"* ]];then
+		foreground=""
+	fi
+
   cat <<EOF
     {
     "vrs_num":"${vrs}",  
@@ -280,6 +286,7 @@ update_wifi_mobile(){
 		sudo dumpsys wifi > ".wifi"
 		wifi_info=`cat ".wifi" | grep "mWifiInfo" | grep "$wifi_ssid"`
 		wifi_qual=`cat ".wifi" | grep -A2 "$wifi_info" | grep "mLastSignalLevel"`
+		wifi_info=`echo "$wifi_info" | tr "\"" "\'"`
 		wifi_traffic=`sudo ifconfig $wifi_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 	
 		# update data consumed 
@@ -496,13 +503,14 @@ sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/fi
 turn_device_on
 echo -e "$uid\t$physical_id" > ".temp"
 sudo cp ".temp" "/storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
+su -c chmod -R 755 /storage/emulated/0/Android/data/com.example.sensorexample/files/*.txt
 myprint "Granting Kenzo permission and restart..."
 sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
 sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
 sudo pm grant $kenzo_pkg android.permission.BLUETOOTH_SCAN
 su -c monkey -p $kenzo_pkg 1 > /dev/null 2>&1
 sleep 5
-foreground=`sudo dumpsys activity | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+foreground=`sudo dumpsys activity | grep -E 'mCurrentFocus' | head -n 1 | cut -d '/' -f1 | sed 's/.* //g'`
 myprint "Confirm Kenzo is in the foregound: $foreground" 
 sudo cp ".temp" "/storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
 
@@ -810,7 +818,7 @@ do
 	# get simple stats
 	free_space=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 	mem_info=`free -m | grep "Mem" | awk '{print "Total:"$2";Used:"$3";Free:"$4";Available:"$NF}'`
-	foreground=`sudo dumpsys activity | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+	foreground=`sudo dumpsys activity | grep -E 'mCurrentFocus' | head -n 1 | cut -d '/' -f1 | sed 's/.* //g'`
 
 	# get phone battery level and ask to charge if needed # TBD
 	sudo dumpsys battery > ".dump"
@@ -1048,7 +1056,7 @@ do
 				myprint "Launching googlemaps to improve location accuracy - DefInterface: $def_iface - (TimeLastGmap:$time_from_last_gmaps (Max: $WIFI_GMAPS)"
 				su -c monkey -p com.google.android.apps.maps 1 > /dev/null 2>&1
 				sleep 5 
-				foreground=`sudo dumpsys activity | grep -E 'mCurrentFocus' | cut -d '/' -f1 | sed 's/.* //g'`
+				foreground=`sudo dumpsys activity | grep -E 'mCurrentFocus' | head -n 1 | cut -d '/' -f1 | sed 's/.* //g'`
 				myprint "Confirm Maps is in the foregound: $foreground" 
 				# needed in case maps ask for storage...
 				sudo input tap 108 1220
