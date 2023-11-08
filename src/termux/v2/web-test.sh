@@ -61,12 +61,12 @@ take_screenshots(){
 
 # run video ananlysis for web perf
 visual(){
-	clean_file ".visualmetrics"
+	rm ".visualmetrics"
     sleep 5 # allow things to finish (maybe can be saved)
     myprint "Running visualmetrics/visualmetrics.py (background - while visual prep is done)"
 	python /data/data/com.termux/files/home/mobile-testbed/src/setup/visualmetrics/visualmetrics.py --video $screen_video --viewport > $perf_video 2>&1
-	speed_index=`cat $perf_video | grep "Speed Index" | cut -f 2 -d ":" | sed s/" "//g`
-	last_change=`cat $perf_video | grep "Last" | cut -f 2 -d ":" | sed s/" "//g`
+	speed_index=`cat $perf_video | grep "Speed Index" | head -n 1 | cut -f 2 -d ":" | sed s/" "//g`
+	last_change=`cat $perf_video | grep "Last Visual Change"| head -n 1 | cut -f 2 -d ":" | sed s/" "//g`
 	echo -e "$speed_index\t$last_change" > ".visualmetrics"
 	gzip $perf_video
 	rm $screen_video

@@ -214,14 +214,7 @@ update_location(){
 
 # helper to get current mobile network type (3g, 4g, 5g)
 get_mobile_type(){
-	sudo dumpsys telephony.registry > ".tel"
-	mobile_level=`cat ".tel" | grep "SignalBarInfo" | head -n 1 | grep "lteLevel"`
-	if [ -z "$mobile_level" ];
-		mobile_state="3G"
-	else 
-		mobile_state="4G"
-		# TODO: Classify 4G vs 5G - hard to do in Abu Dhabi where there is no 5G coverage
-	fi
+	echo sudo dumpsys telephony.registry | grep "mServiceState" | head -n 1 | awk -F'MobileDataRat=' '{split($2, a, /[ ,]/); print a[1]}'
 }
 
 # helper to maintain up-to-date wifi/mobile info 
@@ -508,6 +501,8 @@ myprint "Granting Kenzo permission and restart..."
 sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
 sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
 sudo pm grant $kenzo_pkg android.permission.BLUETOOTH_SCAN
+sudo pm grant $kenzo_pkg android.permission.BLUETOOTH_CONNECT
+sudo pm grant $kenzo_pkg android.permission.ACCESS_BACKGROUND_LOCATION
 su -c monkey -p $kenzo_pkg 1 > /dev/null 2>&1
 sleep 5
 foreground=`sudo dumpsys activity | grep -E 'mCurrentFocus' | head -n 1 | cut -d '/' -f1 | sed 's/.* //g'`
@@ -830,10 +825,10 @@ do
 		then 
 			myprint "Phone battery is low. Asking to recharge!"
 			#termux-notification -c "Please charge your phone!" -t "recharge" --icon warning --prio high --vibrate pattern 500,500
-			./stop-net-testing.sh
+			./stop-net-testing.sh	
 			sleep 5 
 			turn_device_on
-			am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Phone-battery-is-low.-Consider-charging!"
+			su -c am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es accept "Phone-battery-is-low.-Consider-charging!"
 			asked_to_charge="true"
 			msg="ASKED-TO-CHARGE"
 			echo "$(generate_post_data_short)" 		
