@@ -68,6 +68,7 @@ activate_stats_nerds(){
     tap_screen 1000 500 1 
     tap_screen 2280 110 1 
     tap_screen 1080 850 1
+	sudo input swipe 1000 800 1000 500 
 
 	# take a screenshot to see what is on screen and send to the server (in case of failure)
 	screen_file="${res_folder}/screen-${curr_run_id}-${attempt}"

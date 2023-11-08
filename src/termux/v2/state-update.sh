@@ -457,6 +457,7 @@ google_status=`cat ".google_status"`
 # update code 
 myprint "Updating our code..."
 git pull
+su -c chmod -R +rx v2/
 
 # start CPU monitoring (background)
 ./monitor-cpu.sh &
