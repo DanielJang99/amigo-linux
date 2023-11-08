@@ -150,9 +150,8 @@ generate_post_data(){
     "mem_info":"${mem_info}", 
     "battery_level":"${phone_battery}",
     "charging":"${charging}",
+	"kenzo_loc": "${kenzo_loc}",
     "location_info":"${loc_str}",
-    "gps_loc":"${gps_loc}",
-    "network_loc":"${network_loc}",
     "foreground_app":"${foreground}",
     "net_testing_proc":"${num}", 
     "wifi_iface":"${wifi_iface}", 
@@ -196,19 +195,14 @@ update_location(){
 	turn_device_on
 	su -c monkey -p com.termux 1 > /dev/null
 	res_dir="locationlogs/${suffix}"
-	mkdir -p $res_dir		
-	timeout $MAX_LOCATION termux-location -p network -r last > $res_dir"/network-loc-$current_time.txt"
-	lat=`cat $res_dir"/network-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
-	long=`cat $res_dir"/network-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
-	network_loc="$lat,$long"
-	timeout $MAX_LOCATION termux-location -p gps -r last > $res_dir"/gps-loc-$current_time.txt"		
-	lat=`cat $res_dir"/gps-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
-	long=`cat $res_dir"/gps-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
-	gps_loc="$lat,$long"		
+	mkdir -p $res_dir	
+
+	# get latest location from Kenzo App 	
+	kenzo_loc=`sudo tail -n 1 /data/data/com.example.sensorexample/files/log.csv`
+	echo "$kenzo_loc" > $res_dir"/app-loc-$current_time.txt"
 	sudo dumpsys location > $res_dir"/loc-$current_time.txt"
 	loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "fused" | head -n 1`
 	gzip $res_dir"/loc-$current_time.txt"
-	#sudo input keyevent KEYCODE_APP_SWITCH
 	sudo input keyevent KEYCODE_HOME
 }
 
@@ -1054,7 +1048,7 @@ do
 				foreground=`sudo dumpsys activity | grep -E 'mCurrentFocus' | head -n 1 | cut -d '/' -f1 | sed 's/.* //g'`
 				myprint "Confirm Maps is in the foregound: $foreground" 
 				# needed in case maps ask for storage...
-				sudo input tap 108 1220
+				# sudo input tap 108 1220
 				sleep 15
 				close_all
 				turn_device_off
