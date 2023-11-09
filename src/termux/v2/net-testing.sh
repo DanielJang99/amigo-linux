@@ -194,7 +194,7 @@ mobile_iface=`cat .data | grep -A1 "All mobile interfaces" | grep "rmnet"`
 if [ ! -z "$mobile_iface" ];then
 	mobile_iface=`cat .data | grep "iface=rmnet" | grep "defaultNetwork=true" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
 fi 
-if [ ! -z $mobile_iface -a $skipZeus == "false" ]
+if [ ! -z $mobile_iface ] && [ $skipZeus == "false" ]
 then 
 	#  status update 
 	curr_hour=`date +%H`
@@ -232,7 +232,7 @@ else
 	myprint "No mobile connection found. Skipping NYU-ZUS"
 fi 
 
-if on mobile, launch googlemaps which is now locked out on other process
+# if on mobile, launch googlemaps which is now locked out on other process
 if [ ! -z $mobile_iface ]
 then 
 	if [ $iface == $mobile_iface -a $num_runs_today -lt $MAX_ZEUS_RUNS ] 
