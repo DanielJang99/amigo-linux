@@ -1,39 +1,40 @@
 #!/data/data/com.termux/files/usr/bin/env bash
 # upgrade 
-pkg upgrade -y 
+yes | pkg upgrade -y 
 
 # install termux API
-pkg install -y termux-api
+yes | pkg install -y termux-api
 
 # install sudo 
-pkg install -y tsu
+yes | pkg install -y tsu
 
 # install and setup vim (just in case)
-pkg install -y vim
+yes | pkg install -y vim
 # TODO 
 
 # install mtr 
-pkg install -y root-repo
-pkg install -y mtr
+yes | pkg install -y root-repo
+yes | pkg install -y mtr
 
 # install python and upgrade pip 
-pkg install -y python
+yes | yes | pkg install -y python
 python -m pip install --upgrade pip
 
 # install speedtest-cli    
 pip install speedtest-cli    
 
 # traffic collection 
-pkg install -y tcpdump
+yes | pkg install -y tcpdump
 
 # install tshark to analyze pcap traces 
-pkg install -y tshark
+yes | pkg install -y tshark
 
 # video analysis of web performance metrics
-pkg install -y ffmpeg 
+yes | pkg install -y ffmpeg 
 pip install wheel
-pkg install -y imagemagick
+yes | pkg install -y imagemagick
 echo "WARNING -- next command will take some time..."
+yes | pkg install python-pip
 pip install pillow 
 #pip install pyssim     # skipping since takes forever and not needed? 
 if [ ! -d "visualmetrics" ]
@@ -46,7 +47,7 @@ else
 fi
 python visualmetrics.py --check
 
-pkg install -y patchelf 
+yes | pkg install -y patchelf 
 patchelf --replace-needed libxml2.so libxml2.so.2 /data/data/com.termux/files/usr/lib/libwireshark.so
 
 # install jobs in crontab
@@ -90,7 +91,7 @@ echo "All DONE!"
 
 ############################ TESTING, TO BE DECIDED 
 # aioquic 
-# pkg install rust
+# yes | pkg install rust
 # pip install wheel # TOBETESTED
 # git clone git@github.com:aiortc/aioquic.git
 # cd aioquic 
@@ -98,7 +99,7 @@ echo "All DONE!"
 # pip install asgiref dnslib httpbin starlette wsproto
 
 
-#pkg install miniupnpc
-#pkg install iperf3
-#pkg install wpa-supplicant
-#pkg install wireless-tools
+#yes | pkg install miniupnpc
+#yes | pkg install iperf3
+#yes | pkg install wpa-supplicant
+#yes | pkg install wireless-tools
