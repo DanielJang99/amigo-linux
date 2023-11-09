@@ -307,7 +307,7 @@ close_all(){
 
 	# go HOME 
 	sudo input keyevent KEYCODE_HOME
-
+	sleep 2 
 	# enter switch application tab 
 	sudo input keyevent KEYCODE_APP_SWITCH
 	sleep 2

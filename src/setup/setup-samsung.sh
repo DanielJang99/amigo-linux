@@ -295,15 +295,15 @@ then
     adb -s $device_id shell "input keyevent KEYCODE_ENTER"
     sleep 20
 
-    adb -s $device_id shell input text "apt\ upgrade\ -y"
+    adb -s $device_id shell input text "yes\ |\ apt\ upgrade\ -y"
     adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-    sleep 300
+    sleep 100
 
 	echo "Setting default password: $password"
 	adb -s $device_id shell input text "pkg\ install\ -y\ termux-auth"
 	sleep 1
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-	sleep 15 
+	sleep 10 
 	adb -s $device_id shell input text "passwd"
 	sleep 1
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
@@ -321,7 +321,7 @@ then
 	adb -s $device_id shell input text "pkg\ install\ -y\ tsu"
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
 	echo "Allowing 30 secs to install sudo"
-	sleep 30 
+	sleep 20 
 
 	# enable permissive selinux
 	adb -s $device_id shell input text "sudo\ setenforce\ \0"
@@ -344,7 +344,7 @@ then
 	sleep 2 
 	adb -s $device_id shell input text ".\/install.sh"
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-	sleep 100  # watch out cause it is not blocking (ADB gets out) 
+	sleep 50  # watch out cause it is not blocking (ADB gets out) 
 fi 
 
 # wait for above process to be done
@@ -450,27 +450,21 @@ package_list[2]="com.cisco.webex.meetings"
 package_list[3]="com.google.android.apps.meetings"
 package_list[4]="com.google.android.youtube"
 package_list[5]="com.example.sensorexample"
-package_list[6]="com.argonremote.launchonboot"
-package_list[7]="com.mobillium.airalo"
-package_list[8]="com.kiwibrowser.browser"
+package_list[6]="com.kiwibrowser.browser"
 name_list[0]="google\ maps"
 name_list[1]="zoom"
 name_list[2]="webex"
 name_list[3]="google\ meet"
 name_list[4]="youtube"
 name_list[5]="kenzo"
-name_list[6]="Boot\ Apps"
-name_list[7]="Airalo"
-name_list[8]="Kiwi\ Browser"
+name_list[6]="Kiwi\ Browser"
 apk_list[0]="com.google.android.apps.maps_11.7.5.apk"
 apk_list[1]="us.zoom.videomeetings_5.8.4.2783.apk"
 apk_list[2]="com.cisco.webex.meetings_41.11.0.apk"
 apk_list[3]="com.google.android.apps.meetings_2021.10.31.apk"
 apk_list[4]="com.google.android.youtube_16.46.35.apk"
 apk_list[5]="app-debug.apk"
-apk_list[6]="com.argonremote.launchonboot.apk"
-apk_list[7]="com.mobillium.airalo.apk"
-apk_list[8]="com.kiwibrowser.browser.apk"
+apk_list[6]="com.kiwibrowser.browser.apk"
 num_apps="${#package_list[@]}"
 first="true"
 cd APKs
@@ -492,7 +486,7 @@ ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "git clone git@githu
 # ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "pkg install python"
 #ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "termux-notification -c \"ADB:$device_id\" --icon warning --prio high --vibrate pattern 500,500"
 ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed && git init"
-ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd src/setup && (./phone-prepping.sh &)"
+ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "cd mobile-testbed/src/setup && (./phone-prepping.sh &)"
 if [ $production == "true" ] 
 then 
 	ssh -oStrictHostKeyChecking=no -i $ssh_key -p 8022 $wifi_ip "echo \"false\" > \"mobile-testbed/src/termux/.isDebug\"" 
@@ -529,3 +523,9 @@ fi
 
 # logging 
 echo "All good"
+
+
+# additional steps that could not be automated with scripts 
+# 1. Install "Boot Apps" from Play Store and add Termux & Termux:Boot
+# 1.1 Turn off battery optimization for Boot Apps (could be necessary)
+# 2. Install Kenzo Extension on Kiwi Browser 
