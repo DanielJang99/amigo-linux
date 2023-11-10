@@ -130,7 +130,12 @@ then
 	echo "Time to run! Sleep $n_sleep to avoid concurrent restarts"	
 	sleep $n_sleep
 	mkdir -p logs	
-	./state-update.sh > "logs/log-state-update-"`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1 &
+	if [ $dev_model == "SM-A346E" ]
+	then 
+		./v2/state-update.sh > "logs/log-state-update-"`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1 &
+	else 
+		./state-update.sh > "logs/log-state-update-"`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1 &
+	fi
 else 
 	echo "No need to run"
 fi

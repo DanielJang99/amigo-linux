@@ -127,10 +127,12 @@ run_test(){
 	if [ $video_recording == "true" ]
 	then
 		sudo chown $USER:$USER $screen_video
-		if [ -f "/data/data/com.termux/files/home/mobile-testbed/src/setup/visualmetrics" ] 
+		if [ -f "visualmetrics/visualmetrics.py" ] 
 		then
 			myprint "Running visual analysis in the background" 
 			visual &
+		else 
+			myprint "Visualmetrics not found"
 		fi 
 	fi	
 
@@ -275,7 +277,7 @@ sudo  settings put system user_rotation 0          # put in portrait
 # update UID if needed 
 if [ $uid == "none" ]
 then 
-	uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
+    uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
 fi 
 if [ -f "uid-list.txt" ] 
 then 

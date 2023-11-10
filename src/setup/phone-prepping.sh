@@ -37,6 +37,8 @@ echo "WARNING -- next command will take some time..."
 yes | pkg install python-pip
 pip install pillow 
 #pip install pyssim     # skipping since takes forever and not needed? 
+
+cd /data/data/com.termux/files/home/mobile-testbed/src/termux 
 if [ ! -d "visualmetrics" ]
 then
     git clone https://github.com/WPO-Foundation/visualmetrics
