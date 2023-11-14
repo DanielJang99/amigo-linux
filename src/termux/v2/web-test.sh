@@ -168,7 +168,8 @@ generate_post_data(){
     "tshark_traffic_MB":"${tshark_size}",
     "load_dur_sec":"${load_time}",
     "speed_index_ms":"${speed_index}",
-    "last_visual_change_ms":"${last_change}"
+    "last_visual_change_ms":"${last_change}",
+	"network_type": "${network_type}"
     }
 EOF
 }
@@ -202,6 +203,7 @@ pcap_collect="false"               # flag to control pcap collection at the phon
 app="chrome"                       # used to detect process in CPU monitoring
 url="none"                         # URL to test 
 uid="none"                         # user ID
+network_type=`get_network_type`	
 
 # read input parameters
 while [ "$#" -gt 0 ]

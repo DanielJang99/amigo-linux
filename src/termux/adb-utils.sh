@@ -348,3 +348,9 @@ phone_setup_simple(){
 	# all good 
 	return 0 
 }
+
+# get current network type (wifi, LTE, 5G, etc) from file updated by Kenzo App 
+get_network_type() {
+	networkType=`sudo cat "/storage/emulated/0/Android/data/com.example.sensorexample/files/currentNetwork.txt"`
+	echo "$networkType"
+}

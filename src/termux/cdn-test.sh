@@ -45,7 +45,8 @@ generate_post_data(){
 	"t_starttransfer":"${t_starttransfer}",
 	"t_total":"${t_total}",
 	"size_download":"${size_download}",
-	"size_header":"${size_header}"
+	"size_header":"${size_header}",
+	"network_type": "${network_type}"
 	}
 EOF
 }
@@ -121,6 +122,12 @@ test_download(){
 }
 
 
+# get current network type (wifi, LTE, 5G, etc) from file updated by Kenzo App 
+get_network_type() {
+	networkType=`sudo cat "/storage/emulated/0/Android/data/com.example.sensorexample/files/currentNetwork.txt"`
+	echo "$networkType"
+}
+
 # check for macOS
 isMacOS="false"
 uname -a | grep "Darwin" > /dev/null
@@ -142,6 +149,8 @@ fi
 # folder organiztion 
 res_folder="./cdnlogs/$uid"
 mkdir -p $res_folder 
+
+network_type=`get_network_type`	
 
 # CDN tests
 myprint "Starting CDN tests..."

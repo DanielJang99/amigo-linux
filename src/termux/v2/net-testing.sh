@@ -172,6 +172,7 @@ free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 # video testing with youtube
 if [ $opt == "long" ] 
 then 
+    myprint "Running youtube test in `get_network_type`"
 	./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single | timeout 300 cat
 	turn_device_off
 	myprint "Sleep 30 to lower CPU load..."
@@ -181,6 +182,7 @@ else
 fi 
 
 # run multiple MTR
+myprint "Running MTR test in `get_network_type`"
 ./mtr.sh $suffix $t_s | timeout 300 cat 
 
 # run nyu stuff -- only if MOBILE and not done too many already 
@@ -262,7 +264,7 @@ then
 fi
 
 # run a speedtest 
-myprint "Running speedtest-cli..."
+myprint "Running speedtest-cli in `get_network_type`"
 res_folder="speedtest-cli-logs/${suffix}"
 mkdir -p $res_folder
 timeout 300 speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
@@ -274,6 +276,7 @@ sleep 30
 #./speed-browse-test.sh $suffix $t_s
 
 # test multiple CDNs
+myprint "Running CDN test in `get_network_type`"
 ./cdn-test.sh $suffix $t_s | timeout 300 cat
 sleep 30 
 
@@ -283,6 +286,7 @@ sleep 30
 # test multiple webages -- TEMPORARILY DISABLED 
 if [ $opt == "long" ] 
 then 
+    myprint "Running web test in `get_network_type`"
 	./v2/web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap --single | timeout 300 cat # reduced number of webpage tests
 	sleep 30 
 else 

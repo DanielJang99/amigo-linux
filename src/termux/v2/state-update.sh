@@ -166,7 +166,8 @@ generate_post_data(){
     "mobile_ip":"${mobile_ip}",
     "mobile_state":"${mobile_state}", 
     "mobile_signal":"${mobile_signal}",
-    "today_mobile_data":"${mobile_data}"
+    "today_mobile_data":"${mobile_data}",
+	"network_type": "${network_type}"
     }
 EOF
 }
@@ -367,8 +368,7 @@ update_wifi_mobile(){
 	then 
 		cpu_util=`cat ".cpu-usage" | cut -f 1 -d "."`
 	fi 
-	myprint "Device info. Wifi:$wifi_ip Mobile:$mobile_ip DefaultIface:$def_iface GoogleAccountStatus:$google_status CPULast:$cpu_util IsPaused:$isPaused NetTesting:$num"
-
+	myprint "Device info. Wifi:$wifi_ip Mobile:$mobile_ip DefaultIface:$def_iface GoogleAccountStatus:$google_status CPULast:$cpu_util IsPaused:$isPaused NetTesting:$num NetworkType:$network_type"
 }
 
 # parameters
@@ -399,6 +399,7 @@ vrs="2.9"                              # code version
 max_screen_timeout="2147483647"        # do not turn off screen 
 curl_duration="-1"                     # last value measured of curl duration
 isPaused="N/A"                         # hold info on whether a phone is paused or not
+network_type=`get_network_type`	
 	
 # check if testing
 if [ $# -eq 1 ] 
@@ -576,6 +577,7 @@ do
 	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | grep -v "timeout" | wc -l`			
 	
 	# update WiFi and mobile phone connectivity if it is time to do so (once a minute)
+	network_type=`get_network_type`	
 	let "t_last_wifi_mobile_update =  current_time - t_wifi_mobile_update"
 	if [ $t_last_wifi_mobile_update -gt 60 ] 
 	then 
@@ -640,7 +642,7 @@ do
 						t_wifi_mobile_update=`date +%s`	
 						
 						# open a random webpage 
-						myprint "Open a random webpage -- ./v2/web-test.sh  --suffix $suffix --id $time_sel-"user" --iface $def_iface --single --pcap"
+						myprint "Open a random webpage in `get_network_type` -- ./v2/web-test.sh  --suffix $suffix --id $time_sel-"user" --iface $def_iface --single --pcap"
 						./v2/web-test.sh  --suffix $suffix --id $time_sel-"user" --iface $def_iface --single --pcap
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es rateid $time_sel --es accept "Please-rate-how-quickly-the-page-loaded:1-star-(slow)--5-stars-(fast)"
 						;;
@@ -650,7 +652,7 @@ do
 						clean_file ".locked"
 						update_wifi_mobile 
 						t_wifi_mobile_update=`date +%s`	
-						myprint "Watch a video -- ./v2/youtube-test.sh --suffix $suffix --id $time_sel-"user" --iface $def_iface --pcap --single"						
+						myprint "Watch a video in `get_network_type` -- ./v2/youtube-test.sh --suffix $suffix --id $time_sel-"user" --iface $def_iface --pcap --single"						
 						./v2/youtube-test.sh --suffix $suffix --id $time_sel-"user" --iface $def_iface --pcap --single
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es rateid $time_sel --es accept "Please-rate-how-the-video-played:1-star-(poor)--5-stars-(great)"
 						;;
@@ -949,7 +951,7 @@ do
 			t_wifi_mobile_update=`date +%s`
 			if [ ! -z "$wifi_iface" ]
 			then	 	  	    
-				myprint "./net-testing.sh $suffix $current_time $def_iface \"long\" > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+				myprint "./net-testing.sh in `get_network_type` $suffix $current_time $def_iface \"long\" > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt"
 				(./v2/net-testing.sh $suffix $current_time $def_iface "long" | timeout 1200 cat > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
 				num=1
 				echo $current_time > ".last_net"
@@ -980,7 +982,7 @@ do
 			fi  
 			if [[ $skipping == "false" ]]
 			then
-				myprint "./net-testing.sh $suffix $current_time $def_iface \"long\" > logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+				myprint "./net-testing.sh in `get_network_type` $suffix $current_time $def_iface \"long\" > logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt"
 				(./v2/net-testing.sh $suffix $current_time $def_iface "long"| timeout 1200 cat > logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 & )
 				num=1
 				echo $current_time > ".last_net"
@@ -1008,7 +1010,7 @@ do
 			if [[ $skipping == "false" ]]
 			then
 				myprint "Time to run SHORT test: $time_from_last_net > $NET_INTERVAL_SHORT -- DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
-				myprint "./net-testing.sh $suffix $current_time $def_iface \"short\" > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+				myprint "./net-testing.sh in `get_network_type` $suffix $current_time $def_iface \"short\" > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt"
 				(./v2/net-testing.sh $suffix $current_time $def_iface "short" | timeout 1200 cat > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 & )
 				num=1
 				echo $current_time > ".last_net_short"

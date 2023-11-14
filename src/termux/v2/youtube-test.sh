@@ -115,7 +115,8 @@ generate_post_data(){
     "avg_ping6":"${avg_ping6}",    
     "bdw_used_MB":"${traffic}",
     "tshark_traffic_MB":"${tshark_size}", 
-    "msg":"${msg}"
+    "msg":"${msg}", 
+	"network_type": "${network_type}"
     }
 EOF
 }
@@ -172,6 +173,7 @@ first_run="false"                  # first time ever youtube was run
 cpu_usage_middle="N/A"             # CPU measured in the middle of a test 
 MAX_LAUNCH_TIMEOUT=30              # maximum duration for youtube to launch
 record_video="false"               # record a video of enabling stats for nerds 
+network_type=`get_network_type`
 
 # read input parameters
 while [ "$#" -gt 0 ]
