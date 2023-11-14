@@ -308,11 +308,25 @@ browser="chrome"
 package="com.android.chrome"
 activity="com.google.android.apps.chrome.Main"
 myprint "[INFO] Cleaning browser data ($app-->$package)"
-su -c rm -fr "/data/data/$package/cache/*"
-# sudo pm clear $package
-su -c am start -n $package/$activity
-sleep 3
+cur_app=`sudo dumpsys activity | grep -E 'mCurrentFocus' | grep -E $package`
+iter=0
+while [ -z "$cur_app" -a $iter -lte 10 ]
+do
+	su -c rm -fr "/data/data/$package/cache/*"
+	sleep 3
+	su -c am start -n $package/$activity
+	sleep 4
+	cur_app=`sudo dumpsys activity | grep -E 'mCurrentFocus' | grep -E $package`
+	let "iter++"
+
+	if [ $iter -eq 10 ];then
+		myprint "[ERROR] Chrome failed to open after 10 tries..."
+		exit 1
+	fi
+
+done
 chrome_onboarding
+myprint "[INFO] Chrome Onboarding Complete"
 #browser_setup #FIXME => allow to skip chrome onboarding, but using a non working option
 
 # get private  IP in use
