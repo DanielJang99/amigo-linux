@@ -207,11 +207,6 @@ update_location(){
 	gzip $res_dir"/loc-$current_time.txt"
 }
 
-# helper to get current mobile network type (3g, 4g, 5g)
-get_mobile_type(){
-	echo sudo dumpsys telephony.registry | grep "mServiceState" | head -n 1 | awk -F'MobileDataRat=' '{split($2, a, /[ ,]/); print a[1]}'
-}
-
 # helper to maintain up-to-date wifi/mobile info 
 update_wifi_mobile(){
 
@@ -462,10 +457,13 @@ su -c chmod -R +rx v2/
 
 # start CPU monitoring (background)
 # TODO: check whether monitor-cpu is already running
-is_monitoring=`ps aux -e | grep "monitor_cpu.sh" | grep "bash" `
+is_monitoring=`ps aux -e | grep "bash ./monitor-cpu.sh" | grep -v "grep" `
 if [ -z "$is_monitoring" ]
 then
+	myprint "Start CPU Monitoring"
 	./monitor-cpu.sh &
+else 
+	myprint "CPU Monitoring already enabled"
 fi
 
 # ensure that BT is enabled 
@@ -501,7 +499,6 @@ sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/fi
 
 #restart Kenzo - so that background service runs and info is populated 
 turn_device_on
-if [ -f ]
 echo -e "$uid\t$physical_id" > ".temp"
 sudo cp ".temp" "/storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
 su -c chmod -R 755 /storage/emulated/0/Android/data/com.example.sensorexample/files/*.txt
