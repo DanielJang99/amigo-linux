@@ -249,14 +249,17 @@ fi
 ping_youtube &
 
 # update UID if needed 
-if [ $uid == "none" ]
+if [ -f ".uid" ]
 then 
+	uid=`cat ".uid" | awk '{print $2}'`
+	physical_id=`cat ".uid" | awk '{print $1}'`
+else 
 	uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
-fi 
-if [ -f "uid-list.txt" ] 
-then 
-	physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | cut -f 1`
-fi 
+	if [ -f "uid-list.txt" ] 
+	then 
+		physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | awk '{print $1}'`
+	fi 
+fi
 myprint "UID: $uid PhysicalID: $physical_id"
 
 # folder creation

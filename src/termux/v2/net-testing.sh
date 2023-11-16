@@ -50,11 +50,17 @@ run_zus(){
 	#switch to 3G 
 	traffic_start=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 	myprint "NYU-stuff. Switch to 3G"	
-    uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
-	if [ -f "uid-list.txt" ] 
-	then 
-		physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | cut -f 1`
-	fi 
+    if [ -f ".uid" ]
+    then 
+        uid=`cat ".uid" | awk '{print $2}'`
+        physical_id=`cat ".uid" | awk '{print $1}'`
+    else 
+        uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
+        if [ -f "uid-list.txt" ] 
+        then 
+            physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | awk '{print $1}'`
+        fi 
+    fi
 	myprint "UID: $uid PhysicalID: $physical_id"
 	turn_device_on
 	am start -n com.samsung.android.app.telephonyui/com.samsung.android.app.telephonyui.netsettings.ui.simcardmanager.SimCardMgrActivity

@@ -277,14 +277,17 @@ sudo  settings put system accelerometer_rotation 0 # disable (shows portrait)
 sudo  settings put system user_rotation 0          # put in portrait
 
 # update UID if needed 
-if [ $uid == "none" ]
+if [ -f ".uid" ]
 then 
-    uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
-fi 
-if [ -f "uid-list.txt" ] 
-then 
-	physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | cut -f 1`
-fi 
+	uid=`cat ".uid" | awk '{print $2}'`
+	physical_id=`cat ".uid" | awk '{print $1}'`
+else 
+	uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
+	if [ -f "uid-list.txt" ] 
+	then 
+		physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | awk '{print $1}'`
+	fi 
+fi
 myprint "UID: $uid PhisicalID: $physical_id"
 
 # folder creation
