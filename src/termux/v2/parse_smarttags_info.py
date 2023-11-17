@@ -27,15 +27,24 @@ def main(s):
                 fTime = dev_info.split(":")[1]
             if "firstAcc" in dev_info:
                 fAcc = dev_info.split(":")[1]
-            if "secondLat" in dev_info:
-                sLat = dev_info.split(":")[1]
-            if "secondLong" in dev_info:
-                sLong  = dev_info.split(":")[1]
-            if "secondTime" in dev_info:
-                sTime  = dev_info.split(":")[1]
-            if "secondAcc" in dev_info:
-                sAcc  = dev_info.split(":")[1]
-        print(name, fLat, fLong, fTime, fAcc, sLat, sLong, sTime, sAcc)
+            # if "secondLat" in dev_info:
+            #     sLat = dev_info.split(":")[1]
+            # if "secondLong" in dev_info:
+            #     sLong  = dev_info.split(":")[1]
+            # if "secondTime" in dev_info:
+            #     sTime  = dev_info.split(":")[1]
+            # if "secondAcc" in dev_info:
+            #     sAcc  = dev_info.split(":")[1]
+        if "ST" in name:
+            device_dict = {
+                "name": name, 
+                "Latitude": fLat, 
+                "Longitude": fLong, 
+                "Accuracy": fAcc, 
+                "lastUpdated": fTime
+            }
+            print(device_dict)
+        
 
 if '__main__' == __name__:
     main(sys.argv[1])

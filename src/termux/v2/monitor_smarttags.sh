@@ -29,9 +29,18 @@ sleep 10
 # get cache file 
 su -c cp /data/data/com.samsung.android.oneconnect/shared_prefs/FME_SELECTED_DEVICE.xml /data/data/com.termux/files/home/mobile-testbed/src/termux
 su -c chmod 755 FME_SELECTED_DEVICE.xml
-
 SMARTTHINGS_DEVICES=`cat FME_SELECTED_DEVICE.xml | grep "SELECTED_FME_ALL_INFO"`
-python v2/parse_smarttags_info.py "$SMARTTHINGS_DEVICES" >> .smarttags_logs
+
+today=`date +%d-%m-%Y`
+smart_tag_log_dir="smarttag_logs/${today}"
+if [ ! -d "$smart_tag_log_dir" ];then 
+    mkdir -p $smart_tag_log_dir
+fi
+curr_hour=`date +%H`
+output_file="${smart_tag_log_dir}/smarttag_log_${curr_hour}.txt"
+curr_time=`date +\%m-\%d-\%y_\%H:\%M:\%S`
+echo "$curr_time" >> $output_file
+python v2/parse_smarttags_info.py "$SMARTTHINGS_DEVICES" >> $output_file 
 
 close_all 
 turn_device_off
