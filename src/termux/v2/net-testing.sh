@@ -39,6 +39,21 @@ switch_network(){
     fi
 }
 
+# kill a test if it runs more than 5 minutes 
+watch_test_timeout(){
+    TEST_TIMEOUT=300
+    ( sleep $TEST_TIMEOUT && sudo kill -9 $1 ) 2>/dev/null & watcher=$!
+    if wait $pid 2>/dev/null; then
+        sudo kill -9 $watcher
+        wait $watcher
+        sleep_pid=`ps aux | grep "sleep 300" | awk '{print $2}'`
+        sudo kill -9 $sleep_pid
+        echo "Test completed"
+    else
+        echo "Test process after running for 5 minutes"
+    fi
+}
+
 # run NYU measurement 
 run_zus(){
 	# params and folder organization
@@ -179,7 +194,8 @@ free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 if [ $opt == "long" ] 
 then 
     myprint "Running youtube test in `get_network_type`"
-	./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single | timeout 300 cat
+	( ./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single ) & test_pid=$!
+    watch_test_timeout $test_pid
 	turn_device_off
 	myprint "Sleep 30 to lower CPU load..."
 	sleep 30  		 
@@ -189,7 +205,8 @@ fi
 
 # run multiple MTR
 myprint "Running MTR test in `get_network_type`"
-./mtr.sh $suffix $t_s | timeout 300 cat 
+( ./mtr.sh $suffix $t_s ) & test_pid=$!
+watch_test_timeout $test_pid 
 
 # run nyu stuff -- only if MOBILE and not done too many already 
 num_runs_today=0
@@ -283,7 +300,8 @@ sleep 30
 
 # test multiple CDNs
 myprint "Running CDN test in `get_network_type`"
-./cdn-test.sh $suffix $t_s | timeout 300 cat
+( ./cdn-test.sh $suffix $t_s ) & test_pid=$!
+watch_test_timeout $test_pid
 sleep 30 
 
 # QUIC test? 
@@ -293,8 +311,9 @@ sleep 30
 if [ $opt == "long" ] 
 then 
     myprint "Running web test in `get_network_type`"
-	./v2/web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap --single | timeout 300 cat # reduced number of webpage tests
-	sleep 30 
+	( ./v2/web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap --single ) & test_pid=$! # reduced number of webpage tests
+	watch_test_timeout $test_pid
+    sleep 30 
 else 
 	myprint "Skipping WebTest test sing option:$opt"
 fi 
@@ -302,6 +321,7 @@ fi
 # safety cleanup 
 sudo pm clear com.android.chrome
 #sudo pm clear com.google.android.youtube
+turn_device_on
 close_all
 sudo killall tcpdump
 for pid in `ps aux | grep 'youtube-test\|web-test\|mtr.sh\|cdn-test.sh\|speedtest-cli'  | grep -v "grep" | grep -v "stop" | awk '{print $2}'`

@@ -313,8 +313,9 @@ activity="com.google.android.apps.chrome.Main"
 myprint "[INFO] Cleaning browser data ($app-->$package)"
 cur_app=`sudo dumpsys activity | grep -E 'mCurrentFocus' | grep -E $package`
 iter=0
-while [ -z "$cur_app" -a $iter -lte 10 ]
+while [ -z "$cur_app" -a $iter -le 10 ]
 do
+	turn_device_on
 	su -c rm -fr "/data/data/$package/cache/*"
 	sleep 3
 	su -c am start -n $package/$activity
