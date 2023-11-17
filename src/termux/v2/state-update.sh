@@ -507,12 +507,18 @@ sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
 sudo pm grant $kenzo_pkg android.permission.BLUETOOTH_SCAN
 sudo pm grant $kenzo_pkg android.permission.BLUETOOTH_CONNECT
 sudo pm grant $kenzo_pkg android.permission.ACCESS_BACKGROUND_LOCATION
-turn_device_on
-su -c monkey -p $kenzo_pkg 1 > /dev/null 2>&1
-sleep 5
-foreground=`sudo dumpsys activity | grep -E 'mCurrentFocus' | head -n 1 | cut -d '/' -f1 | sed 's/.* //g'`
-myprint "Confirm Kenzo is in the foregound: $foreground" 
-sudo cp ".temp" "/storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
+foreground=""
+while true ; do
+	turn_device_on
+	sleep 2
+	su -c monkey -p $kenzo_pkg 1 > /dev/null 2>&1
+	sleep 5
+	foreground=`sudo dumpsys activity | grep -E 'mCurrentFocus' | head -n 1 | cut -d '/' -f1 | sed 's/.* //g'`
+	myprint "Confirm Kenzo is in the foregound: $foreground" 
+	if [[ $foreground == *"sensorexample"* ]]
+		break
+	fi
+done 
 
 # derive B from GB
 let "MAX_MOBILE = MAX_MOBILE_GB * 1000000000"
