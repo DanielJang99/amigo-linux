@@ -2,7 +2,7 @@
 import sys
 
 def main(s):
-    devices = s.replace("&quot;", "").split('[')[1].split(']')[0].replace("}","").split("{")
+    devices = s.replace("&quot;", "").replace("}","").split("{")
     for device in devices:
         if "TAG" not in device:
             continue 
@@ -12,10 +12,6 @@ def main(s):
         fLong = ""
         fTime = ""
         fAcc = ""
-        sLat = ""
-        sLong = ""
-        sTime = ""
-        sAcc = ""
         for dev_info in device_infos:
             if "name" in dev_info:
                 name = dev_info.split(":")[1]
@@ -27,14 +23,6 @@ def main(s):
                 fTime = dev_info.split(":")[1]
             if "firstAcc" in dev_info:
                 fAcc = dev_info.split(":")[1]
-            # if "secondLat" in dev_info:
-            #     sLat = dev_info.split(":")[1]
-            # if "secondLong" in dev_info:
-            #     sLong  = dev_info.split(":")[1]
-            # if "secondTime" in dev_info:
-            #     sTime  = dev_info.split(":")[1]
-            # if "secondAcc" in dev_info:
-            #     sAcc  = dev_info.split(":")[1]
         if "ST" in name:
             device_dict = {
                 "name": name, 
