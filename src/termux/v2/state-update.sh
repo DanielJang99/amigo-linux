@@ -515,7 +515,7 @@ while true ; do
 	sleep 5
 	foreground=`sudo dumpsys activity | grep -E 'mCurrentFocus' | head -n 1 | cut -d '/' -f1 | sed 's/.* //g'`
 	myprint "Confirm Kenzo is in the foregound: $foreground" 
-	if [[ $foreground == *"sensorexample"* ]]
+	if [[ $foreground == *"sensorexample"* ]]; then
 		break
 	fi
 done 
@@ -1100,7 +1100,7 @@ do
 		echo $current_time > ".last_report"
 	fi 
 
-	turn_device_off
+	# turn_device_off
 	
 	# stop here if testing 
 	if [[ $testing == "true" ]] 
