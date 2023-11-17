@@ -41,12 +41,13 @@ switch_network(){
 
 # kill a test if it runs more than 5 minutes 
 watch_test_timeout(){
+    myprint "Watching PID: $1"
     TEST_TIMEOUT=300
     ( sleep $TEST_TIMEOUT && sudo kill -9 $1 ) 2>/dev/null & watcher=$!
-    if wait $pid 2>/dev/null; then
+    if wait $1 2>/dev/null; then
         sudo kill -9 $watcher
         wait $watcher
-        sleep_pid=`ps aux | grep "sleep 300" | awk '{print $2}'`
+        sleep_pid=`ps aux | grep "sleep 300" | head -n 1 | awk '{print $2}'`
         sudo kill -9 $sleep_pid
         echo "Test completed"
     else
