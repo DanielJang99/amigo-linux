@@ -126,7 +126,13 @@ turn_device_on(){
 			sleep 1
 			sudo input swipe 500 1900 500 1000
 		else
-			myprint "Screen is ON. Nothing to do!"
+			sudo dumpsys window | grep "mDreamingLockscreen=true" > /dev/null
+			if [ $? -eq 0 ]
+			then
+				sudo input swipe 500 1900 500 1000
+			else
+				myprint "Screen is ON. Nothing to do!"
+			fi
 			is_on="true"
 			ans=0
 		fi
@@ -314,6 +320,9 @@ close_all(){
 	if [ $dev_model == "SM-A346E" ] 
 	then 
 		tap_screen 540 1820
+	elif [ $dev_model == "SM-A528B" ]
+	then 
+		tap_screen 580 1860
 	else  
 		tap_screen 370 1210 
 	fi
