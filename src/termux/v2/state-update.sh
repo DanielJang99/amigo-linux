@@ -603,7 +603,7 @@ do
 			t_start_pause=`date +%s`
 			myprint "Paused by user! Time: $t_start_pause"
 			
-			if [[ $def_iface == "none" ]] 
+			if [[ $def_iface == "none" -o $network_type != *"true"* ]] 
 			then
 				myprint "Skipping report sending since not connected"
 			else 
@@ -630,7 +630,7 @@ do
 		if [ $time_from_sel -lt $time_check ]  
 		then 
 			myprint "User entered selection: $sel_id (TimeSinceSel:$time_from_sel)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
-			if [ $def_iface != "none" ] 
+			if [ $def_iface != "none" -a $network_type == *"true"* ] 
 			then
 				case $sel_id in
 					"0")
@@ -722,7 +722,7 @@ do
 	last_slow_loop_time=$current_time
 
 	# check if there is a new command to run
-	if [ $def_iface != "none" ] 
+	if [ $def_iface != "none" -a $network_type == *"true"* ] 
 	then	
 		prev_command="none"
 		if [ -f ".prev_command" ] 
@@ -869,7 +869,7 @@ do
 			# get uptime
 			uptime_info=`uptime`
 
-			if [[ $def_iface == "none" ]] 
+			if [[ $def_iface == "none" -o $network_type != *"true"* ]] 
 			then
 				myprint "Skipping report sending since not connected"
 			else 
@@ -933,7 +933,7 @@ do
 	myprint "TimeFromLastNetLong:$time_from_last_net sec TimeFromLastNetShort:$time_from_last_net_short sec TimeFromLastNetForced:$time_from_last_net_forced sec ShouldRunIfTime:$net_status RunningNetProc:$num LockedStatus:$locked"
 	
 	# 1) flag set, 2) no previous running, 3) connected (basic checks to see if we should run)
-	if [ $net_status == "true" -a $num -eq 0 -a $def_iface != "none" -a $locked == "false" ]
+	if [ $net_status == "true" -a $num -eq 0 -a $def_iface != "none" -a $locked == "false" -a $network_type == *"true"* ]
 	then
 		# update counter of how many runs today 
 		curr_hour=`date +%H`
@@ -1019,7 +1019,7 @@ do
 			fi
 		fi 
 	else
-		myprint "Skipping net-testing. NetStatus:$net_status NumNetProc:$num DefIface:$def_iface LockedStatus:$locked"
+		myprint "Skipping net-testing. NetStatus:$net_status NumNetProc:$num DefIface:$def_iface LockedStatus:$locked network_type:$network_type"
 	fi 
 	
 	# check if it is time to status report
@@ -1084,7 +1084,7 @@ do
 		# get uptime
 		uptime_info=`uptime`
 
-		if [[ $def_iface == "none" ]] 
+		if [[ $def_iface == "none" -o $network_type != *"true"* ]] 
 		then
 			myprint "Skipping report sending since not connected"
 		else 

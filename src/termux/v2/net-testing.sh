@@ -194,20 +194,30 @@ free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 # video testing with youtube
 if [ $opt == "long" ] 
 then 
-    myprint "Running youtube test in `get_network_type`"
-	( ./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single ) & test_pid=$!
-    watch_test_timeout $test_pid
-	turn_device_off
-	myprint "Sleep 30 to lower CPU load..."
-	sleep 30  		 
+    network_type=`get_network_type`
+    if [ $network_type == *"true"* ];then 
+        myprint "Running youtube test in $network_type"
+        ( ./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single ) & test_pid=$!
+        watch_test_timeout $test_pid
+        turn_device_off
+        myprint "Sleep 30 to lower CPU load..."
+        sleep 30  		 
+    else
+        myprint "Skipping Youtube test since internet is not reachable"
+    fi
 else 
 	myprint "Skipping YouTube test sing option:$opt"
 fi 
 
 # run multiple MTR
-myprint "Running MTR test in `get_network_type`"
-( ./mtr.sh $suffix $t_s ) & test_pid=$!
-watch_test_timeout $test_pid 
+network_type=`get_network_type`
+if [ $network_type == *"true"* ];then
+    myprint "Running MTR test in $network_type"
+    ( ./mtr.sh $suffix $t_s ) & test_pid=$!
+    watch_test_timeout $test_pid 
+else 
+    myprint "Skipping mtr test since internet is not reachable"
+fi
 
 # run nyu stuff -- only if MOBILE and not done too many already 
 num_runs_today=0
@@ -288,33 +298,48 @@ then
 fi
 
 # run a speedtest 
-myprint "Running speedtest-cli in `get_network_type`"
-res_folder="speedtest-cli-logs/${suffix}"
-mkdir -p $res_folder
-timeout 300 speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
-gzip "${res_folder}/speedtest-$t_s.json"
-myprint "Sleep 30 to lower CPU load..."
-sleep 30  		 
+network_type=`get_network_type`
+if [ $network_type == *"true"* ];then
+    myprint "Running speedtest-cli in $network_type"
+    res_folder="speedtest-cli-logs/${suffix}"
+    mkdir -p $res_folder
+    timeout 300 speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
+    gzip "${res_folder}/speedtest-$t_s.json"
+    myprint "Sleep 30 to lower CPU load..."
+    sleep 30
+else 
+    myprint "Skipping Speed Test since internet is not reachable"
+fi
 
 # run a speedtest in the browser (fast.com) -- having issue on this phone 
 #./speed-browse-test.sh $suffix $t_s
 
 # test multiple CDNs
-myprint "Running CDN test in `get_network_type`"
-( ./cdn-test.sh $suffix $t_s ) & test_pid=$!
-watch_test_timeout $test_pid
-sleep 30 
+network_type=`get_network_type`
+if [ $network_type == *"true"* ];then
+    myprint "Running CDN test in $network_type"
+    ( ./cdn-test.sh $suffix $t_s ) & test_pid=$!
+    watch_test_timeout $test_pid
+    sleep 30 
+else 
+    myprint "Skipping CDN Test since internet is not reachable"
+fi
 
 # QUIC test? 
 # TODO 
 
 # test multiple webages -- TEMPORARILY DISABLED 
 if [ $opt == "long" ] 
-then 
-    myprint "Running web test in `get_network_type`"
-	( ./v2/web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap --single ) & test_pid=$! # reduced number of webpage tests
-	watch_test_timeout $test_pid
-    sleep 30 
+then
+    network_type=`get_network_type`
+    if [ $network_type == *"true"* ];then
+        myprint "Running web test in $network_type"
+        ( ./v2/web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap --single ) & test_pid=$! # reduced number of webpage tests
+        watch_test_timeout $test_pid
+        sleep 30 
+    else 
+        myprint "Skipping WebTest test since internet is not reachable"
+    fi
 else 
 	myprint "Skipping WebTest test sing option:$opt"
 fi 
