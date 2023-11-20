@@ -195,7 +195,7 @@ free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 if [ $opt == "long" ] 
 then 
     network_type=`get_network_type`
-    if [ $network_type == *"true"* ];then 
+    if [[ $network_type == *"true"* ]];then 
         myprint "Running youtube test in $network_type"
         ( ./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single ) & test_pid=$!
         watch_test_timeout $test_pid
@@ -211,7 +211,7 @@ fi
 
 # run multiple MTR
 network_type=`get_network_type`
-if [ $network_type == *"true"* ];then
+if [[ $network_type == *"true"* ]];then
     myprint "Running MTR test in $network_type"
     ( ./mtr.sh $suffix $t_s ) & test_pid=$!
     watch_test_timeout $test_pid 
@@ -299,7 +299,7 @@ fi
 
 # run a speedtest 
 network_type=`get_network_type`
-if [ $network_type == *"true"* ];then
+if [[ $network_type == *"true"* ]];then
     myprint "Running speedtest-cli in $network_type"
     res_folder="speedtest-cli-logs/${suffix}"
     mkdir -p $res_folder
@@ -316,7 +316,7 @@ fi
 
 # test multiple CDNs
 network_type=`get_network_type`
-if [ $network_type == *"true"* ];then
+if [[ $network_type == *"true"* ]];then
     myprint "Running CDN test in $network_type"
     ( ./cdn-test.sh $suffix $t_s ) & test_pid=$!
     watch_test_timeout $test_pid
@@ -332,7 +332,7 @@ fi
 if [ $opt == "long" ] 
 then
     network_type=`get_network_type`
-    if [ $network_type == *"true"* ];then
+    if [[ $network_type == *"true"* ]];then
         myprint "Running web test in $network_type"
         ( ./v2/web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap --single ) & test_pid=$! # reduced number of webpage tests
         watch_test_timeout $test_pid
