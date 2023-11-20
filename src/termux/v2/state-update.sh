@@ -152,6 +152,8 @@ generate_post_data(){
     "charging":"${charging}",
 	"kenzo_loc": "${kenzo_loc}",
     "location_info":"${loc_str}",
+	"gps_loc":"${gps_loc}",
+    "network_loc":"${network_loc}",
     "foreground_app":"${foreground}",
     "net_testing_proc":"${num}", 
     "wifi_iface":"${wifi_iface}", 
@@ -193,9 +195,21 @@ check_cpu(){
 
 # update location information 
 update_location(){
-	turn_device_on
+	# TODO: is it necessary to turn device on?
+	turn_device_on 
+
 	res_dir="locationlogs/${suffix}"
 	mkdir -p $res_dir	
+
+	# use termux location api 
+	timeout $MAX_LOCATION termux-location -p network -r last > $res_dir"/network-loc-$current_time.txt"
+	lat=`cat $res_dir"/network-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
+	long=`cat $res_dir"/network-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
+	network_loc="$lat,$long"
+	timeout $MAX_LOCATION termux-location -p gps -r last > $res_dir"/gps-loc-$current_time.txt"		
+	lat=`cat $res_dir"/gps-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
+	long=`cat $res_dir"/gps-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
+	gps_loc="$lat,$long"		
 
 	# get latest location from Kenzo App 	
 	kenzo_loc=`sudo tail -n 1 /data/data/com.example.sensorexample/files/log.csv`
@@ -588,7 +602,7 @@ do
 	
 	# check if user wants us to pause 
 	user_status="true"
-	if [ -f $user_file ] 
+	if sudo [ -f $user_file ] 
 	then 
 		user_status=`sudo cat $user_file`
 	fi 
@@ -621,8 +635,7 @@ do
 	fi 
 	
 	# check if user wants to run a test 
-	if [ -f $sel_file ] 
-	then 
+	if sudo [ -f $sel_file ];then 
 		sel_id=`sudo cat $sel_file | cut -f 1`
 		time_sel=`sudo cat $sel_file | cut -f 2`
 		let "time_from_sel = current_time - time_sel"
