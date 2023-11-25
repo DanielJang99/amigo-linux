@@ -360,6 +360,25 @@ phone_setup_simple(){
 
 # get current network type (wifi, LTE, 5G, etc) from file updated by Kenzo App 
 get_network_type() {
-	networkType=`sudo cat "/storage/emulated/0/Android/data/com.example.sensorexample/files/currentNetwork.txt"`
-	echo "$networkType"
+	networkFile="/storage/emulated/0/Android/data/com.example.sensorexample/files/currentNetwork.txt"
+	if sudo [ -f $networkFile ];then
+		sudo cat $networkFile | head -n 1 
+	fi
+}
+
+
+# get information about the link for a network, such as the list of DNS servers, local IP addresses, and network routes installed for the network
+get_network_properties() {
+	lpFile="/storage/emulated/0/Android/data/com.example.sensorexample/files/linkProperties.txt"
+	if sudo [ -f $lpFile ];then
+		sudo cat $lpFile
+	fi
+}
+
+# get information about properties of a network, such as the transports (Wi-Fi, mobile, Bluetooth) and what the network is capable of - supported bandwidth, link speed, etc 
+get_network_capabilities() {
+	networkFile="/storage/emulated/0/Android/data/com.example.sensorexample/files/currentNetwork.txt"
+	if sudo [ -f $networkFile ];then
+		sudo cat $networkFile | tail -n 2 | head -n 1 
+	fi
 }

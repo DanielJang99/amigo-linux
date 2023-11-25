@@ -41,7 +41,6 @@ switch_network(){
 
 # kill a test if it runs more than 5 minutes 
 watch_test_timeout(){
-    myprint "Watching PID: $1"
     TEST_TIMEOUT=300
     ( sleep $TEST_TIMEOUT && sudo kill -9 $1 ) 2>/dev/null & watcher=$!
     if wait $1 2>/dev/null; then
@@ -49,11 +48,85 @@ watch_test_timeout(){
         wait $watcher
         sleep_pid=`ps aux | grep "sleep 300" | head -n 1 | awk '{print $2}'`
         sudo kill -9 $sleep_pid
-        echo "Test completed"
+        myprint "Test completed"
     else
-        echo "Test process after running for 5 minutes"
+        myprint "Test process killed after running for 5 minutes"
     fi
 }
+
+run_experiment(){
+    currentNetwork=`get_network_type`
+    if [[ "$currentNetwork" == "WIFI_true"* ]];then
+        run_experiment_on_wifi $1
+    elif [[ "$currentNetwork" == "WIFI_false"* ]];then
+        myprint "Unable to run $1 due to no internet connection with current WIFI"
+    elif [[ "$currentNetwork" == *"true"* ]];then
+        run_experiment_across_sims $1
+    else
+        myprint "Unable to run $1 due to no internet connection"  
+    fi
+}
+
+run_experiment_on_wifi(){
+    myprint "Running in WIFI: $1"
+    myprint `get_network_properties`
+    ( $1 ) & exp_pid=$! 
+    watch_test_timeout $exp_pid
+}
+
+# run an experiment on esim, sim_lte, sim_5g (if possible)
+run_experiment_across_sims(){
+    subscriptions_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/subscriptions.txt"
+    if sudo [ -f $subscriptions_file ]; then
+        numSubs=`su -c cat $subscriptions_file | wc -l`
+        if [ $numSubs -gt 0 ]
+        then 
+            currentNetwork=`get_network_type`
+            if [ ! -z $currentNetwork ];then
+                for ((i=1; i<=numSubs; i++))
+                do
+                    # 1. switch sim 
+                    turn_device_on
+                    networkToTest=`su -c cat $subscriptions_file | head -n $i | tail -1`
+                    while [[ "$currentNetwork" != "$networkToTest"* ]];
+                    do
+                        su -c cmd statusbar expand-settings
+                        sudo input tap 850 1250
+                        sleep 0.5 
+                        sudo input tap 850 $((1000+$i*250))
+                        sleep 3
+                        currentNetwork=`get_network_type`
+                    done
+                    sudo input keyevent KEYCODE_HOME
+
+                    #2. check internet connectivity after selecting sim - 15 seconds
+                    numFails=0
+                    while [[ "$currentNetwork" == *"false"* && $numFails -lt 30 ]];
+                    do
+                        sleep 0.5 
+                        currentNetwork=`get_network_type`
+                        let "numFails++"
+                    done
+                    if [[ "$currentNetwork" == *"false"* ]];then
+                        myprint "Unable to run $1 due to no internet connection with current mobile data: $currentNetwork"
+                        continue
+                    fi
+
+                    #3. run test 
+                    myprint "Running in $currentNetwork"
+                    myprint `get_network_properties`
+                    ( $1 ) & exp_pid=$! 
+                    watch_test_timeout $exp_pid
+                done
+            fi
+        else 
+            myprint "Error running experiment in mobile data: no active subscriptions"
+        fi
+    else 
+        myprint "Error running experiment in mobile data: missing subscription file"
+    fi
+}
+
 
 # run NYU measurement 
 run_zus(){
@@ -194,30 +267,16 @@ free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 # video testing with youtube
 if [ $opt == "long" ] 
 then 
-    network_type=`get_network_type`
-    if [[ $network_type == *"true"* ]];then 
-        myprint "Running youtube test in $network_type"
-        ( ./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single ) & test_pid=$!
-        watch_test_timeout $test_pid
-        turn_device_off
-        myprint "Sleep 30 to lower CPU load..."
-        sleep 30  		 
-    else
-        myprint "Skipping Youtube test since internet is not reachable"
-    fi
+    run_experiment "./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single"
+    turn_device_off
+    myprint "Sleep 30 to lower CPU load..."
+    sleep 30  	
 else 
-	myprint "Skipping YouTube test sing option:$opt"
+	myprint "Skipping YouTube testing option:$opt"
 fi 
 
 # run multiple MTR
-network_type=`get_network_type`
-if [[ $network_type == *"true"* ]];then
-    myprint "Running MTR test in $network_type"
-    ( ./mtr.sh $suffix $t_s ) & test_pid=$!
-    watch_test_timeout $test_pid 
-else 
-    myprint "Skipping mtr test since internet is not reachable"
-fi
+run_experiment "./mtr.sh $suffix $t_s"
 
 # run nyu stuff -- only if MOBILE and not done too many already 
 num_runs_today=0
@@ -298,32 +357,16 @@ then
 fi
 
 # run a speedtest 
-network_type=`get_network_type`
-if [[ $network_type == *"true"* ]];then
-    myprint "Running speedtest-cli in $network_type"
-    res_folder="speedtest-cli-logs/${suffix}"
-    mkdir -p $res_folder
-    timeout 300 speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
-    gzip "${res_folder}/speedtest-$t_s.json"
-    myprint "Sleep 30 to lower CPU load..."
-    sleep 30
-else 
-    myprint "Skipping Speed Test since internet is not reachable"
-fi
+run_experiment "./v2/speed-test.sh --suffix $suffix --t_s $t_s"
+myprint "Sleep 30 to lower CPU load..."
+sleep 30
 
 # run a speedtest in the browser (fast.com) -- having issue on this phone 
 #./speed-browse-test.sh $suffix $t_s
 
 # test multiple CDNs
-network_type=`get_network_type`
-if [[ $network_type == *"true"* ]];then
-    myprint "Running CDN test in $network_type"
-    ( ./cdn-test.sh $suffix $t_s ) & test_pid=$!
-    watch_test_timeout $test_pid
-    sleep 30 
-else 
-    myprint "Skipping CDN Test since internet is not reachable"
-fi
+run_experiment "./cdn-test.sh $suffix $t_s"
+sleep 30
 
 # QUIC test? 
 # TODO 
@@ -331,17 +374,10 @@ fi
 # test multiple webages -- TEMPORARILY DISABLED 
 if [ $opt == "long" ] 
 then
-    network_type=`get_network_type`
-    if [[ $network_type == *"true"* ]];then
-        myprint "Running web test in $network_type"
-        ( ./v2/web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap --single ) & test_pid=$! # reduced number of webpage tests
-        watch_test_timeout $test_pid
-        sleep 30 
-    else 
-        myprint "Skipping WebTest test since internet is not reachable"
-    fi
+run_experiment "./v2/web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap --single" # reduced number of webpage tests
+sleep 30 
 else 
-	myprint "Skipping WebTest test sing option:$opt"
+	myprint "Skipping WebTest testing option:$opt"
 fi 
 
 # safety cleanup 
