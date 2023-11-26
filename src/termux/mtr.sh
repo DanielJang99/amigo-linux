@@ -13,6 +13,10 @@ else
 	exit -1
 fi
 
+# import utilities files needed
+adb_file=`pwd`"/adb-utils.sh"
+source $adb_file
+
 # helper to run a test 
 test(){
 	prefix=$2

@@ -153,7 +153,7 @@ res_folder="./cdnlogs/$uid"
 mkdir -p $res_folder 
 
 network_type=`get_network_type`	
-=`echo $network_type | cut -f 1 -d "_"`
+network_ind=`echo $network_type | cut -f 1 -d "_"`
 
 # CDN tests
 myprint "Starting CDN tests..."

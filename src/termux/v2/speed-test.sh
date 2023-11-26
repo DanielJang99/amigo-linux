@@ -1,4 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/env bash
+## Author: Daniel Jang (hsj276@nyu.edu)
+## Date: 11/24/2023
+
 adb_file=`pwd`"/adb-utils.sh"
 source $adb_file
 
