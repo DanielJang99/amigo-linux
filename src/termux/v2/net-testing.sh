@@ -69,8 +69,10 @@ run_experiment(){
 
 run_experiment_on_wifi(){
     myprint "Running in WIFI: $1"
-    myprint `get_network_properties`
-    ( $1 ) & exp_pid=$! 
+    networkProperties=`get_network_properties`
+    myprint $networkProperties
+    exp_cmd="$1 WIFI"
+    ( $exp_cmd ) & exp_pid=$! 
     watch_test_timeout $exp_pid
 }
 
@@ -82,7 +84,8 @@ run_experiment_across_sims(){
         if [ $numSubs -gt 0 ]
         then 
             currentNetwork=`get_network_type`
-            if [ ! -z $currentNetwork ];then
+            if [ ! -z "$currentNetwork" ]
+            then
                 for ((i=1; i<=numSubs; i++))
                 do
                     # 1. switch sim 
@@ -96,8 +99,12 @@ run_experiment_across_sims(){
                         sudo input tap 850 $((1000+$i*250))
                         sleep 3
                         currentNetwork=`get_network_type`
+                        if [[ "$currentNetwork" != "$networkToTest"* ]];then
+                            sudo input keyevent KEYCODE_BACK
+                            sleep 0.3
+                            sudo input keyevent KEYCODE_BACK
+                        fi
                     done
-                    sudo input keyevent KEYCODE_HOME
 
                     #2. check internet connectivity after selecting sim - 15 seconds
                     numFails=0
@@ -114,8 +121,10 @@ run_experiment_across_sims(){
 
                     #3. run test 
                     myprint "Running in $currentNetwork"
-                    myprint `get_network_properties`
-                    ( $1 ) & exp_pid=$! 
+                    networkProperties=`get_network_properties`
+                    myprint $networkProperties
+                    exp_cmd="$1 --currentNetwork $currentNetwork"
+                    ( $exp_cmd ) & exp_pid=$! 
                     watch_test_timeout $exp_pid
                 done
             fi
@@ -269,7 +278,7 @@ if [ $opt == "long" ]
 then 
     run_experiment "./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single"
     turn_device_off
-    myprint "Sleep 30 to lower CPU load..."
+    myprint "Sleep 30 after Youtube-test to lower CPU load..."
     sleep 30  	
 else 
 	myprint "Skipping YouTube testing option:$opt"
@@ -357,8 +366,8 @@ then
 fi
 
 # run a speedtest 
-run_experiment "./v2/speed-test.sh --suffix $suffix --t_s $t_s"
-myprint "Sleep 30 to lower CPU load..."
+run_experiment "./v2/speed-test.sh --suffix $suffix --id $t_s"
+myprint "Sleep 30 after speed-test to lower CPU load..."
 sleep 30
 
 # run a speedtest in the browser (fast.com) -- having issue on this phone 
@@ -366,6 +375,7 @@ sleep 30
 
 # test multiple CDNs
 run_experiment "./cdn-test.sh $suffix $t_s"
+myprint "Sleep 30 after CDN-test to lower CPU load..."
 sleep 30
 
 # QUIC test? 

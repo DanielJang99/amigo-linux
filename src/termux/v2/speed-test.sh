@@ -8,14 +8,19 @@ do
         --suffix)
             shift; suffix="$1"; shift;
             ;;
-        --t_s)
-            shift; t_s="$1"; shift;
+        --id)
+            shift; id="$1"; shift;
             ;;
+        -*) 
+            echo "ERROR: Unknown option $1"
     esac
 done
 
+network_type=`get_network_type`
+network_ind=`echo $network_type | cut -f 1 -d "_"`
+id="${id}_${network_ind}"
 res_folder="speedtest-cli-logs/${suffix}"
 mkdir -p $res_folder
-speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
-gzip "${res_folder}/speedtest-$t_s.json"
+speedtest-cli --json > "${res_folder}/speedtest-$id.json"
+gzip "${res_folder}/speedtest-$id.json"
 

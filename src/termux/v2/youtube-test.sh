@@ -219,6 +219,10 @@ do
     esac
 done
 
+# indicate current network in curr_run_id
+network_ind=`echo $network_type | cut -f 1 -d "_"`
+curr_run_id="${curr_run_id}_${network_ind}"
+
 # retrieve last used server port 
 if [ -f ".server_port" ] 
 then 

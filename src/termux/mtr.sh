@@ -18,13 +18,13 @@ test(){
 	prefix=$2
 	myprint "Testing $prefix"
 
-	sudo mtr -r4wc $num $1  >  $res_dir/$prefix-ipv4-$ts.txt 2>&1
-	gzip $res_dir/$prefix-ipv4-$ts.txt
+	sudo mtr -r4wc $num $1  >  $res_dir/$prefix-ipv4-$ts-$network_ind.txt 2>&1
+	gzip $res_dir/$prefix-ipv4-$ts-$network_ind.txt
 	ping6 -c 3 $1 > /dev/null 2>&1
 	if [ $? -eq 0 ] 
 	then 
-		sudo mtr -r6wc $num $1   >  $res_dir/$prefix-ipv6-$ts.txt 2>&1
-		gzip $res_dir/$prefix-ipv6-$ts.txt 
+		sudo mtr -r6wc $num $1   >  $res_dir/$prefix-ipv6-$ts-$network_ind.txt 2>&1
+		gzip $res_dir/$prefix-ipv6-$ts-$network_ind.txt 
 	fi 
 }
 
@@ -37,6 +37,9 @@ else
 	suffix=`date +%d-%m-%Y`
 	ts=`date +%s`
 fi 
+
+network_type=`get_network_type`
+network_ind=`echo $network_type | cut -f 1 -d "_"`
 
 # folder organization
 res_dir="mtrlogs/$suffix"
@@ -52,14 +55,14 @@ test facebook.com facebook
 test amazon.com amazon
 
 # popular DNS
-sudo mtr -r4wc $num 8.8.8.8 >  $res_dir/google-dns-ipv4-$ts.txt 2>&1
-gzip $res_dir/google-dns-ipv4-$ts.txt
-sudo mtr -r6wc $num 2001:4860:4860::8888 >  $res_dir/google-dns-ipv6-$ts.txt 2>&1
-gzip $res_dir/google-dns-ipv6-$ts.txt 
-sudo mtr -r4wc $num 1.1.1.1 >  $res_dir/cloudflare-dns-ipv4-$ts.txt 2>&1
-gzip $res_dir/cloudflare-dns-ipv4-$ts.txt 
-sudo mtr -r6wc $num 2606:4700:4700::1111 >  $res_dir/cloudflare-dns-ipv6-$ts.txt 2>&1
-gzip $res_dir/cloudflare-dns-ipv6-$ts.txt 
+sudo mtr -r4wc $num 8.8.8.8 >  $res_dir/google-dns-ipv4-$ts-$network_ind.txt 2>&1
+gzip $res_dir/google-dns-ipv4-$ts-$network_ind.txt
+sudo mtr -r6wc $num 2001:4860:4860::8888 >  $res_dir/google-dns-ipv6-$ts-$network_ind.txt 2>&1
+gzip $res_dir/google-dns-ipv6-$ts-$network_ind.txt 
+sudo mtr -r4wc $num 1.1.1.1 >  $res_dir/cloudflare-dns-ipv4-$ts-$network_ind.txt 2>&1
+gzip $res_dir/cloudflare-dns-ipv4-$ts-$network_ind.txt 
+sudo mtr -r6wc $num 2606:4700:4700::1111 >  $res_dir/cloudflare-dns-ipv6-$ts-$network_ind.txt 2>&1
+gzip $res_dir/cloudflare-dns-ipv6-$ts-$network_ind.txt 
 
 # test youtube right before youtube test (to better correlated)
 test youtube.com youtube

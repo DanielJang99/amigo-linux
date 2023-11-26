@@ -246,6 +246,10 @@ do
     esac
 done
 
+# indicate current network in curr_run_id
+network_ind=`echo $network_type | cut -f 1 -d "_"`
+curr_run_id="${curr_run_id}_${network_ind}"
+
 # make sure only this instance of this script is running
 my_pid=$$
 myprint "My PID: $my_pid"

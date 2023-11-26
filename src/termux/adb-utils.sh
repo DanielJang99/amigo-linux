@@ -209,18 +209,26 @@ chrome_onboarding(){
 	done
 	if [[ $curr_activity == *"FirstRunActivity"* ]]
 	then
-		tap_screen 550 1730 1   # click ACCEPT 
-		tap_screen 850 2040 1 
-		sudo input swipe 500 1300 500 800
-		tap_screen 850 2040 1 
-		tap_screen 550 1700 1 
-		#tap_screen 370 1210 1  # yes to sync 
-		# sudo input tap 120 1200 && sleep 0.1 && sudo input tap 120 1200
-		#tap_screen 120 1200 1   # no sync		
-		#tap_screen 120 1200 1   # no sync (no idea why need a double tap)
-		# below is needed in case of lite mode 
-		#tap_screen 600 1200 1    
-		#tap_screen 600 1200 1    
+		dev_model=`getprop ro.product.model | sed s/" "//g`
+		if [ $dev_model == "SM-G996B" ]
+		then
+			tap_screen 550 1800 1 
+			tap_screen 850 2100 1 
+			tap_screen 850 2100 1 
+		else 
+			tap_screen 550 1730 1   # click ACCEPT 
+			tap_screen 850 2040 1 
+			sudo input swipe 500 1300 500 800
+			tap_screen 850 2040 1 
+			tap_screen 550 1700 1 
+			#tap_screen 370 1210 1  # yes to sync 
+			# sudo input tap 120 1200 && sleep 0.1 && sudo input tap 120 1200
+			#tap_screen 120 1200 1   # no sync		
+			#tap_screen 120 1200 1   # no sync (no idea why need a double tap)
+			# below is needed in case of lite mode 
+			#tap_screen 600 1200 1    
+			#tap_screen 600 1200 1    
+		fi
 	else 
 		myprint "No onboarding was detected"
 	fi 
