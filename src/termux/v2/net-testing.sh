@@ -57,11 +57,11 @@ watch_test_timeout(){
 run_experiment(){
     currentNetwork=`get_network_type`
     if [[ "$currentNetwork" == "WIFI_true"* ]];then
-        run_experiment_on_wifi $1
+        run_experiment_on_wifi "$1"
     elif [[ "$currentNetwork" == "WIFI_false"* ]];then
         myprint "Unable to run $1 due to no internet connection with current WIFI"
     elif [[ "$currentNetwork" == *"true"* ]];then
-        run_experiment_across_sims $1
+        run_experiment_across_sims "$1"
     else
         myprint "Unable to run $1 due to no internet connection"  
     fi
@@ -70,9 +70,8 @@ run_experiment(){
 run_experiment_on_wifi(){
     myprint "Running in WIFI: $1"
     networkProperties=`get_network_properties`
-    myprint $networkProperties
-    exp_cmd="$1 WIFI"
-    ( $exp_cmd ) & exp_pid=$! 
+    myprint "$networkProperties"
+    ( $1 ) & exp_pid=$! 
     watch_test_timeout $exp_pid
 }
 
@@ -122,9 +121,8 @@ run_experiment_across_sims(){
                     #3. run test 
                     myprint "Running in $currentNetwork"
                     networkProperties=`get_network_properties`
-                    myprint $networkProperties
-                    exp_cmd="$1 --currentNetwork $currentNetwork"
-                    ( $exp_cmd ) & exp_pid=$! 
+                    myprint "$networkProperties"
+                    ( $1 ) & exp_pid=$! 
                     watch_test_timeout $exp_pid
                 done
             fi
