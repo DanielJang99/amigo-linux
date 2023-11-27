@@ -44,7 +44,7 @@ then
 fi 
 
 dev_model=`getprop ro.product.model | sed s/" "//g`
-if [ $dev_model == "SM-A346E" ] 
+if [ $dev_model == "SM-A346E" -o $dev_model == "SM-G966B" ] 
 then 
 	uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
 else
@@ -131,7 +131,7 @@ then
 	echo "Time to run! Sleep $n_sleep to avoid concurrent restarts"	
 	sleep $n_sleep
 	mkdir -p logs	
-	if [ $dev_model == "SM-A346E" ]
+	if [ $dev_model == "SM-A346E" -o $dev_model == "SM-G966B" ]
 	then 
 		./v2/state-update.sh > "logs/log-state-update-"`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1 &
 	else 

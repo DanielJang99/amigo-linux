@@ -584,8 +584,9 @@ last_slow_loop_time=0
 firstPause="true"
 while [[ $to_run == "true" ]] 
 do 
-	isWeheRunning==`ps aux | grep "run_wehe.sh" | grep -v "grep"`
-	if [ ! -z "$isWeheRunning" ];
+	isWeheRunning=`ps aux | grep "run_wehe.sh" | grep -v "grep"`
+	if [ ! -z "$isWeheRunning" ]
+	then
 		sleep 1200
 		continue
 	fi
