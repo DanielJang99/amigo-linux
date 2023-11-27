@@ -88,10 +88,10 @@ run_experiment_across_sims(){
                 for ((i=1;i<=numSubs;i++))
                 do
                     # 1. switch sim 
-                    turn_device_on
                     networkToTest=`su -c cat $subscriptions_file | head -n $i | tail -1`
                     while [[ "$currentNetwork" != "$networkToTest"* ]];
                     do
+                        turn_device_on
                         su -c cmd statusbar expand-settings
                         sleep 1 
                         sudo input tap 850 1250
@@ -276,7 +276,6 @@ free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 if [ $opt == "long" ] 
 then 
     run_experiment "./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single"
-    turn_device_off
     myprint "Sleep 30 after Youtube-test to lower CPU load..."
     sleep 30  	
 else 

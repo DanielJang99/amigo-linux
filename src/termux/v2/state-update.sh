@@ -1119,7 +1119,7 @@ do
 		echo $current_time > ".last_report"
 	fi 
 
-	turn_device_off
+	#turn_device_off
 	
 	# stop here if testing 
 	if [[ $testing == "true" ]] 
