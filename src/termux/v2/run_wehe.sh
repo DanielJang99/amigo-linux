@@ -31,6 +31,7 @@ run_wehe(){
     sudo input tap 550 2180
     sleep 1200 
     sudo input keyevent KEYCODE_HOME
+    close_all
 }
 
 tap_wifi(){
@@ -40,7 +41,7 @@ tap_wifi(){
     sleep 1 
     sudo input tap 150 1500
     sudo input keyevent KEYCODE_APP_SWITCH
-    sleep 0.5
+    sleep 1
     sudo input keyevent KEYCODE_BACK
     sleep 2
 }
@@ -81,8 +82,6 @@ then
         myprint "Wehe test was conducted recently"
         exit 0
     fi
-else 
-    echo "$current_time" > .wehe
 fi
 
 # check if there are sims on the device
@@ -137,6 +136,7 @@ run_wehe
 sleep 2
 tap_wifi  # disable wifi 
 # re-enable data 
+sleep 2
 su -c am start -n com.samsung.android.app.telephonyui/com.samsung.android.app.telephonyui.netsettings.ui.simcardmanager.SimCardMgrActivity
 sleep 0.5 
 sudo input swipe 500 1800 500 500
@@ -154,10 +154,13 @@ do
     let "iter++"
     if [ $iter -gt 20 ];then
         myprint "Failed to get mobile data with internet connectivity"
-        exit 0
+        break
     fi
 done
-run_wehe
+
+if [[ "$currentNetwork" == *"true" ]];
+    run_wehe
+fi
 turn_device_off
 
 today=`date +%d-%m-%Y`
@@ -168,3 +171,4 @@ fi
 
 su -c cp /data/data/mobi.meddle.wehe/shared_prefs/ReplayActPrefsFile.xml /data/data/com.termux/files/home/mobile-testbed/src/termux
 python ./v2/parse_wehe.py > "${wehe_log_dir}/output.txt"
+echo "$current_time" > .wehe

@@ -111,6 +111,7 @@ then
 	# update code 
 	myprint "Updating our code..."
 	git pull
+	su -c chmod 755 -R v2/
 	
 	# make sure net-testing is stopped
 	./stop-net-testing.sh  	

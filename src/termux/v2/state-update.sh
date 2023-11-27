@@ -584,6 +584,11 @@ last_slow_loop_time=0
 firstPause="true"
 while [[ $to_run == "true" ]] 
 do 
+	isWeheRunning==`ps aux | grep "run_wehe.sh" | grep -v "grep"`
+	if [ ! -z "$isWeheRunning" ];
+		sleep 1200
+		continue
+	fi
 	# keep track of time
 	current_time=`date +%s`
 	suffix=`date +%d-%m-%Y`
