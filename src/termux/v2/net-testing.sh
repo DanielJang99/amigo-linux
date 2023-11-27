@@ -72,7 +72,7 @@ run_experiment_on_wifi(){
     networkProperties=`get_network_properties`
     myprint "$networkProperties"
     ( $1 ) & exp_pid=$! 
-    watch_test_timeout $exp_pid
+    watch_test_timeout $exp_pid 2>/dev/null
 }
 
 # run an experiment on esim, sim_lte, sim_5g (if possible)
@@ -85,7 +85,7 @@ run_experiment_across_sims(){
             currentNetwork=`get_network_type`
             if [ ! -z "$currentNetwork" ]
             then
-                for ((i=1; i<=numSubs; i++))
+                for ((i=1;i<=numSubs;i++))
                 do
                     # 1. switch sim 
                     turn_device_on
@@ -93,21 +93,22 @@ run_experiment_across_sims(){
                     while [[ "$currentNetwork" != "$networkToTest"* ]];
                     do
                         su -c cmd statusbar expand-settings
+                        sleep 1 
                         sudo input tap 850 1250
-                        sleep 0.5 
+                        sleep 1 
                         sudo input tap 850 $((1000+$i*250))
                         sleep 3
+                        sudo input keyevent KEYCODE_APP_SWITCH
+                        sleep 0.5
+                        sudo input keyevent KEYCODE_BACK
+                        sleep 1
                         currentNetwork=`get_network_type`
-                        if [[ "$currentNetwork" != "$networkToTest"* ]];then
-                            sudo input keyevent KEYCODE_BACK
-                            sleep 0.3
-                            sudo input keyevent KEYCODE_BACK
-                        fi
                     done
+                    turn_device_off
 
-                    #2. check internet connectivity after selecting sim - 15 seconds
+                    #2. check internet connectivity after selecting sim - 10 seconds
                     numFails=0
-                    while [[ "$currentNetwork" == *"false"* && $numFails -lt 30 ]];
+                    while [[ "$currentNetwork" == *"false"* && $numFails -lt 20 ]];
                     do
                         sleep 0.5 
                         currentNetwork=`get_network_type`
@@ -123,7 +124,7 @@ run_experiment_across_sims(){
                     networkProperties=`get_network_properties`
                     myprint "$networkProperties"
                     ( $1 ) & exp_pid=$! 
-                    watch_test_timeout $exp_pid
+                    watch_test_timeout $exp_pid 2>/dev/null
                 done
             fi
         else 
@@ -382,7 +383,7 @@ sleep 30
 # test multiple webages -- TEMPORARILY DISABLED 
 if [ $opt == "long" ] 
 then
-run_experiment "./v2/web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap --single" # reduced number of webpage tests
+run_experiment "./v2/web-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single" # reduced number of webpage tests
 sleep 30 
 else 
 	myprint "Skipping WebTest testing option:$opt"

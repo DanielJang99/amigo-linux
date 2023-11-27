@@ -331,6 +331,9 @@ close_all(){
 	elif [ $dev_model == "SM-A528B" ]
 	then 
 		tap_screen 580 1860
+	elif [ $dev_model == "SM-G996B" ]
+	then 
+		tap_screen 550 1900
 	else  
 		tap_screen 370 1210 
 	fi
