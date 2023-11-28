@@ -196,7 +196,7 @@ check_cpu(){
 # update location information 
 update_location(){
 	# TODO: is it necessary to turn device on?
-	turn_device_on 
+	# turn_device_on 
 
 	res_dir="locationlogs/${suffix}"
 	mkdir -p $res_dir	
@@ -590,7 +590,7 @@ do
 	# 	sleep 1200
 	# 	continue
 	# fi
-	
+
 	# keep track of time
 	current_time=`date +%s`
 	suffix=`date +%d-%m-%Y`

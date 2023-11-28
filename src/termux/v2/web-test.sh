@@ -121,6 +121,10 @@ run_test(){
 	then 
 		myprint "Attempt accepting cookies"
 		tap_screen 120 1200
+	elif [ $url == "https://www.wsj.com/" ]
+	then 
+		myprint "Block WSJ notifications"
+		tap_screen 630 1330  
 	fi 
 	sleep $half
 
