@@ -47,6 +47,22 @@ dev_model=`getprop ro.product.model | sed s/" "//g`
 if [ $dev_model == "SM-A346E" -o $dev_model == "SM-G966B" ] 
 then 
 	uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
+	physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | awk '{print $1}'`
+	# handle edge case when imei for sim2 is reported instead 
+	if [ -z $physical_id ]
+	then 
+		turn_device_on
+		su -c cmd statusbar expand-settings
+		sleep 1 
+		sudo input tap 250 1350 
+		sleep 1
+		sudo input tap 250 1350 
+		sleep 1 
+		turn_device_off
+		sleep 10 
+		uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
+		physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | awk '{print $1}'`
+	fi
 else
 	uid=`termux-telephony-deviceinfo | grep "device_id" | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 fi
