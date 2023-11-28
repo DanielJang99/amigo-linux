@@ -2,37 +2,55 @@
 import sys
 
 def main(s):
-    devices = s.replace("&quot;", "").replace("}","").split("{")
-    for device in devices:
-        if "TAG" not in device:
-            continue 
-        device_infos = device.split(",")
-        name=""
-        fLat = ""
-        fLong = ""
-        fTime = ""
-        fAcc = ""
-        for dev_info in device_infos:
-            if "name" in dev_info:
-                name = dev_info.split(":")[1]
-            if "firstLong" in dev_info:
-                fLong  = dev_info.split(":")[1]
-            if "firstLat" in dev_info:
-                fLat  = dev_info.split(":")[1]
-            if "firstTime" in dev_info:
-                fTime = dev_info.split(":")[1]
-            if "firstAcc" in dev_info:
-                fAcc = dev_info.split(":")[1]
-        if "ST" in name:
-            device_dict = {
-                "name": name, 
-                "Latitude": fLat, 
-                "Longitude": fLong, 
-                "Accuracy": fAcc, 
-                "lastUpdated": fTime
-            }
-            print(device_dict)
-        
+    device = s.replace("&quot;", "").replace("}","").split("{")[1].replace("</string>","")
+    device_infos = device.split(",")
+    device_dict={}
+    
+    for dev_info in device_infos:
+        dev_info_split = dev_info.split(":")
+        k, v = dev_info_split[0], dev_info_split[1]
+        if k == "id":
+            device_dict["imei"] = v
+        elif k == "name": 
+            device_dict["name"] = v
+        elif k == "isOffline": 
+            device_dict[k] = v
+        elif k == "firstLat": 
+            device_dict["lat"] = v
+        elif k == "firstLong": 
+            device_dict["long"] = v
+        elif k == "firstAcc": 
+            device_dict["acc"] = v
+        elif k == "firstTime":
+            device_dict["lastUpdated"] = v
+    print(device_dict)
+
+    # devices = s.replace("&quot;", "").split("[")[1].split("]")[0].replace("}","").split("{")
+    # for device in devices:
+    #     if "TAG" not in device:
+    #         continue
+    #     device_infos = device.split(",")
+    #     device_dict = {}
+    #     for dev_info in device_infos:
+    #         if ":" not in dev_info:
+    #             continue
+    #         dev_info_split = dev_info.split(":")
+    #         k, v = dev_info_split[0], dev_info_split[1]
+    #         if k == "id":
+    #             device_dict["imei"] = v
+    #         elif k == "name": 
+    #             device_dict["name"] = v
+    #         elif k == "isOffline": 
+    #             device_dict[k] = v
+    #         elif k == "firstLat": 
+    #             device_dict["lat"] = v
+    #         elif k == "firstLong": 
+    #             device_dict["long"] = v
+    #         elif k == "firstAcc": 
+    #             device_dict["acc"] = v
+    #         elif k == "firstTime":
+    #             device_dict["lastUpdated"] = v
+    #     print(device_dict)
 
 if '__main__' == __name__:
     main(sys.argv[1])

@@ -1,7 +1,8 @@
 #!/data/data/com.termux/files/usr/bin/env bash
 ## Author: Daniel Jang (hsj276@nyu.edu)
 ## Date: 11-4-2023
-## NOTE: Script that automates Samsung SmartThings to track SmartTags 
+## NOTE: Temporary script to monitor one smart tag  
+
 DEBUG=1
 util_file=`pwd`"/util.cfg"
 if [ -f $util_file ]
@@ -41,26 +42,13 @@ output_file="${smart_tag_log_dir}/smarttag_log_${curr_hour}.txt"
 curr_time=`date +\%m-\%d-\%y_\%H:\%M:\%S`
 echo "$curr_time" >> $output_file
 
-i=0
-NUM_TAGS=20
-while [ $i -lt $NUM_TAGS ]
-do 
-    sudo input tap 650 2005
-    sleep 5
-    sudo input keyevent KEYCODE_HOME
-    sleep 1 
-    su -c cp /data/data/com.samsung.android.oneconnect/shared_prefs/FME_SELECTED_DEVICE.xml /data/data/com.termux/files/home/mobile-testbed/src/termux
-    su -c chmod 755 FME_SELECTED_DEVICE.xml
-    SMARTTHINGS_DEVICE=`cat FME_SELECTED_DEVICE.xml | grep "SELECTED_FME_INFO"`
-    python v2/parse_smarttags_info.py "$SMARTTHINGS_DEVICE" >> $output_file 
-    sudo input keyevent KEYCODE_APP_SWITCH
-    sleep 1 
-    sudo input tap 550 1000
-    sleep 1 
-    sudo input swipe 800 1860 300 1860
-    let "i++"
-    sleep 1
-done
-
-close_all 
+sudo input tap 650 2005 
+sleep 10
+sudo input keyevent KEYCODE_HOME
+sleep 1 
+su -c cp /data/data/com.samsung.android.oneconnect/shared_prefs/FME_SELECTED_DEVICE.xml /data/data/com.termux/files/home/mobile-testbed/src/termux
+su -c chmod 755 FME_SELECTED_DEVICE.xml
+SMARTTHINGS_DEVICE=`cat FME_SELECTED_DEVICE.xml | grep "SELECTED_FME_INFO"`
+python v2/parse_smarttags_info.py "$SMARTTHINGS_DEVICE" >> $output_file 
+close_all
 turn_device_off
