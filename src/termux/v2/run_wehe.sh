@@ -9,24 +9,24 @@ run_wehe(){
     su -c am start -n mobi.meddle.wehe/mobi.meddle.wehe.activity.MainActivity
     sleep 1 
 
-    # # prepare wehe test - toggle all tests 
-    # TOTAL_WEHE_TESTS=10
-    # while [ $TOTAL_WEHE_TESTS -gt 0 ];
-    # do
-    #     su -c uiautomator dump /data/data/com.termux/files/home/mobile-testbed/src/termux/window_dump.xml
-    #     toggle_btn_coords=`python ./v2/setup_wehe.py`
-    #     tests_found=`echo "$toggle_btn_coords" | tail -n 1`
-    #     let "TOTAL_WEHE_TESTS-=tests_found"
-    #     num_buttons_to_toggle=`echo "$toggle_btn_coords" | wc -l`
-    #     for((i=1;i<num_buttons_to_toggle;i++))
-    #     do
-    #         coord=`echo "$toggle_btn_coords" | head -n $i | tail -1`
-    #         sudo input tap $coord
-    #         sleep 0.5
-    #     done
-    #     sudo input swipe 500 1800 500 500
-    #     sleep 1
-    # done
+    # prepare wehe test - toggle all tests 
+    TOTAL_WEHE_TESTS=10
+    while [ $TOTAL_WEHE_TESTS -gt 0 ];
+    do
+        su -c uiautomator dump /data/data/com.termux/files/home/mobile-testbed/src/termux/window_dump.xml
+        toggle_btn_coords=`python ./v2/setup_wehe.py`
+        tests_found=`echo "$toggle_btn_coords" | tail -n 1`
+        let "TOTAL_WEHE_TESTS-=tests_found"
+        num_buttons_to_toggle=`echo "$toggle_btn_coords" | wc -l`
+        for((i=1;i<num_buttons_to_toggle;i++))
+        do
+            coord=`echo "$toggle_btn_coords" | head -n $i | tail -1`
+            sudo input tap $coord
+            sleep 0.5
+        done
+        sudo input swipe 500 1800 500 500
+        sleep 1
+    done
     myprint "Configured all tests. Now starting Differentiation Test"
     sudo input tap 550 2180
     sleep 500 
