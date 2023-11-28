@@ -29,7 +29,7 @@ run_wehe(){
     done
     myprint "Configured all tests. Now starting Differentiation Test"
     sudo input tap 550 2180
-    sleep 500 
+    sleep 450 
     sudo input keyevent KEYCODE_HOME
     close_all
 }
@@ -100,7 +100,6 @@ then
     exit 0
 fi
 
-touch ".locked"
 
 # check if net-testing is running
 while true; do 
@@ -112,6 +111,8 @@ while true; do
         break
     fi
 done	
+
+touch ".locked"
 
 currentNetwork=`get_network_type`
 while [[ "$currentNetwork" == "NONE"* ]];
@@ -165,18 +166,26 @@ do
     fi
 done
 
-if [[ "$currentNetwork" == *"true" ]];
+if [[ "$currentNetwork" == *"true" ]]
+then
     run_wehe
 fi
 turn_device_off
-
-today=`date +%d-%m-%Y`
-wehe_log_dir="wehe_logs/${today}"
-if [ ! -d "$wehe_log_dir" ];then
-    mkdir -p $wehe_log_dir
-fi
+rm ".locked"
 
 su -c cp /data/data/mobi.meddle.wehe/shared_prefs/ReplayActPrefsFile.xml /data/data/com.termux/files/home/mobile-testbed/src/termux
-python ./v2/parse_wehe.py > "${wehe_log_dir}/output.txt"
-echo "$current_time" > .wehe
-rm ".locked"
+su -c chmod 755 ReplayActPrefsFile.xml
+wehe_res=`python ./v2/parse_wehe.py`
+if [ $? -eq 0 ]
+then
+N=`echo "$wehe_res" | wc -l`
+    if [ $N -ge 1 ];then
+        today=`date +%d-%m-%Y`
+        wehe_log_dir="wehe_logs/${today}"
+        if [ ! -d "$wehe_log_dir" ];then
+            mkdir -p $wehe_log_dir
+        fi
+        echo "$wehe_res" >> "${wehe_log_dir}/output.txt"
+        echo "$current_time" > .wehe
+    fi
+fi
