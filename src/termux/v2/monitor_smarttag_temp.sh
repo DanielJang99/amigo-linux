@@ -27,11 +27,6 @@ sleep 5
 sudo input tap 480 990 
 sleep 7
 
-sudo input tap 980 1580
-sleep 2 
-sudo input tap 500 500
-sleep 2 
-
 today=`date +%d-%m-%Y`
 smart_tag_log_dir="smarttag_logs/${today}"
 if [ ! -d "$smart_tag_log_dir" ];then 

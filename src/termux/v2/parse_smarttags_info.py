@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys
+from datetime import datetime, timedelta
 
 def main(s):
     device = s.replace("&quot;", "").replace("}","").split("{")[1].replace("</string>","")
@@ -22,7 +23,8 @@ def main(s):
         elif k == "firstAcc": 
             device_dict["acc"] = v
         elif k == "firstTime":
-            device_dict["lastUpdated"] = v
+            updated_time_base = datetime.strptime(v, "%Y%m%d%H%M%S")  
+            device_dict["lastUpdated"] = updated_time_base + timedelta(hours=4)
     print(device_dict)
 
     # devices = s.replace("&quot;", "").split("[")[1].split("]")[0].replace("}","").split("{")
