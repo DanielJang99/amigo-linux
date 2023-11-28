@@ -584,12 +584,13 @@ last_slow_loop_time=0
 firstPause="true"
 while [[ $to_run == "true" ]] 
 do 
-	isWeheRunning=`ps aux | grep "run_wehe.sh" | grep -v "grep"`
-	if [ ! -z "$isWeheRunning" ]
-	then
-		sleep 1200
-		continue
-	fi
+	# isWeheRunning=`ps aux | grep "run_wehe.sh" | grep -v "grep"`
+	# if [ ! -z "$isWeheRunning" ]
+	# then
+	# 	sleep 1200
+	# 	continue
+	# fi
+	
 	# keep track of time
 	current_time=`date +%s`
 	suffix=`date +%d-%m-%Y`
@@ -1062,7 +1063,7 @@ do
 		# dump location information (only start googlemaps if not net-testing to avoid collusion)
 		if [ ! -f ".locked" ]  # NOTE: this means that another app (browser, youtube, videoconf) is already running!
 		then 
-			skip_gmaps="false"
+			skip_gmaps="true"
 			last_gmaps=0
 			if [ -f ".last_gmaps" ] 
 			then 

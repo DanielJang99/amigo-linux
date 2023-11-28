@@ -16,6 +16,7 @@ source $adb_file
 
 # safe run interruption
 safe_stop(){	
+	turn_device_on
     close_all
     turn_device_off
 	sudo pm clear $package

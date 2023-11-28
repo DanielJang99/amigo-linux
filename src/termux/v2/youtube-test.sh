@@ -15,6 +15,7 @@ safe_stop(){
 	myprint "Entering safe stop..."
 	sudo  settings put system user_rotation 0 
 	sudo killall tcpdump
+	turn_device_on
 	close_all
 	if [ $single != "true" ] 
 	then
