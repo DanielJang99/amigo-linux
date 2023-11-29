@@ -39,7 +39,7 @@ run_speedtest(){
 
 network_type=`get_network_type`
 network_ind=`echo $network_type | cut -f 1 -d "_"`
-network_ind=`echo "$network_ind// /-"`
+network_ind=`echo "{$network_ind// /-}"`
 res_folder="speedtest-cli-logs/${suffix}"
 mkdir -p $res_folder
 testId="${id}_${network_ind}"
