@@ -1046,7 +1046,7 @@ do
 			skipping="false"
 			update_wifi_mobile 
 			t_wifi_mobile_update=`date +%s`	
-			if [ ! -z $mobile_iface -a $def_iface == $mobile_iface ]
+			if [ ! -z $mobile_iface ] && [ $def_iface == $mobile_iface ]
 			then
 				# if enough mobile data is available 
 				if [[ "$network_type" == "sim"* && $mobile_data -gt $MAX_MOBILE ]]
@@ -1074,26 +1074,25 @@ do
 		then
 			skipping="false"
 			update_wifi_mobile 
-			t_wifi_mobile_update=`date +%s`			
-			if [ ! -z "$mobile_iface" ] 
+			t_wifi_mobile_update=`date +%s`	
+			if [[ "$network_type" == "WIFI"* ]]
 			then
-				if [[ "$network_type" == "sim"* ]]
-				then
-					if [ $def_iface != $mobile_iface -o $num_runs_today -ge $MAX_ZEUS_RUNS  -o $mobile_data -gt $MAX_MOBILE ] 
-					then 
-						myprint "Skipping net-testing-short. DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
-						skipping="true"
-					fi 
-				else 
-					if [ $def_iface != $mobile_iface -o $num_runs_today -ge $MAX_ZEUS_RUNS  -o $esim_data -gt $MAX_ESIM ] 
-					then 
-						myprint "Skipping net-testing-short. DefaultIface:$def_iface NumRuns:$num_runs_today EsimData:$esim_data (MAX: $MAX_ESIM)"
-						skipping="true"
-					fi 
-				fi 
-			else
-				myprint "Skipping net-testing-short since not on mobile at all"				 
+				myprint "Skipping net-testing-short since we are on wifi. DefaultIface:$def_iface NumRuns:$num_runs_today"
 				skipping="true"
+			else
+				if [ $num_runs_today -ge $MAX_ZEUS_RUNS ]
+				then
+					myprint "Skipping net-testing-short since we passed max runs. NumRuns: $num_runs_today MobileData:$mobile_data EsimData:$esim_data"
+					skipping="true"
+				elif [[ "$network_type" == "sim*" && $mobile_data -gt $MAX_MOBILE ]]
+				then
+					myprint "Skipping net-testing-short since we passed limit for mobile data. NumRuns: $num_runs_today MobileData:$mobile_data EsimData:$esim_data"
+					skipping="true"
+				elif [[ "$network_type" == *"true"* && esim_data -gt $MAX_ESIM ]]
+				then		
+					myprint "Skipping net-testing-short since we passed limit for ESIM data. NumRuns: $num_runs_today MobileData:$mobile_data EsimData:$esim_data"
+					skipping="true"
+				fi
 			fi
 			if [[ $skipping == "false" ]]
 			then
