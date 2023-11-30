@@ -39,7 +39,6 @@ run_speedtest(){
 
 network_type=`get_network_type`
 network_ind=`echo $network_type | cut -f 1 -d "_"`
-network_ind=`echo "{$network_ind// /-}"`
 res_folder="speedtest-cli-logs/${suffix}"
 mkdir -p $res_folder
 testId="${id}_${network_ind}"
@@ -50,8 +49,16 @@ then
     args="$network_ind $output_path"
     run_speedtest "$args"
 else
-    subscriptions_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/subscriptions.txt"
-    simNum=`su -c cat $subscriptions_file | grep -n $network_ind | cut -f1 -d:`
+    # TODO: use subscriptions file instead of manually labelling sim to 1 and esim to 2 
+    # subscriptions_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/subscriptions.txt"
+    #simNum=`su -c cat $subscriptions_file | grep -n "$network_ind" | cut -f1 -d:`
+    #network_ind=`echo "{$network_ind// /-}"`
+
+    if [[ "$network_ind" == "sim"* ]];then
+        simNum=1
+    else
+        simNum=2
+    fi
     logFile=".last_mobile_speedtest_$simNum"
     if [ -f $logFile ]
     then
