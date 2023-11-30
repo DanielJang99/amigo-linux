@@ -167,6 +167,11 @@ generate_post_data(){
     "mobile_state":"${mobile_state}", 
     "mobile_signal":"${mobile_signal}",
     "today_mobile_data":"${mobile_data}",
+	"esim_ip": "${esim_ip}",	
+	"esim_state": "${esim_state}", 
+	"esim_signal": "${esim_signal}",
+	"esim_traffic": "${esim_traffic}",
+	"today_esim_data": "${esim_data}",
 	"network_type": "${network_type}"
     }
 EOF
@@ -230,11 +235,9 @@ update_wifi_mobile(){
 	# get dympsys info for connectivity
 	sudo dumpsys netstats > .data
 	wifi_iface=`cat .data | grep "wifiNetworkKey=" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
-	mobile_iface=`cat .data | grep -A1 "All mobile interfaces" | grep "rmnet"`
-	if [ ! -z "$mobile_iface" ];then
-		mobile_iface=`cat .data | grep "iface=rmnet" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
-		# mobile_iface=`cat .data | grep "iface=rmnet" | grep "defaultNetwork=true" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
-	fi 
+	
+	linkPropertiesFile="/storage/emulated/0/Android/data/com.example.sensorexample/files/linkProperties.txt"
+	mobile_iface=`su -c cat $linkPropertiesFile | grep "rmnet" | cut -f 2 -d " "`
 
 	def_iface="none"
 	if [ ! -z "$wifi_iface" ]
@@ -325,7 +328,7 @@ update_wifi_mobile(){
 	fi
 	echo $wifi_data > $wifi_today_file
 		
-	# update mobile data sent/received
+	# update mobile data sent/receselect * from status_update where type = 'itag' and to_timestamp(timestamp) > now() - interval '30mins' ORDER BY timestamp DESC;ived
 	mobile_today_file="./data/mobile/"$suffix".txt"		
 	if [ -f $mobile_today_file ] 
 	then 
@@ -333,37 +336,68 @@ update_wifi_mobile(){
 	else 
 		mobile_data=0	
 	fi	
+	esim_today_file="./data/airalo/"$suffix".txt"
+	if [ -f $esim_today_file ] 
+	then 
+		esim_data=`cat $esim_today_file`
+	else 
+		esim_data=0	
+	fi	
+	
 	if [ ! -z "$mobile_iface" ]
 	then
-		# get update on data sent/received
-		if [ ! -f $mobile_today_file ] 
-		then 
-			if [ -z "$prev_mobile_traffic" ]
+		if [[ "$network_type" == "sim"* ]];
+		then
+			if [ ! -f $mobile_today_file ] 
 			then 
-				prev_mobile_traffic=`sudo ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`	
+				if [ -z "$prev_mobile_traffic" ]
+				then 
+					prev_mobile_traffic=`sudo ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`	
+				fi
+			fi 
+			mobile_ip=`sudo ifconfig $mobile_iface | grep "\." | grep -v packets | awk '{print $2}'`
+			sudo dumpsys telephony.registry > ".tel"
+			mobile_state=`cat ".tel" | grep "mServiceState" | head -n 1`
+			mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
+			mobile_traffic=`sudo ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
+			let "mobile_data += (mobile_traffic - prev_mobile_traffic)"
+			prev_mobile_traffic=$mobile_traffic
+		else 
+			if [ ! -f $esim_today_file ]
+			then
+				if [ -z "$prev_esim_traffic" ]
+				then
+					prev_esim_traffic=`sudo ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
+				fi
 			fi
-		fi 
-		mobile_ip=`sudo ifconfig $mobile_iface | grep "\." | grep -v packets | awk '{print $2}'`
-		sudo dumpsys telephony.registry > ".tel"
-		mobile_state=`cat ".tel" | grep "mServiceState" | head -n 1`
-		mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
-		mobile_traffic=`sudo ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
-		let "mobile_data += (mobile_traffic - prev_mobile_traffic)"
-		prev_mobile_traffic=$mobile_traffic
-	else 
+			esim_ip=`sudo ifconfig $mobile_iface | grep "\." | grep -v packets | awk '{print $2}'`
+			sudo dumpsys telephony.registry > ".tel"
+			esim_state=`cat ".tel" | grep "mServiceState" | head -n 1`
+			esim_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
+			esim_traffic=`sudo ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
+			let "esim_data += (esim_traffic - prev_esim_traffic)"
+			prev_esim_traffic=$esim_traffic
+		fi
+	else
 		mobile_state="none"
 		mobile_ip="none"
 		mobile_signal="none"
 		mobile_traffic="none"
+		esim_state="none"
+		esim_ip="none"
+		esim_signal="none"
+		esim_traffic="none"
+		esim_state="none"
 	fi 
-	echo $mobile_data > $mobile_today_file		 
+	echo $mobile_data > $mobile_today_file		
+	echo $esim_data > $esim_today_file 
 		
 	# update on cpu usage 
 	if [ -f ".cpu-usage" ] 
 	then 
 		cpu_util=`cat ".cpu-usage" | cut -f 1 -d "."`
 	fi 
-	myprint "Device info. Wifi:$wifi_ip Mobile:$mobile_ip DefaultIface:$def_iface GoogleAccountStatus:$google_status CPULast:$cpu_util IsPaused:$isPaused NetTesting:$num NetworkType:$network_type"
+	myprint "Device info. Wifi:$wifi_ip Mobile:$mobile_ip Esim:$esim_ip DefaultIface:$def_iface GoogleAccountStatus:$google_status CPULast:$cpu_util IsPaused:$isPaused NetTesting:$num NetworkType:$network_type"
 }
 
 # parameters
@@ -387,7 +421,9 @@ t_wifi_mobile_update=0                 # last time wifi/mobile info was checked
 asked_to_charge="false"                # keep track if we already asked user to charge their phone
 prev_wifi_traffic=0                    # keep track of wifi traffic used today
 prev_mobile_traffic=0                  # keep track of mobile traffic used today
+prev_esim_traffic=0
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
+MAX_ESIM_GB=1
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
 vrs="2.9"                              # code version 
@@ -551,11 +587,13 @@ done
 
 # derive B from GB
 let "MAX_MOBILE = MAX_MOBILE_GB * 1000000000"
+let "MAX_ESIM = MAX_ESIM_GB * 1000000000"
 
 # folder and file organization 
 mkdir -p "./logs"
 mkdir -p "./data/wifi"
 mkdir -p "./data/mobile"
+mkdir -p "./data/airalo"
 if [ ! -f ".last_command" ] 
 then 
 	echo "testing" > ".last_command"
@@ -1007,13 +1045,17 @@ do
 			myprint "Time to run LONG net-test: $time_from_last_net > $NET_INTERVAL -- DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
 			skipping="false"
 			update_wifi_mobile 
-			t_wifi_mobile_update=`date +%s`
-			if [ ! -z "$mobile_iface" ]
+			t_wifi_mobile_update=`date +%s`	
+			if [ ! -z $mobile_iface -a $def_iface == $mobile_iface ]
 			then
-	 	  	    # if enough mobile data is available 
-				if [ $def_iface == $mobile_iface -a $mobile_data -gt $MAX_MOBILE ]
+				# if enough mobile data is available 
+				if [[ "$network_type" == "sim"* && $mobile_data -gt $MAX_MOBILE ]]
 				then 
 					myprint "Skipping net-testing since we are on mobile and data limit was passed ($mobile_data -> $MAX_MOBILE)"
+					skipping="true"
+				elif [ $esim_data -gt $MAX_ESIM ]
+				then
+					myprint "Skipping net-testing since we are on esim and data limit was passed ($esim_data -> $MAX_ESIM)"
 					skipping="true"
 				fi 
 			fi  
@@ -1034,11 +1076,20 @@ do
 			update_wifi_mobile 
 			t_wifi_mobile_update=`date +%s`			
 			if [ ! -z "$mobile_iface" ] 
-			then 
-				if [ $def_iface != $mobile_iface -o $num_runs_today -ge $MAX_ZEUS_RUNS  -o $mobile_data -gt $MAX_MOBILE ] 
-				then 
-					myprint "Skipping net-testing-short. DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
-					skipping="true"
+			then
+				if [[ "$network_type" == "sim"* ]]
+				then
+					if [ $def_iface != $mobile_iface -o $num_runs_today -ge $MAX_ZEUS_RUNS  -o $mobile_data -gt $MAX_MOBILE ] 
+					then 
+						myprint "Skipping net-testing-short. DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
+						skipping="true"
+					fi 
+				else 
+					if [ $def_iface != $mobile_iface -o $num_runs_today -ge $MAX_ZEUS_RUNS  -o $esim_data -gt $MAX_ESIM ] 
+					then 
+						myprint "Skipping net-testing-short. DefaultIface:$def_iface NumRuns:$num_runs_today EsimData:$esim_data (MAX: $MAX_ESIM)"
+						skipping="true"
+					fi 
 				fi 
 			else
 				myprint "Skipping net-testing-short since not on mobile at all"				 
