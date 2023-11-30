@@ -27,25 +27,22 @@ def write_logs(logfile, msg):
     with open(logfile, "w") as f:
         f.write(msg)
 
-def main(network_type, outputfile, logfile=None, options=None):
+def main(network_type, outputfile, logfile=None, last_test_day=None, bytes_used=None):
     if network_type == "WIFI":
         run_test(SpeedtestOptions.BOTH, outputfile)
     else:
         today = date.today().strftime("%d-%m-%Y")
-        if not options:
+        if not last_test_day or not bytes_used:
             test_bytes = run_test(SpeedtestOptions.BOTH, outputfile)
             write_logs(logfile, f"{today} {test_bytes}")
             return 
-
-        options_split = options.split(" ")
-        last_test_day, bytes_used = options_split[0], options_split[1]
-
         # run both download & upload test if this is the first test of the day
         if (last_test_day != today):
             test_bytes = run_test(SpeedtestOptions.BOTH, outputfile)
             write_logs(logfile, f"{today} {test_bytes}")
             return 
         
+        bytes_used = int(bytes_used)
         # skip if we have already used more than 300mb for speedtest today
         if bytes_used > DAILY_MOBILE_DATA_LIMIT:
             print("DATA_EXCEEDED")
@@ -72,8 +69,8 @@ if '__main__' == __name__:
         main(sys.argv[1], sys.argv[2])
     elif len(sys.argv) == 4:
         main(sys.argv[1], sys.argv[2], sys.argv[3])
-    elif len(sys.argv) == 5:
-        main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    elif len(sys.argv) == 6:
+        main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
     else:
         print("Invalid Number of Arguments")
         exit(1)

@@ -33,6 +33,7 @@ run_speedtest(){
             myprint "Speedtest Skipped"
         else 
             myprint "Speedtest Success"
+            gzip "$output_path"
         fi
     fi
 }
