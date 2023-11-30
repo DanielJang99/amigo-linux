@@ -141,6 +141,9 @@ then
 			gzip "logs/${f}"
 		fi 
 	done
+
+	# check if Kenzo needs to be updated 
+	./update_kenzo.sh $uid $physical_id 
 		
 	# restart script 
 	n_sleep=`shuf -i 0-30 -n 1`
