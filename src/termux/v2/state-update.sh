@@ -842,6 +842,12 @@ do
 							myprint "Requested a muzeel test. Making sure there is no pending net-testing"		
 							./stop-net-testing.sh
 						fi 
+						echo $command | grep "reboot" > /dev/null
+						if [ $? -eq 0 ]
+						then
+							myprint "Rebooting Device"
+							ans=`timeout 15 curl -s "https://mobile.batterylab.dev:$SERVER_PORT/commandDone?id=${uid}&command_id=${comm_id}&status=0&termuxUser=${termux_user}"`
+						fi
 						eval timeout $duration $command
 						comm_status=$?
 						myprint "Command executed. Status: $comm_status"
