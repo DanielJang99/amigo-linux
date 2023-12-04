@@ -288,7 +288,7 @@ update_wifi_mobile(){
 	
 		# update data consumed 
 		if [ $wifi_traffic -lt $prev_wifi_traffic ];then
-			wifi_data=$wifi_traffic
+			let "wifi_data += (wifi_traffic + prev_wifi_traffic)"
 		else
 			let "wifi_data += (wifi_traffic - prev_wifi_traffic)"
 		fi
@@ -358,7 +358,7 @@ update_wifi_mobile(){
 			mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1 | sed -e 's/^[[:space:]]*//'`
 			mobile_traffic=`sudo ifconfig $phySim_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 			if [ $mobile_traffic -lt $prev_mobile_traffic ];then
-				mobile_data=$mobile_traffic
+				let "mobile_data += (mobile_traffic + prev_mobile_traffic)"
 			else 
 				let "mobile_data += (mobile_traffic - prev_mobile_traffic)"
 			fi
@@ -385,7 +385,7 @@ update_wifi_mobile(){
 			esim_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
 			esim_traffic=`sudo ifconfig $esim_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 			if [ $esim_traffic -lt $prev_esim_traffic ];then
-				esim_data=$esim_traffic
+				let "esim_data += (esim_traffic + prev_esim_traffic)"
 			else 
 				let "esim_data += (esim_traffic - prev_esim_traffic)"
 			fi
@@ -573,7 +573,7 @@ sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/fi
 #restart Kenzo - so that background service runs and info is populated 
 echo -e "$uid\t$physical_id" > ".temp"
 sudo cp ".temp" "/storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
-su -c chmod -R 755 /storage/emulated/0/Android/data/com.example.sensorexample/files/*.txt
+su -c chmod -R 777 /storage/emulated/0/Android/data/com.example.sensorexample/files/*.txt
 myprint "Granting Kenzo permission and restart..."
 sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
 sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE

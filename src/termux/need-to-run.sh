@@ -144,7 +144,7 @@ then
 	done
 
 	# check if Kenzo needs to be updated 
-	./update_kenzo.sh $uid $physical_id 
+	./update_kenzo.sh 
 		
 	# restart script 
 	n_sleep=`shuf -i 0-30 -n 1`

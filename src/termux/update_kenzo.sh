@@ -27,9 +27,12 @@ else
 fi
 
 if [[ $update_required == "true" ]];then
-
     kenzo_pkg="com.example.sensorexample"
     apk="app-debug.apk"
+
+    # cache folder to save kenzo files until time of update
+    mkdir -p kenzo_cache
+    su -c cp -R /storage/emulated/0/Android/data/com.example.sensorexample/files/. kenzo_cache/
 
     sudo pm uninstall $kenzo_pkg
     sudo pm install -t "${setup_dir}/$apk"
@@ -40,21 +43,16 @@ if [[ $update_required == "true" ]];then
     sudo pm grant $kenzo_pkg android.permission.ACCESS_BACKGROUND_LOCATION
     sleep 2
     su -c echo "$kenzo_latest_update" > $kenzo_local_file
-    if [ $# -eq 2 ];then
-        turn_device_on
-        su -c monkey -p $kenzo_pkg 1 > /dev/null 2>&1
-        sleep 2 
-        sudo input tap 550 1920
-        sleep 1 
-        close_all
-        turn_device_off
-        uid=$1
-        physical_id=$2
-        echo -e "$uid\t$physical_id" > ".temp"
-        sudo cp ".temp" "/storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
-        rm -rf .temp
-	    su -c chmod -R 755 /storage/emulated/0/Android/data/com.example.sensorexample/files/*.txt
-    fi
+    turn_device_on
+    su -c monkey -p $kenzo_pkg 1 > /dev/null 2>&1
+    sleep 2 
+    sudo input tap 550 1920
+    sleep 1 
+    close_all
+    turn_device_off
+    su -c cp -R ./kenzo_cache/. /storage/emulated/0/Android/data/com.example.sensorexample/files/
+    sudo rm -r kenzo_cache 
+    su -c chmod -R 777 /storage/emulated/0/Android/data/com.example.sensorexample/files/*.txt
 else
     myprint "No need to update Kenzo"
 fi

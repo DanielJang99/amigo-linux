@@ -103,6 +103,10 @@ run_experiment_across_sims(){
                         sudo input keyevent KEYCODE_BACK
                         sleep 1
                         currentNetwork=`get_network_type`
+                        if [[ "$currentNetwork" == "WIFI"* ]];then
+                            myprint "Network has switched from mobile to WIFI"
+                            return
+                        fi
                     done
                     turn_device_off
 
