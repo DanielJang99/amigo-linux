@@ -590,7 +590,7 @@ while true ; do
 	myprint "Confirm Kenzo is in the foregound: $foreground" 
 	if [[ $foreground == *"sensorexample"* ]]; then
 		break
-	elif [[ $foregound == *"NotificationShade"* ]]
+	elif [[ $foregound == *"NotificationShade"* ]];then
 		sudo input keyevent KEYCODE_HOME
 	fi
 done 
