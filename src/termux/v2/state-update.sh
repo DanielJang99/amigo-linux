@@ -222,7 +222,7 @@ update_location(){
 
 	# use dumpsys location 
 	sudo dumpsys location > $res_dir"/loc-$current_time.txt"
-	loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "fused" | head -n 1`
+	loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "fused" | head -n 1 | sed -e 's/^[[:space:]]*//'`
 	gzip $res_dir"/loc-$current_time.txt"
 }
 
@@ -278,11 +278,11 @@ update_wifi_mobile(){
 				prev_wifi_traffic=`sudo ifconfig $wifi_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`	
 			fi 
 		fi
-		wifi_ip=`sudo ifconfig $wifi_iface | grep "\." | grep -v packets | awk '{print $2}'` 
+		wifi_ip=`sudo ifconfig $wifi_iface | grep "\." | grep -v packets | awk '{print $2}' | head -n 1` 
 		wifi_ssid=`sudo dumpsys netstats | grep -E 'iface=wlan.*wifiNetworkKey=' | head -n 1  | awk '{print $4}' | cut -f 2 -d "=" | sed s/","// | cut -c2- | cut -f 1 -d '"'`
 		sudo dumpsys wifi > ".wifi"
-		wifi_info=`cat ".wifi" | grep "mWifiInfo" | grep "$wifi_ssid"`
-		wifi_qual=`cat ".wifi" | grep -A2 "$wifi_info" | grep "mLastSignalLevel"`
+		wifi_info=`cat ".wifi" | grep "mWifiInfo" | grep "$wifi_ssid" | head -n 1`
+		wifi_qual=`cat ".wifi" | grep -A2 "$wifi_info" | grep "mLastSignalLevel" | head -n 1`
 		wifi_info=`echo "$wifi_info" | tr "\"" "\'"`
 		wifi_traffic=`sudo ifconfig $wifi_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 	
@@ -354,8 +354,8 @@ update_wifi_mobile(){
 			fi 
 			mobile_ip=`sudo ifconfig $phySim_iface | grep "\." | grep -v packets | awk '{print $2}'`
 			sudo dumpsys telephony.registry > ".tel"
-			mobile_state=`cat ".tel" | grep "mServiceState" | head -n 1`
-			mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
+			mobile_state=`cat ".tel" | grep "mServiceState" | head -n 1 | sed -e 's/^[[:space:]]*//'`
+			mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1 | sed -e 's/^[[:space:]]*//'`
 			mobile_traffic=`sudo ifconfig $phySim_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 			if [ $mobile_traffic -lt $prev_mobile_traffic ];then
 				mobile_data=$mobile_traffic
