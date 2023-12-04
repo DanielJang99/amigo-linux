@@ -392,7 +392,7 @@ update_wifi_mobile(){
 			prev_esim_traffic=$esim_traffic
 		fi
 	else
-		esim_data="none"
+		esim_state="none"
 		esim_ip="none"
 		esim_signal="none"
 		esim_traffic="none"
