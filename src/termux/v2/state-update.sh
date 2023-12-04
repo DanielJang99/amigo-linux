@@ -229,26 +229,23 @@ update_location(){
 # helper to maintain up-to-date wifi/mobile info 
 update_wifi_mobile(){
 
+	network_type=`get_network_type`
+
 	# discover if we are in airplane mode or not
-	airplane_mode=`sudo  dumpsys wifi | grep mAirplaneModeOn | cut -f 2 -d " "`
+	airplane_mode=`su -c settings get global airplane_mode_on`
 	
 	# get dympsys info for connectivity
-	sudo dumpsys netstats > .data
-	wifi_iface=`cat .data | grep "wifiNetworkKey=" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
-	
 	linkPropertiesFile="/storage/emulated/0/Android/data/com.example.sensorexample/files/linkProperties.txt"
-	mobile_iface=`su -c cat $linkPropertiesFile | grep "rmnet" | cut -f 2 -d " "`
-
-	def_iface="none"
-	if [ ! -z "$wifi_iface" ]
-	then 
-		def_iface=$wifi_iface
-	else  
-		if [ ! -z "$mobile_iface" ]
-		then
-			def_iface=$mobile_iface
-	 	fi 
-	fi 
+	def_iface=`su -c cat "$linkPropertiesFile" | cut -f 2 -d " " | head -n 1`
+	if [ -z $def_iface ];then
+		def_iface="none"
+	else 
+		if [[ "$def_iface" == "wlan"* ]];then
+			wifi_iface=$def_iface
+		elif [[ "$def_iface" == "rmnet"* ]];then
+			mobile_iface=$def_iface
+		fi
+	fi
 		
 	# understand WiFi and mobile phone connectivity
 	myprint "Discover wifi ($wifi_iface) and mobile ($mobile_iface)"
@@ -290,7 +287,11 @@ update_wifi_mobile(){
 		wifi_traffic=`sudo ifconfig $wifi_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 	
 		# update data consumed 
-		let "wifi_data += (wifi_traffic - prev_wifi_traffic)"
+		if [ $wifi_traffic -lt $prev_wifi_traffic ];then
+			wifi_data=$wifi_traffic
+		else
+			let "wifi_data += (wifi_traffic - prev_wifi_traffic)"
+		fi
 		prev_wifi_traffic=$wifi_traffic
 
 		# keep track of wifi encountered 
@@ -313,7 +314,7 @@ update_wifi_mobile(){
 		fi 	
 
 		# constantly force one test when on airplane mode 
-		if [[ $airplane_mode == "true" ]] 
+		if [[ $airplane_mode == "1" ]] 
 		then
 			myprint "Make sure there is always one test to be done when on airplane mode hoping to be on a plane, i.e., keep testing each 30 mins" 
 			force_net_test=1
@@ -328,7 +329,6 @@ update_wifi_mobile(){
 	fi
 	echo $wifi_data > $wifi_today_file
 		
-	# update mobile data sent/receselect * from status_update where type = 'itag' and to_timestamp(timestamp) > now() - interval '30mins' ORDER BY timestamp DESC;ived
 	mobile_today_file="./data/mobile/"$suffix".txt"		
 	if [ -f $mobile_today_file ] 
 	then 
@@ -343,52 +343,60 @@ update_wifi_mobile(){
 	else 
 		esim_data=0	
 	fi	
-	
-	if [ ! -z "$mobile_iface" ]
-	then
-		if [[ "$network_type" == "sim"* ]];
-		then
-			if [ ! -f $mobile_today_file ] 
+
+	mobile_interface_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/physical_sim_interface.txt"
+	if sudo [ -f $mobile_interface_file ];then
+		phySim_iface=`su -c cat "$mobile_interface_file"`
+		if [ ! -z $phySim_iface ];then
+			if [ ! -f $mobile_today_file -a -z "$prev_mobile_traffic" ] 
 			then 
-				if [ -z "$prev_mobile_traffic" ]
-				then 
-					prev_mobile_traffic=`sudo ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`	
-				fi
+				prev_mobile_traffic=`sudo ifconfig $phySim_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 			fi 
-			mobile_ip=`sudo ifconfig $mobile_iface | grep "\." | grep -v packets | awk '{print $2}'`
+			mobile_ip=`sudo ifconfig $phySim_iface | grep "\." | grep -v packets | awk '{print $2}'`
 			sudo dumpsys telephony.registry > ".tel"
 			mobile_state=`cat ".tel" | grep "mServiceState" | head -n 1`
 			mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
-			mobile_traffic=`sudo ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
-			let "mobile_data += (mobile_traffic - prev_mobile_traffic)"
-			prev_mobile_traffic=$mobile_traffic
-		else 
-			if [ ! -f $esim_today_file ]
-			then
-				if [ -z "$prev_esim_traffic" ]
-				then
-					prev_esim_traffic=`sudo ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
-				fi
+			mobile_traffic=`sudo ifconfig $phySim_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
+			if [ $mobile_traffic -lt $prev_mobile_traffic ];then
+				mobile_data=$mobile_traffic
+			else 
+				let "mobile_data += (mobile_traffic - prev_mobile_traffic)"
 			fi
-			esim_ip=`sudo ifconfig $mobile_iface | grep "\." | grep -v packets | awk '{print $2}'`
-			sudo dumpsys telephony.registry > ".tel"
-			esim_state=`cat ".tel" | grep "mServiceState" | head -n 1`
-			esim_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
-			esim_traffic=`sudo ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
-			let "esim_data += (esim_traffic - prev_esim_traffic)"
-			prev_esim_traffic=$esim_traffic
+			prev_mobile_traffic=$mobile_traffic
 		fi
 	else
 		mobile_state="none"
 		mobile_ip="none"
 		mobile_signal="none"
 		mobile_traffic="none"
-		esim_state="none"
+	fi
+
+	esim_interface_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/esim_interface.txt"
+	if sudo [ -f $esim_interface_file ];then
+		esim_iface=`su -c cat "$esim_interface_file"`
+		if [ ! -z $esim_iface ];then
+			if [ ! -f $esim_today_file -a -z "$prev_esim_traffic" ] 
+			then 
+				prev_esim_traffic=`sudo ifconfig $esim_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
+			fi 
+			esim_ip=`sudo ifconfig $esim_iface | grep "\." | grep -v packets | awk '{print $2}'`
+			sudo dumpsys telephony.registry > ".tel"
+			esim_state=`cat ".tel" | grep "mServiceState" | head -n 1`
+			esim_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
+			esim_traffic=`sudo ifconfig $esim_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
+			if [ $esim_traffic -lt $prev_esim_traffic ];then
+				esim_data=$esim_traffic
+			else 
+				let "esim_data += (esim_traffic - prev_esim_traffic)"
+			fi
+			prev_esim_traffic=$esim_traffic
+		fi
+	else
+		esim_data="none"
 		esim_ip="none"
 		esim_signal="none"
 		esim_traffic="none"
-		esim_state="none"
-	fi 
+	fi
 	echo $mobile_data > $mobile_today_file		
 	echo $esim_data > $esim_today_file 
 		
@@ -582,6 +590,8 @@ while true ; do
 	myprint "Confirm Kenzo is in the foregound: $foreground" 
 	if [[ $foreground == *"sensorexample"* ]]; then
 		break
+	elif [[ $foregound == *"NotificationShade"* ]]
+		sudo input keyevent KEYCODE_HOME
 	fi
 done 
 
