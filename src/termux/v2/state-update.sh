@@ -84,7 +84,7 @@ check_account_via_YT(){
 		    sleep 10 
 		    sudo input tap 600 1200
 		    sleep 5
-		    sudo input text "Bremen2013"
+		    sudo input text "Comnets@2020"
 		    sleep 3
 		    sudo input keyevent KEYCODE_ENTER
 		    sleep 10
@@ -288,7 +288,7 @@ update_wifi_mobile(){
 	
 		# update data consumed 
 		if [ $wifi_traffic -lt $prev_wifi_traffic ];then
-			let "wifi_data += (wifi_traffic + prev_wifi_traffic)"
+			let "wifi_data += wifi_traffic"
 		else
 			let "wifi_data += (wifi_traffic - prev_wifi_traffic)"
 		fi
@@ -358,7 +358,7 @@ update_wifi_mobile(){
 			mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1 | sed -e 's/^[[:space:]]*//'`
 			mobile_traffic=`sudo ifconfig $phySim_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 			if [ $mobile_traffic -lt $prev_mobile_traffic ];then
-				let "mobile_data += (mobile_traffic + prev_mobile_traffic)"
+				let "mobile_data += mobile_traffic"
 			else 
 				let "mobile_data += (mobile_traffic - prev_mobile_traffic)"
 			fi
@@ -385,7 +385,7 @@ update_wifi_mobile(){
 			esim_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
 			esim_traffic=`sudo ifconfig $esim_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 			if [ $esim_traffic -lt $prev_esim_traffic ];then
-				let "esim_data += (esim_traffic + prev_esim_traffic)"
+				let "esim_data += esim_traffic"
 			else 
 				let "esim_data += (esim_traffic - prev_esim_traffic)"
 			fi
