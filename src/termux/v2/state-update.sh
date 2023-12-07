@@ -417,6 +417,7 @@ REPORT_INTERVAL=300                    # interval of status reporting (seconds)
 NET_INTERVAL=5400                      # interval of networking testing 
 NET_INTERVAL_SHORT=2700                # short interval of net testing (just on mobile)
 NET_INTERVAL_FORCED=1800               # short interval of net testing (wifi, hopefully on planes)
+NET_INTERVAL_AIRPLANE=900
 GOOGLE_CHECK_FREQ=10800                # interval of Google account check via YT (seconds)
 WIFI_GMAPS=1800                        # lower frequency of launchign GMAPS when on wifi 				
 MAX_ZEUS_RUNS=6                        # maximum number of zeus per day 
@@ -1037,6 +1038,23 @@ do
 				echo $current_time > ".last_net_forced"
 			else 
 				myprint "Skipping forced net-testing since WiFi not found anymore"
+			fi 
+		elif [[ $force_net_test -gt 0 && $time_from_last_net_forced -gt $NET_INTERVAL_AIRPLANE && $airplane_mode == "1" ]]
+		then
+			myprint "Forcing a new test on Airplane Wifi: $time_from_last_net_forced > $NET_INTERVAL_AIRPLANE -- NumRunsLeft: $force_net_test DefaultIface:$def_iface SSID:$wifi_ssid"
+			update_wifi_mobile
+			if [ ! -z "$wifi_iface" ]
+			then	 	  	    
+				myprint "./net-testing.sh in `get_network_type` $suffix $current_time $def_iface \"long\" > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+				(./v2/net-testing.sh $suffix $current_time $def_iface "long" "airplane" > logs/net-testing-forced-airplane-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+				num=1
+				echo $current_time > ".last_net"
+				echo $current_time > ".last_net_short"
+				let "force_net_test--"
+				echo $force_net_test > ".force_counter"
+				echo $current_time > ".last_net_forced"
+			else 
+				myprint "Skipping forced airplane net-testing since WiFi not found anymore"
 			fi 
 		fi 
 		
