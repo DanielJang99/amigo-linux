@@ -26,6 +26,7 @@ run_speedtest(){
     speedtest-cli --json > "${res_folder}/speedtest-$testId.json" 
     if [ $? -ne 0 ]
     then
+        rm -rf "${res_folder}/speedtest-$testId.json"
         node ./speed-cloudflare-cli/cli.js 1>"${res_folder}/speedtest-cloudflare-$testId.txt" 2>/dev/null 
     fi
 }
@@ -52,7 +53,7 @@ elif [[ "$network_ind" == "sim"* ]];then
             skipping="true"
         fi
 	fi	
-    if [[ $skipping == "false" ]]
+    if [[ $skipping == "false" ]]; then
         run_speedtest
     fi
 else
