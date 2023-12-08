@@ -249,6 +249,7 @@ t_s=`date +%s`
 iface="wlan0"
 opt="long"
 TEST_TIMEOUT=300
+airplane_mode="false"
 if [ $# -ge 4 ] 
 then
 	suffix=$1
@@ -259,6 +260,7 @@ then
 	# increase test timeout in airplane mode
 	if [ $5 == "airplane" ]
 	then
+		airplane_mode="true"
 		TEST_TIMEOUT=600
 	fi
 fi  
@@ -283,7 +285,7 @@ sleep 30
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 
 # video testing with youtube
-if [ $opt == "long" ] 
+if [ $opt == "long" -a $airplane_mode == "false" ] 
 then 
     run_experiment "./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single"
     myprint "Sleep 30 after Youtube-test to lower CPU load..."
