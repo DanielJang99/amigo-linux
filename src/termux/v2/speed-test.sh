@@ -23,10 +23,11 @@ do
 done
 
 run_speedtest(){
-    speedtest-cli --json > "${res_folder}/speedtest-$testId.json" 
-    if [ $? -ne 0 ]
+    speedtest_output=`speedtest-cli --json`
+    if [ $? -eq 0 ]
     then
-        rm -rf "${res_folder}/speedtest-$testId.json"
+        echo $speedtest_output > "${res_folder}/speedtest-$testId.json" 
+    else 
         node ./speed-cloudflare-cli/cli.js 1>"${res_folder}/speedtest-cloudflare-$testId.txt" 2>/dev/null 
     fi
 }
