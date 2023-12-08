@@ -42,13 +42,13 @@ then
     run_speedtest
     # args="$network_ind $output_path"
     # run_speedtest "$args"
-elif [[ "$network_ind" == "sim"* ]]
+elif [[ "$network_ind" == "sim"* ]];then
     skipping="false"
     mobile_today_file="./data/mobile/"$suffix".txt"		
 	if [ -f $mobile_today_file ] 
 	then 
 		mobile_data=`cat $mobile_today_file`
-        if [ $mobile_data -gt 500000000 ]
+        if [ $mobile_data -gt 500000000 ]; then
             skipping="true"
         fi
 	fi	
@@ -61,11 +61,11 @@ else
 	if [ -f $esim_today_file ] 
 	then 
 		esim_data=`cat $esim_today_file`
-        if [ $esim_data -gt 500000000 ]
+        if [ $esim_data -gt 500000000 ]; then
             skipping="true"
         fi
 	fi	
-    if [[ $skipping == "false" ]]
+    if [[ $skipping == "false" ]]; then
         run_speedtest
     fi
 fi
