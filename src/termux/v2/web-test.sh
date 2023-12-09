@@ -53,7 +53,7 @@ take_screenshots(){
 		if [ -f ${screen_file}".webp" ]
 		then 
 			chmod 644 ${screen_file}".webp"
-			rm ${screen_file}".png"
+			sudo rm ${screen_file}".png"
 		fi 
 		let "counter++"
 	done	 
@@ -70,7 +70,7 @@ visual(){
 	last_change=`cat $perf_video | grep "Last Visual Change"| head -n 1 | cut -f 2 -d ":" | sed s/" "//g`
 	echo -e "$speed_index\t$last_change" > ".visualmetrics"
 	gzip $perf_video
-	rm $screen_video
+	sudo rm $screen_video
 }
 
 # helper to extra last frame of a video
@@ -411,7 +411,7 @@ do
 	if [ -f ${screen_file}".webp" ]
 	then 
 		chmod 644 ${screen_file}".webp"
-		rm ${screen_file}".png"
+		sudo rm ${screen_file}".png"
 	fi 
 	t_last_scroll=0
 	if [ -f ".time_last_scroll" ] 
