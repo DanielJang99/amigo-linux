@@ -893,7 +893,7 @@ do
 	then 
 		turn_device_on
 		myprint "BT background process (kenzo service) was stopped. Restarting!"
-		sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
+		su -c monkey -p $kenzo_pkg 1 > /dev/null 2>&1
 		sleep 5
 		close_all
 	fi 

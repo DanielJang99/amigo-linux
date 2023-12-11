@@ -48,6 +48,14 @@ if [[ "$dev_model" == "SM-A346E" || "$dev_model" == "SM-G996B" ]]
 then 
 	uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
 	physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | awk '{print $1}'`
+	if sudo [ -f ".uid" ]
+	then 
+		existing_physical_id=`cat ".uid" | awk '{print $1}'`
+		if [[ "$physical_id" != *"$existing_physical_id"* ]]
+		then
+			echo -e "$physical_id\t$uid" > .uid
+		fi
+	fi
 	# handle edge case when imei for sim2 is reported instead 
 	# if [ -z $physical_id ]
 	# then 
