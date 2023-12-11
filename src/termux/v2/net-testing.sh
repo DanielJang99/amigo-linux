@@ -41,7 +41,6 @@ switch_network(){
 
 # kill a test if it runs more than 5 minutes 
 watch_test_timeout(){
-    TEST_TIMEOUT=300
     ( sleep $TEST_TIMEOUT && sudo kill -9 $1 ) 2>/dev/null & watcher=$!
     if wait $1 2>/dev/null; then
         sudo kill -9 $watcher
@@ -249,12 +248,21 @@ suffix=`date +%d-%m-%Y`
 t_s=`date +%s`
 iface="wlan0"
 opt="long"
-if [ $# -eq 4 ] 
+TEST_TIMEOUT=300
+airplane_mode="false"
+if [ $# -ge 4 ] 
 then
 	suffix=$1
 	t_s=$2
 	iface=$3
 	opt=$4
+
+	# increase test timeout in airplane mode
+	if [ $5 == "airplane" ]
+	then
+		airplane_mode="true"
+		TEST_TIMEOUT=600
+	fi
 fi  
 
 # retrieve last used server port 
@@ -277,7 +285,7 @@ sleep 30
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 
 # video testing with youtube
-if [ $opt == "long" ] 
+if [ $opt == "long" -a $airplane_mode == "false" ] 
 then 
     run_experiment "./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single"
     myprint "Sleep 30 after Youtube-test to lower CPU load..."

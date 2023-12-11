@@ -125,6 +125,12 @@ then
 	echo "$(generate_post_data)"
 	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/status
 
+	node --version 
+	if [ $? -ne 0 ]
+	then
+		yes | pkg install -y nodejs
+	fi
+
 	# update code 
 	myprint "Updating our code..."
 	git pull

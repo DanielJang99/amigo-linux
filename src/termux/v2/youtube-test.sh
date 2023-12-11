@@ -79,7 +79,7 @@ activate_stats_nerds(){
 	if [ -f ${screen_file}".webp" ]
 	then 
 		chmod 644 ${screen_file}".webp"
-		rm ${screen_file}".png"
+		sudo rm ${screen_file}".png"
 	fi
 
 	# click on stats-for-nerds 

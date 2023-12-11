@@ -23,18 +23,12 @@ do
 done
 
 run_speedtest(){
-    cmd="python ./v2/run_speedtest.py $1"
-    run=`( $cmd )`
-    if [ $? -ne 0 ]
+    speedtest_output=`speedtest-cli --json`
+    if [ $? -eq 0 ]
     then
-        myprint "Speedtest Failed"
-    else
-        if [[ "$run" == "DATA_EXCEEDED" ]];then
-            myprint "Speedtest Skipped"
-        else 
-            myprint "Speedtest Success"
-            gzip "$output_path"
-        fi
+        echo $speedtest_output > "${res_folder}/speedtest-$testId.json" 
+    else 
+        node ./speed-cloudflare-cli/cli.js 1>"${res_folder}/speedtest-cloudflare-$testId.txt" 2>/dev/null 
     fi
 }
 
@@ -43,54 +37,37 @@ network_ind=`echo $network_type | cut -f 1 -d "_"`
 res_folder="speedtest-cli-logs/${suffix}"
 mkdir -p $res_folder
 testId="${id}_${network_ind}"
-output_path="${res_folder}/speedtest-$testId.json"
+# output_path="${res_folder}/speedtest-$testId.json"
 
 if [[ "$network_ind" == "WIFI" ]];
 then
-    args="$network_ind $output_path"
-    run_speedtest "$args"
-else
-    # TODO: use subscriptions file instead of manually labelling sim to 1 and esim to 2 
-    # subscriptions_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/subscriptions.txt"
-    #simNum=`su -c cat $subscriptions_file | grep -n "$network_ind" | cut -f1 -d:`
-    #network_ind=`echo "{$network_ind// /-}"`
-
-    if [[ "$network_ind" == "sim"* ]];then
-        simNum=1
-    else
-        simNum=2
+    run_speedtest
+    # args="$network_ind $output_path"
+    # run_speedtest "$args"
+elif [[ "$network_ind" == "sim"* ]];then
+    skipping="false"
+    mobile_today_file="./data/mobile/"$suffix".txt"		
+	if [ -f $mobile_today_file ] 
+	then 
+		mobile_data=`cat $mobile_today_file`
+        if [ $mobile_data -gt 500000000 ]; then
+            skipping="true"
+        fi
+	fi	
+    if [[ $skipping == "false" ]]; then
+        run_speedtest
     fi
-    logFile=".last_mobile_speedtest_$simNum"
-    if [ -f $logFile ]
-    then
-        log=`cat $logFile`
-        args="$network_ind $output_path $logFile $log"
-        run_speedtest "$args"
-    else
-        args="$network_ind $output_path $logFile"
-        run_speedtest "$args"
+else
+    skipping="false"
+    esim_today_file="./data/airalo/"$suffix".txt"		
+	if [ -f $esim_today_file ] 
+	then 
+		esim_data=`cat $esim_today_file`
+        if [ $esim_data -gt 500000000 ]; then
+            skipping="true"
+        fi
+	fi	
+    if [[ $skipping == "false" ]]; then
+        run_speedtest
     fi
 fi
-
-# if [ -f $logFile ]
-#     lastMobSTest=`cat $logFile`
-#     var=( $(echo ${d} | awk '{print $1,$2,$3}') )
-#     last_test_tp="${var[0]}"
-#     current_tp=`date +%s`
-#     let "time_elapsed_since_last = current_tp-last_test_tp"
-#     if [ $time_elapsed_since_last -lt 86400 ];
-#     then
-#         bytesUsedToday="${var[1]}"
-#         # check threshold 
-#     else
-#         run_speedtest
-#         # overwrite .last_mobile_speedtest 
-#     fi
-# fi
-
-# testId="${id}_${network_ind}"
-# res_folder="speedtest-cli-logs/${suffix}"
-# mkdir -p $res_folder
-# speedtest-cli --json > "${res_folder}/speedtest-$testId.json"
-# gzip "${res_folder}/speedtest-$testId.json"
-
