@@ -24,7 +24,8 @@ def main(s):
             device_dict["acc"] = v
         elif k == "firstTime":
             updated_time_base = datetime.strptime(v, "%Y%m%d%H%M%S")  
-            device_dict["lastUpdated"] = updated_time_base + timedelta(hours=4)
+            update_time_tz = (updated_time_base + timedelta(hours=4)).strftime("%Y/%m/%d-%H:%M:%S")
+            device_dict["lastUpdated"] = update_time_tz
     print(device_dict)
 
     # devices = s.replace("&quot;", "").split("[")[1].split("]")[0].replace("}","").split("{")
