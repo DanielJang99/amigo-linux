@@ -546,3 +546,6 @@ echo "All good"
 # 1. Install "Boot Apps" from Play Store and add Termux & Termux:Boot
 # 1.1 Turn off battery optimization for Boot Apps (could be necessary)
 # 2. Install Kenzo Extension on Kiwi Browser 
+# 3. Open Youtube & enable stat for nerds & disable Picture-in-picture
+# 4. TermuxApi: Settings -> App -> TermuxApi -> enable Change system settings
+# 5. Install wehe 
