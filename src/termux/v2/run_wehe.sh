@@ -71,9 +71,6 @@ then
 fi
  
 current_time=`date +%s`
-if [ $current_time -lt 1701388800000 ];then
-    exit 0 
-fi 
 
 # check if wehe test was conducted in the last 2 weeks 
 if [ -f ".wehe" ]
@@ -122,6 +119,9 @@ do
     currentNetwork=`get_network_type` 
 done
 
+# clear wehe cache 
+su -c rm -fr "/data/data/mobi.meddle.wehe/cache/*"
+
 # disable mobile data for wifi test  
 turn_device_on
 termux-brightness 0
@@ -133,10 +133,17 @@ sudo input tap 500 1760
 sleep 0.5
 sudo input tap 200 2000 
 
+iter=0
 while [[ "$currentNetwork" == "WIFI_false"* ]]
 do
     sleep 1 
     currentNetwork=`get_network_type` 
+    let "iter++"
+    if [ $iter -gt 20 ];then
+        myprint "Failed to get mobile data with internet connectivity"
+        exit 1
+        break
+    fi
 done
 run_wehe
 
