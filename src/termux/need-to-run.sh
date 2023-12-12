@@ -141,6 +141,7 @@ then
 
 	# update code 
 	myprint "Updating our code..."
+	git stash
 	git pull
 	su -c chmod 755 -R v2/
 	
