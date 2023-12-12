@@ -32,8 +32,9 @@ if [[ $update_required == "true" ]];then
 
     # cache folder to save kenzo files until time of update
     mkdir -p kenzo_cache
+    mkdir -p kenzo_location_cache
     su -c cp -R /storage/emulated/0/Android/data/com.example.sensorexample/files/. kenzo_cache/
-
+    su -c cp -R /data/data/com.example.sensorexample/files/. kenzo_location_cache/
     sudo pm uninstall $kenzo_pkg
     sudo pm install -t "${setup_dir}/$apk"
     sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
@@ -53,6 +54,9 @@ if [[ $update_required == "true" ]];then
     su -c cp -R ./kenzo_cache/. /storage/emulated/0/Android/data/com.example.sensorexample/files/
     sudo rm -r kenzo_cache 
     su -c chmod -R 777 /storage/emulated/0/Android/data/com.example.sensorexample/files/*.txt
+    su -c cp -R ./kenzo_location_cache/. /data/data/com.example.sensorexample/files/
+    sudo rm -r kenzo_location_cache 
+    su -c chmod -R 777 /data/data/com.example.sensorexample/files/*.csv
 else
     myprint "No need to update Kenzo"
 fi

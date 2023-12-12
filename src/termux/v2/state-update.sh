@@ -439,7 +439,10 @@ vrs="2.9"                              # code version
 max_screen_timeout="2147483647"        # do not turn off screen 
 curl_duration="-1"                     # last value measured of curl duration
 isPaused="N/A"                         # hold info on whether a phone is paused or not
-network_type=`get_network_type`	
+network_type=`get_network_type`
+today=`date +\%m-\%d-\%y`
+output_path="logs/$today"
+mkdir -p $output_path
 	
 # check if testing
 if [ $# -eq 1 ] 
@@ -1028,8 +1031,8 @@ do
 			t_wifi_mobile_update=`date +%s`
 			if [ ! -z "$wifi_iface" ]
 			then	 	  	    
-				myprint "./net-testing.sh in `get_network_type` $suffix $current_time $def_iface \"long\" > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt"
-				(./v2/net-testing.sh $suffix $current_time $def_iface "long" | timeout 1200 cat > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+				myprint "./net-testing.sh in `get_network_type` $suffix $current_time $def_iface \"long\" > $output_path/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+				(./v2/net-testing.sh $suffix $current_time $def_iface "long" | timeout 1200 cat > $output_path/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
 				num=1
 				echo $current_time > ".last_net"
 				echo $current_time > ".last_net_short"
@@ -1045,8 +1048,8 @@ do
 			update_wifi_mobile
 			if [ ! -z "$wifi_iface" ]
 			then	 	  	    
-				myprint "./net-testing.sh in `get_network_type` $suffix $current_time $def_iface \"long\" > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt"
-				(./v2/net-testing.sh $suffix $current_time $def_iface "long" "airplane" > logs/net-testing-forced-airplane-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+				myprint "./net-testing.sh in `get_network_type` $suffix $current_time $def_iface \"long\" > $output_path/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+				(./v2/net-testing.sh $suffix $current_time $def_iface "long" "airplane" > $output_path/net-testing-forced-airplane-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
 				num=1
 				echo $current_time > ".last_net"
 				echo $current_time > ".last_net_short"
@@ -1080,8 +1083,8 @@ do
 			fi  
 			if [[ $skipping == "false" ]]
 			then
-				myprint "./net-testing.sh in `get_network_type` $suffix $current_time $def_iface \"long\" > logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt"
-				(./v2/net-testing.sh $suffix $current_time $def_iface "long"| timeout 1200 cat > logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 & )
+				myprint "./net-testing.sh in `get_network_type` $suffix $current_time $def_iface \"long\" > $output_path/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+				(./v2/net-testing.sh $suffix $current_time $def_iface "long"| timeout 1200 cat > $output_path/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 & )
 				num=1
 				echo $current_time > ".last_net"
 				echo $current_time > ".last_net_short"			
@@ -1116,8 +1119,8 @@ do
 			if [[ $skipping == "false" ]]
 			then
 				myprint "Time to run SHORT test: $time_from_last_net > $NET_INTERVAL_SHORT -- DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
-				myprint "./net-testing.sh in `get_network_type` $suffix $current_time $def_iface \"short\" > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt"
-				(./v2/net-testing.sh $suffix $current_time $def_iface "short" | timeout 1200 cat > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 & )
+				myprint "./net-testing.sh in `get_network_type` $suffix $current_time $def_iface \"short\" > $output_path/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+				(./v2/net-testing.sh $suffix $current_time $def_iface "short" | timeout 1200 cat > $output_path/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 & )
 				num=1
 				echo $current_time > ".last_net_short"
 			fi

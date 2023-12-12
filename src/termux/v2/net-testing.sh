@@ -258,7 +258,7 @@ then
 	opt=$4
 
 	# increase test timeout in airplane mode
-	if [ $5 == "airplane" ]
+	if [[ $5 == *"airplane"* ]]
 	then
 		airplane_mode="true"
 		TEST_TIMEOUT=600

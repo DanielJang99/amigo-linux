@@ -164,10 +164,12 @@ then
 	n_sleep=`shuf -i 0-30 -n 1`
 	echo "Time to run! Sleep $n_sleep to avoid concurrent restarts"	
 	sleep $n_sleep
-	mkdir -p logs	
+	today=`date +\%m-\%d-\%y`
+	res_dir="logs/$today"	
+	mkdir -p $res_dir
 	if [[ "$dev_model" == "SM-A346E" || "$dev_model" == "SM-G996B" ]] 
 	then 
-		./v2/state-update.sh > "logs/log-state-update-"`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1 &
+		./v2/state-update.sh > "$res_dir/log-state-update-"`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1 &
 	else 
 		./state-update.sh > "logs/log-state-update-"`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1 &
 	fi
