@@ -284,8 +284,20 @@ sleep 30
 # current free space 
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 
+# Get Current DNS used 
+if [ $opt == "long" ]
+then
+    myprint "Getting current DNS used - saved to dns-results/$suffix/$t_s.txt"
+    dns_res_folder="dns-results/$suffix"
+    mkdir -p dns_res_folder
+    networkProperties=`get_network_properties`
+    myprint "$networkProperties"
+    curl -L https://test.nextdns.io > "${dns_res_folder}/$t_s.txt"
+fi
+
 # video testing with youtube
-if [ $opt == "long" -a $airplane_mode == "false" ] 
+# if [ $opt == "long" -a $airplane_mode == "false" ] 
+if [ $opt == "long" ] 
 then 
     run_experiment "./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single"
     myprint "Sleep 30 after Youtube-test to lower CPU load..."

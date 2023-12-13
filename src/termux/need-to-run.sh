@@ -165,7 +165,7 @@ then
 	n_sleep=`shuf -i 0-30 -n 1`
 	echo "Time to run! Sleep $n_sleep to avoid concurrent restarts"	
 	sleep $n_sleep
-	today=`date +\%m-\%d-\%y`
+	today=`date +\%d-\%m-\%y`
 	res_dir="logs/$today"	
 	mkdir -p $res_dir
 	if [[ "$dev_model" == "SM-A346E" || "$dev_model" == "SM-G996B" ]] 
