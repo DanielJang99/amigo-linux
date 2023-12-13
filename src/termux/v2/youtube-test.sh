@@ -15,6 +15,7 @@ safe_stop(){
 	myprint "Entering safe stop..."
 	sudo  settings put system user_rotation 0 
 	sudo killall tcpdump
+	turn_device_on
 	close_all
 	if [ $single != "true" ] 
 	then
@@ -78,7 +79,7 @@ activate_stats_nerds(){
 	if [ -f ${screen_file}".webp" ]
 	then 
 		chmod 644 ${screen_file}".webp"
-		rm ${screen_file}".png"
+		sudo rm ${screen_file}".png"
 	fi
 
 	# click on stats-for-nerds 
@@ -115,7 +116,8 @@ generate_post_data(){
     "avg_ping6":"${avg_ping6}",    
     "bdw_used_MB":"${traffic}",
     "tshark_traffic_MB":"${tshark_size}", 
-    "msg":"${msg}"
+    "msg":"${msg}", 
+	"network_type": "${network_type}"
     }
 EOF
 }
@@ -172,6 +174,7 @@ first_run="false"                  # first time ever youtube was run
 cpu_usage_middle="N/A"             # CPU measured in the middle of a test 
 MAX_LAUNCH_TIMEOUT=30              # maximum duration for youtube to launch
 record_video="false"               # record a video of enabling stats for nerds 
+network_type=`get_network_type`
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -217,6 +220,10 @@ do
     esac
 done
 
+# indicate current network in curr_run_id
+network_ind=`echo $network_type | cut -f 1 -d "_"`
+curr_run_id="${curr_run_id}_${network_ind}"
+
 # retrieve last used server port 
 if [ -f ".server_port" ] 
 then 
@@ -247,14 +254,17 @@ fi
 ping_youtube &
 
 # update UID if needed 
-if [ $uid == "none" ]
+if [ -f ".uid" ]
 then 
+	uid=`cat ".uid" | awk '{print $2}'`
+	physical_id=`cat ".uid" | awk '{print $1}'`
+else 
 	uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
-fi 
-if [ -f "uid-list.txt" ] 
-then 
-	physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | cut -f 1`
-fi 
+	if [ -f "uid-list.txt" ] 
+	then 
+		physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | awk '{print $1}'`
+	fi 
+fi
 myprint "UID: $uid PhysicalID: $physical_id"
 
 # folder creation
@@ -415,8 +425,8 @@ do
 	fi 
     sleep 1;
 	# make sure we are still inside the app
-	curr_activity=`sudo dumpsys activity | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-    if [[ $curr_activity != *"WatchWhileActivity"* ]] 
+	curr_activity=`sudo dumpsys activity | grep -E 'mCurrentFocus' | tail -n 1`
+    if [[ $curr_activity != *"com.google.android.youtube"* ]] 
     then 
     	msg="ERROR-LEFT-YOUTUBE"
     	myprint "ERROR detected. We left YouTube!"
@@ -464,6 +474,13 @@ echo "false" > ".to_monitor"
 
 # clean youtube state and anything else 
 safe_stop
+
+# kill youtube process if present 
+youtube_pid=`sudo ps aux | grep "com.google.android.youtube" | grep -v "grep" | awk '{print $2}'`
+if [ ! -z $youtube_pid ]
+then 
+	sudo kill -9 $youtube_pid
+fi
 
 # update traffic received counter 
 compute_bandwidth $traffic_rx_last

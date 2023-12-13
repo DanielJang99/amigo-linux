@@ -44,9 +44,24 @@ then
 fi 
 
 dev_model=`getprop ro.product.model | sed s/" "//g`
-if [ $dev_model == "SM-A346E" ] 
+if [[ "$dev_model" == "SM-A346E" || "$dev_model" == "SM-G996B"* ]] 
 then 
 	uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
+	# handle edge case when imei for sim2 is reported instead 
+	# if [ -z $physical_id ]
+	# then 
+	# 	turn_device_on
+	# 	su -c cmd statusbar expand-settings
+	# 	sleep 1 
+	# 	sudo input tap 250 1350 
+	# 	sleep 1
+	# 	sudo input tap 250 1350 
+	# 	sleep 1 
+	# 	turn_device_off
+	# 	sleep 10 
+	# 	uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
+	# 	physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | awk '{print $1}'`
+	# fi
 else
 	uid=`termux-telephony-deviceinfo | grep "device_id" | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
 fi
@@ -92,6 +107,7 @@ then
 	uptime_info=`uptime`
 	msg=$msg"reboot"
 	echo "$(generate_post_data)"
+	echo "false" > .isDebug
 	timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/status
 fi 
 
@@ -108,9 +124,27 @@ then
 	echo "$(generate_post_data)"
 	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/status
 
+	node --version 
+	if [ $? -ne 0 ]
+	then
+		yes | pkg install -y nodejs
+	fi
+
+	traceroute --version 
+	if [ $? -ne 0 ]
+	then 
+		yes | pkg install -y traceroute
+	fi
+
 	# update code 
 	myprint "Updating our code..."
 	git pull
+	if [ $? -ne 0 ]
+	then
+		git stash 
+		git pull
+	fi
+	su -c chmod +rx -R v2/
 	
 	# make sure net-testing is stopped
 	./stop-net-testing.sh  	
@@ -124,13 +158,26 @@ then
 			gzip "logs/${f}"
 		fi 
 	done
+
+	# check if Kenzo needs to be updated 
+	./update_kenzo.sh > log-kenzo-update
+
+	# check if visual_metrics is installed in this directory 
+	./check-visual.sh
 		
 	# restart script 
 	n_sleep=`shuf -i 0-30 -n 1`
 	echo "Time to run! Sleep $n_sleep to avoid concurrent restarts"	
 	sleep $n_sleep
-	mkdir -p logs	
-	./state-update.sh > "logs/log-state-update-"`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1 &
+	today=`date +\%d-\%m-\%y`
+	res_dir="logs/$today"	
+	mkdir -p $res_dir
+	if [[ "$dev_model" == "SM-A346E" || "$dev_model" == "SM-G996B" ]] 
+	then 
+		./v2/state-update.sh > "$res_dir/log-state-update-"`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1 &
+	else 
+		./state-update.sh > "logs/log-state-update-"`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1 &
+	fi
 else 
 	echo "No need to run"
 fi

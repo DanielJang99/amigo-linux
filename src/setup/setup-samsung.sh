@@ -3,6 +3,10 @@
 # Author: Matteo Varvello (varvello@gmail.com)
 # Date: 11/19/2021
 
+# Before running, make sure that on Developer Options: 
+# 1) enable [Stay Awake]
+# 2) disable [Verify apps over USB]
+
 # check input 
 if [ $# -ne 1 -a $# -ne 2 ] 
 then
@@ -295,9 +299,9 @@ then
     adb -s $device_id shell "input keyevent KEYCODE_ENTER"
     sleep 20
 
-    adb -s $device_id shell input text "yes\ |\ apt\ upgrade\ -y"
+    adb -s $device_id shell input text "apt\ upgrade\ -y"
     adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-    sleep 100
+    sleep 70
 
 	echo "Setting default password: $password"
 	adb -s $device_id shell input text "pkg\ install\ -y\ termux-auth"
@@ -344,7 +348,7 @@ then
 	sleep 2 
 	adb -s $device_id shell input text ".\/install.sh"
 	adb -s $device_id shell "input keyevent KEYCODE_ENTER"
-	sleep 50  # watch out cause it is not blocking (ADB gets out) 
+	sleep 40  # watch out cause it is not blocking (ADB gets out) 
 fi 
 
 # wait for above process to be done
@@ -521,6 +525,19 @@ else
 	echo "CRON is correctly running"
 fi
 
+IMEI=`adb -s $device_id shell "service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'"`
+PHY_ID=`cat "./../termux/uid-list.txt" | grep $IMEI | head -n 1 | awk '{print $1}'`
+if [ -z "$PHY_ID" ]
+then
+    PHY_ID=`tail -n 1 ./../termux/uid-list.txt | awk '{print $1}'`
+    let "PHY_ID += 1"
+    echo -e "$PHY_ID\t$IMEI" >> ./../termux/uid-list.txt
+fi
+echo -e "$PHY_ID\t$IMEI" > .uid
+adb -s $device_id push .uid /sdcard/
+adb -s $device_id shell su -c mv /sdcard/.uid /data/data/com.termux/files/home/mobile-testbed/src/termux
+adb -s $device_id shell su -c chmod +r /data/data/com.termux/files/home/mobile-testbed/src/termux/.uid 
+
 # logging 
 echo "All good"
 
@@ -529,3 +546,6 @@ echo "All good"
 # 1. Install "Boot Apps" from Play Store and add Termux & Termux:Boot
 # 1.1 Turn off battery optimization for Boot Apps (could be necessary)
 # 2. Install Kenzo Extension on Kiwi Browser 
+# 3. Open Youtube & enable stat for nerds & disable Picture-in-picture
+# 4. TermuxApi: Settings -> App -> TermuxApi -> enable Change system settings
+# 5. Install wehe 

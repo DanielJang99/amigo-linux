@@ -45,7 +45,8 @@ generate_post_data(){
 	"t_starttransfer":"${t_starttransfer}",
 	"t_total":"${t_total}",
 	"size_download":"${size_download}",
-	"size_header":"${size_header}"
+	"size_header":"${size_header}",
+	"network_type": "${network_type}"
 	}
 EOF
 }
@@ -61,8 +62,8 @@ test_download(){
 
 	# curl download 
 	myprint "[CURL] Destination: $dst Label: $label"
-	stats="$res_folder/stats-$label-$ts"
-	headers="$res_folder/headers-$label-$ts"
+	stats="$res_folder/stats-$label-$ts-$network_ind"
+	headers="$res_folder/headers-$label-$ts-$network_ind"
 #	echo "curl -v -H \"Accept-Encoding: gzip\" -H 'user-agent: $UA' -w \"@curl-format.txt\" -s $dst -o $out_file"
 	#curl -v -H "Accept-Encoding: gzip" -H 'user-agent: $UA' -w "@curl-format.txt" -s $dst -o $out_file > $stats  2>$headers
 	timeout 15 curl -v -w "@curl-format.txt" -s $dst -o $out_file > $stats  2>$headers
@@ -121,6 +122,14 @@ test_download(){
 }
 
 
+# get current network type (wifi, LTE, 5G, etc) from file updated by Kenzo App 
+get_network_type() {
+	networkFile="/storage/emulated/0/Android/data/com.example.sensorexample/files/currentNetwork.txt"
+	if sudo [ -f $networkFile ];then
+		sudo cat $networkFile | head -n 1 
+	fi
+}
+
 # check for macOS
 isMacOS="false"
 uname -a | grep "Darwin" > /dev/null
@@ -142,6 +151,9 @@ fi
 # folder organiztion 
 res_folder="./cdnlogs/$uid"
 mkdir -p $res_folder 
+
+network_type=`get_network_type`	
+network_ind=`echo $network_type | cut -f 1 -d "_"`
 
 # CDN tests
 myprint "Starting CDN tests..."

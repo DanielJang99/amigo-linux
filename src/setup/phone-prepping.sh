@@ -29,6 +29,10 @@ yes | pkg install -y tcpdump
 # install tshark to analyze pcap traces 
 yes | pkg install -y tshark
 
+yes | pkg install node 
+
+yes | pkg install traceroute
+
 # video analysis of web performance metrics
 yes | pkg install -y ffmpeg 
 pip install wheel
@@ -37,6 +41,8 @@ echo "WARNING -- next command will take some time..."
 yes | pkg install python-pip
 pip install pillow 
 #pip install pyssim     # skipping since takes forever and not needed? 
+
+cd /data/data/com.termux/files/home/mobile-testbed/src/termux 
 if [ ! -d "visualmetrics" ]
 then
     git clone https://github.com/WPO-Foundation/visualmetrics

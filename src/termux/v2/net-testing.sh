@@ -39,6 +39,106 @@ switch_network(){
     fi
 }
 
+# kill a test if it runs more than 5 minutes 
+watch_test_timeout(){
+    ( sleep $TEST_TIMEOUT && sudo kill -9 $1 ) 2>/dev/null & watcher=$!
+    if wait $1 2>/dev/null; then
+        sudo kill -9 $watcher
+        wait $watcher
+        sleep_pid=`ps aux | grep "sleep 300" | head -n 1 | awk '{print $2}'`
+        sudo kill -9 $sleep_pid
+        myprint "Test completed"
+    else
+        myprint "Test process killed after running for 5 minutes"
+    fi
+}
+
+run_experiment(){
+    currentNetwork=`get_network_type`
+    if [[ "$currentNetwork" == "WIFI_true"* ]];then
+        run_experiment_on_wifi "$1"
+    elif [[ "$currentNetwork" == "WIFI_false"* ]];then
+        myprint "Unable to run $1 due to no internet connection with current WIFI"
+    elif [[ "$currentNetwork" == *"true"* ]];then
+        run_experiment_across_sims "$1"
+    else
+        myprint "Unable to run $1 due to no internet connection"  
+    fi
+}
+
+run_experiment_on_wifi(){
+    myprint "Running in WIFI: $1"
+    networkProperties=`get_network_properties`
+    myprint "$networkProperties"
+    ( $1 ) & exp_pid=$! 
+    watch_test_timeout $exp_pid 2>/dev/null
+}
+
+# run an experiment on esim, sim_lte, sim_5g (if possible)
+run_experiment_across_sims(){
+    subscriptions_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/subscriptions.txt"
+    if sudo [ -f $subscriptions_file ]; then
+        numSubs=`su -c cat $subscriptions_file | wc -l`
+        if [ $numSubs -gt 0 ]
+        then 
+            currentNetwork=`get_network_type`
+            if [ ! -z "$currentNetwork" ]
+            then
+                for ((i=1;i<=numSubs;i++))
+                do
+                    # 1. switch sim 
+                    networkToTest=`su -c cat $subscriptions_file | head -n $i | tail -1`
+                    while [[ "$currentNetwork" != "$networkToTest"* ]];
+                    do
+                        turn_device_on
+                        su -c cmd statusbar expand-settings
+                        sleep 1 
+                        sudo input tap 850 1250
+                        sleep 1 
+                        sudo input tap 850 $((1000+$i*250))
+                        sleep 3
+                        sudo input keyevent KEYCODE_APP_SWITCH
+                        sleep 0.5
+                        sudo input keyevent KEYCODE_BACK
+                        sleep 1
+                        currentNetwork=`get_network_type`
+                        if [[ "$currentNetwork" == "WIFI"* ]];then
+                            myprint "Network has switched from mobile to WIFI"
+                            return
+                        fi
+                    done
+                    turn_device_off
+
+                    #2. check internet connectivity after selecting sim - 10 seconds
+                    numFails=0
+                    while [[ "$currentNetwork" == *"false"* && $numFails -lt 20 ]];
+                    do
+                        sleep 0.5 
+                        currentNetwork=`get_network_type`
+                        let "numFails++"
+                    done
+                    if [[ "$currentNetwork" == *"false"* ]];then
+                        myprint "Unable to run $1 due to no internet connection with current mobile data: $currentNetwork"
+                        continue
+                    fi
+
+                    #3. run test 
+                    myprint "Running in $currentNetwork"
+                    networkProperties=`get_network_properties`
+                    myprint "$networkProperties"
+                    ( $1 ) & exp_pid=$! 
+                    watch_test_timeout $exp_pid 2>/dev/null
+                done
+            fi
+        else 
+            myprint "Error running experiment in mobile data: no active subscriptions"
+        fi
+    else 
+        myprint "Error running experiment in mobile data: missing subscription file"
+    fi
+}
+
+
 # run NYU measurement 
 run_zus(){
 	# params and folder organization
@@ -50,11 +150,17 @@ run_zus(){
 	#switch to 3G 
 	traffic_start=`ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 	myprint "NYU-stuff. Switch to 3G"	
-    uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
-	if [ -f "uid-list.txt" ] 
-	then 
-		physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | cut -f 1`
-	fi 
+    if [ -f ".uid" ]
+    then 
+        uid=`cat ".uid" | awk '{print $2}'`
+        physical_id=`cat ".uid" | awk '{print $1}'`
+    else 
+        uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
+        if [ -f "uid-list.txt" ] 
+        then 
+            physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | awk '{print $1}'`
+        fi 
+    fi
 	myprint "UID: $uid PhysicalID: $physical_id"
 	turn_device_on
 	am start -n com.samsung.android.app.telephonyui/com.samsung.android.app.telephonyui.netsettings.ui.simcardmanager.SimCardMgrActivity
@@ -142,12 +248,21 @@ suffix=`date +%d-%m-%Y`
 t_s=`date +%s`
 iface="wlan0"
 opt="long"
-if [ $# -eq 4 ] 
+TEST_TIMEOUT=300
+airplane_mode="false"
+if [ $# -ge 4 ] 
 then
 	suffix=$1
 	t_s=$2
 	iface=$3
 	opt=$4
+
+	# increase test timeout in airplane mode
+	if [[ $5 == *"airplane"* ]]
+	then
+		airplane_mode="true"
+		TEST_TIMEOUT=600
+	fi
 fi  
 
 # retrieve last used server port 
@@ -169,19 +284,30 @@ sleep 30
 # current free space 
 free_space_s=`df | grep "emulated" | awk '{print $4/(1000*1000)}'`
 
+# Get Current DNS used 
+if [ $opt == "long" ]
+then
+    myprint "Getting current DNS used - saved to dns-results/$suffix/$t_s.txt"
+    dns_res_folder="dns-results/$suffix"
+    mkdir -p dns_res_folder
+    networkProperties=`get_network_properties`
+    myprint "$networkProperties"
+    curl -L https://test.nextdns.io > "${dns_res_folder}/$t_s.txt"
+fi
+
 # video testing with youtube
+# if [ $opt == "long" -a $airplane_mode == "false" ] 
 if [ $opt == "long" ] 
 then 
-	./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single | timeout 300 cat
-	turn_device_off
-	myprint "Sleep 30 to lower CPU load..."
-	sleep 30  		 
+    run_experiment "./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single"
+    myprint "Sleep 30 after Youtube-test to lower CPU load..."
+    sleep 30  	
 else 
-	myprint "Skipping YouTube test sing option:$opt"
+	myprint "Skipping YouTube testing option:$opt"
 fi 
 
 # run multiple MTR
-./mtr.sh $suffix $t_s | timeout 300 cat 
+run_experiment "./mtr.sh $suffix $t_s"
 
 # run nyu stuff -- only if MOBILE and not done too many already 
 num_runs_today=0
@@ -262,36 +388,34 @@ then
 fi
 
 # run a speedtest 
-myprint "Running speedtest-cli..."
-res_folder="speedtest-cli-logs/${suffix}"
-mkdir -p $res_folder
-timeout 300 speedtest-cli --json > "${res_folder}/speedtest-$t_s.json"
-gzip "${res_folder}/speedtest-$t_s.json"
-myprint "Sleep 30 to lower CPU load..."
-sleep 30  		 
+run_experiment "./v2/speed-test.sh --suffix $suffix --id $t_s"
+myprint "Sleep 30 after speed-test to lower CPU load..."
+sleep 30
 
 # run a speedtest in the browser (fast.com) -- having issue on this phone 
 #./speed-browse-test.sh $suffix $t_s
 
 # test multiple CDNs
-./cdn-test.sh $suffix $t_s | timeout 300 cat
-sleep 30 
+run_experiment "./cdn-test.sh $suffix $t_s"
+myprint "Sleep 30 after CDN-test to lower CPU load..."
+sleep 30
 
 # QUIC test? 
 # TODO 
 
 # test multiple webages -- TEMPORARILY DISABLED 
 if [ $opt == "long" ] 
-then 
-	./v2/web-test.sh  --suffix $suffix --id $t_s --iface $iface --pcap --single | timeout 300 cat # reduced number of webpage tests
-	sleep 30 
+then
+run_experiment "./v2/web-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single" # reduced number of webpage tests
+sleep 30 
 else 
-	myprint "Skipping WebTest test sing option:$opt"
+	myprint "Skipping WebTest testing option:$opt"
 fi 
 
 # safety cleanup 
 sudo pm clear com.android.chrome
 #sudo pm clear com.google.android.youtube
+turn_device_on
 close_all
 sudo killall tcpdump
 for pid in `ps aux | grep 'youtube-test\|web-test\|mtr.sh\|cdn-test.sh\|speedtest-cli'  | grep -v "grep" | grep -v "stop" | awk '{print $2}'`

@@ -126,7 +126,13 @@ turn_device_on(){
 			sleep 1
 			sudo input swipe 500 1900 500 1000
 		else
-			myprint "Screen is ON. Nothing to do!"
+			sudo dumpsys window | grep "mDreamingLockscreen=true" > /dev/null
+			if [ $? -eq 0 ]
+			then
+				sudo input swipe 500 1900 500 1000
+			else
+				myprint "Screen is ON. Nothing to do!"
+			fi
 			is_on="true"
 			ans=0
 		fi
@@ -203,18 +209,26 @@ chrome_onboarding(){
 	done
 	if [[ $curr_activity == *"FirstRunActivity"* ]]
 	then
-		tap_screen 550 1730 1   # click ACCEPT 
-		tap_screen 850 2040 1 
-		sudo input swipe 500 1300 500 800
-		tap_screen 850 2040 1 
-		tap_screen 550 1700 1 
-		#tap_screen 370 1210 1  # yes to sync 
-		# sudo input tap 120 1200 && sleep 0.1 && sudo input tap 120 1200
-		#tap_screen 120 1200 1   # no sync		
-		#tap_screen 120 1200 1   # no sync (no idea why need a double tap)
-		# below is needed in case of lite mode 
-		#tap_screen 600 1200 1    
-		#tap_screen 600 1200 1    
+		dev_model=`getprop ro.product.model | sed s/" "//g`
+		if [ $dev_model == "SM-G996B" ]
+		then
+			tap_screen 550 1800 1 
+			tap_screen 850 2100 1 
+			tap_screen 850 2100 1 
+		else 
+			tap_screen 550 1730 1   # click ACCEPT 
+			tap_screen 850 2040 1 
+			sudo input swipe 500 1300 500 800
+			tap_screen 850 2040 1 
+			tap_screen 550 1700 1 
+			#tap_screen 370 1210 1  # yes to sync 
+			# sudo input tap 120 1200 && sleep 0.1 && sudo input tap 120 1200
+			#tap_screen 120 1200 1   # no sync		
+			#tap_screen 120 1200 1   # no sync (no idea why need a double tap)
+			# below is needed in case of lite mode 
+			#tap_screen 600 1200 1    
+			#tap_screen 600 1200 1    
+		fi
 	else 
 		myprint "No onboarding was detected"
 	fi 
@@ -314,6 +328,12 @@ close_all(){
 	if [ $dev_model == "SM-A346E" ] 
 	then 
 		tap_screen 540 1820
+	elif [ $dev_model == "SM-A528B" ]
+	then 
+		tap_screen 580 1860
+	elif [ $dev_model == "SM-G996B" ]
+	then 
+		tap_screen 550 1900
 	else  
 		tap_screen 370 1210 
 	fi
@@ -347,4 +367,29 @@ phone_setup_simple(){
 
 	# all good 
 	return 0 
+}
+
+# get current network type (wifi, LTE, 5G, etc) from file updated by Kenzo App 
+get_network_type() {
+	networkFile="/storage/emulated/0/Android/data/com.example.sensorexample/files/currentNetwork.txt"
+	if sudo [ -f $networkFile ];then
+		sudo cat $networkFile | head -n 1 
+	fi
+}
+
+
+# get information about the link for a network, such as the list of DNS servers, local IP addresses, and network routes installed for the network
+get_network_properties() {
+	lpFile="/storage/emulated/0/Android/data/com.example.sensorexample/files/linkProperties.txt"
+	if sudo [ -f $lpFile ];then
+		sudo cat $lpFile
+	fi
+}
+
+# get information about properties of a network, such as the transports (Wi-Fi, mobile, Bluetooth) and what the network is capable of - supported bandwidth, link speed, etc 
+get_network_capabilities() {
+	networkFile="/storage/emulated/0/Android/data/com.example.sensorexample/files/currentNetwork.txt"
+	if sudo [ -f $networkFile ];then
+		sudo cat $networkFile | tail -n 2 | head -n 1 
+	fi
 }

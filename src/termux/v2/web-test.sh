@@ -16,6 +16,7 @@ source $adb_file
 
 # safe run interruption
 safe_stop(){	
+	turn_device_on
     close_all
     turn_device_off
 	sudo pm clear $package
@@ -52,7 +53,7 @@ take_screenshots(){
 		if [ -f ${screen_file}".webp" ]
 		then 
 			chmod 644 ${screen_file}".webp"
-			rm ${screen_file}".png"
+			sudo rm ${screen_file}".png"
 		fi 
 		let "counter++"
 	done	 
@@ -69,7 +70,7 @@ visual(){
 	last_change=`cat $perf_video | grep "Last Visual Change"| head -n 1 | cut -f 2 -d ":" | sed s/" "//g`
 	echo -e "$speed_index\t$last_change" > ".visualmetrics"
 	gzip $perf_video
-	rm $screen_video
+	sudo rm $screen_video
 }
 
 # helper to extra last frame of a video
@@ -120,6 +121,10 @@ run_test(){
 	then 
 		myprint "Attempt accepting cookies"
 		tap_screen 120 1200
+	elif [ $url == "https://www.wsj.com/" ]
+	then 
+		myprint "Block WSJ notifications"
+		tap_screen 630 1330  
 	fi 
 	sleep $half
 
@@ -127,10 +132,12 @@ run_test(){
 	if [ $video_recording == "true" ]
 	then
 		sudo chown $USER:$USER $screen_video
-		if [ -f "/data/data/com.termux/files/home/mobile-testbed/src/setup/visualmetrics" ] 
+		if [ -f "visualmetrics/visualmetrics.py" ] 
 		then
 			myprint "Running visual analysis in the background" 
 			visual &
+		else 
+			myprint "Visualmetrics not found"
 		fi 
 	fi	
 
@@ -166,7 +173,8 @@ generate_post_data(){
     "tshark_traffic_MB":"${tshark_size}",
     "load_dur_sec":"${load_time}",
     "speed_index_ms":"${speed_index}",
-    "last_visual_change_ms":"${last_change}"
+    "last_visual_change_ms":"${last_change}",
+	"network_type": "${network_type}"
     }
 EOF
 }
@@ -200,6 +208,7 @@ pcap_collect="false"               # flag to control pcap collection at the phon
 app="chrome"                       # used to detect process in CPU monitoring
 url="none"                         # URL to test 
 uid="none"                         # user ID
+network_type=`get_network_type`	
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -242,6 +251,10 @@ do
     esac
 done
 
+# indicate current network in curr_run_id
+network_ind=`echo $network_type | cut -f 1 -d "_"`
+curr_run_id="${curr_run_id}_${network_ind}"
+
 # make sure only this instance of this script is running
 my_pid=$$
 myprint "My PID: $my_pid"
@@ -273,14 +286,17 @@ sudo  settings put system accelerometer_rotation 0 # disable (shows portrait)
 sudo  settings put system user_rotation 0          # put in portrait
 
 # update UID if needed 
-if [ $uid == "none" ]
+if [ -f ".uid" ]
 then 
-	uid=`termux-telephony-deviceinfo | grep device_id | cut -f 2 -d ":" | sed s/"\""//g | sed s/","//g | sed 's/^ *//g'`
-fi 
-if [ -f "uid-list.txt" ] 
-then 
-	physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | cut -f 1`
-fi 
+	uid=`cat ".uid" | awk '{print $2}'`
+	physical_id=`cat ".uid" | awk '{print $1}'`
+else 
+	uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
+	if [ -f "uid-list.txt" ] 
+	then 
+		physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | awk '{print $1}'`
+	fi 
+fi
 myprint "UID: $uid PhisicalID: $physical_id"
 
 # folder creation
@@ -304,11 +320,26 @@ browser="chrome"
 package="com.android.chrome"
 activity="com.google.android.apps.chrome.Main"
 myprint "[INFO] Cleaning browser data ($app-->$package)"
-su -c rm -fr "/data/data/$package/cache/*"
-# sudo pm clear $package
-su -c am start -n $package/$activity
-sleep 3
+cur_app=`sudo dumpsys activity | grep -E 'mCurrentFocus' | grep -E $package`
+iter=0
+while [ -z "$cur_app" ]
+do
+	turn_device_on
+	su -c rm -fr "/data/data/$package/cache/*"
+	sleep 3
+	su -c am start -n $package/$activity
+	sleep 4
+	cur_app=`sudo dumpsys activity | grep -E 'mCurrentFocus' | grep -E $package`
+	let "iter++"
+
+	if [ $iter -eq 10 ];then
+		myprint "[ERROR] Chrome failed to open after 10 tries..."
+		exit 1
+	fi
+
+done
 chrome_onboarding
+myprint "[INFO] Chrome Onboarding Complete"
 #browser_setup #FIXME => allow to skip chrome onboarding, but using a non working option
 
 # get private  IP in use
@@ -380,7 +411,7 @@ do
 	if [ -f ${screen_file}".webp" ]
 	then 
 		chmod 644 ${screen_file}".webp"
-		rm ${screen_file}".png"
+		sudo rm ${screen_file}".png"
 	fi 
 	t_last_scroll=0
 	if [ -f ".time_last_scroll" ] 
