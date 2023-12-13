@@ -160,7 +160,7 @@ then
 	done
 
 	# check if Kenzo needs to be updated 
-	./update_kenzo.sh 
+	./update_kenzo.sh > log-kenzo-update
 
 	# check if visual_metrics is installed in this directory 
 	./check-visual.sh
