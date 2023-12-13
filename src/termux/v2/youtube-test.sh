@@ -425,8 +425,8 @@ do
 	fi 
     sleep 1;
 	# make sure we are still inside the app
-	curr_activity=`sudo dumpsys activity | grep -E 'mCurrentFocus' | awk -F "." '{print $NF}' | sed s/"}"//g`
-    if [[ $curr_activity != *"WatchWhileActivity"* ]] 
+	curr_activity=`sudo dumpsys activity | grep -E 'mCurrentFocus' | tail -n 1`
+    if [[ $curr_activity != *"com.google.android.youtube"* ]] 
     then 
     	msg="ERROR-LEFT-YOUTUBE"
     	myprint "ERROR detected. We left YouTube!"
