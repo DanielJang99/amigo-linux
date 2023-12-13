@@ -207,14 +207,14 @@ update_location(){
 	mkdir -p $res_dir	
 
 	# use termux location api 
-	timeout $MAX_LOCATION termux-location -p network -r last > $res_dir"/network-loc-$current_time.txt"
-	lat=`cat $res_dir"/network-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
-	long=`cat $res_dir"/network-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
-	network_loc="$lat,$long"
-	timeout $MAX_LOCATION termux-location -p gps -r last > $res_dir"/gps-loc-$current_time.txt"		
-	lat=`cat $res_dir"/gps-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
-	long=`cat $res_dir"/gps-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
-	gps_loc="$lat,$long"		
+	# timeout $MAX_LOCATION termux-location -p network -r last > $res_dir"/network-loc-$current_time.txt"
+	# lat=`cat $res_dir"/network-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
+	# long=`cat $res_dir"/network-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
+	# network_loc="$lat,$long"
+	# timeout $MAX_LOCATION termux-location -p gps -r last > $res_dir"/gps-loc-$current_time.txt"		
+	# lat=`cat $res_dir"/gps-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
+	# long=`cat $res_dir"/gps-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
+	# gps_loc="$lat,$long"		
 
 	# get latest location from Kenzo App 	
 	kenzo_loc=`sudo tail -n 1 /data/data/com.example.sensorexample/files/log.csv`
@@ -222,7 +222,8 @@ update_location(){
 
 	# use dumpsys location 
 	sudo dumpsys location > $res_dir"/loc-$current_time.txt"
-	loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "fused" | head -n 1 | sed -e 's/^[[:space:]]*//'`
+	loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "fused" | tail -n 1 | sed -e 's/^[[:space:]]*//'`
+	network_loc=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "network" | tail -n 1 | sed -e 's/^[[:space:]]*//'`
 	gzip $res_dir"/loc-$current_time.txt"
 }
 
