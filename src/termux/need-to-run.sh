@@ -47,8 +47,6 @@ dev_model=`getprop ro.product.model | sed s/" "//g`
 if [[ "$dev_model" == "SM-A346E" || "$dev_model" == "SM-G996B"* ]] 
 then 
 	uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
-	physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | awk '{print $1}'`
-	echo -e "$physical_id\t$uid" > .uid
 	# handle edge case when imei for sim2 is reported instead 
 	# if [ -z $physical_id ]
 	# then 
@@ -132,6 +130,12 @@ then
 		yes | pkg install -y nodejs
 	fi
 
+	traceroute --version 
+	if [ $? -ne 0 ]
+	then 
+		yes | pkg install -y traceroute
+	fi
+
 	# update code 
 	myprint "Updating our code..."
 	git stash
@@ -153,6 +157,9 @@ then
 
 	# check if Kenzo needs to be updated 
 	./update_kenzo.sh 
+
+	# check if visual_metrics is installed in this directory 
+	./check-visual.sh
 		
 	# restart script 
 	n_sleep=`shuf -i 0-30 -n 1`
