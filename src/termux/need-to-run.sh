@@ -138,9 +138,13 @@ then
 
 	# update code 
 	myprint "Updating our code..."
-	git stash
 	git pull
-	su -c chmod 755 -R v2/
+	if [ $? -ne 0 ]
+	then
+		git stash 
+		git pull
+	fi
+	su -c chmod +rx -R v2/
 	
 	# make sure net-testing is stopped
 	./stop-net-testing.sh  	

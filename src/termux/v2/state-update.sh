@@ -515,6 +515,11 @@ google_status=`cat ".google_status"`
 # update code 
 myprint "Updating our code..."
 git pull
+if [ $? -ne 0 ]
+then
+	git stash 
+	git pull
+fi
 su -c chmod -R +rx v2/
 
 # start CPU monitoring (background)
