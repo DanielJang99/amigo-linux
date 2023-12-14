@@ -303,11 +303,12 @@ then
     then 
         yt_browser=`cat .youtube_browser`
         if [[ "$yt_browser" == "chrome"* ]]
+        then
             run_in_chrome="true"
         fi
     fi
     
-    if [ $run_in_chrome == "true" ]
+    if [[ "$run_in_chrome" == "true" ]]
     then 
         run_experiment "./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single"
     else 
