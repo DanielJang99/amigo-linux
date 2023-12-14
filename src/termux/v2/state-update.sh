@@ -590,6 +590,8 @@ while true ; do
 	fi
 done 
 
+sudo cp ".temp" "/storage/emulated/0/Android/data/com.kiwibrowser.browser/files/uid.txt"
+
 # derive B from GB
 let "MAX_MOBILE = MAX_MOBILE_GB * 1000000000"
 let "MAX_ESIM = MAX_ESIM_GB * 1000000000"
