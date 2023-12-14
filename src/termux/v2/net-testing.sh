@@ -299,7 +299,20 @@ fi
 # if [ $opt == "long" -a $airplane_mode == "false" ] 
 if [ $opt == "long" ] 
 then 
-    run_experiment "./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single"
+    if [ -f ".youtube_browser" ]
+    then 
+        yt_browser=`cat .youtube_browser`
+        if [[ "$yt_browser" == "chrome"* ]]
+            run_in_chrome="true"
+        fi
+    fi
+    
+    if [ $run_in_chrome == "true" ]
+    then 
+        run_experiment "./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single"
+    else 
+        run_experiment "./v2/youtube-test-kiwi.sh --suffix $suffix --id $t_s --iface $iface --pcap --single"
+    fi
     myprint "Sleep 30 after Youtube-test to lower CPU load..."
     sleep 30  	
 else 
