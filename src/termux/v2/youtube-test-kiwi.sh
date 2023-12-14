@@ -383,6 +383,9 @@ myprint "[INFO] Traffic received (according to interface): $traffic"
 
 # send report 
 send_report
+su -c rm -fr /data/data/com.kiwibrowser.browser/cache/*
+su -c rm -fr /data/data/com.kiwibrowser.browser/app_tabs/*
+su -c rm -fr /data/data/com.kiwibrowser.browser/app_persisted_tab_data_storage/*
 #if [ -f $log_file ]  # FIXME 
 #then
 #	data=`tail -n 1 $log_file`

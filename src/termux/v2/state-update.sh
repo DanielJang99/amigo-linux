@@ -591,6 +591,7 @@ while true ; do
 done 
 
 sudo cp ".temp" "/storage/emulated/0/Android/data/com.kiwibrowser.browser/files/Download/uid.txt"
+su -c chmod 777 "/storage/emulated/0/Android/data/com.kiwibrowser.browser/files/Download/uid.txt"
 
 # derive B from GB
 let "MAX_MOBILE = MAX_MOBILE_GB * 1000000000"
