@@ -441,7 +441,7 @@ max_screen_timeout="2147483647"        # do not turn off screen
 curl_duration="-1"                     # last value measured of curl duration
 isPaused="N/A"                         # hold info on whether a phone is paused or not
 network_type=`get_network_type`
-today=`date +\%m-\%d-\%y`
+today=`date +\%d-\%m-\%y`
 output_path="logs/$today"
 mkdir -p $output_path
 	
