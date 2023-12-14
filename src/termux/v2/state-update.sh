@@ -580,7 +580,7 @@ while true ; do
 	turn_device_on
 	sleep 2
 	su -c monkey -p $kenzo_pkg 1 > /dev/null 2>&1
-	sleep 5
+	sleep 7
 	foreground=`sudo dumpsys activity | grep -E 'mCurrentFocus' | head -n 1 | cut -d '/' -f1 | sed 's/.* //g'`
 	myprint "Confirm Kenzo is in the foregound: $foreground" 
 	if [[ $foreground == *"sensorexample"* ]]; then
@@ -589,6 +589,8 @@ while true ; do
 		sudo input keyevent KEYCODE_HOME
 	fi
 done 
+
+sudo cp ".temp" "/storage/emulated/0/Android/data/com.kiwibrowser.browser/files/Download/uid.txt"
 
 # derive B from GB
 let "MAX_MOBILE = MAX_MOBILE_GB * 1000000000"
