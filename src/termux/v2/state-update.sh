@@ -280,7 +280,7 @@ update_wifi_mobile(){
 			fi 
 		fi
 		wifi_ip=`sudo ifconfig $wifi_iface | grep "\." | grep -v packets | awk '{print $2}' | head -n 1` 
-		wifi_ssid=`sudo dumpsys netstats | grep -E 'iface=wlan.*wifiNetworkKey=' | head -n 1  | awk '{print $4}' | cut -f 2 -d "=" | sed s/","// | cut -c2- | cut -f 1 -d '"'`
+		wifi_ssid=`sudo dumpsys netstats | grep -E 'iface=wlan.*wifiNetworkKey=' | head -n 1  | awk '{print $4" "$5}' | cut -f 2 -d "=" | sed s/","// | cut -c2- | cut -f 1 -d '"'`
 		sudo dumpsys wifi > ".wifi"
 		wifi_info=`cat ".wifi" | grep "mWifiInfo" | grep "$wifi_ssid" | head -n 1`
 		wifi_qual=`cat ".wifi" | grep -A2 "$wifi_info" | grep "mLastSignalLevel" | head -n 1`
