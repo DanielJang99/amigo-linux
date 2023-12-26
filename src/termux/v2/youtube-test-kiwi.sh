@@ -28,13 +28,12 @@ send_report(){
 	if [ -f "notes-ping" ] 
 	then 
 		avg_ping=`cat notes-ping | grep "mdev" | cut -f 2 -d "=" | cut -f 2 -d "/"`
-		if [ -z $avg_ping ] && [ -f "notes-nping" ]
+		if [ -z $avg_ping ]
 		then 
-			avg_ping=`cat notes-nping | grep "Avg rtt" | cut -f 4 -d ":" | cut -f 1 -d "m" | cut -f 2 -d " "`
+			avg_ping=`cat notes-ping | grep "Avg rtt" | cut -f 4 -d ":" | cut -f 1 -d "m" | cut -f 2 -d " "`
 		fi
 		myprint "Average ping to youtube: $avg_ping"
 		rm notes-ping 
-		rm notes-nping
 	fi
 	if [ -f "notes-ping6" ] 
 	then 
@@ -95,8 +94,12 @@ EOF
 # helper to ping youtube 
 ping_youtube(){
 	ping -c 5 -W 2 youtube.com > notes-ping 2>&1
+	tmp=`cat notes-ping | grep "mdev" `
+	if [ -z $tmp ]
+	then
+		nping -c 5 youtube.com > notes-ping 2>&1
+	fi
 	ping6 -c 5 -W 2 youtube.com > notes-ping6 2>&1
-	nping youtube.com > notes-nping 2>&1
 }
 
 # wait for sane CPU values 
