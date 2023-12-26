@@ -31,6 +31,12 @@ send_report(){
 		myprint "Average ping to youtube: $avg_ping"
 		rm notes-ping 
 	fi
+	if [ -f "notes-nping" ]
+	then 
+		avg_nping=`cat notes-nping | grep "Avg rtt" | cut -f 4 -d ":" | cut -f 1 -d "m" | cut -f 2 -d " "`
+		myprint "Average nping to youtube: $avg_nping"
+		rm notes-nping
+	fi
 	if [ -f "notes-ping6" ] 
 	then 
 		avg_ping6=`cat notes-ping6 | grep "mdev" | cut -f 2 -d "=" | cut -f 2 -d "/"`
@@ -78,6 +84,7 @@ generate_post_data(){
     "test_id":"${curr_run_id}",
     "cpu_util_midload_perc":"${cpu_usage_middle}",
     "avg_ping":"${avg_ping}",
+    "avg_nping":"${avg_nping}",
     "avg_ping6":"${avg_ping6}",    
     "bdw_used_MB":"${traffic}",
     "tshark_traffic_MB":"${tshark_size}", 
@@ -90,11 +97,11 @@ EOF
 # helper to ping youtube 
 ping_youtube(){
 	ping -c 5 -W 2 youtube.com > notes-ping 2>&1
+	nping -c 5 youtube.com > notes-nping 2>&1
 	ping6 -c 5 -W 2 youtube.com > notes-ping6 2>&1
-
 }
 
-# wait for sane CPU values 
+# wait for sane CPU values ss
 wait_on_cpu(){
 	if [ -f ".cpu-usage" ]
 	then 

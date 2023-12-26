@@ -136,6 +136,12 @@ then
 		yes | pkg install -y traceroute
 	fi
 
+	nmap --version 
+	if [ $? -ne 0 ]
+	then 
+		yes | pkg install -y nmap
+	fi
+
 	# update code 
 	myprint "Updating our code..."
 	git pull
