@@ -19,7 +19,6 @@ safe_stop(){
 	turn_device_on
     close_all
     turn_device_off
-	sudo pm clear $package
     myprint "[safe_stop] EXIT!"
     exit 0
 }
@@ -316,8 +315,8 @@ do
 done < $url_file
 
 # clean the browser before testing 
-browser="chrome"
-package="com.android.chrome"
+browser="kiwi"
+package="com.kiwibrowser.browser"
 activity="com.google.android.apps.chrome.Main"
 myprint "[INFO] Cleaning browser data ($app-->$package)"
 cur_app=`sudo dumpsys activity | grep -E 'mCurrentFocus' | grep -E $package`
@@ -325,7 +324,9 @@ iter=0
 while [ -z "$cur_app" ]
 do
 	turn_device_on
-	su -c rm -fr "/data/data/$package/cache/*"
+	su -c rm -fr /data/data/com.kiwibrowser.browser/cache/*
+	su -c rm -fr /data/data/com.kiwibrowser.browser/app_tabs/*
+	su -c rm -fr /data/data/com.kiwibrowser.browser/app_persisted_tab_data_storage/*
 	sleep 3
 	su -c am start -n $package/$activity
 	sleep 4
@@ -485,7 +486,7 @@ do
 	do 
 		sleep 2 
 		let "c++"
-		if [ $c -eq 6 ]
+		if [ $c -eq 15 ]
 		then 
 			# stop process 						 
 			myprint "visualmetrics.py seems stuck. Killing it."
@@ -520,9 +521,14 @@ then
 fi
 
 # all done
-if [ $single != "true" ]
-then
-	safe_stop
-else 
-	sudo pm clear $package
-fi 
+safe_stop
+su -c rm -fr /data/data/com.kiwibrowser.browser/cache/*
+su -c rm -fr /data/data/com.kiwibrowser.browser/app_tabs/*
+su -c rm -fr /data/data/com.kiwibrowser.browser/app_persisted_tab_data_storage/*
+
+# kill kiwi process if present 
+kiwi_pid=`sudo ps aux | grep "com.kiwibrowser.browser" | grep -v "grep" | grep -v "browser_" | grep -v "browser:" | awk '{print $2}'`
+if [ ! -z $kiwi_pid ]
+then 
+	sudo kill -9 $kiwi_pid
+fi
