@@ -378,7 +378,7 @@ echo "false" > ".to_monitor"
 safe_stop
 
 # kill youtube process if present 
-youtube_pid=`sudo ps aux | grep "com.kiwibrowser" | grep -v "grep" | awk '{print $2}'`
+youtube_pid=`sudo ps aux | grep "com.kiwibrowser" | grep -v "grep" | grep -v "browser_" | grep -v "browser:" | awk '{print $2}'`
 if [ ! -z $youtube_pid ]
 then 
 	sudo kill -9 $youtube_pid
