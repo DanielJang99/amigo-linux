@@ -38,8 +38,7 @@ run_network_tests(){
 		mkdir -p $dns_res_folder
 		networkProperties=`get_network_properties`
 		myprint "$networkProperties"
-		( curl -L https://test.nextdns.io > "${dns_res_folder}/$t_s.txt" ) & exp_pid=$!
-		watch_test_timeout $exp_pid 2>/dev/null
+		curl -L https://test.nextdns.io > "${dns_res_folder}/$t_s.txt"
 	fi
 
 	# video testing with youtube
