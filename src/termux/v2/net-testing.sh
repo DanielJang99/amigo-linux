@@ -88,7 +88,7 @@ run_experiment_across_sims(){
                 do
                     # 1. switch sim 
                     networkToTest=`su -c cat $subscriptions_file | head -n $i | tail -1`
-                    while [[ "$currentNetwork" != "$networkToTest"* ]];
+                    while [[ "$networkToTest" != "$currentNetwork"* ]];
                     do
                         turn_device_on
                         su -c cmd statusbar expand-settings
