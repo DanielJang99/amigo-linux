@@ -339,8 +339,8 @@ do
 	fi
 
 done
-chrome_onboarding
-myprint "[INFO] Chrome Onboarding Complete"
+#chrome_onboarding
+#myprint "[INFO] Chrome Onboarding Complete"
 #browser_setup #FIXME => allow to skip chrome onboarding, but using a non working option
 
 # get private  IP in use
