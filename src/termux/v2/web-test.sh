@@ -64,6 +64,7 @@ visual(){
 	rm ".visualmetrics"
     sleep 5 # allow things to finish (maybe can be saved)
     myprint "Running visualmetrics/visualmetrics.py (background - while visual prep is done)"
+	sudo chmod +r $screen_video
 	python /data/data/com.termux/files/home/mobile-testbed/src/setup/visualmetrics/visualmetrics.py --video $screen_video --viewport > $perf_video 2>&1
 	speed_index=`cat $perf_video | grep "Speed Index" | head -n 1 | cut -f 2 -d ":" | sed s/" "//g`
 	last_change=`cat $perf_video | grep "Last Visual Change"| head -n 1 | cut -f 2 -d ":" | sed s/" "//g`
@@ -339,8 +340,8 @@ do
 	fi
 
 done
-chrome_onboarding
-myprint "[INFO] Chrome Onboarding Complete"
+#chrome_onboarding
+#myprint "[INFO] Chrome Onboarding Complete"
 #browser_setup #FIXME => allow to skip chrome onboarding, but using a non working option
 
 # get private  IP in use
