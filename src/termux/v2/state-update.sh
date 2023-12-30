@@ -84,7 +84,7 @@ check_account_via_YT(){
 		    sleep 10 
 		    sudo input tap 600 1200
 		    sleep 5
-		    sudo input text "Comnets@2020"
+		    sudo input text "Bremen2013"
 		    sleep 3
 		    sudo input keyevent KEYCODE_ENTER
 		    sleep 10
@@ -152,8 +152,6 @@ generate_post_data(){
     "charging":"${charging}",
 	"kenzo_loc": "${kenzo_loc}",
     "location_info":"${loc_str}",
-	"gps_loc":"${gps_loc}",
-    "network_loc":"${network_loc}",
     "foreground_app":"${foreground}",
     "net_testing_proc":"${num}", 
     "wifi_iface":"${wifi_iface}", 
@@ -166,13 +164,7 @@ generate_post_data(){
     "mobile_ip":"${mobile_ip}",
     "mobile_state":"${mobile_state}", 
     "mobile_signal":"${mobile_signal}",
-    "today_mobile_data":"${mobile_data}",
-	"esim_ip": "${esim_ip}",	
-	"esim_state": "${esim_state}", 
-	"esim_signal": "${esim_signal}",
-	"esim_traffic": "${esim_traffic}",
-	"today_esim_data": "${esim_data}",
-	"network_type": "${network_type}"
+    "today_mobile_data":"${mobile_data}"
     }
 EOF
 }
@@ -200,53 +192,50 @@ check_cpu(){
 
 # update location information 
 update_location(){
-	# TODO: is it necessary to turn device on?
-	# turn_device_on 
-
+	turn_device_on
+	su -c monkey -p com.termux 1 > /dev/null
 	res_dir="locationlogs/${suffix}"
 	mkdir -p $res_dir	
-
-	# use termux location api 
-	# timeout $MAX_LOCATION termux-location -p network -r last > $res_dir"/network-loc-$current_time.txt"
-	# lat=`cat $res_dir"/network-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
-	# long=`cat $res_dir"/network-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
-	# network_loc="$lat,$long"
-	# timeout $MAX_LOCATION termux-location -p gps -r last > $res_dir"/gps-loc-$current_time.txt"		
-	# lat=`cat $res_dir"/gps-loc-$current_time.txt" | grep "latitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`		
-	# long=`cat $res_dir"/gps-loc-$current_time.txt" | grep "longitude" | cut -f 2 -d ":" |sed s/","// | sed 's/^ *//g'`
-	# gps_loc="$lat,$long"		
 
 	# get latest location from Kenzo App 	
 	kenzo_loc=`sudo tail -n 1 /data/data/com.example.sensorexample/files/log.csv`
 	echo "$kenzo_loc" > $res_dir"/app-loc-$current_time.txt"
-
-	# use dumpsys location 
 	sudo dumpsys location > $res_dir"/loc-$current_time.txt"
-	loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "fused" | tail -n 1 | sed -e 's/^[[:space:]]*//'`
-	network_loc=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "network" | tail -n 1 | sed -e 's/^[[:space:]]*//'`
+	loc_str=`cat $res_dir"/loc-$current_time.txt" | grep "hAcc" | grep "fused" | head -n 1`
 	gzip $res_dir"/loc-$current_time.txt"
+	sudo input keyevent KEYCODE_HOME
+}
+
+# helper to get current mobile network type (3g, 4g, 5g)
+get_mobile_type(){
+	echo sudo dumpsys telephony.registry | grep "mServiceState" | head -n 1 | awk -F'MobileDataRat=' '{split($2, a, /[ ,]/); print a[1]}'
 }
 
 # helper to maintain up-to-date wifi/mobile info 
 update_wifi_mobile(){
 
-	network_type=`get_network_type`
-
 	# discover if we are in airplane mode or not
-	airplane_mode=`su -c settings get global airplane_mode_on`
+	airplane_mode=`sudo  dumpsys wifi | grep mAirplaneModeOn | cut -f 2 -d " "`
 	
 	# get dympsys info for connectivity
-	linkPropertiesFile="/storage/emulated/0/Android/data/com.example.sensorexample/files/linkProperties.txt"
-	def_iface=`su -c cat "$linkPropertiesFile" | cut -f 2 -d " " | head -n 1`
-	if [ -z $def_iface ];then
-		def_iface="none"
-	else 
-		if [[ "$def_iface" == "wlan"* ]];then
-			wifi_iface=$def_iface
-		elif [[ "$def_iface" == "rmnet"* ]];then
-			mobile_iface=$def_iface
-		fi
-	fi
+	sudo dumpsys netstats > .data
+	wifi_iface=`cat .data | grep "wifiNetworkKey=" | grep "iface" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
+	mobile_iface=`cat .data | grep -A1 "All mobile interfaces" | grep "rmnet"`
+	if [ ! -z "$mobile_iface" ];then
+		mobile_iface=`cat .data | grep "iface=rmnet" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
+		# mobile_iface=`cat .data | grep "iface=rmnet" | grep "defaultNetwork=true" | head -n 1 | cut -f 2 -d "=" | cut -f 1 -d " "`
+	fi 
+
+	def_iface="none"
+	if [ ! -z "$wifi_iface" ]
+	then 
+		def_iface=$wifi_iface
+	else  
+		if [ ! -z "$mobile_iface" ]
+		then
+			def_iface=$mobile_iface
+	 	fi 
+	fi 
 		
 	# understand WiFi and mobile phone connectivity
 	myprint "Discover wifi ($wifi_iface) and mobile ($mobile_iface)"
@@ -279,20 +268,16 @@ update_wifi_mobile(){
 				prev_wifi_traffic=`sudo ifconfig $wifi_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`	
 			fi 
 		fi
-		wifi_ip=`sudo ifconfig $wifi_iface | grep "\." | grep -v packets | awk '{print $2}' | head -n 1` 
-		wifi_ssid=`sudo dumpsys netstats | grep -E 'iface=wlan.*wifiNetworkKey=' | head -n 1  | awk '{print $4" "$5}' | cut -f 2 -d "=" | sed s/","// | cut -c2- | cut -f 1 -d '"'`
+		wifi_ip=`sudo ifconfig $wifi_iface | grep "\." | grep -v packets | awk '{print $2}'` 
+		wifi_ssid=`sudo dumpsys netstats | grep -E 'iface=wlan.*wifiNetworkKey=' | head -n 1  | awk '{print $4}' | cut -f 2 -d "=" | sed s/","// | cut -c2- | cut -f 1 -d '"'`
 		sudo dumpsys wifi > ".wifi"
-		wifi_info=`cat ".wifi" | grep "mWifiInfo" | grep "$wifi_ssid" | head -n 1`
-		wifi_qual=`cat ".wifi" | grep -A2 "$wifi_info" | grep "mLastSignalLevel" | head -n 1`
+		wifi_info=`cat ".wifi" | grep "mWifiInfo" | grep "$wifi_ssid"`
+		wifi_qual=`cat ".wifi" | grep -A2 "$wifi_info" | grep "mLastSignalLevel"`
 		wifi_info=`echo "$wifi_info" | tr "\"" "\'"`
 		wifi_traffic=`sudo ifconfig $wifi_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 	
 		# update data consumed 
-		if [ $wifi_traffic -lt $prev_wifi_traffic ];then
-			let "wifi_data += wifi_traffic"
-		else
-			let "wifi_data += (wifi_traffic - prev_wifi_traffic)"
-		fi
+		let "wifi_data += (wifi_traffic - prev_wifi_traffic)"
 		prev_wifi_traffic=$wifi_traffic
 
 		# keep track of wifi encountered 
@@ -315,7 +300,7 @@ update_wifi_mobile(){
 		fi 	
 
 		# constantly force one test when on airplane mode 
-		if [[ $airplane_mode == "1" ]] 
+		if [[ $airplane_mode == "true" ]] 
 		then
 			myprint "Make sure there is always one test to be done when on airplane mode hoping to be on a plane, i.e., keep testing each 30 mins" 
 			force_net_test=1
@@ -330,6 +315,7 @@ update_wifi_mobile(){
 	fi
 	echo $wifi_data > $wifi_today_file
 		
+	# update mobile data sent/received
 	mobile_today_file="./data/mobile/"$suffix".txt"		
 	if [ -f $mobile_today_file ] 
 	then 
@@ -337,76 +323,38 @@ update_wifi_mobile(){
 	else 
 		mobile_data=0	
 	fi	
-	esim_today_file="./data/airalo/"$suffix".txt"
-	if [ -f $esim_today_file ] 
-	then 
-		esim_data=`cat $esim_today_file`
-	else 
-		esim_data=0	
-	fi	
-
-	mobile_interface_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/physical_sim_interface.txt"
-	if sudo [ -f $mobile_interface_file ];then
-		phySim_iface=`su -c cat "$mobile_interface_file"`
-		if [ ! -z $phySim_iface ];then
-			if [ ! -f $mobile_today_file -a -z "$prev_mobile_traffic" ] 
+	if [ ! -z "$mobile_iface" ]
+	then
+		# get update on data sent/received
+		if [ ! -f $mobile_today_file ] 
+		then 
+			if [ -z "$prev_mobile_traffic" ]
 			then 
-				prev_mobile_traffic=`sudo ifconfig $phySim_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
-			fi 
-			mobile_ip=`sudo ifconfig $phySim_iface | grep "\." | grep -v packets | awk '{print $2}'`
-			sudo dumpsys telephony.registry > ".tel"
-			mobile_state=`cat ".tel" | grep "mServiceState" | head -n 1 | sed -e 's/^[[:space:]]*//'`
-			mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1 | sed -e 's/^[[:space:]]*//'`
-			mobile_traffic=`sudo ifconfig $phySim_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
-			if [ $mobile_traffic -lt $prev_mobile_traffic ];then
-				let "mobile_data += mobile_traffic"
-			else 
-				let "mobile_data += (mobile_traffic - prev_mobile_traffic)"
+				prev_mobile_traffic=`sudo ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`	
 			fi
-			prev_mobile_traffic=$mobile_traffic
-		fi
-	else
+		fi 
+		mobile_ip=`sudo ifconfig $mobile_iface | grep "\." | grep -v packets | awk '{print $2}'`
+		sudo dumpsys telephony.registry > ".tel"
+		mobile_state=`cat ".tel" | grep "mServiceState" | head -n 1`
+		mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
+		mobile_traffic=`sudo ifconfig $mobile_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
+		let "mobile_data += (mobile_traffic - prev_mobile_traffic)"
+		prev_mobile_traffic=$mobile_traffic
+	else 
 		mobile_state="none"
 		mobile_ip="none"
 		mobile_signal="none"
 		mobile_traffic="none"
-	fi
-
-	esim_interface_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/esim_interface.txt"
-	if sudo [ -f $esim_interface_file ];then
-		esim_iface=`su -c cat "$esim_interface_file"`
-		if [ ! -z $esim_iface ];then
-			if [ ! -f $esim_today_file -a -z "$prev_esim_traffic" ] 
-			then 
-				prev_esim_traffic=`sudo ifconfig $esim_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
-			fi 
-			esim_ip=`sudo ifconfig $esim_iface | grep "\." | grep -v packets | awk '{print $2}'`
-			sudo dumpsys telephony.registry > ".tel"
-			esim_state=`cat ".tel" | grep "mServiceState" | head -n 1`
-			esim_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
-			esim_traffic=`sudo ifconfig $esim_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
-			if [ $esim_traffic -lt $prev_esim_traffic ];then
-				let "esim_data += esim_traffic"
-			else 
-				let "esim_data += (esim_traffic - prev_esim_traffic)"
-			fi
-			prev_esim_traffic=$esim_traffic
-		fi
-	else
-		esim_state="none"
-		esim_ip="none"
-		esim_signal="none"
-		esim_traffic="none"
-	fi
-	echo $mobile_data > $mobile_today_file		
-	echo $esim_data > $esim_today_file 
+	fi 
+	echo $mobile_data > $mobile_today_file		 
 		
 	# update on cpu usage 
 	if [ -f ".cpu-usage" ] 
 	then 
 		cpu_util=`cat ".cpu-usage" | cut -f 1 -d "."`
 	fi 
-	myprint "Device info. Wifi:$wifi_ip Mobile:$mobile_ip Esim:$esim_ip DefaultIface:$def_iface GoogleAccountStatus:$google_status CPULast:$cpu_util IsPaused:$isPaused NetTesting:$num NetworkType:$network_type"
+	myprint "Device info. Wifi:$wifi_ip Mobile:$mobile_ip DefaultIface:$def_iface GoogleAccountStatus:$google_status CPULast:$cpu_util IsPaused:$isPaused NetTesting:$num"
+
 }
 
 # parameters
@@ -418,7 +366,6 @@ REPORT_INTERVAL=300                    # interval of status reporting (seconds)
 NET_INTERVAL=5400                      # interval of networking testing 
 NET_INTERVAL_SHORT=2700                # short interval of net testing (just on mobile)
 NET_INTERVAL_FORCED=1800               # short interval of net testing (wifi, hopefully on planes)
-NET_INTERVAL_AIRPLANE=900
 GOOGLE_CHECK_FREQ=10800                # interval of Google account check via YT (seconds)
 WIFI_GMAPS=1800                        # lower frequency of launchign GMAPS when on wifi 				
 MAX_ZEUS_RUNS=6                        # maximum number of zeus per day 
@@ -431,19 +378,13 @@ t_wifi_mobile_update=0                 # last time wifi/mobile info was checked
 asked_to_charge="false"                # keep track if we already asked user to charge their phone
 prev_wifi_traffic=0                    # keep track of wifi traffic used today
 prev_mobile_traffic=0                  # keep track of mobile traffic used today
-prev_esim_traffic=0
 MAX_MOBILE_GB=4                        # maximum mobile data usage per day
-MAX_ESIM_GB=1
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
 vrs="2.9"                              # code version 
 max_screen_timeout="2147483647"        # do not turn off screen 
 curl_duration="-1"                     # last value measured of curl duration
 isPaused="N/A"                         # hold info on whether a phone is paused or not
-network_type=`get_network_type`
-today=`date +\%d-\%m-\%y`
-output_path="logs/$today"
-mkdir -p $output_path
 	
 # check if testing
 if [ $# -eq 1 ] 
@@ -497,7 +438,7 @@ let "t_p = current_time - t_last_google"
 if [ $t_p -gt $GOOGLE_CHECK_FREQ ]
 then
 	myprint "Time to check Google account status via YT ($t_p > $GOOGLE_CHECK_FREQ)"
-	check_account_via_YT	  
+	# check_account_via_YT	  
 	t_last_google=$current_time		
 	if [[ $youtube_error == "false" ]]
 	then
@@ -516,23 +457,10 @@ google_status=`cat ".google_status"`
 # update code 
 myprint "Updating our code..."
 git pull
-if [ $? -ne 0 ]
-then
-	git stash 
-	git pull
-fi
 su -c chmod -R +rx v2/
 
 # start CPU monitoring (background)
-# TODO: check whether monitor-cpu is already running
-is_monitoring=`ps aux -e | grep "bash ./monitor-cpu.sh" | grep -v "grep" `
-if [ -z "$is_monitoring" ]
-then
-	myprint "Start CPU Monitoring"
-	./monitor-cpu.sh &
-else 
-	myprint "CPU Monitoring already enabled"
-fi
+./monitor-cpu.sh &
 
 # ensure that BT is enabled 
 myprint "Make sure that BT is running" 
@@ -547,17 +475,11 @@ fi
 
 # retrieve unique ID for this device and pass to our app
 physical_id="N/A"
-if [ -f ".uid" ]
+uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
+if [ -f "uid-list.txt" ] 
 then 
-	uid=`cat ".uid" | awk '{print $2}'`
-	physical_id=`cat ".uid" | awk '{print $1}'`
-else 
-	uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
-	if [ -f "uid-list.txt" ] 
-	then 
-		physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | awk '{print $1}'`
-	fi 
-fi
+	physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | cut -f 1`
+fi 
 myprint "IMEI: $uid PhysicalID: $physical_id"
 
 # status update
@@ -566,42 +488,29 @@ to_run=`cat ".status"`
 sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"
 
 #restart Kenzo - so that background service runs and info is populated 
+turn_device_on
 echo -e "$uid\t$physical_id" > ".temp"
 sudo cp ".temp" "/storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
-su -c chmod -R 777 /storage/emulated/0/Android/data/com.example.sensorexample/files/*.txt
+su -c chmod -R 755 /storage/emulated/0/Android/data/com.example.sensorexample/files/*.txt
 myprint "Granting Kenzo permission and restart..."
 sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
 sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
 sudo pm grant $kenzo_pkg android.permission.BLUETOOTH_SCAN
 sudo pm grant $kenzo_pkg android.permission.BLUETOOTH_CONNECT
 sudo pm grant $kenzo_pkg android.permission.ACCESS_BACKGROUND_LOCATION
-foreground=""
-while true ; do
-	turn_device_on
-	sleep 2
-	su -c monkey -p $kenzo_pkg 1 > /dev/null 2>&1
-	sleep 7
-	foreground=`sudo dumpsys activity | grep -E 'mCurrentFocus' | head -n 1 | cut -d '/' -f1 | sed 's/.* //g'`
-	myprint "Confirm Kenzo is in the foregound: $foreground" 
-	if [[ $foreground == *"sensorexample"* ]]; then
-		break
-	elif [[ $foregound == *"NotificationShade"* ]];then
-		sudo input keyevent KEYCODE_HOME
-	fi
-done 
-
-sudo cp ".temp" "/storage/emulated/0/Android/data/com.kiwibrowser.browser/files/Download/uid.txt"
-su -c chmod 777 "/storage/emulated/0/Android/data/com.kiwibrowser.browser/files/Download/uid.txt"
+su -c monkey -p $kenzo_pkg 1 > /dev/null 2>&1
+sleep 5
+foreground=`sudo dumpsys activity | grep -E 'mCurrentFocus' | head -n 1 | cut -d '/' -f1 | sed 's/.* //g'`
+myprint "Confirm Kenzo is in the foregound: $foreground" 
+sudo cp ".temp" "/storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
 
 # derive B from GB
 let "MAX_MOBILE = MAX_MOBILE_GB * 1000000000"
-let "MAX_ESIM = MAX_ESIM_GB * 1000000000"
 
 # folder and file organization 
 mkdir -p "./logs"
 mkdir -p "./data/wifi"
 mkdir -p "./data/mobile"
-mkdir -p "./data/airalo"
 if [ ! -f ".last_command" ] 
 then 
 	echo "testing" > ".last_command"
@@ -645,13 +554,6 @@ last_slow_loop_time=0
 firstPause="true"
 while [[ $to_run == "true" ]] 
 do 
-	# isWeheRunning=`ps aux | grep "run_wehe.sh" | grep -v "grep"`
-	# if [ ! -z "$isWeheRunning" ]
-	# then
-	# 	sleep 1200
-	# 	continue
-	# fi
-
 	# keep track of time
 	current_time=`date +%s`
 	suffix=`date +%d-%m-%Y`
@@ -660,7 +562,6 @@ do
 	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | grep -v "timeout" | wc -l`			
 	
 	# update WiFi and mobile phone connectivity if it is time to do so (once a minute)
-	network_type=`get_network_type`	
 	let "t_last_wifi_mobile_update =  current_time - t_wifi_mobile_update"
 	if [ $t_last_wifi_mobile_update -gt 60 ] 
 	then 
@@ -670,7 +571,7 @@ do
 	
 	# check if user wants us to pause 
 	user_status="true"
-	if sudo [ -f $user_file ] 
+	if [ -f $user_file ] 
 	then 
 		user_status=`sudo cat $user_file`
 	fi 
@@ -685,7 +586,7 @@ do
 			t_start_pause=`date +%s`
 			myprint "Paused by user! Time: $t_start_pause"
 			
-			if [[ $def_iface == "none" || $network_type != *"true"* ]] 
+			if [[ $def_iface == "none" ]] 
 			then
 				myprint "Skipping report sending since not connected"
 			else 
@@ -703,7 +604,8 @@ do
 	fi 
 	
 	# check if user wants to run a test 
-	if sudo [ -f $sel_file ];then 
+	if [ -f $sel_file ] 
+	then 
 		sel_id=`sudo cat $sel_file | cut -f 1`
 		time_sel=`sudo cat $sel_file | cut -f 2`
 		let "time_from_sel = current_time - time_sel"
@@ -711,7 +613,7 @@ do
 		if [ $time_from_sel -lt $time_check ]  
 		then 
 			myprint "User entered selection: $sel_id (TimeSinceSel:$time_from_sel)" #{"OPEN A WEBPAGE", "WATCH A VIDEO", "JOIN A VIDEOCONFERENCE"};
-			if [[ $def_iface != "none" && $network_type == *"true"* ]] 
+			if [ $def_iface != "none" ] 
 			then
 				case $sel_id in
 					"0")
@@ -724,7 +626,7 @@ do
 						t_wifi_mobile_update=`date +%s`	
 						
 						# open a random webpage 
-						myprint "Open a random webpage in `get_network_type` -- ./v2/web-test.sh  --suffix $suffix --id $time_sel-"user" --iface $def_iface --single --pcap"
+						myprint "Open a random webpage -- ./v2/web-test.sh  --suffix $suffix --id $time_sel-"user" --iface $def_iface --single --pcap"
 						./v2/web-test.sh  --suffix $suffix --id $time_sel-"user" --iface $def_iface --single --pcap
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es rateid $time_sel --es accept "Please-rate-how-quickly-the-page-loaded:1-star-(slow)--5-stars-(fast)"
 						;;
@@ -734,7 +636,7 @@ do
 						clean_file ".locked"
 						update_wifi_mobile 
 						t_wifi_mobile_update=`date +%s`	
-						myprint "Watch a video in `get_network_type` -- ./v2/youtube-test.sh --suffix $suffix --id $time_sel-"user" --iface $def_iface --pcap --single"						
+						myprint "Watch a video -- ./v2/youtube-test.sh --suffix $suffix --id $time_sel-"user" --iface $def_iface --pcap --single"						
 						./v2/youtube-test.sh --suffix $suffix --id $time_sel-"user" --iface $def_iface --pcap --single
 						am start -n com.example.sensorexample/com.example.sensorexample.MainActivity --es rateid $time_sel --es accept "Please-rate-how-the-video-played:1-star-(poor)--5-stars-(great)"
 						;;
@@ -788,7 +690,7 @@ do
 	if [ $t_p -gt $GOOGLE_CHECK_FREQ -a $num -eq 0 -a $asked_to_charge == "false" ] 
 	then
 		myprint "Time to check Google account status via YT ($t_p > $GOOGLE_CHECK_FREQ)"	
-		check_account_via_YT	  
+		# check_account_via_YT	  
 		t_last_google=$current_time
 		echo $current_time > ".time_google_check"
 		myprint "Google account status: $google_status"	
@@ -803,7 +705,7 @@ do
 	last_slow_loop_time=$current_time
 
 	# check if there is a new command to run
-	if [[ $def_iface != "none" && $network_type == *"true"* ]] 
+	if [ $def_iface != "none" ] 
 	then	
 		prev_command="none"
 		if [ -f ".prev_command" ] 
@@ -850,12 +752,6 @@ do
 							myprint "Requested a muzeel test. Making sure there is no pending net-testing"		
 							./stop-net-testing.sh
 						fi 
-						echo $command | grep "reboot" > /dev/null
-						if [ $? -eq 0 ]
-						then
-							myprint "Rebooting Device"
-							ans=`timeout 15 curl -s "https://mobile.batterylab.dev:$SERVER_PORT/commandDone?id=${uid}&command_id=${comm_id}&status=0&termuxUser=${termux_user}"`
-						fi
 						eval timeout $duration $command
 						comm_status=$?
 						myprint "Command executed. Status: $comm_status"
@@ -903,9 +799,8 @@ do
 	N_kenzo=`sudo ps aux | grep "com.example.sensor" | grep -v "grep" | grep -v "curl" | wc -l `
 	if [ $N_kenzo -eq 0 ] 
 	then 
-		turn_device_on
 		myprint "BT background process (kenzo service) was stopped. Restarting!"
-		su -c monkey -p $kenzo_pkg 1 > /dev/null 2>&1
+		sudo monkey -p $kenzo_pkg 1 > /dev/null 2>&1
 		sleep 5
 		close_all
 	fi 
@@ -956,7 +851,7 @@ do
 			# get uptime
 			uptime_info=`uptime`
 
-			if [[ $def_iface == "none" || $network_type != *"true"* ]] 
+			if [[ $def_iface == "none" ]] 
 			then
 				myprint "Skipping report sending since not connected"
 			else 
@@ -1020,7 +915,7 @@ do
 	myprint "TimeFromLastNetLong:$time_from_last_net sec TimeFromLastNetShort:$time_from_last_net_short sec TimeFromLastNetForced:$time_from_last_net_forced sec ShouldRunIfTime:$net_status RunningNetProc:$num LockedStatus:$locked"
 	
 	# 1) flag set, 2) no previous running, 3) connected (basic checks to see if we should run)
-	if [[ $net_status == "true" && $num -eq 0 && $def_iface != "none" && $locked == "false" && $network_type == *"true"* ]]
+	if [ $net_status == "true" -a $num -eq 0 -a $def_iface != "none" -a $locked == "false" ]
 	then
 		# update counter of how many runs today 
 		curr_hour=`date +%H`
@@ -1040,8 +935,8 @@ do
 			t_wifi_mobile_update=`date +%s`
 			if [ ! -z "$wifi_iface" ]
 			then	 	  	    
-				myprint "./net-testing.sh in `get_network_type` $suffix $current_time $def_iface \"long\" > $output_path/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt"
-				(./v2/net-testing.sh $suffix $current_time $def_iface "long" | timeout 1200 cat > $output_path/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
+				myprint "./net-testing.sh $suffix $current_time $def_iface \"long\" > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+				(./v2/net-testing.sh $suffix $current_time $def_iface "long" | timeout 1200 cat > logs/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
 				num=1
 				echo $current_time > ".last_net"
 				echo $current_time > ".last_net_short"
@@ -1051,23 +946,6 @@ do
 			else 
 				myprint "Skipping forced net-testing since WiFi not found anymore"
 			fi 
-		elif [[ $force_net_test -gt 0 && $time_from_last_net_forced -gt $NET_INTERVAL_AIRPLANE && $airplane_mode == "1" ]]
-		then
-			myprint "Forcing a new test on Airplane Wifi: $time_from_last_net_forced > $NET_INTERVAL_AIRPLANE -- NumRunsLeft: $force_net_test DefaultIface:$def_iface SSID:$wifi_ssid"
-			update_wifi_mobile
-			if [ ! -z "$wifi_iface" ]
-			then	 	  	    
-				myprint "./net-testing.sh in `get_network_type` $suffix $current_time $def_iface \"long\" > $output_path/net-testing-forced-`date +\%m-\%d-\%y_\%H:\%M`.txt"
-				(./v2/net-testing.sh $suffix $current_time $def_iface "long" "airplane" > $output_path/net-testing-forced-airplane-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 &)
-				num=1
-				echo $current_time > ".last_net"
-				echo $current_time > ".last_net_short"
-				let "force_net_test--"
-				echo $force_net_test > ".force_counter"
-				echo $current_time > ".last_net_forced"
-			else 
-				myprint "Skipping forced airplane net-testing since WiFi not found anymore"
-			fi 
 		fi 
 		
 		# condition-2: it is time! (long freq, for both wifi and mobile)
@@ -1076,24 +954,20 @@ do
 			myprint "Time to run LONG net-test: $time_from_last_net > $NET_INTERVAL -- DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
 			skipping="false"
 			update_wifi_mobile 
-			t_wifi_mobile_update=`date +%s`	
-			if [ ! -z $mobile_iface ] && [ $def_iface == $mobile_iface ]
+			t_wifi_mobile_update=`date +%s`
+			if [ ! -z "$mobile_iface" ]
 			then
-				# if enough mobile data is available 
-				if [[ "$network_type" == "sim"* && $mobile_data -gt $MAX_MOBILE ]]
+	 	  	    # if enough mobile data is available 
+				if [ $def_iface == $mobile_iface -a $mobile_data -gt $MAX_MOBILE ]
 				then 
 					myprint "Skipping net-testing since we are on mobile and data limit was passed ($mobile_data -> $MAX_MOBILE)"
-					skipping="true"
-				elif [ $esim_data -gt $MAX_ESIM ]
-				then
-					myprint "Skipping net-testing since we are on esim and data limit was passed ($esim_data -> $MAX_ESIM)"
 					skipping="true"
 				fi 
 			fi  
 			if [[ $skipping == "false" ]]
 			then
-				myprint "./net-testing.sh in `get_network_type` $suffix $current_time $def_iface \"long\" > $output_path/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt"
-				(./v2/net-testing.sh $suffix $current_time $def_iface "long"| timeout 1200 cat > $output_path/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 & )
+				myprint "./net-testing.sh $suffix $current_time $def_iface \"long\" > logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+				(./v2/net-testing.sh $suffix $current_time $def_iface "long"| timeout 1200 cat > logs/net-testing-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 & )
 				num=1
 				echo $current_time > ".last_net"
 				echo $current_time > ".last_net_short"			
@@ -1105,37 +979,29 @@ do
 		then
 			skipping="false"
 			update_wifi_mobile 
-			t_wifi_mobile_update=`date +%s`	
-			if [[ "$network_type" == "WIFI"* ]]
-			then
-				myprint "Skipping net-testing-short since we are on wifi. DefaultIface:$def_iface NumRuns:$num_runs_today"
-				skipping="true"
+			t_wifi_mobile_update=`date +%s`			
+			if [ ! -z "$mobile_iface" ] 
+			then 
+				if [ $def_iface != $mobile_iface -o $num_runs_today -ge $MAX_ZEUS_RUNS  -o $mobile_data -gt $MAX_MOBILE ] 
+				then 
+					myprint "Skipping net-testing-short. DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
+					skipping="true"
+				fi 
 			else
-				if [ $num_runs_today -ge $MAX_ZEUS_RUNS ]
-				then
-					myprint "Skipping net-testing-short since we passed max runs. NumRuns: $num_runs_today MobileData:$mobile_data EsimData:$esim_data"
-					skipping="true"
-				elif [[ "$network_type" == "sim*" && $mobile_data -gt $MAX_MOBILE ]]
-				then
-					myprint "Skipping net-testing-short since we passed limit for mobile data. NumRuns: $num_runs_today MobileData:$mobile_data EsimData:$esim_data"
-					skipping="true"
-				elif [[ "$network_type" == *"true"* && esim_data -gt $MAX_ESIM ]]
-				then		
-					myprint "Skipping net-testing-short since we passed limit for ESIM data. NumRuns: $num_runs_today MobileData:$mobile_data EsimData:$esim_data"
-					skipping="true"
-				fi
+				myprint "Skipping net-testing-short since not on mobile at all"				 
+				skipping="true"
 			fi
 			if [[ $skipping == "false" ]]
 			then
 				myprint "Time to run SHORT test: $time_from_last_net > $NET_INTERVAL_SHORT -- DefaultIface:$def_iface NumRuns:$num_runs_today MobileData:$mobile_data (MAX: $MAX_MOBILE)"
-				myprint "./net-testing.sh in `get_network_type` $suffix $current_time $def_iface \"short\" > $output_path/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt"
-				(./v2/net-testing.sh $suffix $current_time $def_iface "short" | timeout 1200 cat > $output_path/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 & )
+				myprint "./net-testing.sh $suffix $current_time $def_iface \"short\" > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt"
+				(./v2/net-testing.sh $suffix $current_time $def_iface "short" | timeout 1200 cat > logs/net-testing-short-`date +\%m-\%d-\%y_\%H:\%M`.txt 2>&1 & )
 				num=1
 				echo $current_time > ".last_net_short"
 			fi
 		fi 
 	else
-		myprint "Skipping net-testing. NetStatus:$net_status NumNetProc:$num DefIface:$def_iface LockedStatus:$locked network_type:$network_type"
+		myprint "Skipping net-testing. NetStatus:$net_status NumNetProc:$num DefIface:$def_iface LockedStatus:$locked"
 	fi 
 	
 	# check if it is time to status report
@@ -1159,7 +1025,7 @@ do
 		# dump location information (only start googlemaps if not net-testing to avoid collusion)
 		if [ ! -f ".locked" ]  # NOTE: this means that another app (browser, youtube, videoconf) is already running!
 		then 
-			skip_gmaps="true"
+			skip_gmaps="false"
 			last_gmaps=0
 			if [ -f ".last_gmaps" ] 
 			then 
@@ -1200,7 +1066,7 @@ do
 		# get uptime
 		uptime_info=`uptime`
 
-		if [[ $def_iface == "none" || $network_type != *"true"* ]] 
+		if [[ $def_iface == "none" ]] 
 		then
 			myprint "Skipping report sending since not connected"
 		else 
@@ -1216,7 +1082,7 @@ do
 		echo $current_time > ".last_report"
 	fi 
 
-	#turn_device_off
+	turn_device_off
 	
 	# stop here if testing 
 	if [[ $testing == "true" ]] 
