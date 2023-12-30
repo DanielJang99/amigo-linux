@@ -35,78 +35,80 @@ source $adb_file
 
 # check account verification via YT
 check_account_via_YT(){
-	# make sure screen is on 
-	turn_device_on
+	echo "authorized" > ".google_status"
 
-	# launch youtube
-	myprint "Launching YT and allow to settle..."
-    su -c am start --user 0 -n com.google.android.youtube/com.google.android.apps.youtube.app.watchwhile.WatchWhileActivity 1 > /dev/null 2>&1
+	# # make sure screen is on 
+	# turn_device_on
 
-	# lower all the volumes
-	myprint "Making sure volume is off"
-	termux-volume call 0                    # call volume 
-    termux-volume music 0
-    termux-volume system 0
-	# sudo media volume --stream 3 --set 0    # media volume
-	# sudo media volume --stream 1 --set 0	# ring volume
-	# sudo media volume --stream 4 --set 0	# alarm volume
+	# # launch youtube
+	# myprint "Launching YT and allow to settle..."
+    # su -c am start --user 0 -n com.google.android.youtube/com.google.android.apps.youtube.app.watchwhile.WatchWhileActivity 1 > /dev/null 2>&1
 
-	# wait for YT 
-	youtube_error="false"
-	sleep 5 
-	myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
-	curr_activity=`sudo dumpsys activity | grep -E 'mCurrentFocus' | head -n 1 | awk -F "." '{print $NF}' | sed s/"}"//g`
-	c=0
-	while [[ $curr_activity != *"WatchWhileActivity"* ]] 
-	do 
-		sleep 3 
-	    curr_activity=`sudo dumpsys activity | grep -E 'mCurrentFocus' | head -n 1 | awk -F "." '{print $NF}' | sed s/"}"//g`
-		let "c++"
-		if [ $c -ge 10 ]
-		then 
-			myprint "Something went wrong loading YouTube"
-			youtube_error="true"
-			break
-		fi 
-	done
+	# # lower all the volumes
+	# myprint "Making sure volume is off"
+	# termux-volume call 0                    # call volume 
+    # termux-volume music 0
+    # termux-volume system 0
+	# # sudo media volume --stream 3 --set 0    # media volume
+	# # sudo media volume --stream 1 --set 0	# ring volume
+	# # sudo media volume --stream 4 --set 0	# alarm volume
 
-	# click account notification if there (guessing so far)
-	if [[ $youtube_error == "false" ]]
-	then
-		sleep 3
-		# sudo input tap 560 725
-		# sleep 10
-		sudo dumpsys activity | grep -E 'mCurrentFocus' | grep "MinuteMaidActivity"
-		need_to_verify=$?
-		if [ $need_to_verify -eq 0 ]
-		then
-		    myprint "Google account validation needed"
-		    sleep 10 
-		    sudo input tap 600 1200
-		    sleep 5
-		    sudo input text "Bremen2013"
-		    sleep 3
-		    sudo input keyevent KEYCODE_ENTER
-		    sleep 10
-		    sudo dumpsys activity | grep -E 'mCurrentFocus' | grep MinuteMaidActivity
-		    if [ $? -eq 0 ]
-		    then
-		        myprint "ERROR - notification cannot be accepted. Inform USER"
-		        echo "not-authorized" > ".google_status"
-		    	safe_stop
-		    else
-		    	echo "authorized" > ".google_status"
-		        myprint "Google account is now verified"
-		    fi
-		else
-			echo "authorized" > ".google_status"
-		    myprint "Google account is already verified"
-		fi
-	fi 
+	# # wait for YT 
+	# youtube_error="false"
+	# sleep 5 
+	# myprint "Waiting for YT to load (aka detect \"WatchWhileActivity\")"
+	# curr_activity=`sudo dumpsys activity | grep -E 'mCurrentFocus' | head -n 1 | awk -F "." '{print $NF}' | sed s/"}"//g`
+	# c=0
+	# while [[ $curr_activity != *"WatchWhileActivity"* ]] 
+	# do 
+	# 	sleep 3 
+	#     curr_activity=`sudo dumpsys activity | grep -E 'mCurrentFocus' | head -n 1 | awk -F "." '{print $NF}' | sed s/"}"//g`
+	# 	let "c++"
+	# 	if [ $c -ge 10 ]
+	# 	then 
+	# 		myprint "Something went wrong loading YouTube"
+	# 		youtube_error="true"
+	# 		break
+	# 	fi 
+	# done
 
-	# make sure screen is off and nothing running
-	close_all 
-	turn_device_off
+	# # click account notification if there (guessing so far)
+	# if [[ $youtube_error == "false" ]]
+	# then
+	# 	sleep 3
+	# 	# sudo input tap 560 725
+	# 	# sleep 10
+	# 	sudo dumpsys activity | grep -E 'mCurrentFocus' | grep "MinuteMaidActivity"
+	# 	need_to_verify=$?
+	# 	if [ $need_to_verify -eq 0 ]
+	# 	then
+	# 	    myprint "Google account validation needed"
+	# 	    sleep 10 
+	# 	    sudo input tap 600 1200
+	# 	    sleep 5
+	# 	    sudo input text "Bremen2013"
+	# 	    sleep 3
+	# 	    sudo input keyevent KEYCODE_ENTER
+	# 	    sleep 10
+	# 	    sudo dumpsys activity | grep -E 'mCurrentFocus' | grep MinuteMaidActivity
+	# 	    if [ $? -eq 0 ]
+	# 	    then
+	# 	        myprint "ERROR - notification cannot be accepted. Inform USER"
+	# 	        echo "not-authorized" > ".google_status"
+	# 	    	safe_stop
+	# 	    else
+	# 	    	echo "authorized" > ".google_status"
+	# 	        myprint "Google account is now verified"
+	# 	    fi
+	# 	else
+	# 		echo "authorized" > ".google_status"
+	# 	    myprint "Google account is already verified"
+	# 	fi
+	# fi 
+
+	# # make sure screen is off and nothing running
+	# close_all 
+	# turn_device_off
 }
 
 # generate data to be POSTed to my server
