@@ -36,6 +36,7 @@ source $adb_file
 # check account verification via YT
 check_account_via_YT(){
 	echo "authorized" > ".google_status"
+	youtube_error="false"
 
 	# # make sure screen is on 
 	# turn_device_on
