@@ -282,11 +282,15 @@ elif [[ "$currentNetwork" == *"true"* ]];then
 					currentNetwork=`get_network_type`
 					if [[ "$currentNetwork" == "WIFI"* ]];then
 						myprint "Network has switched from mobile to WIFI"
-						return
+						run_network_tests
+						break
 					fi
 				done
 				turn_device_off
-
+				if [[ "$currentNetwork" == "WIFI"* ]];then
+					break
+				fi
+				
 				#2. check internet connectivity after selecting sim - 10 seconds
 				myprint "Switching Data Plan - Step 2"
 				numFails=0
