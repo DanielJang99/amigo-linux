@@ -297,28 +297,30 @@ fi
 
 # video testing with youtube
 # if [ $opt == "long" -a $airplane_mode == "false" ] 
-if [ $opt == "long" ] 
-then 
-    if [ -f ".youtube_browser" ]
-    then 
-        yt_browser=`cat .youtube_browser`
-        if [[ "$yt_browser" == "chrome"* ]]
-        then
-            run_in_chrome="true"
-        fi
-    fi
+
+# disable youtbe test in China 
+# if [ $opt == "long" ] 
+# then 
+#     if [ -f ".youtube_browser" ]
+#     then 
+#         yt_browser=`cat .youtube_browser`
+#         if [[ "$yt_browser" == "chrome"* ]]
+#         then
+#             run_in_chrome="true"
+#         fi
+#     fi
     
-    if [[ "$run_in_chrome" == "true" ]]
-    then 
-        run_experiment "./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single"
-    else 
-        run_experiment "./v2/youtube-test-kiwi.sh --suffix $suffix --id $t_s --iface $iface --pcap --single"
-    fi
-    myprint "Sleep 30 after Youtube-test to lower CPU load..."
-    sleep 30  	
-else 
-	myprint "Skipping YouTube testing option:$opt"
-fi 
+#     if [[ "$run_in_chrome" == "true" ]]
+#     then 
+#         run_experiment "./v2/youtube-test.sh --suffix $suffix --id $t_s --iface $iface --pcap --single"
+#     else 
+#         run_experiment "./v2/youtube-test-kiwi.sh --suffix $suffix --id $t_s --iface $iface --pcap --single"
+#     fi
+#     myprint "Sleep 30 after Youtube-test to lower CPU load..."
+#     sleep 30  	
+# else 
+# 	myprint "Skipping YouTube testing option:$opt"
+# fi 
 
 # run multiple MTR
 run_experiment "./mtr.sh $suffix $t_s"
