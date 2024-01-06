@@ -40,7 +40,7 @@ run_speedtest(){
         tshark -nr $pcap_file -T fields -E separator=',' -e _ws.col.Protocol -e ip.dst -e tcp.dstport > $tshark_file
         dest_ip=`cat $tshark_file | grep "TLSv1.3" | grep "443" | head -n 1 | awk -F"," '{print $2}'`
     fi
-    traceroute $dest_ip > "${res_folder}/traceroute-$testId.txt"
+    traceroute -m 255 $dest_ip > "${res_folder}/traceroute-$testId.txt"
     sudo rm $pcap_file
     sudo rm $tshark_file
 }
