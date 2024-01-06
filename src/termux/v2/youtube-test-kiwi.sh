@@ -252,6 +252,10 @@ su -c rm -fr /data/data/com.kiwibrowser.browser/cache/*
 su -c rm -fr /data/data/com.kiwibrowser.browser/app_tabs/*
 su -c rm -fr /data/data/com.kiwibrowser.browser/app_persisted_tab_data_storage/*
 
+# traceroute youtube 
+traceroute_file="${res_folder}/${curr_run_id}_traceroute.txt"
+(traceroute -m 255 youtube.com >> $traceroute_file 2>&1 &)
+
 # start CPU monitoring
 log_cpu="${res_folder}/${curr_run_id}.cpu"
 clean_file $log_cpu

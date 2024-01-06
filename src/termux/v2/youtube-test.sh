@@ -291,6 +291,10 @@ su -c rm -fr /data/data/com.google.android.youtube/cache/*
 #sudo monkey -p com.google.android.youtube 1 > /dev/null 2>&1 
 #wait_on_cpu
 
+# traceroute youtube 
+traceroute_file="${res_folder}/${curr_run_id}_traceroute.txt"
+(traceroute -m 255 youtube.com >> $traceroute_file 2>&1 &)
+
 # start CPU monitoring
 log_cpu="${res_folder}/${curr_run_id}.cpu"
 clean_file $log_cpu
