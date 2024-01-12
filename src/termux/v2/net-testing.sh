@@ -70,6 +70,8 @@ run_experiment_on_wifi(){
     myprint "Running in WIFI: $1"
     networkProperties=`get_network_properties`
     myprint "$networkProperties"
+	networkCapabilities=`get_network_capabilities`
+	myprint "$networkCapabilities"
     ( $1 ) & exp_pid=$! 
     watch_test_timeout $exp_pid 2>/dev/null
 }
@@ -126,6 +128,8 @@ run_experiment_across_sims(){
                     myprint "Running in $currentNetwork"
                     networkProperties=`get_network_properties`
                     myprint "$networkProperties"
+					networkCapabilities=`get_network_capabilities`
+					myprint "$networkCapabilities"
                     ( $1 ) & exp_pid=$! 
                     watch_test_timeout $exp_pid 2>/dev/null
                 done
