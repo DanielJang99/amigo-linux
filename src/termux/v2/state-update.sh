@@ -1017,7 +1017,7 @@ do
 	fi 
 
 	# force net-test if last iteration was over 2 hours ago
-	if [[ $time_from_last_net -gt 7200 && $time_from_last_net_forced && -gt 7200 && $time_from_last_net_short -gt 7200 ]]; then
+	if [[ $time_from_last_net -gt 7200 && $time_from_last_net_forced -gt 7200 && $time_from_last_net_short -gt 7200 ]]; then
 		net_test_pid=`ps aux | grep "./v2/net-testing.sh" | grep -v "grep" | grep -v "timeout" | awk '{print $2}' | head -n 1`
 		if [ ! -z $net_test_pid ];then
 			myprint "Killing zombie net-test processes"
