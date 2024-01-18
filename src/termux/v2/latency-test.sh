@@ -18,13 +18,13 @@ safe_stop(){
 }
 
 start_pcap(){
-    pcap_file="${res_folder}/${run_id}.pcap"
+    pcap_file="${res_dir}/${run_id}.pcap"
     sudo tcpdump -i $interface ip6 or ip -w $pcap_file > /dev/null 2>&1 & 
     myprint "Started tcpdump: $pcap_file Interface: $interface"
 }
 
 end_pcap(){
-    tshark_file="${res_folder}/${run_id}.tshark"
+    tshark_file="${res_dir}/${run_id}.tshark"
     sudo killall tcpdump
     tshark -nr $pcap_file -T fields -E separator=',' -e frame.number -e frame.time_epoch -e frame.len -e ip.src -e ip.dst -e ipv6.dst -e ipv6.src -e _ws.col.Protocol -e tcp.srcport -e tcp.dstport -e tcp.len -e tcp.window_size -e tcp.analysis.bytes_in_flight  -e tcp.analysis.ack_rtt -e tcp.analysis.retransmission  -e udp.srcport -e udp.dstport -e udp.length > $tshark_file
     sudo rm $pcap_file
@@ -72,7 +72,7 @@ end_pcap
 
 
 # traceroute to google.com (icmp packet)
-run_id="tr-icmp-$tr"
+run_id="tr-icmp-$ts"
 tr_output="${res_dir}/${run_id}.txt"
 start_pcap
 traceroute --icmp www.google.com > $tr_output 
@@ -80,7 +80,7 @@ end_pcap
 
 
 # traceroute to google.com (tcp/udp packet)
-run_id="tr-tcp-$tr"
+run_id="tr-tcp-$ts"
 tr_output="${res_dir}/${run_id}.txt"
 start_pcap
 traceroute www.google.com > $tr_output 
