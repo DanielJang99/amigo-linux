@@ -415,7 +415,7 @@ fast_freq=5                            # interval for checking the app (faster)
 #SERVER_PORT=8082                      # port of our web app
 SERVER_PORT=8083                       # web app port (when debugging at server)
 REPORT_INTERVAL=300                    # interval of status reporting (seconds)
-NET_INTERVAL=5400                      # interval of networking testing 
+NET_INTERVAL=3600                      # interval of networking testing 
 NET_INTERVAL_SHORT=2700                # short interval of net testing (just on mobile)
 NET_INTERVAL_FORCED=1800               # short interval of net testing (wifi, hopefully on planes)
 NET_INTERVAL_AIRPLANE=900
@@ -432,8 +432,8 @@ asked_to_charge="false"                # keep track if we already asked user to 
 prev_wifi_traffic=0                    # keep track of wifi traffic used today
 prev_mobile_traffic=0                  # keep track of mobile traffic used today
 prev_esim_traffic=0
-MAX_MOBILE_GB=4                        # maximum mobile data usage per day
-MAX_ESIM_GB=1
+MAX_MOBILE_GB=5                        # maximum mobile data usage per day
+MAX_ESIM_GB=5
 testing="false"                        # keep track if we are testing or not 
 strike=0                               # keep time of how many times in a row high CPU was detected 
 vrs="2.9"                              # code version 
@@ -657,7 +657,7 @@ do
 	suffix=`date +%d-%m-%Y`
 	
 	# check if net-testing is running
-	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | grep -v "timeout" | wc -l`			
+	num=`ps aux | grep "./v2/net-testing.sh" | grep -v "grep" | grep -v "timeout" | wc -l`			
 	
 	# update WiFi and mobile phone connectivity if it is time to do so (once a minute)
 	network_type=`get_network_type`	
@@ -782,7 +782,7 @@ do
 	fi 
 		
 	# update Google account authorization status
-	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | grep -v "timeout" | wc -l`
+	num=`ps aux | grep "./v2/net-testing.sh" | grep -v "grep" | grep -v "timeout" | wc -l`
 	t_last_google=`cat ".time_google_check"`
 	let "t_p = current_time - t_last_google"
 	if [ $t_p -gt $GOOGLE_CHECK_FREQ -a $num -eq 0 -a $asked_to_charge == "false" ] 
@@ -985,7 +985,7 @@ do
 	fi 
 
 	# check if it is time to run net experiments 
-	num=`ps aux | grep "net-testing.sh" | grep -v "grep" | grep -v "timeout" | wc -l`	
+	num=`ps aux | grep "./v2/net-testing.sh" | grep -v "grep" | grep -v "timeout" | wc -l`	
 	if [ -f ".last_net" ] 
 	then 
 		last_net=`cat ".last_net"`
@@ -1015,6 +1015,22 @@ do
 	then 
 		locked="true"
 	fi 
+
+	# force net-test if last iteration was over 2 hours ago
+	if [[ $time_from_last_net -gt 7200 && $time_from_last_net_forced -gt 7200 && $time_from_last_net_short -gt 7200 ]]; then
+		net_test_pid=`ps aux | grep "./v2/net-testing.sh" | grep -v "grep" | grep -v "timeout" | awk '{print $2}' | head -n 1`
+		if [ ! -z $net_test_pid ];then
+			myprint "Killing zombie net-test processes"
+			sudo kill -9 "$net_test_pid"
+		fi
+		sleep 1 
+		num=`ps aux | grep "./v2/net-testing.sh" | grep -v "grep" | grep -v "timeout" | wc -l`			
+
+		if [[ $locked == "true" ]];then
+			clean_file ".locked"
+			locked="false"
+		fi
+	fi
 
 	# logging 
 	myprint "TimeFromLastNetLong:$time_from_last_net sec TimeFromLastNetShort:$time_from_last_net_short sec TimeFromLastNetForced:$time_from_last_net_forced sec ShouldRunIfTime:$net_status RunningNetProc:$num LockedStatus:$locked"
@@ -1111,15 +1127,11 @@ do
 				myprint "Skipping net-testing-short since we are on wifi. DefaultIface:$def_iface NumRuns:$num_runs_today"
 				skipping="true"
 			else
-				if [ $num_runs_today -ge $MAX_ZEUS_RUNS ]
-				then
-					myprint "Skipping net-testing-short since we passed max runs. NumRuns: $num_runs_today MobileData:$mobile_data EsimData:$esim_data"
-					skipping="true"
-				elif [[ "$network_type" == "sim*" && $mobile_data -gt $MAX_MOBILE ]]
+				if [[ "$network_type" == "sim*" && $mobile_data -gt $MAX_MOBILE ]]
 				then
 					myprint "Skipping net-testing-short since we passed limit for mobile data. NumRuns: $num_runs_today MobileData:$mobile_data EsimData:$esim_data"
 					skipping="true"
-				elif [[ "$network_type" == *"true"* && esim_data -gt $MAX_ESIM ]]
+				elif [[ "$network_type" == *"true"* && $esim_data -gt $MAX_ESIM ]]
 				then		
 					myprint "Skipping net-testing-short since we passed limit for ESIM data. NumRuns: $num_runs_today MobileData:$mobile_data EsimData:$esim_data"
 					skipping="true"

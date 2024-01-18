@@ -390,6 +390,6 @@ get_network_properties() {
 get_network_capabilities() {
 	networkFile="/storage/emulated/0/Android/data/com.example.sensorexample/files/currentNetwork.txt"
 	if sudo [ -f $networkFile ];then
-		sudo cat $networkFile | tail -n 2 | head -n 1 
+		sudo cat $networkFile | tail -n 1 
 	fi
 }

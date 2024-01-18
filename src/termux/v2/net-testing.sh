@@ -70,6 +70,8 @@ run_experiment_on_wifi(){
     myprint "Running in WIFI: $1"
     networkProperties=`get_network_properties`
     myprint "$networkProperties"
+	networkCapabilities=`get_network_capabilities`
+	myprint "$networkCapabilities"
     ( $1 ) & exp_pid=$! 
     watch_test_timeout $exp_pid 2>/dev/null
 }
@@ -126,6 +128,8 @@ run_experiment_across_sims(){
                     myprint "Running in $currentNetwork"
                     networkProperties=`get_network_properties`
                     myprint "$networkProperties"
+					networkCapabilities=`get_network_capabilities`
+					myprint "$networkCapabilities"
                     ( $1 ) & exp_pid=$! 
                     watch_test_timeout $exp_pid 2>/dev/null
                 done
@@ -320,6 +324,11 @@ else
 	myprint "Skipping YouTube testing option:$opt"
 fi 
 
+if [[ "$airplane_mode" == "true" ]]
+then 
+	run_experiment "./v2/latency-test.sh $suffix $t_s"
+fi
+
 # run multiple MTR
 run_experiment "./mtr.sh $suffix $t_s"
 
@@ -432,7 +441,7 @@ sudo pm clear com.android.chrome
 turn_device_on
 close_all
 sudo killall tcpdump
-for pid in `ps aux | grep 'youtube-test\|web-test\|mtr.sh\|cdn-test.sh\|speedtest-cli'  | grep -v "grep" | grep -v "stop" | awk '{print $2}'`
+for pid in `ps aux | grep 'youtube-test\|latency-test\|web-test\|mtr.sh\|cdn-test.sh\|speedtest-cli'  | grep -v "grep" | grep -v "stop" | awk '{print $2}'`
 do
     kill -9 $pid
 done
