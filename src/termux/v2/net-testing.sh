@@ -324,6 +324,11 @@ else
 	myprint "Skipping YouTube testing option:$opt"
 fi 
 
+if [[ "$airplane_mode" == "true" ]]
+then 
+	run_experiment "./v2/latency-test.sh $suffix $t_s"
+fi
+
 # run multiple MTR
 run_experiment "./mtr.sh $suffix $t_s"
 
