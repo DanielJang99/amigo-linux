@@ -441,7 +441,7 @@ sudo pm clear com.android.chrome
 turn_device_on
 close_all
 sudo killall tcpdump
-for pid in `ps aux | grep 'youtube-test\|web-test\|mtr.sh\|cdn-test.sh\|speedtest-cli'  | grep -v "grep" | grep -v "stop" | awk '{print $2}'`
+for pid in `ps aux | grep 'youtube-test\|latency-test\|web-test\|mtr.sh\|cdn-test.sh\|speedtest-cli'  | grep -v "grep" | grep -v "stop" | awk '{print $2}'`
 do
     kill -9 $pid
 done

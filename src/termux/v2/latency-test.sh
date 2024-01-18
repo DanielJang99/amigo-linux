@@ -21,6 +21,7 @@ start_pcap(){
     pcap_file="${res_dir}/${run_id}.pcap"
     sudo tcpdump -i $interface ip6 or ip -w $pcap_file > /dev/null 2>&1 & 
     myprint "Started tcpdump: $pcap_file Interface: $interface"
+    sleep 1
 }
 
 end_pcap(){

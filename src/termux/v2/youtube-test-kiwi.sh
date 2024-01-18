@@ -27,12 +27,16 @@ send_report(){
 	avg_ping="N/A"
 	if [ -f "notes-ping" ] 
 	then 
+		myprint "---------ping stats---------"
+		tail -n 2 notes-ping
 		avg_ping=`cat notes-ping | grep "mdev" | cut -f 2 -d "=" | cut -f 2 -d "/"`
 		myprint "Average ping to youtube: $avg_ping"
 		rm notes-ping 
 	fi
 	if [ -f "notes-nping" ]
-	then 
+	then
+		myprint "---------nping stats---------" 
+		tail -n 3 notes-nping | head -n 2 
 		avg_nping=`cat notes-nping | grep "Avg rtt" | cut -f 4 -d ":" | cut -f 1 -d "m" | cut -f 2 -d " "`
 		myprint "Average nping to youtube: $avg_nping"
 		rm notes-nping
