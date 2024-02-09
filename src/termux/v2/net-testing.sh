@@ -27,19 +27,31 @@ EOF
 }
 
 run_network_tests(){
+
+	sudo dumpsys telephony.registry > ".tel"
+	mobile_state=`cat ".tel" | grep "mServiceState" | tail -n 1 | sed -e 's/^[[:space:]]*//'`
+	mobile_signal=`cat ".tel" | grep "mSignalStrength" | tail -n 1 | sed -e 's/^[[:space:]]*//'`
+	myprint "Mobile State: $mobile_state"
+	myprint "Mobile Signal: $mobile_signal"
+
 	linkPropertiesFile="/storage/emulated/0/Android/data/com.example.sensorexample/files/linkProperties.txt"
 	iface=`su -c cat "$linkPropertiesFile" | cut -f 2 -d " " | head -n 1`
 
+	# get network properties and capabilities
+	networkProperties=`get_network_properties`
+	myprint "$networkProperties"
+	networkCapabilities=`get_network_capabilities`
+	myprint "$networkCapabilities"
+
+	# Get current IP address
+	ip_addr=`curl -s ifconfig.co`
+	myprint "Current IP address: $ip_addr" 
+
 	# Get Current DNS used 
-	if [ $opt == "long" ]
-	then
-		myprint "Getting current DNS used - saved to dns-results/$suffix/$t_s.txt"
-		dns_res_folder="dns-results/$suffix"
-		mkdir -p $dns_res_folder
-		networkProperties=`get_network_properties`
-		myprint "$networkProperties"
-		curl -L https://test.nextdns.io >> "${dns_res_folder}/$t_s.txt"
-	fi
+	myprint "Getting current DNS used - saved to dns-results/$suffix/$t_s.txt"
+	dns_res_folder="dns-results/$suffix"
+	mkdir -p $dns_res_folder
+	curl -L https://test.nextdns.io >> "${dns_res_folder}/$t_s.txt"
 
 	# video testing with youtube
 	# if [ $opt == "long" -a $airplane_mode == "false" ] 
