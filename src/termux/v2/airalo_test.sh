@@ -3,17 +3,9 @@
 ## Author: Daniel Jang 
 ## Date: 2/9/2024
 
-
-# import util file
-DEBUG=1
-util_file=`pwd`"/util.cfg"
-if [ -f $util_file ]
-then
-    source $util_file
-else
-    echo "Util file $util_file is missing"
-    exit 1
-fi
+# import utilities files needed
+adb_file=`pwd`"/adb-utils.sh"
+source $adb_file
 
  
 network_type=`get_network_type`
