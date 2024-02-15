@@ -171,6 +171,9 @@ generate_post_data(){
 	"esim_state": "${esim_state}", 
 	"esim_signal": "${esim_signal}",
 	"esim_traffic": "${esim_traffic}",
+	"carrier_id": "${carrier_id}",
+	"mcc": "${mcc}",
+	"mnc": "${mnc}",
 	"today_esim_data": "${esim_data}",
 	"network_type": "${network_type}"
     }
@@ -357,6 +360,10 @@ update_wifi_mobile(){
 			sudo dumpsys telephony.registry > ".tel"
 			mobile_state=`cat ".tel" | grep "mServiceState" | head -n 1 | sed -e 's/^[[:space:]]*//'`
 			mobile_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1 | sed -e 's/^[[:space:]]*//'`
+			timeout 1 sudo logcat -b radio > ".radio"
+			carrierId=`cat .radio | grep "getActiveSubscriptionInfoForSimSlotIndex" | tail -n 1 | awk -F'carrierId=' '{print $2}' | awk '{print $1}'`
+			mcc=`cat .radio | grep "getActiveSubscriptionInfoForSimSlotIndex" | tail -n 1 | awk -F'mcc=' '{print $2}' | awk '{print $1}'`
+			mnc=`cat .radio | grep "getActiveSubscriptionInfoForSimSlotIndex" | tail -n 1 | awk -F'mnc=' '{print $2}' | awk '{print $1}'`
 			mobile_traffic=`sudo ifconfig $phySim_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
 			if [ $mobile_traffic -lt $prev_mobile_traffic ];then
 				let "mobile_data += mobile_traffic"
@@ -382,9 +389,13 @@ update_wifi_mobile(){
 			fi 
 			esim_ip=`sudo ifconfig $esim_iface | grep "\." | grep -v packets | awk '{print $2}'`
 			sudo dumpsys telephony.registry > ".tel"
-			esim_state=`cat ".tel" | grep "mServiceState" | head -n 1`
-			esim_signal=`cat ".tel" | grep "mSignalStrength" | head -n 1`
+			esim_state=`cat ".tel" | grep "mServiceState" | tail -n 1`
+			esim_signal=`cat ".tel" | grep "mSignalStrength" | tail -n 1`
 			esim_traffic=`sudo ifconfig $esim_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
+			timeout 1 sudo logcat -b radio > ".radio" 
+			carrierId=`cat .radio | grep "getActiveSubscriptionInfoForSimSlotIndex" | tail -n 1 | awk -F'carrierId=' '{print $2}' | awk '{print $1}'`
+			mcc=`cat .radio | grep "getActiveSubscriptionInfoForSimSlotIndex" | tail -n 1 | awk -F'mcc=' '{print $2}' | awk '{print $1}'`
+			mnc=`cat .radio | grep "getActiveSubscriptionInfoForSimSlotIndex" | tail -n 1 | awk -F'mnc=' '{print $2}' | awk '{print $1}'`
 			if [ $esim_traffic -lt $prev_esim_traffic ];then
 				let "esim_data += esim_traffic"
 			else 
