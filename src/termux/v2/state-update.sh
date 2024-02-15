@@ -171,7 +171,7 @@ generate_post_data(){
 	"esim_state": "${esim_state}", 
 	"esim_signal": "${esim_signal}",
 	"esim_traffic": "${esim_traffic}",
-	"carrier_id": "${carrier_id}",
+	"carrierId": "${carrierId}",
 	"mcc": "${mcc}",
 	"mnc": "${mnc}",
 	"today_esim_data": "${esim_data}",
