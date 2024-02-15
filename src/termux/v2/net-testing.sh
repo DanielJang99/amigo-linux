@@ -27,13 +27,6 @@ EOF
 }
 
 run_network_tests(){
-
-	sudo dumpsys telephony.registry > ".tel"
-	mobile_state=`cat ".tel" | grep "mServiceState" | tail -n 1 | sed -e 's/^[[:space:]]*//'`
-	mobile_signal=`cat ".tel" | grep "mSignalStrength" | tail -n 1 | sed -e 's/^[[:space:]]*//'`
-	myprint "Mobile State: $mobile_state"
-	myprint "Mobile Signal: $mobile_signal"
-
 	linkPropertiesFile="/storage/emulated/0/Android/data/com.example.sensorexample/files/linkProperties.txt"
 	iface=`su -c cat "$linkPropertiesFile" | cut -f 2 -d " " | head -n 1`
 
