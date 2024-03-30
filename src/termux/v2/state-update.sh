@@ -84,7 +84,8 @@ check_account_via_YT(){
 		    sleep 10 
 		    sudo input tap 600 1200
 		    sleep 5
-		    sudo input text "Comnets@2020"
+			g_cred=`ssh -i ~/.ssh/id_rsa_mobile -o StrictHostKeyChecking=no root@23.235.205.53 "cat /root/mobile-testbed/src/server/google_credential"`
+		    sudo input text "${g_cred}"
 		    sleep 3
 		    sudo input keyevent KEYCODE_ENTER
 		    sleep 10
