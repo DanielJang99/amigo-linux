@@ -265,7 +265,15 @@ elif [[ "$currentNetwork" == *"true"* ]];then
     subscriptions_file="/storage/emulated/0/Android/data/com.example.sensorexample/files/subscriptions.txt"
     if sudo [ -f $subscriptions_file ]; then
         numSubs=`su -c cat $subscriptions_file | wc -l`
-		if [ $numSubs -gt 0 ];then
+		if [ $numSubs -eq 1 ];then
+			myprint "Running network tests in $currentNetwork"
+			networkProperties=`get_network_properties`
+			myprint "$networkProperties"
+			run_network_tests
+			myprint "Done with network tests on $currentNetwork $iface. Sleeping for 30 seconds"
+			sleep 30
+		fi
+		elif [ $numSubs -gt 1 ];then
 			for ((i=1;i<=numSubs;i++))
 			do
 				# 1. switch sim 
