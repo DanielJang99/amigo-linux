@@ -1,7 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/env bash
 
 pip show grpcio
-if [ $? eq 0 ]
+if [ $? -eq 0 ]
 then 
     exit 0
 fi
