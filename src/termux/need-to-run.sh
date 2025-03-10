@@ -73,6 +73,12 @@ then
 	debug=`cat .isDebug`
 fi 
 
+isStarlink="false"  
+if [ -f ".isStarlink" ] 
+then 
+	isStarlink=`cat .isStarlink`
+fi 
+
 # retrieve last used server port 
 if [ -f ".server_port" ] 
 then 
@@ -184,6 +190,21 @@ then
 	else 
 		./state-update.sh > "logs/log-state-update-"`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1 &
 	fi
+
+	if [ $isStarlink == "true" ]
+	then
+		echo "This device is ready to run Starlink measurements"
+		crontab -l | grep starlink_grpc_tools
+		if [ $? -eq 1 ]
+		then 
+			echo "Detected need to add starlink-grpc job"
+			if [ $debug == "false" ]
+			then
+				(crontab -l 2>/dev/null; echo "*/10 * * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/starlink_grpc_tools && ./monitor_starlink_grpc_jobs.sh > .log_starlink") | crontab -
+			fi 
+		fi  
+	fi
+
 else 
 	echo "No need to run"
 fi
