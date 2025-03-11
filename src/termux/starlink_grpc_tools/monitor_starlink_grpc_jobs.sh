@@ -15,7 +15,22 @@ then
     exit 0     
 fi
 
-./setup_starlink_grpc.sh
+pip show grpcio
+if [ $? -ne 0 ]
+then 
+    echo "missing grpcio lib"
+    # ./setup_starlink_grpc.sh
+    exit 0
+fi
+
+pip show grpcio-tools
+if [ $? -ne 0 ]
+then 
+    echo "missing grpcio-tools lib"
+    # ./setup_starlink_grpc.sh
+    exit 0
+fi
+
 
 # Fetch the public IP address
 PUBLIC_IP=$(curl -s https://api64.ipify.org)
