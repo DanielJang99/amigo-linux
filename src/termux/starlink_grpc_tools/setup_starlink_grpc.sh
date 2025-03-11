@@ -17,3 +17,11 @@ pip install --upgrade -r requirements.txt
 
 mkdir -p dish_status 
 mkdir -p obstruction_maps
+
+# added because speedtest-cli could not be found after pkg upgrade 
+pip show speedtest-cli
+if [ $? -ne 0 ]
+then 
+    pip install speedtest-cli
+fi
+
