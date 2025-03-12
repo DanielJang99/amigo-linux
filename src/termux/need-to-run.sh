@@ -198,7 +198,13 @@ then
 		if [ $? -eq 1 ]
 		then 
 			echo "Detected need to add starlink-grpc job"
-			(crontab -l 2>/dev/null; echo "*/10 * * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/starlink_grpc_tools && ./monitor_starlink_grpc_jobs.sh > .log_starlink") | crontab -
+			(crontab -l 2>/dev/null; echo "*/15 * * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/starlink_grpc_tools && ./monitor_starlink_grpc_jobs.sh > .log_starlink") | crontab -
+		fi  
+		crontab -l | grep run_stats.sh
+		if [ $? -eq 1 ]
+		then 
+			echo "Detected need to add starlink stats job"
+			(crontab -l 2>/dev/null; echo "*/1 * * * * cd /data/data/com.termux/files/home/mobile-testbed/src/termux/starlink_grpc_tools && ./run_stats.sh > .log_starlink_stats") | crontab -
 		fi  
 	fi
 
