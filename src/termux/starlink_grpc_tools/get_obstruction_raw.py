@@ -185,19 +185,18 @@ def main():
         if now - start > timedelta(seconds=TOTAL_DURATION_SECONDS):
             break 
         wait_until_target_time()
+        print(now+"reset obs map")
 
         end_time = time.monotonic() + RESET_INTERVAL_SECONDS
         while True:
             time_mono = time.monotonic()
-            loop_end = time_mono + opts.loop_interval 
+            loop_end = time_mono + max(opts.loop_interval, 1.0) 
             if time_mono > end_time:
                 break
             try: 
-                cur = datetime.now(timezone.utc)
+                cur = time.time()
                 png_filename = opts.filename+"/"+str(cur)+".png"
                 raw_filename = opts.filename+"/"+str(cur)+".csv"
-                print(png_filename)
-                print(raw_filename)
                 with open("test.csv", "a", buffering=1) as raw_file:
                     raw_file.write(png_filename + "," + raw_filename + "\n")
 
