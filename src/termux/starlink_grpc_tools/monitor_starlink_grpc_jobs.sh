@@ -52,15 +52,15 @@ if [[ "$ASN_INFO" == *"AS14593"* ]]; then
     if [ $dish_status_p -eq 0 ]
     then 
         echo "Detected dish_status job not running"
-        (python3 dish_grpc_text.py status -t 1 -O ./dish_status/status_`date +%s`.csv > /dev/null 2>&1 &)
+        (nohup python3 dish_grpc_text.py status -t 1 -O ./dish_status/status_`date +%s`.csv > grpc_text.log 2>&1 &)
     fi 
 
-    ps aux | grep "dish_obstruction_map" | grep "python" > ".dish_obs_ps"
+    ps aux | grep "get_obstruction_raw" | grep "python" > ".dish_obs_ps"
     dish_obs_p=`cat ".dish_obs_ps" | wc -l`
     if [ $dish_obs_p -eq 0 ]
     then 
         echo "Detected obstruction_map job not running"
-        (python3 dish_obstruction_map.py -t 1 ./obstruction_maps/obstructions_`date +%s`.png > /dev/null 2>&1 &)
+        (nohup python3 get_obstruction_raw.py obstruction_maps -t 1 > obs_map.log 2>&1 &)
     fi 
     exit 0
 else

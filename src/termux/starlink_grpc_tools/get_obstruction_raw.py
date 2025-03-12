@@ -47,17 +47,21 @@ DEFAULT_OBSTRUCTED_GREYSCALE = "FF00"
 DEFAULT_UNOBSTRUCTED_GREYSCALE = "FFFF"
 DEFAULT_NO_DATA_GREYSCALE = "0000"
 LOOP_TIME_DEFAULT = 0
-TOTAL_DURATION_SECONDS = 60
+TOTAL_DURATION_SECONDS = 300
 RESET_INTERVAL_SECONDS = 14
 
 
 def wait_until_target_time():
-    target_seconds = {12, 27, 42, 57}
+    target_seconds = {11, 26, 41, 56}
     while True:
-        current_second = datetime.now(timezone.utc).second
+        now = datetime.now(timezone.utc)
+        current_second, current_ms = now.second, now.microsecond
         if current_second in target_seconds:
+            remaining_ms = 1000000 - current_ms
+            remaining_ms = round(remaining_ms / 100) * 100
+            time.sleep(remaining_ms / 1000000)
             break
-        time.sleep(0.5)
+        time.sleep(1)
 
 def pixel_bytes(row, opts):
     for point in row:
@@ -173,32 +177,48 @@ def parse_args():
             sys.exit(1)
 
     return opts
+
+
 def main():
     start = datetime.now(timezone.utc)
     opts = parse_args()
 
     logging.basicConfig(format="%(levelname)s: %(message)s")
 
+    context = starlink_grpc.ChannelContext(target=opts.target)
+
+    wait_until_target_time()
 
     while True:
         now = datetime.now(timezone.utc)
         if now - start > timedelta(seconds=TOTAL_DURATION_SECONDS):
             break 
-        wait_until_target_time()
-        print(now+"reset obs map")
 
         end_time = time.monotonic() + RESET_INTERVAL_SECONDS
+        starlink_grpc.reset_obstruction_map(context)
         while True:
             time_mono = time.monotonic()
-            loop_end = time_mono + max(opts.loop_interval, 1.0) 
             if time_mono > end_time:
                 break
+            loop_end = time_mono + max(opts.loop_interval, 1.0) 
+
             try: 
-                cur = time.time()
+                snr_data = starlink_grpc.obstruction_map(context)
+                if not snr_data or not snr_data[0]:
+                    logging.error("Invalid SNR map data: Zero-length")
+                    continue
+                cur = int(time.time())
                 png_filename = opts.filename+"/"+str(cur)+".png"
                 raw_filename = opts.filename+"/"+str(cur)+".csv"
-                with open("test.csv", "a", buffering=1) as raw_file:
-                    raw_file.write(png_filename + "," + raw_filename + "\n")
+                with open(raw_filename, "a", buffering=1) as raw_file:
+                    for row in snr_data:
+                        raw_file.write(",".join(str(point) for point in row) + "\n")
+                with open(png_filename, "wb", buffering=1) as png_outfile:
+                    writer = png.Writer(len(snr_data[0]),
+                            len(snr_data),
+                            alpha=(not opts.no_alpha),
+                            greyscale=opts.greyscale)
+                    writer.write(png_outfile, (bytes(pixel_bytes(row)) for row in snr_data))
 
             except starlink_grpc.GrpcError as e:
                 logging.error("Failed getting obstruction map data: %s", str(e))
@@ -207,54 +227,7 @@ def main():
             if loop_end > time_mono:
                 time.sleep(loop_end - time_mono)
 
-
-# def main():
-#     start = datetime.now(timezone.utc)
-#     opts = parse_args()
-
-#     logging.basicConfig(format="%(levelname)s: %(message)s")
-
-#     context = starlink_grpc.ChannelContext(target=opts.target)
-
-#     while True:
-#         now = datetime.now(timezone.utc)
-#         if now - start > timedelta(seconds=TOTAL_DURATION_SECONDS):
-#             break 
-#         wait_until_target_time()
-
-#         starlink_grpc.reset_obstruction_map(context)
-#         end_time = time.monotonic() + RESET_INTERVAL_SECONDS
-#         while True:
-#             time_mono = time.monotonic()
-#             loop_end = time_mono + opts.loop_interval 
-#             if time_mono > end_time:
-#                 break
-#             try: 
-#                 snr_data = starlink_grpc.obstruction_map(context)
-#                 if not snr_data or not snr_data[0]:
-#                     logging.error("Invalid SNR map data: Zero-length")
-#                     continue
-#                 cur = datetime.now(timezone.utc)
-#                 png_filename = opts.filename+"/"+str(cur)+".png"
-#                 raw_filename = opts.filename+"/"+str(cur)+".csv"
-#                 with open(raw_filename, "a", buffering=1) as raw_file:
-#                     for row in snr_data:
-#                         raw_file.write(",".join(str(point) for point in row) + "\n")
-#                 with open(png_filename, "wb", buffering=1) as png_outfile:
-#                     writer = png.Writer(len(snr_data[0]),
-#                             len(snr_data),
-#                             alpha=(not opts.no_alpha),
-#                             greyscale=opts.greyscale)
-#                     writer.write(png_outfile, (bytes(pixel_bytes(row)) for row in snr_data))
-
-#             except starlink_grpc.GrpcError as e:
-#                 logging.error("Failed getting obstruction map data: %s", str(e))
-#                 return 1
-#             time_mono = time.monotonic()
-#             if loop_end > time_mono:
-#                 time.sleep(loop_end - time_mono)
-
-#     context.close()
+    context.close()
 
 
 if __name__ == "__main__":
