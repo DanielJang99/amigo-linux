@@ -1,7 +1,6 @@
-import requests
-import pandas as pd
 import ipaddress
 import argparse
+import json
 
 server_ip_address_dict = {
     "Frankfurt": "3.120.146.236", 
@@ -10,28 +9,18 @@ server_ip_address_dict = {
     "Doha": "3.29.242.12",
 }
 
-def get_public_ip():
-    """Get the current public IP address."""
-    try:
-        response = requests.get('https://api.ipify.org')
-        return response.text
-    except requests.RequestException as e:
-        print(f"Error getting public IP: {e}")
-        return None
-
 def check_ip_location(ip_address):
     """
     Check if IP address belongs to any Starlink subnet and return location info.
-    Returns tuple of (country, city) if found, None if not found.
+    Returns dict with location info if found, None if not found.
     """
-    # Read the CSV file
     try:
-        df = pd.read_csv('starlink_ips.csv')
+        with open('starlink_ips.json', 'r') as f:
+            networks = json.load(f)
     except Exception as e:
-        print(f"Error reading CSV file: {e}")
+        print(f"Error reading JSON file: {e}")
         return None
 
-    # Convert IP address to IPv4Address object for comparison
     try:
         ip_obj = ipaddress.ip_address(ip_address)
     except ValueError as e:
@@ -39,18 +28,12 @@ def check_ip_location(ip_address):
         return None
 
     # Check each subnet
-    for _, row in df.iterrows():
+    for network in networks["ip_networks"]:
         try:
-            network = ipaddress.ip_network(row['ip_subnet'])
-            if ip_obj in network:
-                return {
-                    'ip_subnet': row['ip_subnet'],
-                    'country': row['country'],
-                    'country_code': row['country_code'],
-                    'city': row['city']
-                }
+            if ip_obj in ipaddress.ip_network(network['ip_subnet']):
+                return network
         except ValueError as e:
-            print(f"Invalid subnet {row['ip_subnet']}: {e}")
+            print(f"Invalid subnet {network['ip_subnet']}: {e}")
             continue
 
     return None
@@ -58,20 +41,11 @@ def check_ip_location(ip_address):
 def get_closest_server(location):
     """Find the closest server based on predefined regional mapping."""
     
-    # Server locations
-    servers = {
-        "Doha": "Doha, Qatar",
-        "Frankfurt": "Frankfurt, Germany",
-        "London": "London, UK",
-        "North Virginia": "Ashburn, Virginia, USA"
-    }
-    
     # Regional mapping to closest servers
-    # This is a simplified geographical approximation
     regional_mapping = {
         # North America
         "US": {
-            "US-WA": "North Virginia",  # West coast but closer to N.Virginia than Doha
+            "US-WA": "North Virginia",
             "US-CA": "North Virginia",
             "US-TX": "North Virginia",
             "US-FL": "North Virginia",
@@ -152,7 +126,7 @@ def get_closest_server(location):
         "IN": "Doha",
         "PK": "Doha",
         
-        # Latin America (generally closer to N.Virginia)
+        # Latin America
         "BR": "North Virginia",
         "MX": "North Virginia",
         "AR": "North Virginia",
@@ -188,33 +162,23 @@ def get_closest_server(location):
     # For all other countries
     if country in regional_mapping:
         if isinstance(regional_mapping[country], dict):
-            return regional_mapping[country].get(state, "North Virginia")  # Default to N.Virginia if state not found
+            return regional_mapping[country].get(state, "North Virginia")
         return regional_mapping[country]
     
-    # Default to closest major hub if country not in mapping
     return "North Virginia"
 
 def main():
-    # Set up argument parser
     parser = argparse.ArgumentParser(description='Check Starlink IP location and find closest server')
     parser.add_argument('ip_address', help='IP address to check')
     args = parser.parse_args()
     
     current_ip = args.ip_address
-    # print(f"\nChecking IP: {current_ip}")
     
     # Check if IP is in Starlink network
     result = check_ip_location(current_ip)
     
     if result:
-        # print(f"IP belongs to Starlink network:")
-        # print(f"Subnet: {result['ip_subnet']}")
-        # print(f"Location: {result['city']}, {result['country']} ({result['country_code']})")
-        
-        # # Find closest server
         closest = get_closest_server(result)
-        # print(f"Closest server: {closest}")
-        # print(f"Server IP: {server_ip_address_dict[closest]}")
         print(server_ip_address_dict[closest])
     else:
         exit(1)
