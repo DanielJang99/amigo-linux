@@ -26,7 +26,7 @@ while [ $t_p -lt $TIMEOUT ]
 do 
     t_s=`date +%s%N | cut -b1-13`
     echo "TIME: $t_s" >> $log
-    ss -i -t >> $log
+    ss -i -t -n >> $log
     t_now=`date +%s%N | cut -b1-13`
     let "t_p = t_now - t_start"
     let "t_m = t_now - t_s"
