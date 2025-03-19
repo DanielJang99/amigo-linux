@@ -16,7 +16,7 @@ function clean_file(){
 function stop_previous(){  
     # stop any remote sender running  
     command="cd ${SRC_DIR} && ./stop-gen.sh sender $1"
-    ssh -i ${key} -p ${ssh_sender_port} ${AWS_USER}@${ssh_sender} "${command}"
+    remote_command "${command}"
     
     # stop local receiver
     ./stop-gen.sh receiver $1
@@ -41,6 +41,30 @@ function ctrl_c() {
     exit -1 
 }
 
+# helper to execute a remote command
+function remote_command(){
+    command=$1
+    background="false"
+    if [ $# -eq 2 ]
+    then
+        background="true"
+    fi
+    #myprint "[remote_command] ${command} => ${background}"
+    if [ ${useSSH} == "true" ]
+    then
+        if [ ${background} == "true" ]
+        then
+            ssh -i ${key} -p ${ssh_sender_port} ${AWS_USER}@${ssh_sender} "${command}" &
+        else 
+            ssh -i ${key} -p ${ssh_sender_port} ${AWS_USER}@${ssh_sender} "${command}"
+        fi 
+    else 
+        myprint "Currently support for no SSH is under development!"
+        exit -1 
+    fi
+}
+
+
 # fixed parameters
 ssh_sender="ec2-54-205-30-146.compute-1.amazonaws.com"     # sender address (used for ssh)
 ssh_sender_port="22"                                       # sender port (used for ssh)
@@ -56,10 +80,12 @@ rate=10                                                    # available rate in M
 SRC_DIR="/home/ec2-user/leo-sender"                        # default running folder at the sender
 target_duration=15                                         # default experiment duration 
 warmup_time=5                                              # sender warmup time 
+useSSH="true"                                              # flag to control SSH usage or not 
+SENDER_PORT=12345                                          # default sender port 
 
 # Function to display usage information
 usage() {
-    echo "Usage: $0 [-c|--cc TCP_CC] [-r|--rate RATE] [-e|--exp-id EXP_ID] [--ID RUN_ID] [--dur TARGET_DURATION] [--tcpdump]"  1>&2
+    echo "Usage: $0 [-c|--cc TCP_CC] [-r|--rate RATE] [-e|--exp-id EXP_ID] [--ID RUN_ID] [--dur TARGET_DURATION] [--tcpdump] [--noSSH]"  1>&2
     exit 1
 }
 
@@ -92,6 +118,11 @@ while [[ $# -gt 0 ]]; do
         --tcpdump)
             useTCPDUMP="true"
             ;;
+        --noSSH)
+            noSSH="false"
+            myprint "Currently support for no SSH is under development!"
+            exit -1 
+            ;;
         *)
             echo "Unknown option: $1" >&2
             usage
@@ -113,7 +144,7 @@ mkdir -p ${res_folder}
 
 # remote folder organization 
 command="mkdir -p ${SRC_DIR}/${res_folder}"
-ssh -i ${key} -p ${ssh_sender_port} ${AWS_USER}@${ssh_sender} "${command}"
+remote_command "${command}"
 
 # check for hystart in requested congestion control 
 SHORT_TCP_CC=${TCP_CC}
@@ -131,19 +162,22 @@ stop_previous "full"
 # verify TCP settings at the sender (no saving metrics + use window scaling)
 myprint "Make sure TCP metrics are not being saved across runs..."
 command="sudo sysctl -w net.ipv4.tcp_no_metrics_save=1 && sudo sysctl -w net.ipv4.tcp_adv_win_scale=1" 
-ssh -i ${key} -p ${ssh_sender_port} ${AWS_USER}@${ssh_sender} "${command}"
+remote_command "${command}"
 
 # update TCP stack at the sender
-myprint "Updating congestion control to ${TCP_CC} at the client"
+myprint "Updating congestion control to ${TCP_CC} at the sender"
 command="sudo sysctl -w net.ipv4.tcp_congestion_control=${SHORT_TCP_CC}"
-ssh -i ${key} -p ${ssh_sender_port} ${AWS_USER}@${ssh_sender} "${command}"
+remote_command "${command}"
+
 command="sudo modprobe tcp_${SHORT_TCP_CC}"
-ssh -i ${key} -p ${ssh_sender_port} ${AWS_USER}@${ssh_sender} "${command}"
+remote_command "${command}"
+
 command="sysctl net.ipv4.tcp_congestion_control"
-ssh -i ${key} -p ${ssh_sender_port} ${AWS_USER}@${ssh_sender} "${command}"
+remote_command "${command}"
+
 myprint "Updating hystart (1) or lackof (0)"
 command="echo ${use_hystart} | sudo tee /sys/module/tcp_cubic/parameters/hystart"
-ssh -i ${key} -p ${ssh_sender_port} ${AWS_USER}@${ssh_sender} "${command}"
+remote_command "${command}"
 
 ## FQ? This is needed for BBRv2 for which I need more recent machines
 #sudo sysctl -w net.core.default_qdisc=fq
@@ -152,8 +186,9 @@ ssh -i ${key} -p ${ssh_sender_port} ${AWS_USER}@${ssh_sender} "${command}"
 # make sure we are using the right file and it exits 
 file_size=$(echo "${rate} * ${target_duration} / 8" | bc)
 file_name="samplefile_${file_size}.bin"
+myprint "Generating file to be served. Size: ${file_size} MB"
 command="cd ${SRC_DIR} && ./create-file.sh ${file_name} ${file_size}"
-ssh -i ${key} -p ${ssh_sender_port} ${AWS_USER}@${ssh_sender} "${command}"
+remote_command "${command}"
 
 # start the sender
 sender_log="${SRC_DIR}/sender-log"
@@ -165,10 +200,10 @@ else
     command="cd ${SRC_DIR} && python3 -u sender.py ${file_name} > ${sender_log} 2>&1 &"
 fi 
 myprint "Starting sender (requires a client connection to start sending). Command: ${command}"
-ssh -i ${key} -p ${ssh_sender_port} ${AWS_USER}@${ssh_sender} "${command}" &
+remote_command "${command}" "true"
 
 # allow server warmup or things to calm down...
-myprint "Sleep ${warmup_time} to warmup server!"
+myprint "Sleep ${warmup_time} to warmup AWS sender!"
 sleep ${warmup_time}
 
 # start the "receiver"
@@ -237,19 +272,19 @@ myprint "FileSize:${file_size} Duration:${file_duration} Goodput:${goodput}"
 
 # clean file which was served (since can get big at high transmission rates)
 command="cd ${SRC_DIR} && rm -v ${file_name}"
-ssh -i ${key} -p ${ssh_sender_port} ${AWS_USER}@${ssh_sender} "${command}"
+remote_command "${command}"
 
 # parse socket stats at the sender to save space 
 receiver_IP=$(curl -s ifconfig.me)
 out_log="${res_folder}/client-socket-stats-${receiver_IP}"
-command="cd ${SRC_DIR} && ./compress-ss.sh ss-log ${receiver_IP} ${out_log}"
-ssh -i ${key} -p ${ssh_sender_port} ${AWS_USER}@${ssh_sender} "${command}" 
+command="cd ${SRC_DIR} && ./compress-ss.sh ss-log ${receiver_IP} ${out_log} ${SENDER_PORT}"
+myprint "Remote log compression: ${command}"
+remote_command "${command}"
 
 # do some TCP plotting at the server
 myprint "Plotting cwnd..."      
 command="cd ${SRC_DIR} && python3 cwnd-plot-simple.py ${out_log} ${file_duration} ${goodput} ${file_size}"
-echo $command
-ssh -i ${key} -p ${ssh_sender_port} ${AWS_USER}@${ssh_sender} "${command}" 
+remote_command "${command}"
 
 # collect plot (for debugging)
 collect_plot="true"
