@@ -15,6 +15,7 @@ function myprint(){
 if ! command -v dig &> /dev/null; then
     myprint "dig not found, installing dnsutils..."
     pkg install dnsutils -y
+    exit 0
 fi
 
 isStarlink="false"  
@@ -47,6 +48,10 @@ if [[ "$CURRENT_HOSTNAME" != *"starlinkisp.net"* ]]; then
     exit 0
 fi
 
+# Define common parameters
+RATE=80
+DUR=180
+
 # Create hostnames.txt if it doesn't exist
 touch hostnames.txt
 
@@ -67,12 +72,12 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
         mv hostnames.tmp hostnames.txt
 
-        myprint "Executing: run-aws-client.sh -s us-east-1 --dur 180 -r 80 --tcpdump -e $CURRENT_EPOCH --ID us-east-1"
-        ./run-aws-client.sh -s us-east-1 --dur 180 -r 80 --tcpdump -e "$CURRENT_EPOCH" --ID us-east-1
-        myprint "Executing: run-aws-client.sh -s us-east-1 --dur 180 -r 80 --tcpdump -c bbr -e $CURRENT_EPOCH --ID us-east-1"
-        ./run-aws-client.sh -s us-east-1 --dur 180 -r 80 --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID us-east-1
-        myprint "Executing: run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
-        ./run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
+        myprint "Executing: run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID us-east-1"
+        ./run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID us-east-1
+        myprint "Executing: run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -c bbr -e $CURRENT_EPOCH --ID us-east-1"
+        ./run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID us-east-1
+        myprint "Executing: run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
+        ./run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
 
         exit 0
     fi
@@ -85,12 +90,12 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
         mv hostnames.tmp hostnames.txt
 
-        myprint "Executing: run-aws-client.sh -s eu-west-2 --dur 180 -r 80 --tcpdump -e $CURRENT_EPOCH --ID eu-west-2"
-        ./run-aws-client.sh -s eu-west-2 --dur 180 -r 80 --tcpdump -e "$CURRENT_EPOCH" --ID eu-west-2
-        myprint "Executing: run-aws-client.sh -s eu-west-2 --dur 180 -r 80 --tcpdump -c bbr -e $CURRENT_EPOCH --ID eu-west-2"
-        ./run-aws-client.sh -s eu-west-2 --dur 180 -r 80 --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID eu-west-2
-        myprint "Executing: run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
-        ./run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
+        myprint "Executing: run-aws-client.sh -s eu-west-2 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID eu-west-2"
+        ./run-aws-client.sh -s eu-west-2 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID eu-west-2
+        myprint "Executing: run-aws-client.sh -s eu-west-2 --dur $DUR -r $RATE --tcpdump -c bbr -e $CURRENT_EPOCH --ID eu-west-2"
+        ./run-aws-client.sh -s eu-west-2 --dur $DUR -r $RATE --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID eu-west-2
+        myprint "Executing: run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
+        ./run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
 
         exit 0
     fi
@@ -103,12 +108,12 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
         mv hostnames.tmp hostnames.txt
 
-        myprint "Executing: run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -e $CURRENT_EPOCH --ID eu-central-1"
-        ./run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -e "$CURRENT_EPOCH" --ID eu-central-1     
-        myprint "Executing: run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -c bbr -e $CURRENT_EPOCH --ID eu-central-1  "
-        ./run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID eu-central-1
-        myprint "Executing: run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
-        ./run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
+        myprint "Executing: run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID eu-central-1"
+        ./run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID eu-central-1     
+        myprint "Executing: run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -c bbr -e $CURRENT_EPOCH --ID eu-central-1  "
+        ./run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID eu-central-1
+        myprint "Executing: run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
+        ./run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
 
         exit 0
     fi
@@ -121,12 +126,12 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
         mv hostnames.tmp hostnames.txt
 
-        myprint "Executing: run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -e $CURRENT_EPOCH --ID eu-central-1"
-        ./run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -e "$CURRENT_EPOCH" --ID eu-central-1
-        myprint "Executing: run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -c bbr -e $CURRENT_EPOCH --ID eu-central-1"
-        ./run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID eu-central-1
-        myprint "Executing: run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
-        ./run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
+        myprint "Executing: run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID eu-central-1"
+        ./run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID eu-central-1
+        myprint "Executing: run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -c bbr -e $CURRENT_EPOCH --ID eu-central-1"
+        ./run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID eu-central-1
+        myprint "Executing: run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
+        ./run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
 
         exit 0
     fi
@@ -139,10 +144,10 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
         mv hostnames.tmp hostnames.txt
 
-        myprint "Executing: run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
-        ./run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
-        myprint "Executing: run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -c bbr -e $CURRENT_EPOCH --ID me-central-1"
-        ./run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID me-central-1
+        myprint "Executing: run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
+        ./run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
+        myprint "Executing: run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -c bbr -e $CURRENT_EPOCH --ID me-central-1"
+        ./run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID me-central-1
         exit 0
     fi
 
