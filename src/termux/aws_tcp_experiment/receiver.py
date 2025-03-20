@@ -22,15 +22,25 @@ def handle_interrupt(signum, frame):
 signal.signal(signal.SIGINT, handle_interrupt)
 signal.signal(signal.SIGTERM, handle_interrupt)
 
-# Default global params
-SERVER_LOCATIONS = {
-    'us-east-1': '3.82.162.198',
-    'eu-west-2': '3.8.142.94',
-    'me-central-1': '3.28.195.121',
-    'eu-central-1': '18.195.148.148'
-}
+# Read server locations from file
+SERVER_LOCATIONS = {}
+try:
+    with open('aws_servers.txt', 'r') as f:
+        for line in f:
+            line = line.strip()
+            if line:  # Skip empty lines
+                fields = line.split(',')
+                SERVER_LOCATIONS[fields[0]] = fields[2]
+except FileNotFoundError:
+    print("Error: aws_servers.txt not found")
+    sys.exit(1)
+
 DEFAULT_SERVER_LOC = 'us-east-1'
-DEFAULT_HOST = SERVER_LOCATIONS[DEFAULT_SERVER_LOC]  # Default server IP address
+DEFAULT_HOST = SERVER_LOCATIONS.get(DEFAULT_SERVER_LOC)  # Use .get() in case file is missing the default location
+if DEFAULT_HOST is None:
+    print(f"Error: Default server location '{DEFAULT_SERVER_LOC}' not found in aws_servers.txt")
+    sys.exit(1)
+
 DEFAULT_PORT = 12345            # Default port the sender is listening on
 start_time = 0                 # Start time
 
