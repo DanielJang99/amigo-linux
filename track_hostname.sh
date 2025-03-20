@@ -61,12 +61,12 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
         mv hostnames.tmp hostnames.txt
 
-        myprint "Executing: run-aws-client.sh -s us-east-1 --dur 180 -r 80 --tcpdump"
-        ./run-aws-client.sh -s us-east-1 --dur 180 -r 80 --tcpdump
-        myprint "Executing: run-aws-client.sh -s us-east-1 --dur 180 -r 80 --tcpdump -c bbr"
-        ./run-aws-client.sh -s us-east-1 --dur 180 -r 80 --tcpdump -c bbr 
-        myprint "Executing: run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump"
-        ./run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump
+        myprint "Executing: run-aws-client.sh -s us-east-1 --dur 180 -r 80 --tcpdump -e $CURRENT_EPOCH --ID us-east-1"
+        ./run-aws-client.sh -s us-east-1 --dur 180 -r 80 --tcpdump -e "$CURRENT_EPOCH" --ID us-east-1
+        myprint "Executing: run-aws-client.sh -s us-east-1 --dur 180 -r 80 --tcpdump -c bbr -e $CURRENT_EPOCH --ID us-east-1"
+        ./run-aws-client.sh -s us-east-1 --dur 180 -r 80 --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID us-east-1
+        myprint "Executing: run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
+        ./run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
 
         exit 0
     fi
@@ -79,12 +79,12 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
         mv hostnames.tmp hostnames.txt
 
-        myprint "Executing: run-aws-client.sh -s eu-west-2 --dur 180 -r 80 --tcpdump"
-        ./run-aws-client.sh -s eu-west-2 --dur 180 -r 80 --tcpdump
-        myprint "Executing: run-aws-client.sh -s eu-west-2 --dur 180 -r 80 --tcpdump -c bbr"
-        ./run-aws-client.sh -s eu-west-2 --dur 180 -r 80 --tcpdump -c bbr 
-        myprint "Executing: run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump"
-        ./run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump
+        myprint "Executing: run-aws-client.sh -s eu-west-2 --dur 180 -r 80 --tcpdump -e $CURRENT_EPOCH --ID eu-west-2"
+        ./run-aws-client.sh -s eu-west-2 --dur 180 -r 80 --tcpdump -e "$CURRENT_EPOCH" --ID eu-west-2
+        myprint "Executing: run-aws-client.sh -s eu-west-2 --dur 180 -r 80 --tcpdump -c bbr -e $CURRENT_EPOCH --ID eu-west-2"
+        ./run-aws-client.sh -s eu-west-2 --dur 180 -r 80 --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID eu-west-2
+        myprint "Executing: run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
+        ./run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
 
         exit 0
     fi
@@ -97,12 +97,12 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
         mv hostnames.tmp hostnames.txt
 
-        myprint "Executing: run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump"
-        ./run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump
-        myprint "Executing: run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -c bbr"
-        ./run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -c bbr 
-        myprint "Executing: run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump"
-        ./run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump
+        myprint "Executing: run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -e $CURRENT_EPOCH --ID eu-central-1"
+        ./run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -e "$CURRENT_EPOCH" --ID eu-central-1     
+        myprint "Executing: run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -c bbr -e $CURRENT_EPOCH --ID eu-central-1  "
+        ./run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID eu-central-1
+        myprint "Executing: run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
+        ./run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
 
         exit 0
     fi
@@ -115,12 +115,12 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
         mv hostnames.tmp hostnames.txt
 
-        myprint "Executing: run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump"
-        ./run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump
-        myprint "Executing: run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -c bbr"
-        ./run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -c bbr 
-        myprint "Executing: run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump"
-        ./run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump
+        myprint "Executing: run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -e $CURRENT_EPOCH --ID eu-central-1"
+        ./run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -e "$CURRENT_EPOCH" --ID eu-central-1
+        myprint "Executing: run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -c bbr -e $CURRENT_EPOCH --ID eu-central-1"
+        ./run-aws-client.sh -s eu-central-1 --dur 180 -r 80 --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID eu-central-1
+        myprint "Executing: run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
+        ./run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
 
         exit 0
     fi
@@ -133,10 +133,10 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
         mv hostnames.tmp hostnames.txt
 
-        myprint "Executing: run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump"
-        ./run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump
-        myprint "Executing: run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -c bbr"
-        ./run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -c bbr 
+        myprint "Executing: run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
+        ./run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
+        myprint "Executing: run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -c bbr -e $CURRENT_EPOCH --ID me-central-1"
+        ./run-aws-client.sh -s me-central-1 --dur 180 -r 80 --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID me-central-1
         exit 0
     fi
 
