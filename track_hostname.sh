@@ -44,16 +44,19 @@ fi
 
 # Only proceed if hostname contains starlinkisp.net
 if [[ "$CURRENT_HOSTNAME" != *"starlinkisp.net"* ]]; then
-    echo "Hostname $CURRENT_HOSTNAME does not contain starlinkisp.net - skipping"
+    myprint "Hostname $CURRENT_HOSTNAME does not contain starlinkisp.net - skipping"
     exit 0
 fi
 
 # Define common parameters
-RATE=80
+RATE=70
 DUR=180
 
 # Create hostnames.txt if it doesn't exist
 touch hostnames.txt
+
+grep_val="receiver.py" 
+ans=`ps aux | grep "${grep_val}" | grep -v "grep" | wc -l`
 
 # Check if hostname exists in file
 if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
@@ -62,7 +65,7 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
     LAST_EPOCH=$(echo "$LAST_LINE" | cut -d',' -f2)
     WAS_EXECUTED=$(echo "$LAST_LINE" | cut -d',' -f3)
     TIME_DIFF=$((CURRENT_EPOCH - LAST_EPOCH))
-    echo "TIME_DIFF: $TIME_DIFF"
+    myprint "TIME_DIFF: $TIME_DIFF"
 
     # NY PoP: 60-90 minutes after first encounter 
     if [[ "$CURRENT_HOSTNAME" == *"customer.nwyynyx"* && $TIME_DIFF -ge 3600 && $TIME_DIFF -le 5400 && "$WAS_EXECUTED" != "1" ]]; then
@@ -71,6 +74,12 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         grep -v "^$CURRENT_HOSTNAME," hostnames.txt > hostnames.tmp
         echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
         mv hostnames.tmp hostnames.txt
+
+        if [ $ans -gt 0 ]
+        then
+            myprint "Receiver already running - skipping"
+            exit 0
+        fi
 
         myprint "Executing: run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID us-east-1"
         ./run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID us-east-1
@@ -90,6 +99,12 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
         mv hostnames.tmp hostnames.txt
 
+        if [ $ans -gt 0 ]
+        then
+            myprint "Receiver already running - skipping"
+            exit 0
+        fi
+
         myprint "Executing: run-aws-client.sh -s eu-west-2 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID eu-west-2"
         ./run-aws-client.sh -s eu-west-2 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID eu-west-2
         myprint "Executing: run-aws-client.sh -s eu-west-2 --dur $DUR -r $RATE --tcpdump -c bbr -e $CURRENT_EPOCH --ID eu-west-2"
@@ -107,6 +122,12 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         grep -v "^$CURRENT_HOSTNAME," hostnames.txt > hostnames.tmp
         echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
         mv hostnames.tmp hostnames.txt
+
+        if [ $ans -gt 0 ]
+        then
+            myprint "Receiver already running - skipping"
+            exit 0
+        fi
 
         myprint "Executing: run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID eu-central-1"
         ./run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID eu-central-1     
@@ -126,6 +147,12 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
         mv hostnames.tmp hostnames.txt
 
+        if [ $ans -gt 0 ]
+        then
+            myprint "Receiver already running - skipping"
+            exit 0
+        fi
+
         myprint "Executing: run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID eu-central-1"
         ./run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID eu-central-1
         myprint "Executing: run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -c bbr -e $CURRENT_EPOCH --ID eu-central-1"
@@ -144,6 +171,12 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
         mv hostnames.tmp hostnames.txt
 
+        if [ $ans -gt 0 ]
+        then
+            myprint "Receiver already running - skipping"
+            exit 0
+        fi
+
         myprint "Executing: run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
         ./run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
         myprint "Executing: run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -c bbr -e $CURRENT_EPOCH --ID me-central-1"
@@ -161,6 +194,6 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
     fi
 else
     # New PoP, append entry
-    echo "Adding new entry for $CURRENT_HOSTNAME"
+    myprint "Adding new entry for $CURRENT_HOSTNAME"
     echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,0" >> hostnames.txt
 fi 
