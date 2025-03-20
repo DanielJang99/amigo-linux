@@ -11,6 +11,12 @@ function myprint(){
     echo -e "\033[32m[$0][$timestamp]\t${val}\033[0m"      
 }
 
+# Check if dig is installed
+if ! command -v dig &> /dev/null; then
+    myprint "dig not found, installing dnsutils..."
+    pkg install dnsutils -y
+fi
+
 isStarlink="false"  
 isStarlink_fpath="/data/data/com.termux/files/home/mobile-testbed/src/termux/.isStarlink"
 if [ -f $isStarlink_fpath ] 
