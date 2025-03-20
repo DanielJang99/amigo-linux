@@ -1034,9 +1034,16 @@ do
 
 	# logging 
 	myprint "TimeFromLastNetLong:$time_from_last_net sec TimeFromLastNetShort:$time_from_last_net_short sec TimeFromLastNetForced:$time_from_last_net_forced sec ShouldRunIfTime:$net_status RunningNetProc:$num LockedStatus:$locked"
-	
-	# 1) flag set, 2) no previous running, 3) connected (basic checks to see if we should run)
-	if [[ $net_status == "true" && $num -eq 0 && $def_iface != "none" && $locked == "false" && $network_type == *"true"* ]]
+
+	aws_test=`ps aux | grep "run-aws-client.sh" | grep -v "grep" | wc -l`
+	if [ $aws_test -gt 0 ]
+	then
+		myprint "AWS test running. Net-test will be skipped"
+		myprint "Skipping net-testing. NetStatus:$net_status NumNetProc:$num DefIface:$def_iface LockedStatus:$locked network_type:$network_type"
+	fi
+
+	# 1) flag set, 2) no previous running, 3) connected (basic checks to see if we should run) 4) aws test not running
+	if [[ $net_status == "true" && $num -eq 0 && $def_iface != "none" && $locked == "false" && $network_type == *"true"* && $aws_test -eq 0 ]]
 	then
 		# update counter of how many runs today 
 		curr_hour=`date +%H`
