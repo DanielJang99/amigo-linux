@@ -49,7 +49,7 @@ if [[ "$CURRENT_HOSTNAME" != *"starlinkisp.net"* ]]; then
 fi
 
 # Define common parameters
-RATE=70
+RATE=80
 DUR=180
 
 # Create hostnames.txt if it doesn't exist
