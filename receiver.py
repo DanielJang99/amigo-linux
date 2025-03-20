@@ -23,9 +23,16 @@ signal.signal(signal.SIGINT, handle_interrupt)
 signal.signal(signal.SIGTERM, handle_interrupt)
 
 # Default global params
-DEFAULT_HOST = '54.205.30.146'  # Default server IP address where the sender is running
+SERVER_LOCATIONS = {
+    'us-east-1': '3.82.162.198',
+    'eu-west-2': '3.8.142.94',
+    'me-central-1': '3.28.195.121',
+    'eu-central-1': '18.195.148.148'
+}
+DEFAULT_SERVER_LOC = 'us-east-1'
+DEFAULT_HOST = SERVER_LOCATIONS[DEFAULT_SERVER_LOC]  # Default server IP address
 DEFAULT_PORT = 12345            # Default port the sender is listening on
-start_time = 0                  # Start time
+start_time = 0                 # Start time
 
 # Helper to receive a file
 def receive_file(output_filename='received_file.txt', host=DEFAULT_HOST, port=DEFAULT_PORT):
@@ -71,17 +78,24 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Receive a file from a sender server')
     parser.add_argument('-o', '--output', default='received_file.txt', 
                         help='Output filename (default: received_file.txt)')
-    parser.add_argument('-ip', '--host', default=DEFAULT_HOST,
-                        help=f'Server IP address (default: {DEFAULT_HOST})')
+    parser.add_argument('-ip', '--host', default=None,
+                        help='Server IP address (overrides server location if provided)')
     parser.add_argument('-p', '--port', type=int, default=DEFAULT_PORT,
                         help=f'Server port (default: {DEFAULT_PORT})')
+    parser.add_argument('-s', '--server-loc', default=DEFAULT_SERVER_LOC,
+                        choices=SERVER_LOCATIONS.keys(),
+                        help=f'Server location (default: {DEFAULT_SERVER_LOC})')
     
     # Parse arguments
     args = parser.parse_args()
+
+    # Determine host based on server location or explicit IP
+    host = args.host if args.host else SERVER_LOCATIONS[args.server_loc]
     
     # Display connection info
-    print(f"Connecting to: {args.host}:{args.port}")
+    print(f"Server location: {args.server_loc}")
+    print(f"Connecting to: {host}:{args.port}")
     print(f"Output file: {args.output}")
     
     # Start receiving
-    receive_file(args.output, args.host, args.port)
+    receive_file(args.output, host, args.port)
