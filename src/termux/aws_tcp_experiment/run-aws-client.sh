@@ -87,7 +87,7 @@ fi
 # Function to display usage information
 usage() {
     echo "Usage: $0 [-c|--cc TCP_CC] [-r|--rate RATE] [-e|--exp-id EXP_ID] [--ID RUN_ID] [--dur TARGET_DURATION] [--tcpdump] [--noSSH] [-s|--server-loc LOCATION]"  1>&2
-    echo "Valid server locations: us-east-1, eu-west-2, me-central-1, eu-central-1" 1>&2
+    echo "Valid server locations: us-east-1, eu-west-2, me-central-1, eu-central-1, eu-south-1, eu-south-2" 1>&2
     exit 1
 }
 
@@ -127,11 +127,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         -s|--server-loc)
             case "$2" in
-                us-east-1|eu-west-2|me-central-1|eu-central-1)
+                us-east-1|eu-west-2|me-central-1|eu-central-1|eu-south-1|eu-south-2)
                     server_loc=$2
                     ;;
                 *)
-                    echo "Error: Invalid server location. Valid options are: us-east-1, eu-west-2, me-central-1, eu-central-1" >&2
+                    echo "Error: Invalid server location. Valid options are: us-east-1, eu-west-2, me-central-1, eu-central-1, eu-south-1, eu-south-2" >&2
                     usage
                     ;;
             esac
