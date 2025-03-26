@@ -67,9 +67,9 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
     TIME_DIFF=$((CURRENT_EPOCH - LAST_EPOCH))
     myprint "TIME_DIFF: $TIME_DIFF"
 
-    # NY PoP: 60-90 minutes after first encounter 
-    if [[ "$CURRENT_HOSTNAME" == *"customer.nwyynyx"* && $TIME_DIFF -ge 3600 && $TIME_DIFF -le 5400 && "$WAS_EXECUTED" != "1" ]]; then
-        echo "Detected target hostname after 60-90 minutes - starting aws experiment to us-east-1"
+    # NY PoP: 30 minutes after first encounter 
+    if [[ "$CURRENT_HOSTNAME" == *"customer.nwyynyx"* && $TIME_DIFF -ge 1800 && $TIME_DIFF -le 3600 && "$WAS_EXECUTED" != "1" ]]; then
+        echo "Detected target hostname after 30 minutes - starting aws experiment to us-east-1"
         # Update entry with execution flag
         grep -v "^$CURRENT_HOSTNAME," hostnames.txt > hostnames.tmp
         echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
@@ -85,8 +85,8 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         ./run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID us-east-1
         myprint "Executing: run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -c bbr -e $CURRENT_EPOCH --ID us-east-1"
         ./run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID us-east-1
-        myprint "Executing: run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
-        ./run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
+        # myprint "Executing: run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
+        # ./run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
 
         exit 0
     fi
@@ -109,8 +109,8 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         ./run-aws-client.sh -s eu-west-2 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID eu-west-2
         myprint "Executing: run-aws-client.sh -s eu-west-2 --dur $DUR -r $RATE --tcpdump -c bbr -e $CURRENT_EPOCH --ID eu-west-2"
         ./run-aws-client.sh -s eu-west-2 --dur $DUR -r $RATE --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID eu-west-2
-        myprint "Executing: run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
-        ./run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
+        myprint "Executing: run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID us-east-1"
+        ./run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID us-east-1
 
         exit 0
     fi
@@ -133,15 +133,15 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         ./run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID eu-central-1     
         myprint "Executing: run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -c bbr -e $CURRENT_EPOCH --ID eu-central-1  "
         ./run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID eu-central-1
-        myprint "Executing: run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
-        ./run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
+        myprint "Executing: run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID us-east-1"
+        ./run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID us-east-1
 
         exit 0
     fi
 
-    # Sofia PoP: 60-90 minutes after first encounter 
-    if [[ "$CURRENT_HOSTNAME" == *"customer.sfiabgr"* && $TIME_DIFF -ge 3600 && $TIME_DIFF -le 5400 && "$WAS_EXECUTED" != "1" ]]; then
-        echo "Detected target hostname after 60-90 minutes - starting aws experiment to eu-central-1"
+    # milan PoP: right after first encounter 
+    if [[ "$CURRENT_HOSTNAME" == *"customer.mlnnita1"* && $TIME_DIFF -ge 1 && "$WAS_EXECUTED" != "1" ]]; then
+        echo "Detected target hostname after 10 minutes - starting aws experiment to eu-south-1"
         # Update entry with execution flag
         grep -v "^$CURRENT_HOSTNAME," hostnames.txt > hostnames.tmp
         echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
@@ -153,15 +153,63 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
             exit 0
         fi
 
-        myprint "Executing: run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID eu-central-1"
-        ./run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID eu-central-1
-        myprint "Executing: run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -c bbr -e $CURRENT_EPOCH --ID eu-central-1"
-        ./run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID eu-central-1
-        myprint "Executing: run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
-        ./run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
+        myprint "Executing: run-aws-client.sh -s eu-south-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID eu-south-1"
+        ./run-aws-client.sh -s eu-south-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID eu-south-1
+        myprint "Executing: run-aws-client.sh -s eu-south-1 --dur $DUR -r $RATE --tcpdump -c bbr -e $CURRENT_EPOCH --ID eu-south-1"
+        ./run-aws-client.sh -s eu-south-1 --dur $DUR -r $RATE --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID eu-south-1
+        myprint "Executing: run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID us-east-1"
+        ./run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID us-east-1
+
+        exit 0  
+    fi
+
+    # Madrid PoP: 30 minutes after first encounter 
+    if [[ "$CURRENT_HOSTNAME" == *"customer.mdrdesp1"* && $TIME_DIFF -ge 1800 && $TIME_DIFF -le 3600 && "$WAS_EXECUTED" != "1" ]]; then
+        echo "Detected target hostname after 30 minutes - starting aws experiment to eu-south-2"
+        # Update entry with execution flag
+        grep -v "^$CURRENT_HOSTNAME," hostnames.txt > hostnames.tmp
+        echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
+        mv hostnames.tmp hostnames.txt
+
+        if [ $ans -gt 0 ]
+        then
+            myprint "Receiver already running - skipping"
+            exit 0
+        fi
+
+        myprint "Executing: run-aws-client.sh -s eu-south-2 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID eu-south-2"
+        ./run-aws-client.sh -s eu-south-2 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID eu-south-2
+        myprint "Executing: run-aws-client.sh -s eu-south-2 --dur $DUR -r $RATE --tcpdump -c bbr -e $CURRENT_EPOCH --ID eu-south-2"
+        ./run-aws-client.sh -s eu-south-2 --dur $DUR -r $RATE --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID eu-south-2
+        myprint "Executing: run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID us-east-1"
+        ./run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID us-east-1
 
         exit 0
     fi
+
+    # # Sofia PoP: 60-90 minutes after first encounter 
+    # if [[ "$CURRENT_HOSTNAME" == *"customer.sfiabgr"* && $TIME_DIFF -ge 3600 && $TIME_DIFF -le 5400 && "$WAS_EXECUTED" != "1" ]]; then
+    #     echo "Detected target hostname after 60-90 minutes - starting aws experiment to eu-central-1"
+    #     # Update entry with execution flag
+    #     grep -v "^$CURRENT_HOSTNAME," hostnames.txt > hostnames.tmp
+    #     echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
+    #     mv hostnames.tmp hostnames.txt
+
+    #     if [ $ans -gt 0 ]
+    #     then
+    #         myprint "Receiver already running - skipping"
+    #         exit 0
+    #     fi
+
+    #     myprint "Executing: run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID eu-central-1"
+    #     ./run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID eu-central-1
+    #     myprint "Executing: run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -c bbr -e $CURRENT_EPOCH --ID eu-central-1"
+    #     ./run-aws-client.sh -s eu-central-1 --dur $DUR -r $RATE --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID eu-central-1
+    #     myprint "Executing: run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
+    #     ./run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
+
+    #     exit 0
+    # fi
 
     # Doha PoP: 30-60 minutes after first encounter 
     if [[ "$CURRENT_HOSTNAME" == *"customer.dohaqat"* && $TIME_DIFF -ge 1800 && $TIME_DIFF -le 3600 && "$WAS_EXECUTED" != "1" ]]; then
@@ -181,6 +229,8 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         ./run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
         myprint "Executing: run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -c bbr -e $CURRENT_EPOCH --ID me-central-1"
         ./run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID me-central-1
+        myprint "Executing: run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID us-east-1"
+        ./run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID us-east-1
         exit 0
     fi
 
