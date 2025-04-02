@@ -136,7 +136,7 @@ source $adb_file
 
 # default parameters
 # DURATION=60                        # experiment duration
-DURATION=20                        # experiment duration
+DURATION=40                        # experiment duration
 interface="wlan0"                  # default network interface to monitor (for traffic)
 suffix=`date +%d-%m-%Y`            # folder id (one folder per day)
 curr_run_id=`date +%s`             # unique id per run
@@ -372,7 +372,8 @@ then
     tshark_size=`cat $tshark_file | awk -F "," '{if($8=="UDP"){tot_udp += ($NF-8);} else if(index($8,"QUIC")!=0){tot_quic += ($NF-8);} else if($8=="TCP"){tot_tcp += ($11);}}END{tot=(tot_tcp+tot_udp+tot_quic)/1000000; print "TOT:" tot " TOT-TCP:" tot_tcp/1000000 " TOT-UDP:" tot_udp/1000000 " TOT-QUIC:" tot_quic/1000000}'`
     myprint "[INFO] Traffic received (according to tshark): $tshark_size"
 	gzip $tshark_file
-	sudo rm $pcap_file
+	gzip $pcap_file
+	# sudo rm $pcap_file
 fi
 
 # stop monitoring CPU
