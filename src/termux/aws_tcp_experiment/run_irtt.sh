@@ -16,5 +16,7 @@ echo $server_ip
 
 # # Run irtt client
 mkdir -p irtt_logs
-echo "/data/data/com.termux/files/home/go/bin/irtt client -i 10ms -d 180s "$server_ip:2112" -o irtt_logs/`date +%s.json`"
-/data/data/com.termux/files/home/go/bin/irtt client -i 10ms -d 180s "$server_ip:2112" -o irtt_logs/`date +%s.json`
+ts=`date +%s`
+out_file="irtt_logs/"$server_name"_"$ts".json"
+echo "/data/data/com.termux/files/home/go/bin/irtt client -i 10ms -d 180s "$server_ip:2112" -o $out_file"
+/data/data/com.termux/files/home/go/bin/irtt client -i 10ms -d 180s "$server_ip:2112" -o $out_file
