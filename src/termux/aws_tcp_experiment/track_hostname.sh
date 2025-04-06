@@ -88,6 +88,11 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         # myprint "Executing: run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID me-central-1"
         # ./run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID me-central-1
 
+        # Run irtt client
+        sleep 10
+        myprint "Executing: ./run_irtt.sh us-east-1"
+        ./run_irtt.sh us-east-1
+
         exit 0
     fi
 
@@ -111,6 +116,11 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         ./run-aws-client.sh -s eu-west-2 --dur $DUR -r $RATE --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID eu-west-2
         myprint "Executing: run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID us-east-1"
         ./run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID us-east-1
+
+        # Run irtt client
+        sleep 10
+        myprint "Executing: ./run_irtt.sh eu-west-2"
+        ./run_irtt.sh eu-west-2
 
         exit 0
     fi
@@ -136,12 +146,17 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         myprint "Executing: run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID us-east-1"
         ./run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID us-east-1
 
+        # Run irtt client
+        sleep 10
+        myprint "Executing: ./run_irtt.sh eu-central-1"
+        ./run_irtt.sh eu-central-1
+
         exit 0
     fi
 
-    # milan PoP: right after first encounter 
-    if [[ "$CURRENT_HOSTNAME" == *"customer.mlnnita1"* && $TIME_DIFF -ge 1 && "$WAS_EXECUTED" != "1" ]]; then
-        echo "Detected target hostname after 10 minutes - starting aws experiment to eu-south-1"
+    # milan PoP: 15 minutes after first encounter 
+    if [[ "$CURRENT_HOSTNAME" == *"customer.mlnnita1"* && $TIME_DIFF -ge 900 && $TIME_DIFF -le 3600 && "$WAS_EXECUTED" != "1" ]]; then
+        echo "Detected target hostname after 15 minutes - starting aws experiment to eu-south-1"
         # Update entry with execution flag
         grep -v "^$CURRENT_HOSTNAME," hostnames.txt > hostnames.tmp
         echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
@@ -160,12 +175,17 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         myprint "Executing: run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID us-east-1"
         ./run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID us-east-1
 
+        # Run irtt client
+        sleep 10
+        myprint "Executing: ./run_irtt.sh eu-south-1"
+        ./run_irtt.sh eu-south-1
+
         exit 0  
     fi
 
-    # Madrid PoP: 30 minutes after first encounter 
-    if [[ "$CURRENT_HOSTNAME" == *"customer.mdrdesp1"* && $TIME_DIFF -ge 1800 && $TIME_DIFF -le 3600 && "$WAS_EXECUTED" != "1" ]]; then
-        echo "Detected target hostname after 30 minutes - starting aws experiment to eu-south-2"
+    # Madrid PoP: 20 minutes after first encounter 
+    if [[ "$CURRENT_HOSTNAME" == *"customer.mdrdesp1"* && $TIME_DIFF -ge 1200 && $TIME_DIFF -le 3600 && "$WAS_EXECUTED" != "1" ]]; then
+        echo "Detected target hostname after 20 minutes - starting aws experiment to eu-south-2"
         # Update entry with execution flag
         grep -v "^$CURRENT_HOSTNAME," hostnames.txt > hostnames.tmp
         echo "$CURRENT_HOSTNAME,$CURRENT_EPOCH,1" >> hostnames.tmp
@@ -183,6 +203,11 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         ./run-aws-client.sh -s eu-south-2 --dur $DUR -r $RATE --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID eu-south-2
         myprint "Executing: run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID us-east-1"
         ./run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID us-east-1
+
+        # Run irtt client
+        sleep 10
+        myprint "Executing: ./run_irtt.sh eu-south-2"
+        ./run_irtt.sh eu-south-2
 
         exit 0
     fi
@@ -231,6 +256,12 @@ if grep -q "^$CURRENT_HOSTNAME," hostnames.txt; then
         ./run-aws-client.sh -s me-central-1 --dur $DUR -r $RATE --tcpdump -c bbr -e "$CURRENT_EPOCH" --ID me-central-1
         myprint "Executing: run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e $CURRENT_EPOCH --ID us-east-1"
         ./run-aws-client.sh -s us-east-1 --dur $DUR -r $RATE --tcpdump -e "$CURRENT_EPOCH" --ID us-east-1
+
+        # Run irtt client
+        sleep 10
+        myprint "Executing: ./run_irtt.sh me-central-1"
+        ./run_irtt.sh me-central-1
+
         exit 0
     fi
 
