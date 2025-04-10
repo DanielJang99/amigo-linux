@@ -18,6 +18,8 @@ if ! command -v dig &> /dev/null; then
     exit 0
 fi
 
+sleep 10
+
 # Get current public IP and its hostname
 PUBLIC_IP=$(curl -s ifconfig.me)
 # PUBLIC_IP="129.222.238.135"
