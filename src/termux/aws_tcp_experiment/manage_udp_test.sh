@@ -30,13 +30,6 @@ if [[ "$CURRENT_HOSTNAME" != *"starlinkisp.net"* ]]; then
     exit 0
 fi
 
-
-# Check if the script is already running
-if pgrep -f "$0" > /dev/null; then
-    myprint "Script is already running - skipping"
-    exit 0
-fi
-
 # Check if track_hostname.sh is running
 if pgrep -f "track_hostname.sh" > /dev/null; then
     myprint "track_hostname.sh is already running - skipping"

@@ -32,3 +32,5 @@ ts=`date +%s`
 out_file="irtt_logs/"$server_name"_"$ts".json"
 myprint "/data/data/com.termux/files/home/go/bin/irtt client -i 10ms -d ${duration}s "$server_ip:2112" -o $out_file"
 # /data/data/com.termux/files/home/go/bin/irtt client -i 10ms -d ${duration}s "$server_ip:2112" -o $out_file
+/data/data/com.termux/files/home/go/bin/irtt client -i 10ms -d ${duration}s "$server_ip:2112" -o $out_file
+
