@@ -565,30 +565,30 @@ echo "true" > ".status"
 to_run=`cat ".status"`
 sudo cp ".status" "/storage/emulated/0/Android/data/com.example.sensorexample/files/status.txt"
 
-#restart Kenzo - so that background service runs and info is populated 
-echo -e "$uid\t$physical_id" > ".temp"
-sudo cp ".temp" "/storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
-su -c chmod -R 777 /storage/emulated/0/Android/data/com.example.sensorexample/files/*.txt
-myprint "Granting Kenzo permission and restart..."
-sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
-sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
-sudo pm grant $kenzo_pkg android.permission.BLUETOOTH_SCAN
-sudo pm grant $kenzo_pkg android.permission.BLUETOOTH_CONNECT
-sudo pm grant $kenzo_pkg android.permission.ACCESS_BACKGROUND_LOCATION
-foreground=""
-while true ; do
-	turn_device_on
-	sleep 2
-	su -c monkey -p $kenzo_pkg 1 > /dev/null 2>&1
-	sleep 7
-	foreground=`sudo dumpsys activity | grep -E 'mCurrentFocus' | head -n 1 | cut -d '/' -f1 | sed 's/.* //g'`
-	myprint "Confirm Kenzo is in the foregound: $foreground" 
-	if [[ $foreground == *"sensorexample"* ]]; then
-		break
-	elif [[ $foregound == *"NotificationShade"* ]];then
-		sudo input keyevent KEYCODE_HOME
-	fi
-done 
+# #restart Kenzo - so that background service runs and info is populated 
+# echo -e "$uid\t$physical_id" > ".temp"
+# sudo cp ".temp" "/storage/emulated/0/Android/data/com.example.sensorexample/files/uid.txt"
+# su -c chmod -R 777 /storage/emulated/0/Android/data/com.example.sensorexample/files/*.txt
+# myprint "Granting Kenzo permission and restart..."
+# sudo pm grant $kenzo_pkg android.permission.ACCESS_FINE_LOCATION
+# sudo pm grant $kenzo_pkg android.permission.READ_PHONE_STATE
+# sudo pm grant $kenzo_pkg android.permission.BLUETOOTH_SCAN
+# sudo pm grant $kenzo_pkg android.permission.BLUETOOTH_CONNECT
+# sudo pm grant $kenzo_pkg android.permission.ACCESS_BACKGROUND_LOCATION
+# foreground=""
+# while true ; do
+# 	turn_device_on
+# 	sleep 2
+# 	su -c monkey -p $kenzo_pkg 1 > /dev/null 2>&1
+# 	sleep 7
+# 	foreground=`sudo dumpsys activity | grep -E 'mCurrentFocus' | head -n 1 | cut -d '/' -f1 | sed 's/.* //g'`
+# 	myprint "Confirm Kenzo is in the foregound: $foreground" 
+# 	if [[ $foreground == *"sensorexample"* ]]; then
+# 		break
+# 	elif [[ $foregound == *"NotificationShade"* ]];then
+# 		sudo input keyevent KEYCODE_HOME
+# 	fi
+# done 
 
 sudo cp ".temp" "/storage/emulated/0/Android/data/com.kiwibrowser.browser/files/Download/uid.txt"
 su -c chmod 777 "/storage/emulated/0/Android/data/com.kiwibrowser.browser/files/Download/uid.txt"
