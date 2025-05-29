@@ -28,7 +28,6 @@ rm -rf /var/lib/apt/lists/*
 COPY cronjobs /etc/cron.d/cronjobs
 RUN chmod 0644 /etc/cron.d/cronjobs
 RUN crontab /etc/cron.d/cronjobs
-CMD cron
 
 # setup script to install python packages and clone repo
 COPY setup-linux.sh .
@@ -39,4 +38,4 @@ RUN ./setup-linux.sh
 WORKDIR $REPO_DIR
 
 # Default command
-CMD ["/bin/bash"] 
+CMD service cron start && /bin/bash
