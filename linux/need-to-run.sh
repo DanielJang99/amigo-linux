@@ -1,7 +1,17 @@
-#!/data/data/com.termux/files/usr/bin/env bash
+#!/bin/bash
 ## NOTE: check if there is something to run 
-## Author: Matteo Varvello (matteo.varvello@nokia.com)
-## Date: 11/15/2021
+## Author: Daniel Jang (hsj276@nyu.edu)
+## Date: 2025-05-29
+
+DEBUG=1
+util_file=`pwd`"/utils.sh"
+if [ -f $util_file ]
+then
+    source $util_file
+else
+    echo "Util file $util_file is missing"
+    exit 1
+fi
 
 # generate data to be POSTed to my server
 generate_post_data(){
@@ -17,15 +27,6 @@ generate_post_data(){
 EOF
 }
 
-# check if we need to install muzeel certificate 
-if [ ! -f "/system/etc/security/cacerts/c8750f0d.0" ]
-then 
-	echo "Installed muzeel certificate"
-	sudo mount -o remount,rw /system
-	sudo cp c8750f0d.0 /system/etc/security/cacerts/
-	sudo chmod 644 /system/etc/security/cacerts/c8750f0d.0
-	msg="installed-certificate-"
-fi 
 
 
 # check if debugging or production
@@ -64,19 +65,7 @@ then
 	uptime_info=`uptime`
 	msg="script-restart"
 	echo "$(generate_post_data)"
-	timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/status
-
-	node --version 
-	if [ $? -ne 0 ]
-	then
-		yes | pkg install -y nodejs
-	fi
-
-	traceroute --version 
-	if [ $? -ne 0 ]
-	then 
-		yes | pkg install -y traceroute
-	fi
+	# timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/status
 
 	# update code 
 	myprint "Updating our code..."
@@ -86,7 +75,6 @@ then
 		git stash 
 		git pull
 	fi
-	su -c chmod +rx -R v2/
 	
 	# make sure net-testing is stopped
 	./stop-net-testing.sh  	

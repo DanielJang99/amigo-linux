@@ -1,0 +1,1 @@
+*/1 * * * * cd /amigo-linux/linux && ./need-to-run.sh > log-need-run
