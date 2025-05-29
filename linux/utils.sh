@@ -33,28 +33,23 @@ check_network_status() {
     local current_network_capabilities=""
     
     # Check if we have any network interfaces up (excluding loopback)
-    active_interfaces=$(ip link show | grep -E "state UP" | grep -v "lo:" | wc -l)
+    active_interfaces=$(ip link show | grep -E "state UP" | grep -v "@" | grep -v "lo:" | wc -l)
     
     if [ "$active_interfaces" -eq 0 ]; then
         echo "No active network interfaces found"
         return 1
     fi
-    
     # Get network interface information
     network_info=$(ip route show default 2>/dev/null)
     current_network_capabilities="Network interfaces: $(ip link show | grep -E "state UP" | cut -d: -f2 | tr -d ' ' | tr '\n' ', ')"
     
     # Check for WiFi connection
-    if command -v iwconfig >/dev/null 2>&1; then
+    if ip address | grep -q "docker"; then
+        current_network_type="docker"
+    elif command -v iwconfig >/dev/null 2>&1; then
         # Check if any wireless interface is connected
         wifi_status=$(iwconfig 2>/dev/null | grep -E "ESSID|Access Point" | grep -v "off/any" | grep -v "Not-Associated")
         if [ -n "$wifi_status" ]; then
-            current_network_type="wifi"
-        fi
-    elif command -v nmcli >/dev/null 2>&1; then
-        # Alternative method using NetworkManager
-        wifi_connection=$(nmcli -t -f TYPE,STATE connection show --active | grep "802-11-wireless:activated")
-        if [ -n "$wifi_connection" ]; then
             current_network_type="wifi"
         fi
     else
@@ -121,7 +116,11 @@ check_network_status() {
 
 get_def_iface() {
     local def_iface="none"
-    def_iface=$(ip link show | grep -E "state UP" | cut -d: -f2)
+    if ip address | grep -q "docker"; then
+        def_iface="docker0"
+    else
+        def_iface=$(ip link show | grep -E "state UP" | grep -v "@" | head -n 1 | cut -d: -f2)
+    fi
     echo "$def_iface" > ".def_iface"
     sudo cat ".def_iface"
 }
