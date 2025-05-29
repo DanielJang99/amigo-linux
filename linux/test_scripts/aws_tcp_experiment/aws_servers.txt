@@ -1,0 +1,6 @@
+us-east-1,ec2-44-214-255-32.compute-1.amazonaws.com,44.214.255.32
+eu-west-2,ec2-35-176-126-106.eu-west-2.compute.amazonaws.com,35.176.126.106
+eu-central-1,ec2-63-176-25-115.eu-central-1.compute.amazonaws.com,63.176.25.115
+me-central-1,ec2-40-172-3-210.me-central-1.compute.amazonaws.com,40.172.3.210
+eu-south-2,ec2-51-94-201-96.eu-south-2.compute.amazonaws.com,51.94.201.96
+eu-south-1,ec2-35-152-186-150.eu-south-1.compute.amazonaws.com,35.152.186.150

@@ -1,4 +1,0 @@
-https://google.com
-https://youtube.com
-https://www.facebook.com
-https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js
