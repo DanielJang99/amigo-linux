@@ -11,7 +11,7 @@ REPO_DIR=/amigo-linux
 if [ -d "$REPO_DIR" ] && [ -d "$REPO_DIR/.git" ]; then
     echo "Repository exists, pulling latest changes..."
     cd "$REPO_DIR"
-    git pull origin main || git pull origin master
+    git pull
 else
     echo "Repository not found, cloning..."
     git clone "$REPO_URL"

@@ -203,6 +203,8 @@ let "MAX_DOCKER = MAX_DOCKER_GB * 1000000000"
 # folder and file organization 
 mkdir -p "./logs"
 mkdir -p "./data/wifi"
+mkdir -p "./data/docker"
+
 if [ ! -f ".last_command" ] 
 then 
 	echo "testing" > ".last_command"
