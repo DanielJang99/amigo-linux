@@ -1,0 +1,10 @@
+# Hidden files in linux directory
+linux/.*
+linux/data
+linux/logs
+linux/results
+
+# Sensitive files in container directory
+container/config
+container/authorized_keys
+container/id_rsa_mobile 
