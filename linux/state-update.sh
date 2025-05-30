@@ -39,13 +39,6 @@ EOF
 # generate data to be POSTed to my server 
 generate_post_data(){
 	
-	if [[ "$uid" == "unknown" ]]; then
-		uid=`echo "$HOST_MACHINE_ID"`
-		if [[ -z "$uid" ]]; then
-			myprint "[Warning] HOST_MACHINE_ID environment variable is not set."
-			uid="unknown"
-		fi
-	fi
   cat <<EOF
     {
     "vrs_num":"${vrs}",  
@@ -117,15 +110,6 @@ update_network_status(){
 	myprint "Device info. Wifi:$wifi_ssid WifiData:$wifi_data DockerData:$docker_data DefaultIface:$def_iface NetTesting:$num NetworkType:$network_type"
 }
 
-
-# TODO: create identifier for linux container
-uid=`echo "$HOST_MACHINE_ID"`
-if [[ -z "$uid" ]]; then
-	myprint "[Warning] HOST_MACHINE_ID environment variable is not set."
-	uid="unknown"
-else
-	myprint "Container started on host: $HOST_MACHINE_ID"
-fi
 
 # parameters
 slow_freq=30                           # interval for checking commands to run (slower)

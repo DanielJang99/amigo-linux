@@ -46,6 +46,14 @@ else
 	SERVER_PORT="8082"
 fi 
 
+network_type=`check_network_status`
+if [[ "$network_type" == *"docker"* ]]; then
+	export uid=$(tr '\0' '\n' < /proc/1/environ | grep '^HOST_MACHINE_ID=' | cut -d= -f2-)
+else
+	# FIXME
+	export uid="unknown"
+fi
+
 # add reboot jobs if missing  (unless we are in debug mode)
 msg=""
 
