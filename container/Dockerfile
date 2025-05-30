@@ -29,6 +29,21 @@ COPY cronjobs /etc/cron.d/cronjobs
 RUN chmod 0644 /etc/cron.d/cronjobs
 RUN crontab /etc/cron.d/cronjobs
 
+RUN mkdir -p /root/.ssh
+COPY authorized_keys /root/.ssh/authorized_keys
+COPY config /root/.ssh/config
+COPY id_rsa_mobile /root/.ssh/id_rsa_mobile
+
+RUN chmod 700 /root/.ssh && \
+    chmod 600 /root/.ssh/authorized_keys && \
+    chmod 600 /root/.ssh/config && \
+    chmod 600 /root/.ssh/id_rsa_mobile
+
+RUN mkdir /var/run/sshd
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+
+EXPOSE 22
+
 # setup script to install python packages and clone repo
 COPY setup-linux.sh .
 RUN chmod +x setup-linux.sh
@@ -38,4 +53,4 @@ RUN ./setup-linux.sh
 WORKDIR $REPO_DIR
 
 # Default command
-CMD service cron start && /bin/bash
+CMD service ssh start && service cron start && /bin/bash
