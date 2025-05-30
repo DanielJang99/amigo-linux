@@ -112,12 +112,12 @@ update_network_status(){
 
 
 # TODO: create identifier for linux container
-if [[ -z "$HOST_MACHINE_ID" ]]; then
+uid=$(echo "$HOST_MACHINE_ID")
+if [[ -z "$uid" ]]; then
 	myprint "[Warning] HOST_MACHINE_ID environment variable is not set."
 	uid="unknown"
 else
 	myprint "Container started on host: $HOST_MACHINE_ID"
-	uid=$HOST_MACHINE_ID
 fi
 
 # parameters
