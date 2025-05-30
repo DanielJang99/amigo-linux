@@ -153,3 +153,26 @@ get_public_ip() {
     cat ".public_ip"
 }
 
+get_uptime(){
+    if [ $# -eq 1 ] && [ "$1" = "docker" ]; then
+        ps -o etimes= -p 1 | tr -d ' '
+    else
+        sudo cat /proc/uptime | awk '{print $1}' | cut -f 1 -d "."
+    fi
+}
+
+get_v_interface_data(){
+    v_interface=`ip link | grep "state UP" | awk '{print $2}' | grep "@" |cut -d ':' -f 1`
+    rx_bytes=`cat /sys/class/net/$v_interface/statistics/rx_bytes`
+    tx_bytes=`cat /sys/class/net/$v_interface/statistics/tx_bytes`
+    total_bytes=$((rx_bytes + tx_bytes))
+    echo $total_bytes
+}
+
+get_interface_data(){
+    interface=$1
+    rx_bytes=`cat /sys/class/net/$interface/statistics/rx_bytes`
+    tx_bytes=`cat /sys/class/net/$interface/statistics/tx_bytes`
+    total_bytes=$((rx_bytes + tx_bytes))
+    echo $total_bytes
+}

@@ -3,6 +3,7 @@ linux/.*
 linux/data
 linux/logs
 linux/results
+linux/test.sh
 
 # Sensitive files in container directory
 container/config

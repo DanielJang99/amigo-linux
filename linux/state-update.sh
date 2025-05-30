@@ -54,6 +54,7 @@ generate_post_data(){
     "public_ip":"${public_ip}",
     "wifi_ssid":"${wifi_ssid}",
     "today_wifi_data":"${wifi_data}",
+    "today_docker_data":"${docker_data}",
     "network_type": "${network_type}"
     }
 EOF
@@ -71,40 +72,53 @@ update_network_status(){
     if [ -f $wifi_today_file ] 
     then 
         wifi_data=`cat $wifi_today_file`
+		init_wifi_traffic=$wifi_data
     else 
         wifi_data=0	
-    fi 	
+		init_wifi_traffic=0
+    fi
+
+	docker_today_file="./data/docker/"$suffix".txt"		
+    if [ -f $docker_today_file ] 
+    then 
+        docker_data=`cat $docker_today_file`
+		init_docker_traffic=$docker_data
+    else
+		docker_data=0
+		init_docker_traffic=`get_v_interface_data`
+    fi
 
     def_iface=`get_def_iface`
     network_type=`check_network_status`
+	wifi_ssid="none"
+	public_ip="none"
     if [[ "$network_type" == *"true"* ]]
     then 
         public_ip=`get_public_ip`
         if [[ "$network_type" == *"wifi"* ]]
         then
-            wifi_ssid=`get_wifi_ssid`
-            if [ -z "$prev_wifi_traffic" ]
-			then 
-				prev_wifi_traffic=`sudo ifconfig $def_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`	
-			fi 
-            wifi_traffic=`sudo ifconfig $def_iface | grep "RX" | grep "bytes" | awk '{print $(NF-2)}'`
-            if [ $wifi_traffic -lt $prev_wifi_traffic ]; then
-				wifi_data=$wifi_traffic
-			else
-				wifi_data=$((wifi_data + wifi_traffic - prev_wifi_traffic))
-			fi
-			prev_wifi_traffic=$wifi_traffic
-        else
-            wifi_ssid="none"
+			wifi_traffic=`get_interface_data $def_iface`
+			wifi_data=$((wifi_traffic - init_wifi_traffic))
+        elif [[ "$network_type" == *"docker"* ]]
+        then
+			docker_traffic=`get_v_interface_data`
+			docker_data=$((docker_traffic - init_docker_traffic))
         fi
-    else
-        public_ip="none"
-        wifi_ssid="none"
     fi
 	echo $wifi_data > $wifi_today_file
-
-	myprint "Device info. Wifi:$wifi_ssid DefaultIface:$def_iface NetTesting:$num NetworkType:$network_type"
+	echo $docker_data > $docker_today_file
+	myprint "Device info. Wifi:$wifi_ssid WifiData:$wifi_data DockerData:$docker_data DefaultIface:$def_iface NetTesting:$num NetworkType:$network_type"
 }
+
+
+# TODO: create identifier for linux container
+if [[ -z "$HOST_MACHINE_ID" ]]; then
+	myprint "[Warning] HOST_MACHINE_ID environment variable is not set."
+	uid="unknown"
+else
+	myprint "Container started on host: $HOST_MACHINE_ID"
+	uid=$HOST_MACHINE_ID
+fi
 
 # parameters
 slow_freq=30                           # interval for checking commands to run (slower)
@@ -116,7 +130,8 @@ NET_INTERVAL=3600                      # interval of networking testing
 last_report_time=0                     # last time a report was sent 
 last_net=0                             # last time a net test was done  
 t_wifi_update=0                        # last time wifi/mobile info was checked 
-MAX_WIFI_GB=1                          # maximum wifi data usage per day
+MAX_WIFI_GB=10                          # maximum wifi data usage per day
+MAX_DOCKER_GB=1                       # maximum docker data usage per day
 testing="false"                        # keep track if we are testing or not 
 vrs="3.0"                              # code version for linux adaptation 
 curl_duration="-1"                     # last value measured of curl duration
@@ -169,26 +184,6 @@ then
 	git stash 
 	git pull
 fi
-# su -c chmod -R +rx state-update.sh
-
-# Initialize uid variable to prevent undefined variable errors
-uid="unknown"
-
-# TODO: create identifier for linux container
-# # retrieve unique ID for this device and pass to our app
-# physical_id="N/A"
-# if [ -f ".uid" ]
-# then 
-# 	uid=`cat ".uid" | awk '{print $2}'`
-# 	physical_id=`cat ".uid" | awk '{print $1}'`
-# else 
-# 	uid=`su -c service call iphonesubinfo 1 s16 com.android.shell | cut -c 52-66 | tr -d '.[:space:]'`
-# 	if [ -f "uid-list.txt" ] 
-# 	then 
-# 		physical_id=`cat "uid-list.txt" | grep $uid | head -n 1 | awk '{print $1}'`
-# 	fi 
-# fi
-# myprint "IMEI: $uid PhysicalID: $physical_id"
 
 # status update
 echo "true" > ".status"
@@ -196,6 +191,8 @@ to_run=`cat ".status"`
 
 # derive B from GB
 let "MAX_WIFI = MAX_WIFI_GB * 1000000000"
+let "MAX_DOCKER = MAX_DOCKER_GB * 1000000000"
+
 # folder and file organization 
 mkdir -p "./logs"
 mkdir -p "./data/wifi"
@@ -219,7 +216,6 @@ update_network_status
 myprint "Script will run with a <$fast_freq, $slow_freq> frequency. To stop: <<echo \"false\" > \".status\""
 last_loop_time=0
 last_slow_loop_time=0
-# Removed unused variable: firstPause="true"
 while [[ $to_run == "true" ]] 
 do 
 
@@ -373,9 +369,9 @@ do
         skipping="false"
         update_network_status 
         t_wifi_update=`date +%s`	
-        if [[ $wifi_data -gt $MAX_WIFI ]]
+        if [[ $wifi_data -gt $MAX_WIFI || $docker_data -gt $MAX_DOCKER ]]
         then 
-            myprint "Skipping net-testing since we are on wifi and data limit was passed ($wifi_data -> $MAX_WIFI)"
+            myprint "Skipping net-testing since we are on wifi and data limit was passed ($wifi_data -> $MAX_WIFI) or ($docker_data -> $MAX_DOCKER)"
             skipping="true"
         fi
         if [[ $skipping == "false" ]]
