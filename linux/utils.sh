@@ -162,7 +162,7 @@ get_uptime(){
 }
 
 get_v_interface_data(){
-    v_interface=`ip link | grep "state UP" | awk '{print $2}' | grep "@" |cut -d ':' -f 1`
+    v_interface=`ip link | grep "state UP" | awk '{print $2}' | grep "@" | head -n 1 | cut -d '@' -f 1`
     rx_bytes=`cat /sys/class/net/$v_interface/statistics/rx_bytes`
     tx_bytes=`cat /sys/class/net/$v_interface/statistics/tx_bytes`
     total_bytes=$((rx_bytes + tx_bytes))
