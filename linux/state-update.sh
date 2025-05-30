@@ -38,7 +38,14 @@ EOF
 
 # generate data to be POSTed to my server 
 generate_post_data(){
-
+	
+	if [[ "$uid" == "unknown" ]]; then
+		uid=`echo "$HOST_MACHINE_ID"`
+		if [[ -z "$uid" ]]; then
+			myprint "[Warning] HOST_MACHINE_ID environment variable is not set."
+			uid="unknown"
+		fi
+	fi
   cat <<EOF
     {
     "vrs_num":"${vrs}",  
@@ -112,7 +119,7 @@ update_network_status(){
 
 
 # TODO: create identifier for linux container
-uid=$(echo "$HOST_MACHINE_ID")
+uid=`echo "$HOST_MACHINE_ID"`
 if [[ -z "$uid" ]]; then
 	myprint "[Warning] HOST_MACHINE_ID environment variable is not set."
 	uid="unknown"
