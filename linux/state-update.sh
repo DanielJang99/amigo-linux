@@ -139,6 +139,7 @@ MAX_DOCKER_GB=1                       # maximum docker data usage per day
 testing="false"                        # keep track if we are testing or not 
 vrs="3.0"                              # code version for linux adaptation 
 curl_duration="-1"                     # last value measured of curl duration
+username=`whoami`
 network_type=`check_network_status`
 today=`date +\%d-\%m-\%y`
 output_path="logs/$today"
@@ -269,7 +270,7 @@ do
 			prev_command=`cat ".prev_command"`
 		fi 
 		t_curl_start=`date +%s`
-		ans=`timeout 15 curl -s "https://mobile.batterylab.dev:$SERVER_PORT/action?id=${uid}&prev_command=${prev_command}&termuxUser=${termux_user}"`		
+		ans=`timeout 15 curl -s "https://mobile.batterylab.dev:$SERVER_PORT/action?id=${uid}&prev_command=${prev_command}&termuxUser=${username}"`		
 		ret_code=$?
 		t_curl_end=`date +%s`
 		let "curl_duration = t_curl_end - t_curl_start"		
@@ -312,13 +313,13 @@ do
 						if [ $? -eq 0 ]
 						then
 							myprint "Rebooting Device"
-							ans=`timeout 15 curl -s "https://mobile.batterylab.dev:$SERVER_PORT/commandDone?id=${uid}&command_id=${comm_id}&status=0&termuxUser=${termux_user}"`
+							ans=`timeout 15 curl -s "https://mobile.batterylab.dev:$SERVER_PORT/commandDone?id=${uid}&command_id=${comm_id}&status=0&termuxUser=${username}"`
 						fi
 						eval timeout $duration $command
 						comm_status=$?
 						myprint "Command executed. Status: $comm_status"
 					fi
-					ans=`timeout 15 curl -s "https://mobile.batterylab.dev:$SERVER_PORT/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${termux_user}"`
+					ans=`timeout 15 curl -s "https://mobile.batterylab.dev:$SERVER_PORT/commandDone?id=${uid}&command_id=${comm_id}&status=${comm_status}&termuxUser=${username}"`
 					myprint "Informed server about last command run. ANS: $ans"
 				fi 
 				echo $comm_id > ".prev_command"
@@ -423,7 +424,7 @@ do
 			myprint "Data to send to the server:"
 			echo "$(generate_post_data)"
 			t_curl_start=`date +%s`	
-			# timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/status
+			timeout 15 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/status
 			t_curl_end=`date +%s`
 			let "curl_duration = t_curl_end - t_curl_start"
 			myprint "CURL duration POST: $curl_duration"
