@@ -65,14 +65,7 @@ echo "CurrentTime: $curr_time Uptime-sec:$uptime_sec"
 today=`date +\%d-\%m-\%y`
 
 # log location data from starlink dish
-mkdir -p "locationlogs"
-ps aux | grep "dish_grpc_text.py location" | grep "python" > ".dish_location_ps"
-dish_location_p=`cat ".dish_location_ps" | wc -l`
-if [ $dish_location_p -eq 0 -a $debug == "false" ]
-then 
-	myprint "Detected dish_location job not running"
-	(nohup python3 ./test_scripts/starlink_grpc_tools/dish_grpc_text.py location -t 1 -O "locationlogs/$today.txt" > .dish_location_log 2>&1 &)	
-fi 
+./run_location_logging.sh
 
 # don't run if already running
 ps aux | grep "state-update.sh" | grep "bash" > ".ps"

@@ -1,1 +1,4 @@
 */1 * * * * cd /amigo-linux/linux && ./need-to-run.sh > log-need-run
+0 4 * * * cd /amigo-linux/linux && ./test_scripts/starlink_grpc_tools/monitor_starlink_grpc_jobs.sh > .log-starlink-grpc-monitor
+0 5 * * * cd /amigo-linux/linux && ./test_scripts/starlink_grpc_tools/stop_grpc_jobs.sh
+0 0 * * * cd /amigo-linux/linux && ./stop-state-update.sh
