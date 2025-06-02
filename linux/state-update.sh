@@ -74,24 +74,29 @@ update_location(){
 }
 
 update_network_status(){
-    wifi_today_file="./data/wifi/"$suffix".txt"		
-    if [ -f $wifi_today_file ] 
-    then 
-        wifi_data=`cat $wifi_today_file`
-		init_wifi_traffic=$wifi_data
-    else 
-        wifi_data=0	
-		init_wifi_traffic=0
-    fi
 
-	docker_today_file="./data/docker/"$suffix".txt"		
-    if [ -f $docker_today_file ] 
-    then 
-        docker_data=`cat $docker_today_file`
-		init_docker_traffic=$docker_data
-    else
-		docker_data=0
+	if [ -z $init_wifi_traffic ]
+	then
+		init_wifi_traffic=0
+	fi
+    wifi_today_file="./data/wifi/"$suffix".txt"
+	if [ ! -f $wifi_today_file ]
+	then
+		wifi_data=0
+	else
+		wifi_data=`cat $wifi_today_file`
+	fi
+
+	if [ -z $init_docker_traffic ]
+	then
 		init_docker_traffic=`get_v_interface_data`
+	fi
+	docker_today_file="./data/docker/"$suffix".txt"		
+    if [ ! -f $docker_today_file ] 
+    then 
+        docker_data=0
+    else
+		docker_data=`cat $docker_today_file`
     fi
 
     def_iface=`get_def_iface`
@@ -105,10 +110,12 @@ update_network_status(){
         then
 			wifi_traffic=`get_interface_data $def_iface`
 			wifi_data=$((wifi_traffic - init_wifi_traffic))
+			myprint "Wifi traffic: $wifi_traffic - $init_wifi_traffic = $wifi_data"
         elif [[ "$network_type" == *"docker"* ]]
         then
 			docker_traffic=`get_v_interface_data`
 			docker_data=$((docker_traffic - init_docker_traffic))
+			myprint "Docker traffic: $docker_traffic - $init_docker_traffic = $docker_data"
         fi
     fi
 	echo $wifi_data > $wifi_today_file
