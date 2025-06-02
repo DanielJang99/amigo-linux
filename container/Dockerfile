@@ -46,11 +46,13 @@ EXPOSE 22
 
 # setup script to install python packages and clone repo
 COPY setup-linux.sh .
+COPY requirements.txt .
 RUN chmod +x setup-linux.sh
 RUN ./setup-linux.sh
 
-# Set working directory to the repo
-WORKDIR $REPO_DIR
+COPY clone_repo.sh .
+RUN chmod +x clone_repo.sh
 
 # Default command
-CMD service ssh start && service cron start && /bin/bash
+CMD /clone_repo.sh && cd $REPO_DIR && service ssh start && service cron start && /bin/bash
+ 
