@@ -414,7 +414,7 @@ do
 		update_location
 
 		# get uptime
-		uptime_info=`uptime`
+		uptime_info=`get_uptime`
 
 		if [[ $def_iface == "none" || $network_type != *"true"* ]] 
 		then

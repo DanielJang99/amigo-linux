@@ -59,7 +59,7 @@ msg=""
 
 # inform server of reboot detected 
 curr_time=`date +%s`
-uptime_sec=`sudo cat /proc/uptime | awk '{print $1}' | cut -f 1 -d "."`
+uptime_sec=`get_uptime`
 echo "CurrentTime: $curr_time Uptime-sec:$uptime_sec"
 
 today=`date +\%d-\%m-\%y`
@@ -75,7 +75,7 @@ then
 	# inform server of restart needed
 	suffix=`date +%d-%m-%Y`
 	current_time=`date +%s`
-	uptime_info=`uptime`
+	uptime_info=`get_uptime`
 	msg="script-restart"
 	echo "$(generate_post_data)"
 	# timeout 10 curl -s -H "Content-Type:application/json" -X POST -d "$(generate_post_data)" https://mobile.batterylab.dev:$SERVER_PORT/status
