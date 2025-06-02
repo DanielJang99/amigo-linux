@@ -248,9 +248,8 @@ def loop_body(opts, gstate, print_file, shutdown=False):
     else:
         if csv_data:
             timestamp = status_ts if status_ts is not None else hist_ts
-            csv_data.insert(0, datetime.utcfromtimestamp(timestamp).isoformat())
+            csv_data.insert(0, str(timestamp))
             print(",".join(csv_data), file=print_file)
-
     return rc
 
 

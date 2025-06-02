@@ -48,7 +48,7 @@ generate_post_data(){
     "last_curl_dur":"${curl_duration}",
     "uid":"${uid}",
     "uptime":"${uptime_info}",
-    "network_loc":"${network_loc}",
+    "dish_location":"${dish_location}",
     "net_testing_proc":"${num}", 
     "def_iface":"${def_iface}", 
     "public_ip":"${public_ip}",
@@ -63,8 +63,14 @@ EOF
 
 # TODO: get GPS location from linux machine 
 update_location(){
-	res_dir="locationlogs/${suffix}"
-	mkdir -p $res_dir	
+	today=`date +\%d-\%m-\%y`
+	res_dir="/locationlogs/${today}.txt"
+	if [ -f $res_dir ]
+	then 
+		dish_location=`tail -n 1 $res_dir`
+	else
+		dish_location="none"
+	fi
 }
 
 update_network_status(){

@@ -62,6 +62,18 @@ curr_time=`date +%s`
 uptime_sec=`sudo cat /proc/uptime | awk '{print $1}' | cut -f 1 -d "."`
 echo "CurrentTime: $curr_time Uptime-sec:$uptime_sec"
 
+today=`date +\%d-\%m-\%y`
+
+# log location data from starlink dish
+mkdir -p "locationlogs"
+ps aux | grep "dish_grpc_text.py location" | grep "python" > ".dish_location_ps"
+dish_location_p=`cat ".dish_location_ps" | wc -l`
+if [ $dish_location_p -eq 0 -a $debug == "false" ]
+then 
+	myprint "Detected dish_location job not running"
+	(nohup python3 ./test_scripts/starlink_grpc_tools/dish_grpc_text.py location -t 1 -O "locationlogs/$today.txt" > .dish_location_log 2>&1 &)	
+fi 
+
 # don't run if already running
 ps aux | grep "state-update.sh" | grep "bash" > ".ps"
 N=`cat ".ps" | wc -l`
@@ -102,7 +114,6 @@ then
 	n_sleep=`shuf -i 0-30 -n 1`
 	echo "Time to run! Sleep $n_sleep to avoid concurrent restarts"	
 	sleep $n_sleep
-	today=`date +\%d-\%m-\%y`
 	res_dir="logs/$today"	
 	mkdir -p $res_dir
 	./state-update.sh > "$res_dir/log-state-update-"`date +\%m-\%d-\%y_\%H:\%M`".txt" 2>&1 &
