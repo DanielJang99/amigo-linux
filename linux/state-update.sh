@@ -89,7 +89,7 @@ update_network_status(){
 
 	if [ -z $init_docker_traffic ]
 	then
-		init_docker_traffic=`get_v_interface_data`
+		init_docker_traffic=`get_interface_data eth0`
 	fi
 	docker_today_file="./data/docker/"$suffix".txt"		
     if [ ! -f $docker_today_file ] 
@@ -113,7 +113,7 @@ update_network_status(){
 			myprint "Wifi traffic: $wifi_traffic - $init_wifi_traffic = $wifi_data"
         elif [[ "$network_type" == *"docker"* ]]
         then
-			docker_traffic=`get_v_interface_data`
+			docker_traffic=`get_interface_data eth0`
 			docker_data=$((docker_traffic - init_docker_traffic))
 			myprint "Docker traffic: $docker_traffic - $init_docker_traffic = $docker_data"
         fi
@@ -134,8 +134,6 @@ NET_INTERVAL=3600                      # interval of networking testing
 last_report_time=0                     # last time a report was sent 
 last_net=0                             # last time a net test was done  
 t_wifi_update=0                        # last time wifi/mobile info was checked 
-MAX_WIFI_GB=10                          # maximum wifi data usage per day
-MAX_DOCKER_GB=1                       # maximum docker data usage per day
 testing="false"                        # keep track if we are testing or not 
 vrs="3.0"                              # code version for linux adaptation 
 curl_duration="-1"                     # last value measured of curl duration
@@ -193,6 +191,45 @@ fi
 # status update
 echo "true" > ".status"
 to_run=`cat ".status"`
+
+# Read MAX_DOCKER_GB from config file, fallback to default if not found
+CONFIG_FILE="/config/amigo.conf"
+if [ -f "$CONFIG_FILE" ]; then
+    myprint "Loading configuration from $CONFIG_FILE"
+    
+    # Parse the config file for key=value pairs
+    while IFS='=' read -r key value; do
+        # Skip comments and empty lines
+        [[ $key =~ ^[[:space:]]*# ]] && continue
+        [[ -z $key ]] && continue
+        
+        # Remove leading/trailing whitespace and quotes
+        key=$(echo "$key" | xargs)
+        value=$(echo "$value" | xargs | sed 's/^["'"'"']\|["'"'"']$//g')
+        
+        # Set variables based on key
+        case "$key" in
+            "MAX_DOCKER_GB")
+                MAX_DOCKER_GB="$value"
+                ;;
+            "MAX_WIFI_GB")
+                MAX_WIFI_GB="$value"
+                ;;
+        esac
+    done < "$CONFIG_FILE"
+    
+    myprint "Configuration loaded successfully"
+fi
+
+# Set defaults if not defined or empty
+if [ -z "$MAX_DOCKER_GB" ]; then
+    MAX_DOCKER_GB=1
+    myprint "Warning: MAX_DOCKER_GB not found in config, using default: ${MAX_DOCKER_GB}GB"
+fi
+if [ -z "$MAX_WIFI_GB" ]; then
+    MAX_WIFI_GB=10
+    myprint "Warning: MAX_WIFI_GB not found in config, using default: ${MAX_WIFI_GB}GB"
+fi
 
 # derive B from GB
 let "MAX_WIFI = MAX_WIFI_GB * 1000000000"
@@ -370,7 +407,7 @@ do
 	myprint "TimeFromLastNetLong:$time_from_last_net sec ShouldRunIfTime:$net_status RunningNetProc:$num LockedStatus:$locked"
 
 	# 1) flag set, 2) no previous running, 3) connected (basic checks to see if we should run) 
-	if [[ $num -eq 0 && $def_iface != "none" && $locked == "false" && $network_type == *"true" && $time_from_last_net -gt $NET_INTERVAL ]]
+	if [[ $num -eq 0 && $def_iface != "none" && $locked == "false" && $network_type == *"true"* && $time_from_last_net -gt $NET_INTERVAL ]]
 	then
         myprint "Time to run LONG net-test: $time_from_last_net > $NET_INTERVAL -- DefaultIface:$def_iface"
         skipping="false"

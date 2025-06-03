@@ -42,6 +42,9 @@ RUN chmod 700 /root/.ssh && \
 RUN mkdir /var/run/sshd
 RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 
+RUN mkdir -p /config
+COPY docker-config.conf /config/amigo.conf
+
 EXPOSE 22
 
 # setup script to install python packages and clone repo
