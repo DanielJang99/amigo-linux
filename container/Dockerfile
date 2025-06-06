@@ -56,6 +56,10 @@ RUN ./setup-linux.sh
 COPY clone_repo.sh .
 RUN chmod +x clone_repo.sh
 
+# Create entrypoint script
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
 # Default command
-CMD /clone_repo.sh && cd $REPO_DIR && service ssh start && service cron start && /bin/bash
+CMD ["./entrypoint.sh"]
  
