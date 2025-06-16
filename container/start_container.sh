@@ -17,13 +17,17 @@ if ! sudo docker pull hsj276/amigo-linux-image:latest &> /dev/null; then
     exit 1
 fi
 
-if [ $# -ne 1 ]; then
-    echo "Error: Please provide a unique MACHINE_ID as argument"
-    echo "Usage: $0 <MACHINE_ID>"
+if [ $# -eq 1 ]; then
+    MACHINE_ID=$1
+elif [ -f ".machine-id" ]; then
+    MACHINE_ID=$(cat .machine-id)
+elif [ -f "/etc/machine-id" ]; then
+    MACHINE_ID=$(cat /etc/machine-id)
+    echo $MACHINE_ID > .machine-id
+else
+    echo "Error: No MACHINE_ID provided and /etc/machine-id file not found"
     exit 1
 fi
-
-MACHINE_ID=$1
 
 echo "Starting container..."
 
