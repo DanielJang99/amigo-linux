@@ -9,3 +9,5 @@ linux/test.sh
 container/config
 container/authorized_keys
 container/id_rsa_mobile 
+
+.DS_Store
